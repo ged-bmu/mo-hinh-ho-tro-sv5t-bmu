@@ -1,0 +1,291 @@
+"use client";
+
+
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+import Sidebar from "./components/Sidebar";
+
+export default function Home() {
+    const [profile, setProfile] = useState<any>(null);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+checkUser();
+}, []);
+useEffect(() => {
+  checkUser();
+  loadProfile();
+}, []);
+
+async function checkUser() {
+const {
+data: { user },
+} = await supabase.auth.getUser();
+
+if (!user) {
+  window.location.href = "/login";
+  return;
+}
+
+setLoading(false);
+
+}
+
+const folders = [
+{
+  name: "Đạo đức tốt",
+  icon: "❤️",
+  link: "/dao-duc",
+  field: "dao-duc",
+},
+{
+  name: "Học tập tốt",
+  icon: "📚",
+  link: "/hoc-tap",
+  field: "hoc-tap",
+},
+{
+  name: "Thể lực tốt",
+  icon: "💪",
+  link: "/the-luc",
+  field: "the-luc",
+},
+{
+  name: "Tình nguyện tốt",
+  icon: "🤝",
+  link: "/tinh-nguyen",
+  field: "tinh-nguyen",
+},
+{
+  name: "Hội nhập tốt",
+  icon: "🌏",
+  link: "/hoi-nhap",
+  field: "hoi-nhap",
+},
+{
+  name: "Tiêu chuẩn ưu tiên",
+  icon: "⭐",
+  link: "/uu-tien",
+  field: "uu-tien",
+},
+];
+
+async function loadProfile() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+if (data) {
+  console.table(data);
+  setProfile(data);
+}
+}
+if (loading) {
+return (
+<div
+style={{
+minHeight: "100vh",
+display: "flex",
+justifyContent: "center",
+alignItems: "center",
+}}
+>
+Đang tải... </div>
+);
+}
+
+return (
+<div
+style={{
+display: "flex",
+minHeight: "100vh",
+}}
+> <Sidebar />
+
+  <main
+    style={{
+      flex: 1,
+      minHeight: "100vh",
+      background: "#f5f7fb",
+      padding: "30px",
+    }}
+  >
+    <div
+  style={{
+    maxWidth: "900px",
+    margin: "0 auto",
+  }}
+>
+
+      <h1
+        style={{
+          textAlign: "center",
+          fontSize: "26px",
+          marginBottom: "10px",
+        }}
+      >
+        CÂU LẠC BỘ SINH VIÊN 5 TỐT
+      </h1>
+
+      <h1
+        style={{
+          textAlign: "center",
+          fontSize: "26px",
+          marginBottom: "10px",
+        }}
+      >
+        TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT
+      </h1>
+
+      <h1
+        style={{
+          textAlign: "center",
+          fontSize: "18px",
+          marginBottom: "40px",
+        }}
+      >
+        Mô hình hỗ trợ Sinh viên phấn đấu đạt danh hiệu "Sinh viên 5 tốt" các cấp
+      </h1>
+        <div
+  style={{
+    background: "white",
+    borderRadius: "16px",
+    padding: "20px",
+    marginBottom: "30px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+  }}
+>
+ <div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  }}
+>
+  <h2
+    style={{
+      margin: 0,
+      fontSize: "20px",
+      fontWeight: "700",
+    }}
+  >
+    👋 Xin chào, {profile?.ho_ten}
+  </h2>
+
+  <a
+    href="/bao-cao"
+    style={{
+      background: "#2563eb",
+      color: "white",
+      textDecoration: "none",
+      padding: "12px 20px",
+      borderRadius: "12px",
+      fontWeight: "600",
+    }}
+  >
+    📑 Gửi báo cáo
+  </a>
+</div>
+</div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(250px, 1fr))",
+          gap: "20px",
+        }}
+      >
+
+        {folders.map((folder) => (
+          <a
+            key={folder.name}
+            href={folder.link}
+            style={{
+              background: "white",
+              padding: "25px",
+              borderRadius: "18px",
+              textDecoration: "none",
+              color: "#111",
+              boxShadow:
+                "0 4px 12px rgba(0,0,0,0.08)",
+            }}
+          >
+            <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    marginBottom: "10px",
+  }}
+>
+  <span
+    style={{
+      fontSize: "28px",
+    }}
+  >
+    {folder.icon}
+  </span>
+
+  <div>
+    <h2
+      style={{
+        margin: 0,
+        fontSize: "18px",
+        fontWeight: "600",
+      }}
+    >
+      {folder.name}
+    </h2>
+
+ {folder.name !== "Tiêu chuẩn ưu tiên" && (
+  <div
+    style={{
+      marginTop: "4px",
+      display: "inline-block",
+      padding: "2px 8px",
+      borderRadius: "999px",
+      background:
+        profile?.[folder.field]
+          ? "#dcfce7"
+          : "#f3f4f6",
+      color:
+        profile?.[folder.field]
+          ? "#166534"
+          : "#f36060",
+      fontSize: "12px",
+      fontWeight: "600",
+    }}
+  >
+    {profile?.[folder.field]
+      ? "✅ Đạt"
+      : "❌ Chưa đạt"}
+  </div>
+)}
+  </div>
+</div>
+
+<p
+  style={{
+    color: "#666",
+    marginTop: "8px",
+  }}
+>
+  Xem và quản lý minh chứng
+</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </main>
+</div>
+
+);
+}
