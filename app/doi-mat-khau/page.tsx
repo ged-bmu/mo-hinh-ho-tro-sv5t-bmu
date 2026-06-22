@@ -1,12 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import Sidebar from "../components/Sidebar";
 
 export default function DoiMatKhauPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+  checkRole();
+}, []);
+
+async function checkRole() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (data?.role === "admin") {
+    setIsAdmin(true);
+  }
+}
+  
 
   async function handleChangePassword() {
     if (password.length < 6) {
@@ -30,17 +54,31 @@ export default function DoiMatKhauPage() {
 
   alert("Đổi mật khẩu thành công.");
 
-window.location.href = "/";
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+const { data } = await supabase
+  .from("profiles")
+  .select("role")
+  .eq("id", user?.id)
+  .single();
+
+if (data?.role === "admin") {
+  window.location.href = "/admin";
+} else {
+  window.location.href = "/";
+}
   }
 
   return (
     <div
       style={{
-        display: "flex",
+        display: isAdmin ? "block" : "flex",
         minHeight: "100vh",
       }}
     >
-      <Sidebar />
+      {!isAdmin && <Sidebar />}
 
       <main
         style={{

@@ -3,58 +3,93 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 export default function Sidebar() {
 const pathname = usePathname();
+if (pathname === "doi-mat-khau") {
+  return null;
+}
+const [collapsed, setCollapsed] = useState(false);
+const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+useEffect(() => {
+  checkRole();
+}, []);
 
+async function checkRole() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (data?.role === "admin") {
+    setIsAdmin(true);
+  }
+  if (data?.role === "admin") {
+  setIsAdmin(true);
+} else {
+  setIsAdmin(false);
+}
+}
 const menus = [
-{
-name: "Trang chủ",
-icon: "🏠",
-href: "/",
-},
-{
-name: "Báo cáo thành tích",
-icon: "📑",
-href: "/bao-cao",
-},
+  {
+    name: "Trang chủ",
+    icon: "🏠",
+    href: "/",
+  },
+  {
+    name: "Báo cáo thành tích",
+    icon: "📑",
+    href: "/bao-cao",
+  },
+  {
+    name: "Đạo đức tốt",
+    icon: "❤️",
+    href: "/dao-duc",
+  },
+  {
+    name: "Học tập tốt",
+    icon: "📚",
+    href: "/hoc-tap",
+  },
+  {
+    name: "Thể lực tốt",
+    icon: "💪",
+    href: "/the-luc",
+  },
+  {
+    name: "Tình nguyện tốt",
+    icon: "🤝",
+    href: "/tinh-nguyen",
+  },
+  {
+    name: "Hội nhập tốt",
+    icon: "🌏",
+    href: "/hoi-nhap",
+  },
+  {
+    name: "Tiêu chuẩn ưu tiên",
+    icon: "⭐",
+    href: "/uu-tien",
+  },
 
-{
-name: "Đạo đức tốt",
-icon: "❤️",
-href: "/dao-duc",
-},
-{
-name: "Học tập tốt",
-icon: "📚",
-href: "/hoc-tap",
-},
-{
-name: "Thể lực tốt",
-icon: "💪",
-href: "/the-luc",
-},
-{
-name: "Tình nguyện tốt",
-icon: "🤝",
-href: "/tinh-nguyen",
-},
-{
-name: "Hội nhập tốt",
-icon: "🌏",
-href: "/hoi-nhap",
-},
-{
-name: "Tiêu chuẩn ưu tiên",
-icon: "⭐",
-href: "/uu-tien",
-},
-{
-name: "Đổi mật khẩu",
-icon: "🔐",
-href: "/doi-mat-khau",
-},
+  ...(isAdmin === false
+    ? [
+        {
+          name: "Đổi mật khẩu",
+          icon: "🔐",
+          href: "/doi-mat-khau",
+        },
+      ]
+    : []),
 ];
 
 async function handleLogout() {
@@ -65,7 +100,9 @@ window.location.href = "/login";
 return (
 <aside
 style={{
-width: "280px",
+width: collapsed ? "80px" : "280px",
+transition: "0.3s",
+position: "relative",
 minHeight: "100vh",
 background: "white",
 borderRight: "1px solid #e5e7eb",
@@ -74,23 +111,26 @@ display: "flex",
 flexDirection: "column",
 }}
 >
-<div
-style={{
-marginBottom: "20px",
-paddingBottom: "15px",
-borderBottom: "1px solid #e5e7eb",
-}}
->
-<Image
-src="/logo-header.png"
-alt="Logo"
-width={220}
-height={80}
-style={{
-width: "100%",
-height: "auto",
-}}
-/> </div>
+{!collapsed && (
+  <div
+    style={{
+      marginBottom: "20px",
+      paddingBottom: "15px",
+      borderBottom: "1px solid #e5e7eb",
+    }}
+  >
+    <Image
+      src="/logo-header.png"
+      alt="Logo"
+      width={220}
+      height={80}
+      style={{
+        width: "100%",
+        height: "auto",
+      }}
+    />
+  </div>
+)}
 
   <div
     style={{
@@ -127,7 +167,7 @@ height: "auto",
             transition: "0.2s",
           }}
         >
-          {item.icon} {item.name}
+          {collapsed ? item.icon : `${item.icon} ${item.name}`}
         </Link>
       );
     })}
@@ -135,22 +175,44 @@ height: "auto",
 
   <div style={{ flex: 1 }} />
 
-  <button
-    onClick={handleLogout}
-    style={{
-      border: "none",
-      background: "#ef4444",
-      color: "white",
-      padding: "14px",
-      borderRadius: "12px",
-      cursor: "pointer",
-      fontSize: "17px",
-      fontWeight: "600",
-    }}
-  >
-    🚪 Đăng xuất
-  </button>
+<button
+  onClick={() => setCollapsed(!collapsed)}
+  style={{
+    position: "absolute",
+    right: "-15px",
+    top: "50%",
+    transform: "translateY(-50%)",
+    width: "30px",
+    height: "30px",
+    borderRadius: "50%",
+    border: "none",
+    background: "#b9b9b9",
+    color: "white",
+    cursor: "pointer",
+    fontWeight: "bold",
+    zIndex: 100,
+  }}
+>
+  {collapsed ? ">" : "<"}
+</button>
+
+<button
+  onClick={handleLogout}
+  style={{
+    border: "none",
+    background: "#ef4444",
+    color: "white",
+    padding: "14px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontSize: "17px",
+    fontWeight: "600",
+  }}
+>
+  {collapsed ? "🚪" : "🚪 Đăng xuất"}
+</button>
 </aside>
+
 
 );
 }

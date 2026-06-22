@@ -3,11 +3,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 
-import { useParams } from "next/navigation";
-
-export default function EditUser() {
-  const params = useParams();
+export default function UserManagement() {
   const [users, setUsers] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     loadUsers();
@@ -98,6 +96,27 @@ export default function EditUser() {
     boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
   }}
 >
+  <div
+  style={{
+    padding: "20px",
+    background: "#fff",
+    borderBottom: "1px solid #e2e8f0",
+  }}
+>
+  <input
+    type="text"
+    placeholder="🔍 Tìm theo họ tên hoặc MSSV..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    style={{
+      width: "100%",
+      padding: "12px 16px",
+      borderRadius: "10px",
+      border: "1px solid #cbd5e1",
+      fontSize: "15px",
+    }}
+  />
+</div>
   <table
     style={{
       width: "100%",
@@ -162,7 +181,16 @@ export default function EditUser() {
     </thead>
 
     <tbody>
-      {users.map((user, index) => (
+      {users
+  .filter((user) =>
+    user.ho_ten
+      ?.toLowerCase()
+      .includes(search.toLowerCase()) ||
+    user.mssv
+      ?.toLowerCase()
+      .includes(search.toLowerCase())
+  )
+  .map((user, index) => (
         <tr
           key={user.id}
           style={{
@@ -302,9 +330,34 @@ export default function EditUser() {
     return;
   }
 
-  alert(
-    `Sẽ đổi mật khẩu cho ${user.ho_ten}`
-      );
+const res = await fetch(
+  "/api/reset-password",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      userId: user.id,
+      password,
+    }),
+  }
+);
+
+console.log("status:", res.status);
+
+const data = await res.json();
+
+console.log("response:", data);
+
+if (!res.ok) {
+  alert(data.error);
+  return;
+}
+
+alert(
+  `Đã đổi mật khẩu cho ${user.ho_ten}`
+); 
 }}
     style={{
       marginRight: "8px",
@@ -375,10 +428,10 @@ onClick={async () => {
   }}
 >
   <button
-   onClick={() => {
+    onClick={() => {
   window.location.href =
     `/admin/users/edit/${user.id}`;
-}}
+    }}
     style={{
       width: "100%",
       padding: "7px",

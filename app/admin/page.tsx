@@ -168,7 +168,12 @@ async function updateCriteria(
 >
   👥 Quản lý tài khoản
 </a>
-
+<a
+  href="/doi-mat-khau"
+  style={menuStyle}
+>
+  🔐 Đổi mật khẩu
+</a>
         <button
           onClick={async () => {
             await supabase.auth.signOut();
@@ -496,13 +501,23 @@ async function updateCriteria(
     fontWeight: "bold",
   }}
 >
-  {sv["dao-duc"] &&
-   sv["hoc-tap"] &&
-   sv["the-luc"] &&
-   sv["tinh-nguyen"] &&
-   sv["hoi-nhap"]
-    ? "🟢"
-    : sv.dao_duc &&
+ {sv["dao-duc"] &&
+ sv["hoc-tap"] &&
+ sv["the-luc"] &&
+ sv["tinh-nguyen"] &&
+ sv["hoi-nhap"] ? (
+  <span
+    style={{
+      background: "#dcfce7",
+      color: "#166534",
+      padding: "6px 12px",
+      borderRadius: "999px",
+      fontWeight: 600,
+    }}
+  >
+    Đạt
+  </span>
+)    : sv.dao_duc &&
  sv.hoc_tap &&
  sv.the_luc &&
  sv.tinh_nguyen &&

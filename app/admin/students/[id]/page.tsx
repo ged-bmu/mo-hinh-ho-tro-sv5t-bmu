@@ -9,7 +9,7 @@ export default function StudentsDetailPage() {
   const id = params.id as string;
 
   const [profile, setProfile] = useState<any>(null);
-
+  const [nhanXet, setNhanXet] = useState("");
   const [daoDucFiles, setDaoDucFiles] = useState<any[]>([]);
   const [hocTapFiles, setHocTapFiles] = useState<any[]>([]);
   const [theLucFiles, setTheLucFiles] = useState<any[]>([]);
@@ -17,6 +17,7 @@ export default function StudentsDetailPage() {
   const [hoiNhapFiles, setHoiNhapFiles] = useState<any[]>([]);
   const [uuTienFiles, setUuTienFiles] = useState<any[]>([]);
   const [baoCaoFiles, setBaoCaoFiles] = useState<any[]>([]);
+  const [trangThai, setTrangThai] = useState("");
 
   useEffect(() => {
     if (!id) return;
@@ -38,6 +39,8 @@ export default function StudentsDetailPage() {
     }
 
     setProfile(data);
+    setTrangThai(data.trang_thai || "cho-duyet");
+    setNhanXet(data.nhan_xet || "");
   }
 
   async function loadFiles() {
@@ -150,11 +153,13 @@ const baoCaoUrl = baoCao
           </div>
 
           <div
-            style={{
-              display: "flex",
-              gap: "8px",
-            }}
-          >
+  style={{
+    display: "flex",
+    gap: "80px",
+    alignItems: "flex-start",
+    marginTop: "-30px",
+  }}
+>
             <a
               href={url}
               target="_blank"
@@ -210,117 +215,242 @@ const baoCaoUrl = baoCao
       </div>
     );
   }
-  return (
-    <div
+return (
+  <div
+    style={{
+      padding: "30px",
+      maxWidth: "1800px",
+      margin: "0 auto",
+    }}
+  >
+    <h1
       style={{
-        padding: "30px",
-        maxWidth: "1800px",
-        margin: "0 auto",
+        fontSize: "34px",
+        marginBottom: "25px",
       }}
     >
-      <h1
+      🏆 Hồ sơ Sinh viên 5 Tốt cấp Trường
+    </h1>
+
+    <div
+      style={{
+        background: "white",
+        borderRadius: "16px",
+        padding: "30px",
+        marginBottom: "25px",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+      }}
+    >
+      <a
+        href="/admin"
         style={{
-          fontSize: "34px",
+          display: "inline-block",
           marginBottom: "25px",
+          padding: "10px 16px",
+          background: "#ffffff",
+          color: "#0f172a",
+          textDecoration: "none",
+          borderRadius: "12px",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+          fontWeight: "600",
         }}
       >
-        🏆 Hồ sơ Sinh viên 5 Tốt cấp Trường
-      </h1>
+        ← Trang chính
+      </a>
+
+      <h2
+  style={{
+    marginTop: "-10px",
+    marginBottom: "20px",
+  }}
+>
+        👤 Thông tin cá nhân
+      </h2>
 
       <div
         style={{
-          background: "white",
-          borderRadius: "16px",
-          padding: "25px",
-          marginBottom: "25px",
-          boxShadow:
-            "0 2px 10px rgba(0,0,0,0.08)",
+          display: "grid",
+          gridTemplateColumns: "300px 250px 500px",
+          gap: "40px",
+          alignItems: "start",
         }}
       >
-        <h2
-          style={{
-            marginBottom: "20px",
-          }}
-        >
-          👤 Thông tin cá nhân
-        </h2>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(2,minmax(250px,1fr))",
-            gap: "15px",
-          }}
-        >
-          <div>
+        {/* Cột 1 */}
+        <div>
+          <div style={{ marginBottom: "20px" }}>
             <b>Họ tên:</b> {profile.ho_ten}
           </div>
 
-          <div>
-            <b>MSSV:</b> {profile.mssv}
+          <div style={{ marginBottom: "20px" }}>
+            <b>Lớp:</b> {profile.lop}
           </div>
 
-          <div>
-            <b>Lớp:</b> {profile.lop}
+          <div style={{ marginTop: "40px" }}>
+            <b>Báo cáo:</b>
+
+            {baoCao ? (
+              <>
+                <a
+                  href={baoCaoUrl}
+                  target="_blank"
+                  style={{
+                    marginLeft: "10px",
+                    color: "#2563eb",
+                    textDecoration: "none",
+                  }}
+                >
+                  👁 Xem
+                </a>
+
+                <a
+                  href={baoCaoUrl}
+                  download
+                  style={{
+                    marginLeft: "10px",
+                    color: "#16a34a",
+                    textDecoration: "none",
+                  }}
+                >
+                  ⬇ Tải
+                </a>
+              </>
+            ) : (
+              <span
+                style={{
+                  color: "#94a3b8",
+                  marginLeft: "10px",
+                }}
+              >
+                Chưa có báo cáo
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Cột 2 */}
+        <div>
+          <div style={{ marginBottom: "20px" }}>
+            <b>MSSV:</b> {profile.mssv}
           </div>
 
           <div>
             <b>Email:</b> {profile.email}
           </div>
-          <div>
-  <b>Báo cáo:</b>
+        </div>
 
-  {baoCao ? (
-    <>
-      {" "}
-      <a
-        href={baoCaoUrl}
-        target="_blank"
-        style={{
-          marginLeft: "10px",
-          color: "#2563eb",
-          textDecoration: "none",
-        }}
-      >
-        👁 Xem
-      </a>
+        {/* Cột 3 */}
+        <div>
+<div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "10px",
+  }}
+>
+  <h3
+    style={{
+      margin: 0,
+      fontSize: "16px",
+      fontWeight: "600",
+    }}
+  >
+    📝 Nhận xét của hồ sơ
+  </h3>
 
-      <a
-        href={baoCaoUrl}
-        download
-        style={{
-          marginLeft: "10px",
-          color: "#16a34a",
-          textDecoration: "none",
-        }}
-      >
-        ⬇ Tải
-      </a>
-    </>
-  ) : (
-    <span
-      style={{
-        color: "#94a3b8",
-        marginLeft: "10px",
-      }}
-    >
-      Chưa có báo cáo
-    </span>
-  )}
+  <button
+    onClick={async () => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+  nhan_xet: nhanXet,
+  trang_thai: trangThai,
+  ngay_nhan_xet: new Date().toISOString(),
+})
+        .eq("id", id);
+
+      if (error) {
+        alert("Lưu thất bại");
+        return;
+      }
+
+      alert("Đã lưu nhận xét");
+    }}
+    style={{
+      padding: "8px 12px",
+      border: "none",
+      borderRadius: "10px",
+      background: "#5b92ff",
+      color: "white",
+      cursor: "pointer",
+      fontWeight: "600",
+    }}
+  >
+    💾 Lưu nhận xét
+  </button>
 </div>
+
+<div style={{ marginBottom: "12px" }}>
+  <label>
+    <b>Trạng thái hồ sơ:</b>
+  </label>
+
+  <select
+    value={trangThai}
+    onChange={(e) => setTrangThai(e.target.value)}
+    style={{
+      marginLeft: "10px",
+      padding: "8px",
+      borderRadius: "8px",
+    }}
+  >
+    <option value="cho-duyet">
+      Hoàn thiện
+    </option>
+
+    <option value="can_bo_sung">
+      Cần bổ sung
+    </option>
+  </select>
+</div>
+         <div
+  style={{
+    background: "#f1f5f9",
+    borderRadius: "16px",
+    padding: "20px",
+    height: "140px",
+    overflowY: "auto",
+    lineHeight: "1.6",
+    color: "#334155",
+    fontSize: "16px",
+  }}
+>
+            <textarea
+  value={nhanXet}
+  onChange={(e) => setNhanXet(e.target.value)}
+  style={{
+    width: "100%",
+    height: "100%",
+    border: "none",
+    outline: "none",
+    resize: "none",
+    background: "transparent",
+    fontSize: "16px",
+  }}
+/>
+          </div>
         </div>
       </div>
+    </div>
 
-      <div
-        style={{
-          background: "white",
-          borderRadius: "16px",
-          overflow: "hidden",
-          boxShadow:
-            "0 2px 10px rgba(0,0,0,0.08)",
-        }}
-      >
+    <div
+      style={{
+        background: "white",
+        borderRadius: "16px",
+        overflow: "hidden",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+      }}
+    >
         <table
           style={{
             width: "100%",

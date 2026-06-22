@@ -179,7 +179,20 @@ minHeight: "100vh",
   >
     👋 Xin chào, {profile?.ho_ten}
   </h2>
+<div
+  style={{
+    marginTop: "10px",
+    fontWeight: "600",
+  }}
+>
+  
+  {profile?.trang_thai === "cho-duyet" &&
+    "🟢 Hồ sơ đã đầy đủ"}
 
+  {profile?.trang_thai === "can_bo_sung" &&
+    "🔴 Hồ sơ cần bổ sung"}
+
+</div>
   <a
     href="/bao-cao"
     style={{
@@ -235,6 +248,7 @@ minHeight: "100vh",
   </span>
 
   <div>
+    
     <h2
       style={{
         margin: 0,
@@ -280,9 +294,63 @@ minHeight: "100vh",
 >
   Xem và quản lý minh chứng
 </p>
+
           </a>
         ))}
       </div>
+      <div
+  style={{
+    marginTop: "25px",
+    background: "white",
+    borderRadius: "16px",
+    padding: "25px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+  }}
+>
+  <h2
+  style={{
+    marginTop: 0,
+    marginBottom: "15px",
+    fontSize: "16px",
+  }}
+>
+  📝 Nhận xét hồ sơ
+
+  {profile?.nhan_xet &&
+    profile.nhan_xet.trim() !== "" &&
+    profile?.ngay_nhan_xet && (
+      <span
+        style={{
+          marginLeft: "10px",
+          fontSize: "14px",
+          fontStyle: "italic",
+          color: "#64748b",
+          fontWeight: "400",
+        }}
+      >
+        (cập nhật{" "}
+        {new Date(
+          profile.ngay_nhan_xet
+        ).toLocaleString("vi-VN")}
+        )
+      </span>
+    )}
+</h2>
+
+  <div
+    style={{
+      background: "#f8fafc",
+      borderRadius: "12px",
+      padding: "20px",
+      minHeight: "150px",
+      whiteSpace: "pre-wrap",
+      lineHeight: "1.8",
+      color: "#000000",
+    }}
+  >
+    <i>{profile?.nhan_xet || "Chưa có nhận xét"}</i>
+  </div>
+</div>
     </div>
   </main>
 </div>
