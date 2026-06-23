@@ -1,14 +1,18 @@
 "use client";
 
-import FileItem from "../components/FileItem";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import Sidebar from "../components/Sidebar";
+import FileItem from "../components/FileItem";
 
 export default function TheLucPage() {
   const [files, setFiles] = useState<any[]>([]);
   const [userId, setUserId] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [displayNames, setDisplayNames] = useState<
+  Record<string, string>
+>({});
+
   useEffect(() => {
     loadFiles();
   }, []);
@@ -19,13 +23,38 @@ export default function TheLucPage() {
   } = await supabase.auth.getUser();
 
   if (!user) return;
+
   setUserId(user.id);
-    const { data } = await supabase.storage
+
+  const { data } = await supabase.storage
     .from("Ho so SV5T")
     .list(`${user.id}/the-luc`);
 
   if (data) {
     setFiles(data);
+  }
+
+  const { data: uploadedFiles } =
+    await supabase
+      .from("uploaded_files")
+      .select(
+        "storage_name, display_name"
+      )
+      .eq("user_id", user.id)
+      .eq("folder", "the-luc");
+
+  if (uploadedFiles) {
+    const map: Record<
+      string,
+      string
+    > = {};
+
+    uploadedFiles.forEach((f) => {
+      map[f.storage_name] =
+        f.display_name;
+    });
+
+    setDisplayNames(map);
   }
 }
 async function uploadFile(file: File) {
@@ -35,32 +64,44 @@ async function uploadFile(file: File) {
 
   if (!user) return;
 
-  const fileName =
-    Date.now() +
-    "-" +
-    file.name
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replaceAll(" ", "_");
+const fileName =
+  Date.now() +
+  "-" +
+  file.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replaceAll(" ", "_");
 
   const { error } = await supabase.storage
-    .from("Ho so SV5T")
-    .upload(
-      `${user.id}/the-luc/${fileName}`,
-      file,
-      {
-        upsert: true,
-      }
-    );
+  .from("Ho so SV5T")
+  .upload(
+    `${user.id}/the-luc/${fileName}`,
+    file,
+    {
+      upsert: true,
+    }
+  );
 
-  if (error) {
-    alert(error.message);
-    return;
-  }
+if (error) {
+  alert(error.message);
+  return;
+}
+
+const { data, error: insertError } = await supabase
+  .from("uploaded_files")
+  .insert({
+    user_id: user.id,
+    folder: "the-luc",
+    storage_name: fileName,
+    display_name: file.name,
+  });
+
+console.log("INSERT DATA:", data);
+console.log("INSERT ERROR:", insertError);
 
   loadFiles();
 }
-  async function handleUpload(
+async function handleUpload(
   event: React.ChangeEvent<HTMLInputElement>
 ) {
   const file = event.target.files?.[0];
@@ -115,7 +156,7 @@ console.log("AUTH ID =", user?.id);
               boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
             }}
           >
-            <div
+          <div
   onDragOver={(e) => {
     e.preventDefault();
     setDragging(true);
@@ -143,6 +184,7 @@ console.log("AUTH ID =", user?.id);
     background: dragging
       ? "#eff6ff"
       : "#f8fafc",
+    transition: "0.2s",
   }}
 >
   <label
@@ -204,21 +246,26 @@ console.log("AUTH ID =", user?.id);
             </div>
           )}
 
-          {files.map((file) => {
+{files.map((file) => {
   const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL +
     `/storage/v1/object/public/Ho%20so%20SV5T/${userId}/the-luc/${file.name}`;
 
   return (
     <FileItem
-      key={file.name}
-      file={file}
-      url={url}
-      onDelete={() => deleteFile(file.name)}
-    />
+  key={file.name}
+  file={{
+    ...file,
+    display_name:
+      displayNames[file.name] ||
+      file.name,
+  }}
+  url={url}
+  onDelete={() => deleteFile(file.name)}
+/>
   );
 })}
-     </div>
+        </div>
       </main>
     </div>
   );

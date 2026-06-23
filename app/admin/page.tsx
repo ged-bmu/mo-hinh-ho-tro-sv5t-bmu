@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+import Image from "next/image";
 
 export default function AdminPage() {
   const [profile, setProfile] = useState<any>(null);
@@ -9,9 +12,11 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [showSidebar, setShowSidebar] = useState(false);
   const totalStudents = students.length;
+  const [filterResult, setFilterResult] =
+  useState("all");
   const menuStyle = {
   display: "block",
-  padding: "12px 16px",
+  padding: "12px 12px",
   borderRadius: "10px",
   textDecoration: "none",
   color: "#1e293b",
@@ -19,15 +24,38 @@ export default function AdminPage() {
   background: "#f8fafc",
   fontWeight: 500,
 };
+  const keyword =
+  search.toLowerCase();
 
-const filteredStudents = students.filter((sv) => {
-  const keyword = search.toLowerCase();
+const filteredStudents =
+  students.filter((sv) => {
+    const matchSearch =
+      sv.ho_ten
+        ?.toLowerCase()
+        .includes(keyword) ||
+      sv.mssv
+        ?.toLowerCase()
+        .includes(keyword);
 
-  return (
-    sv.ho_ten?.toLowerCase().includes(keyword) ||
-    sv.mssv?.toLowerCase().includes(keyword)
-  );
-});
+    const isPassed =
+      sv["dao-duc"] &&
+      sv["hoc-tap"] &&
+      sv["the-luc"] &&
+      sv["tinh-nguyen"] &&
+      sv["hoi-nhap"];
+
+    const matchFilter =
+      filterResult === "all"
+        ? true
+        : filterResult === "passed"
+        ? isPassed
+        : !isPassed;
+
+    return (
+      matchSearch &&
+      matchFilter
+    );
+  });
 
   useEffect(() => {
     checkAdmin();
@@ -71,7 +99,8 @@ async function updateCriteria(
   id: string,
   field: string,
   value: boolean
-) {
+) 
+{
   await supabase
     .from("profiles")
     .update({
@@ -90,7 +119,110 @@ async function updateCriteria(
     )
   );
 }
+const exportExcel = async () => {
+  const workbook =
+    new ExcelJS.Workbook();
 
+  const worksheet =
+    workbook.addWorksheet(
+      "Danh sách SV5T"
+    );
+
+  worksheet.mergeCells(
+    "A1:D1"
+  );
+
+  worksheet.getCell(
+    "A1"
+  ).value =
+    "DANH SÁCH SINH VIÊN ĐẠT DANH HIỆU SINH VIÊN 5 TỐT CẤP TRƯỜNG";
+
+  worksheet.getCell(
+    "A1"
+  ).font = {
+    bold: true,
+    size: 16,
+  };
+
+  worksheet.getCell(
+    "A1"
+  ).alignment = {
+    horizontal: "center",
+  };
+
+  worksheet.addRow([]);
+
+  worksheet.addRow([
+    "STT",
+    "Họ tên",
+    "Lớp",
+    "MSSV",
+  ]);
+
+  const headerRow =
+    worksheet.getRow(3);
+
+  headerRow.font = {
+    bold: true,
+  };
+
+  headerRow.alignment = {
+    horizontal: "center",
+  };
+
+  filteredStudents.forEach(
+    (sv, index) => {
+      worksheet.addRow([
+        index + 1,
+        sv.ho_ten,
+        sv.lop,
+        sv.mssv,
+      ]);
+    }
+  );
+
+  worksheet.columns = [
+    {
+      width: 10,
+    },
+    {
+      width: 40,
+    },
+    {
+      width: 20,
+    },
+    {
+      width: 20,
+    },
+  ];
+
+  worksheet.eachRow((row) => {
+    row.eachCell((cell) => {
+      cell.border = {
+        top: {
+          style: "thin",
+        },
+        left: {
+          style: "thin",
+        },
+        bottom: {
+          style: "thin",
+        },
+        right: {
+          style: "thin",
+        },
+      };
+    });
+  });
+
+  const buffer =
+    await workbook.xlsx.writeBuffer();
+
+  saveAs(
+    new Blob([buffer]),
+    "DanhSachSV5T.xlsx"
+  );
+};
  return (
   <>
     <button
@@ -161,12 +293,17 @@ async function updateCriteria(
         >
           📋 Danh sách sinh viên
         </a>
-
       <a
   href="/admin/users"
   style={menuStyle}
 >
   👥 Quản lý tài khoản
+</a>
+<a
+  href="/admin/statistics"
+  style={menuStyle}
+>
+  📊 Thống kê
 </a>
 <a
   href="/doi-mat-khau"
@@ -206,10 +343,31 @@ async function updateCriteria(
     <div
   style={{
     textAlign: "center",
-    marginTop: "-40px",
+    marginTop: "-60px",
     marginBottom: "20px",
   }}
 >
+  <div
+  style={{
+    marginBottom: "20px",
+    paddingBottom: "15px",
+    borderBottom: "1px solid #e5e7eb",
+    display: "flex",
+    justifyContent: "center",
+  }}
+>
+    <Image
+      src="/logo-header.png"
+      alt="Logo"
+      width={220}
+      height={80}
+      style={{
+        marginTop: "15px",
+        width: "20%",
+        height: "auto",
+      }}
+    />
+  </div>
   <h1
     style={{
       marginBottom: "5px",
@@ -228,43 +386,91 @@ async function updateCriteria(
   >
     <b>TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT</b>
   </h2>
-
-  <p
-    style={{
-      marginTop: "15px",
-      color: "#2563eb",
-      fontWeight: 600,
-    }}
-  >
-    Xin chào Ban Chủ nhiệm 👋
-  </p>
 </div>
-
 <div
   style={{
-    display: "grid",
-    gridTemplateColumns:
-      "repeat(4,1fr)",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
     gap: "20px",
-    marginTop: "-20px",
     marginBottom: "30px",
   }}
 >
-    <input
-  placeholder="🔍 Tìm MSSV hoặc họ tên..."
-  value={search}
-  onChange={(e) =>
-    setSearch(e.target.value)
-  }
+<div
   style={{
-    width: "100%",
-    padding: "14px",
+    display: "flex",
+    width: "420px",
     marginBottom: "20px",
-    borderRadius: "12px",
-    border:
-      "1px solid #dbe2ea",
   }}
-/>
+>
+  <input
+    placeholder="🔍 Tìm MSSV hoặc họ tên..."
+    value={search}
+    onChange={(e) =>
+      setSearch(e.target.value)
+    }
+    style={{
+      flex: 1,
+      padding: "14px",
+      border:
+        "1px solid #dbe2ea",
+      borderRight: "none",
+      borderRadius:
+        "12px 0 0 12px",
+    }}
+  />
+
+  <select
+    value={filterResult}
+    onChange={(e) =>
+      setFilterResult(
+        e.target.value
+      )
+    }
+    style={{
+      padding: "14px",
+      border:
+        "1px solid #dbe2ea",
+      borderRadius:
+        "0 12px 12px 0",
+      background: "white",
+      cursor: "pointer",
+    }}
+  >
+    <option value="all">
+      Tất cả
+    </option>
+
+    <option value="passed">
+      Đạt
+    </option>
+
+    <option value="failed">
+      Chưa đạt
+    </option>
+  </select>
+</div>
+
+  <button
+    onClick={() =>
+  window.open(
+    `/api/export-all-student?filter=${filterResult}`,
+    "_blank"
+  )
+}
+    style={{
+      background: "#16a34a",
+      color: "white",
+      border: "none",
+      padding: "14px 20px",
+      borderRadius: "12px",
+      cursor: "pointer",
+      fontWeight: 600,
+      whiteSpace: "nowrap",
+    }}
+  >
+    🗂️ Xuất hồ sơ
+  </button>
 </div>
    <p
   style={{
@@ -284,8 +490,37 @@ async function updateCriteria(
       }}
     />
 
-    <h2>📋 Danh sách sinh viên</h2>
+    <div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "20px",
+  }}
+>
+  <h2
+    style={{
+      margin: 0,
+    }}
+  >
+    <b>Danh sách sinh viên</b>
+  </h2>
 
+  <button
+    onClick={exportExcel}
+    style={{
+      padding: "10px 16px",
+      borderRadius: "10px",
+      border: "none",
+      background: "#16a34a",
+      color: "white",
+      fontWeight: 600,
+      cursor: "pointer",
+    }}
+  >
+    Xuất Excel
+  </button>
+</div>
     <div
   style={{
     background: "white",
@@ -385,22 +620,31 @@ async function updateCriteria(
     textAlign: "center",
   }}
 >
-  <input
-  type="checkbox"
-  checked={sv["dao-duc"] || false}
-  onChange={(e) =>
-    updateCriteria(
-      sv.id,
-      "dao-duc",
-      e.target.checked
-    )
-  }
-  style={{
-  width: "16px",
-  height: "16px",
-  cursor: "pointer",
-}}
-/>
+  {sv["dao-duc"] ? (
+    <span
+      style={{
+        background: "#dcfce7",
+        color: "#166534",
+        padding: "4px 10px",
+        borderRadius: "999px",
+        fontWeight: 600,
+      }}
+    >
+      Đạt
+    </span>
+  ) : (
+    <span
+      style={{
+        background: "#fee2e2",
+        color: "#991b1b",
+        padding: "4px 10px",
+        borderRadius: "999px",
+        fontWeight: 600,
+      }}
+    >
+      Chưa đạt
+    </span>
+  )}
 </td>
 
 <td
@@ -408,22 +652,31 @@ async function updateCriteria(
     textAlign: "center",
   }}
 >
-  <input
-  type="checkbox"
-  checked={sv["hoc-tap"] || false}
-  onChange={(e) =>
-    updateCriteria(
-      sv.id,
-      "hoc-tap",
-      e.target.checked
-    )
-  }
-  style={{
-  width: "16px",
-  height: "16px",
-  cursor: "pointer",
-}}
-/>
+  {sv["hoc-tap"] ? (
+    <span
+      style={{
+        background: "#dcfce7",
+        color: "#166534",
+        padding: "4px 10px",
+        borderRadius: "999px",
+        fontWeight: 600,
+      }}
+    >
+      Đạt
+    </span>
+  ) : (
+    <span
+      style={{
+        background: "#fee2e2",
+        color: "#991b1b",
+        padding: "4px 10px",
+        borderRadius: "999px",
+        fontWeight: 600,
+      }}
+    >
+      Chưa đạt
+    </span>
+  )}
 </td>
 
 <td
@@ -431,22 +684,31 @@ async function updateCriteria(
     textAlign: "center",
   }}
 >
-  <input
-  type="checkbox"
-  checked={sv["the-luc"] || false}
-  onChange={(e) =>
-    updateCriteria(
-      sv.id,
-      "the-luc",
-      e.target.checked
-    )
-  }
-  style={{
-  width: "16px",
-  height: "16px",
-  cursor: "pointer",
-}}
-/>
+  {sv["the-luc"] ? (
+    <span
+      style={{
+        background: "#dcfce7",
+        color: "#166534",
+        padding: "4px 10px",
+        borderRadius: "999px",
+        fontWeight: 600,
+      }}
+    >
+      Đạt
+    </span>
+  ) : (
+    <span
+      style={{
+        background: "#fee2e2",
+        color: "#991b1b",
+        padding: "4px 10px",
+        borderRadius: "999px",
+        fontWeight: 600,
+      }}
+    >
+      Chưa đạt
+    </span>
+  )}
 </td>
 
 <td
@@ -454,22 +716,31 @@ async function updateCriteria(
     textAlign: "center",
   }}
 >
-  <input
-  type="checkbox"
-  checked={sv["tinh-nguyen"] || false}
-  onChange={(e) =>
-    updateCriteria(
-      sv.id,
-      "tinh-nguyen",
-      e.target.checked
-    )
-  }
-  style={{
-  width: "16px",
-  height: "16px",
-  cursor: "pointer",
-}}
-/>
+  {sv["tinh-nguyen"] ? (
+    <span
+      style={{
+        background: "#dcfce7",
+        color: "#166534",
+        padding: "4px 10px",
+        borderRadius: "999px",
+        fontWeight: 600,
+      }}
+    >
+      Đạt
+    </span>
+  ) : (
+    <span
+      style={{
+        background: "#fee2e2",
+        color: "#991b1b",
+        padding: "4px 10px",
+        borderRadius: "999px",
+        fontWeight: 600,
+      }}
+    >
+      Chưa đạt
+    </span>
+  )}
 </td>
 
 <td
@@ -477,22 +748,31 @@ async function updateCriteria(
     textAlign: "center",
   }}
 >
- <input
-  type="checkbox"
-  checked={sv["hoi-nhap"] || false}
-  onChange={(e) =>
-    updateCriteria(
-      sv.id,
-      "hoi-nhap",
-      e.target.checked
-    )
-  }
-  style={{
-  width: "16px",
-  height: "16px",
-  cursor: "pointer",
-}}
-/>
+  {sv["hoi-nhap"] ? (
+    <span
+      style={{
+        background: "#dcfce7",
+        color: "#166534",
+        padding: "4px 10px",
+        borderRadius: "999px",
+        fontWeight: 600,
+      }}
+    >
+      Đạt
+    </span>
+  ) : (
+    <span
+      style={{
+        background: "#fee2e2",
+        color: "#991b1b",
+        padding: "4px 10px",
+        borderRadius: "999px",
+        fontWeight: 600,
+      }}
+    >
+      Chưa đạt
+    </span>
+  )}
 </td>
 
 <td

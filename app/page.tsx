@@ -181,7 +181,7 @@ minHeight: "100vh",
   </h2>
 <div
   style={{
-    marginTop: "10px",
+    marginTop: "0px",
     fontWeight: "600",
   }}
 >
@@ -206,6 +206,18 @@ minHeight: "100vh",
   >
     📑 Gửi báo cáo
   </a>
+  
+  <button
+  onClick={() => {
+    window.open(
+      `/api/export-student/${profile.id}`,
+      "_blank"
+    );
+  }}
+  className="bg-green-600 text-white px-5 py-3 rounded-xl font-semibold"
+>
+  🗂️ Xuất hồ sơ
+</button>
 </div>
 </div>
       <div

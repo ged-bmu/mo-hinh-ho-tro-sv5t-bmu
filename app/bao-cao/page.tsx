@@ -8,7 +8,10 @@ import Sidebar from "../components/Sidebar";
 export default function BaoCaoPage() {
 const [profile, setProfile] = useState<any>(null);
 const [loading, setLoading] = useState(true);
-
+const [displayNames, setDisplayNames] =
+  useState<Record<string, string>>(
+    {}
+  );
 const [files, setFiles] = useState<any[]>([]);
 const [userId, setUserId] = useState("");
 const [dragging, setDragging] = useState(false);
@@ -41,8 +44,26 @@ console.log("ERROR =", error);
   if (fileData) {
     setFiles(fileData);
   }
-  if (data) {
-  setProfile(data);
+  const { data: uploadedFiles } =
+  await supabase
+    .from("uploaded_files")
+    .select(
+      "storage_name, display_name"
+    )
+    .eq("folder", "bao-cao");
+
+if (uploadedFiles) {
+  const map: Record<
+    string,
+    string
+  > = {};
+
+  uploadedFiles.forEach((f) => {
+    map[f.storage_name] =
+      f.display_name;
+  });
+
+  setDisplayNames(map);
 }
 
   setLoading(false);
@@ -60,12 +81,12 @@ async function uploadFile(file: File) {
   if (!user) return;
 
   const fileName =
-    Date.now() +
-    "-" +
-    file.name
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replaceAll(" ", "_");
+  Date.now() +
+  "-" +
+  file.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replaceAll(" ", "_");
 
   const { error } = await supabase.storage
     .from("Ho so SV5T")
@@ -76,6 +97,14 @@ async function uploadFile(file: File) {
         upsert: true,
       }
     );
+    await supabase
+  .from("uploaded_files")
+  .insert({
+    user_id: user.id,
+    folder: "bao-cao",
+    storage_name: fileName,
+    display_name: file.name,
+  });
 
   if (error) {
     alert(error.message);
@@ -295,12 +324,16 @@ minHeight: "100vh",
     file.name;
 
   return (
-    <FileItem
-      key={file.name}
-      file={file}
-      url={url}
-      onDelete={() => deleteFile(file.name)}
-    />
+   <FileItem
+  key={file.name}
+  file={{
+    ...file,
+    display_name:
+      displayNames[file.name],
+  }}
+  url={url}
+  onDelete={() => deleteFile(file.name)}
+/>
   );
 })}
 

@@ -7,7 +7,6 @@ import { supabase } from "../../../../lib/supabase";
 export default function StudentsDetailPage() {
   const params = useParams();
   const id = params.id as string;
-
   const [profile, setProfile] = useState<any>(null);
   const [nhanXet, setNhanXet] = useState("");
   const [daoDucFiles, setDaoDucFiles] = useState<any[]>([]);
@@ -18,6 +17,15 @@ export default function StudentsDetailPage() {
   const [uuTienFiles, setUuTienFiles] = useState<any[]>([]);
   const [baoCaoFiles, setBaoCaoFiles] = useState<any[]>([]);
   const [trangThai, setTrangThai] = useState("");
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState({
+  top: 0,
+  left: 0,
+});
+  const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
+  const [displayNames, setDisplayNames] = useState<
+  Record<string, string>
+>({});
 
   useEffect(() => {
     if (!id) return;
@@ -42,7 +50,24 @@ export default function StudentsDetailPage() {
     setTrangThai(data.trang_thai || "cho-duyet");
     setNhanXet(data.nhan_xet || "");
   }
+async function updateCriteria(
+  field: string,
+  value: boolean
+) {
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      [field]: value,
+    })
+    .eq("id", id);
 
+  if (!error) {
+    setProfile({
+      ...profile,
+      [field]: value,
+    });
+  }
+}
   async function loadFiles() {
     const folders = [
       {
@@ -92,6 +117,26 @@ export default function StudentsDetailPage() {
           )
         )
       );
+      const { data: uploadedFiles } =
+  await supabase
+    .from("uploaded_files")
+    .select(
+      "storage_name, display_name"
+    );
+
+if (uploadedFiles) {
+  const map: Record<
+    string,
+    string
+  > = {};
+
+  uploadedFiles.forEach((f) => {
+    map[f.storage_name] =
+      f.display_name;
+  });
+
+  setDisplayNames(map);
+}
     }
   }
 
@@ -128,73 +173,128 @@ const baoCaoUrl = baoCao
     `/storage/v1/object/public/Ho%20so%20SV5T/${id}/bao-cao/${baoCao.name}`
   : "";
       return (
-        <div
-          key={file.name}
-          style={{
-            background: "#f8fafc",
+  <div
+    key={file.name}
+    onClick={() => setOpenMenu(null)}
+    style={{
+      background: "#f8fafc",
             border: "1px solid #e2e8f0",
             borderRadius: "10px",
             padding: "10px",
             marginBottom: "10px",
           }}
         >
-          <div
-            style={{
-              fontSize: "14px",
-              marginBottom: "10px",
-              wordBreak: "break-word",
-            }}
-          >
-            📄{" "}
-            {file.name.replace(
-              /^\d+-/,
-              ""
-            )}
-          </div>
-
-          <div
+<div
   style={{
     display: "flex",
-    gap: "80px",
-    alignItems: "flex-start",
-    marginTop: "-30px",
+    justifyContent: "space-between",
+    alignItems: "center",
   }}
 >
-            <a
-              href={url}
-              target="_blank"
-              style={{
-                background: "#2563eb",
-                color: "white",
-                padding: "6px 10px",
-                borderRadius: "6px",
-                textDecoration: "none",
-                fontSize: "13px",
-              }}
-            >
-              👁 Xem
-            </a>
+  <div
+  onClick={() => window.open(url, "_blank")}
+  style={{
+    fontSize: "14px",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    maxWidth: "230px",
+    cursor: "pointer",
+    color: "#000000",
+  }}
+>
+ {displayNames[file.name] || file.name.replace(/^\d+-/, "")}
+</div>
+  <div
+    style={{
+      position: "relative",
+    }}
+  >
+   <span
+  onClick={(e) => {
+  e.stopPropagation();
 
-            <a
-              href={url}
-              download
-              style={{
-                background: "#16a34a",
-                color: "white",
-                padding: "6px 10px",
-                borderRadius: "6px",
-                textDecoration: "none",
-                fontSize: "13px",
-              }}
-            >
-              ⬇ Tải
-            </a>
-          </div>
-        </div>
+  setOpenMenu(
+    openMenu === `${folder}-${file.name}`
+      ? null
+      : `${folder}-${file.name}`
+  );
+}}
+      style={{
+        cursor: "pointer",
+        fontSize: "20px",
+        fontWeight: "bold",
+      }}
+    >
+      ⋮
+    </span>
+
+{openMenu === `${folder}-${file.name}` && (
+  <div
+  style={{
+  position: "absolute",
+  bottom: "28px",
+  right: "0",
+  background: "white",
+  border: "1px solid #e2e8f0",
+  borderRadius: "10px",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+  zIndex: 9999,
+
+  width: "200px",
+}}
+  >
+    <div
+      style={{
+        padding: "12px",
+        fontSize: "13px",
+        background: "#f8fafc",
+        borderBottom: "1px solid #e5e7eb",
+        overflowWrap: "break-word",
+        whiteSpace: "normal",
+      }}
+    >
+      📄 {displayNames[file.name] || file.name.replace(/^\d+-/, "")}
+    </div>
+
+<div
+  onClick={() => setSelectedPdf(url)}
+  style={{
+    display: "block",
+    padding: "8px",
+    color: "#000",
+    fontWeight: "600",
+    fontSize: "12px",
+    background: "white",
+    cursor: "pointer",
+  }}
+>
+  👁 Xem
+</div>
+  </div>
+)}
+  </div>
+</div>
+
+</div>
       );
     });
   }
+async function exportStudentFolder() {
+  const link =
+    document.createElement("a");
 
+  link.href =
+    `/api/export-student/${id}`;
+
+  link.download = "";
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  link.remove();
+}
   const baoCao =
   baoCaoFiles.length > 0
     ? baoCaoFiles[0]
@@ -215,6 +315,7 @@ const baoCaoUrl = baoCao
       </div>
     );
   }
+  
 return (
   <div
     style={{
@@ -247,7 +348,7 @@ return (
           display: "inline-block",
           marginBottom: "25px",
           padding: "10px 16px",
-          background: "#ffffff",
+          background: "#f6f6f6",
           color: "#0f172a",
           textDecoration: "none",
           borderRadius: "12px",
@@ -255,7 +356,7 @@ return (
           fontWeight: "600",
         }}
       >
-        ← Trang chính
+        ← Trang chủ
       </a>
 
       <h2
@@ -264,7 +365,7 @@ return (
     marginBottom: "20px",
   }}
 >
-        👤 Thông tin cá nhân
+        👤 Thông tin sinh viên
       </h2>
 
       <div
@@ -336,6 +437,23 @@ return (
           <div>
             <b>Email:</b> {profile.email}
           </div>
+
+        <button
+    onClick={exportStudentFolder}
+    style={{
+      background: "#068804",
+      color: "white",
+      border: "none",
+      padding: "8px 12px",
+      marginTop: "40px",
+      borderRadius: "8px",
+      cursor: "pointer",
+      fontWeight: "600",
+    }}
+  >
+     🗂️ Xuất hồ sơ
+     
+  </button>
         </div>
 
         {/* Cột 3 */}
@@ -366,7 +484,8 @@ return (
   nhan_xet: nhanXet,
   trang_thai: trangThai,
   ngay_nhan_xet: new Date().toISOString(),
-})
+}
+)
         .eq("id", id);
 
       if (error) {
@@ -443,14 +562,14 @@ return (
       </div>
     </div>
 
-    <div
-      style={{
-        background: "white",
-        borderRadius: "16px",
-        overflow: "hidden",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
-      }}
-    >
+   <div
+  style={{
+    background: "white",
+    borderRadius: "16px",
+    overflow: "visible",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+  }}
+>
         <table
           style={{
             width: "100%",
@@ -465,55 +584,167 @@ return (
               }}
             >
               <th
-                style={{
-                  padding: "15px",
-                  borderRight:
-                    "1px solid #e5e7eb",
-                }}
-              >
-                ❤️ Đạo đức tốt
-              </th>
+  style={{
+    padding: "15px",
+    borderRight: "1px solid #e5e7eb",
+  }}
+>
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+    }}
+  >
+    <span>❤️ Đạo đức tốt</span>
+
+    <input
+  type="checkbox"
+  checked={profile?.["dao-duc"] || false}
+  onChange={(e) =>
+    updateCriteria(
+      "dao-duc",
+      e.target.checked
+    )
+  }
+  style={{
+    width: "18px",
+    height: "18px",
+    cursor: "pointer",
+  }}
+/>
+  </div>
+</th>
+              <th
+  style={{
+    padding: "15px",
+    borderRight: "1px solid #e5e7eb",
+  }}
+>
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+    }}
+  >
+    <span>📚 Học tập tốt</span>
+
+    <input
+      type="checkbox"
+      checked={profile?.["hoc-tap"] || false}
+      onChange={(e) =>
+        updateCriteria(
+          "hoc-tap",
+          e.target.checked
+        )
+      }
+      style={{
+        width: "18px",
+        height: "18px",
+        cursor: "pointer",
+      }}
+    />
+  </div>
+</th>
+
+             <th
+  style={{
+    padding: "15px",
+    borderRight: "1px solid #e5e7eb",
+  }}
+>
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+    }}
+  >
+    <span>💪 Thể lực tốt</span>
+
+    <input
+      type="checkbox"
+      checked={profile?.["the-luc"] || false}
+      onChange={(e) =>
+        updateCriteria(
+          "the-luc",
+          e.target.checked
+        )
+      }
+      style={{
+        width: "18px",
+        height: "18px",
+        cursor: "pointer",
+      }}
+    />
+  </div>
+</th>
 
               <th
-                style={{
-                  padding: "15px",
-                  borderRight:
-                    "1px solid #e5e7eb",
-                }}
-              >
-                📚 Học tập tốt
-              </th>
+  style={{
+    padding: "15px",
+    borderRight: "1px solid #e5e7eb",
+  }}
+>
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+    }}
+  >
+    <span>🤝 Tình nguyện tốt</span>
+
+    <input
+      type="checkbox"
+      checked={profile?.["tinh-nguyen"] || false}
+      onChange={(e) =>
+        updateCriteria(
+          "tinh-nguyen",
+          e.target.checked
+        )
+      }
+      style={{
+        width: "18px",
+        height: "18px",
+        cursor: "pointer",
+      }}
+    />
+  </div>
+</th>
 
               <th
-                style={{
-                  padding: "15px",
-                  borderRight:
-                    "1px solid #e5e7eb",
-                }}
-              >
-                💪 Thể lực tốt
-              </th>
+  style={{
+    padding: "15px",
+  }}
+>
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+    }}
+  >
+    <span>🌍 Hội nhập tốt</span>
 
-              <th
-                style={{
-                  padding: "15px",
-                  borderRight:
-                    "1px solid #e5e7eb",
-                }}
-              >
-                🤝 Tình nguyện tốt
-              </th>
-
-              <th
-                style={{
-                  padding: "15px",
-                  borderRight:
-                    "1px solid #e5e7eb",
-                }}
-              >
-                🌍 Hội nhập tốt
-              </th>
-
+    <input
+      type="checkbox"
+      checked={profile?.["hoi-nhap"] || false}
+      onChange={(e) =>
+        updateCriteria(
+          "hoi-nhap",
+          e.target.checked
+        )
+      }
+      style={{
+        width: "18px",
+        height: "18px",
+        cursor: "pointer",
+      }}
+    />
+  </div>
+</th>
               <th
                 style={{
                   padding: "15px",

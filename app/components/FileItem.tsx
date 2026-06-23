@@ -27,7 +27,7 @@ export default function FileItem({
         }}
       >
         <span>
-          📄 {file.name.replace(/^\d+-/, "")}
+          📄 {file.display_name || file.name}
         </span>
 
        <div
