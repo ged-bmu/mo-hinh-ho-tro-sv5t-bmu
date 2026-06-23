@@ -5,7 +5,7 @@ import { supabase } from "../../lib/supabase";
 import Sidebar from "../components/Sidebar";
 import FileItem from "../components/FileItem";
 
-export default function TheLucPage() {
+export default function TheLucpPage() {
   const [files, setFiles] = useState<any[]>([]);
   const [userId, setUserId] = useState("");
   const [dragging, setDragging] = useState(false);
@@ -64,13 +64,13 @@ async function uploadFile(file: File) {
 
   if (!user) return;
 
+const safeName = file.name
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/[^a-zA-Z0-9._-]/g, "_");
+
 const fileName =
-  Date.now() +
-  "-" +
-  file.name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replaceAll(" ", "_");
+  `${Date.now()}-${safeName}`;
 
   const { error } = await supabase.storage
   .from("Ho so SV5T")
@@ -124,6 +124,23 @@ console.log("AUTH ID =", user?.id);
 
     loadFiles();
   }
+  async function renameFile(file: any) {
+  const newName = prompt(
+    "Nhập tên mới:",
+    file.display_name
+  );
+
+  if (!newName) return;
+
+  await supabase
+    .from("uploaded_files")
+    .update({
+      display_name: newName,
+    })
+    .eq("storage_name", file.storage_name || file.name)
+
+  loadFiles();
+}
 
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
@@ -253,16 +270,18 @@ console.log("AUTH ID =", user?.id);
 
   return (
     <FileItem
-  key={file.name}
-  file={{
-    ...file,
-    display_name:
-      displayNames[file.name] ||
-      file.name,
-  }}
-  url={url}
-  onDelete={() => deleteFile(file.name)}
-/>
+      key={file.name}
+      file={{
+        ...file,
+        storage_name: file.name,
+        display_name:
+          displayNames[file.name] ||
+          file.name,
+      }}
+      url={url}
+      onDelete={() => deleteFile(file.name)}
+      onRename={renameFile}
+    />
   );
 })}
         </div>

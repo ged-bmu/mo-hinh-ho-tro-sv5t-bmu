@@ -4,7 +4,13 @@ export default function FileItem({
   file,
   url,
   onDelete,
-}: any) {
+  onRename,
+}: {
+  file: any;
+  url: string;
+  onDelete: () => void;
+  onRename: (file: any) => void;
+}) {
   return (
     <div
       style={{
@@ -50,19 +56,19 @@ export default function FileItem({
     👁 Xem
   </a>
 
-  <a
-    href={url}
-    download
-    style={{
-      background: "#10b981",
-      color: "white",
-      textDecoration: "none",
-      padding: "6px 12px",
-      borderRadius: "8px",
-    }}
-  >
-    📥 Tải
-  </a>
+  <button
+  onClick={() => onRename(file)}
+  style={{
+    background: "#2cfa25ed",
+    color: "white",
+    border: "none",
+    padding: "6px 12px",
+    borderRadius: "8px",
+    cursor: "pointer",
+  }}
+>
+  ✍️ Đổi tên
+</button>
 </div>
       </div>
 

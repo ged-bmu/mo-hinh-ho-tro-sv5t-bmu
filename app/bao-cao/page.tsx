@@ -80,13 +80,13 @@ async function uploadFile(file: File) {
 
   if (!user) return;
 
-  const fileName =
-  Date.now() +
-  "-" +
-  file.name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replaceAll(" ", "_");
+ const safeName = file.name
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/[^a-zA-Z0-9._-]/g, "_");
+
+const fileName =
+  `${Date.now()}-${safeName}`;
 
   const { error } = await supabase.storage
     .from("Ho so SV5T")
@@ -143,7 +143,25 @@ if (error) {
 
 loadData();
 }
+async function renameFile(file: any) {
+  const newName = prompt(
+    "Nhập tên mới:",
+    file.display_name
+  );
+    if (!newName) return;
 
+  await supabase
+    .from("uploaded_files")
+    .update({
+      display_name: newName,
+    })
+    .eq(
+      "storage_name",
+      file.storage_name || file.name
+    );
+
+  loadData();
+}
 return (
 <div
 style={{
@@ -324,23 +342,25 @@ minHeight: "100vh",
     file.name;
 
   return (
-   <FileItem
-  key={file.name}
-  file={{
-    ...file,
-    display_name:
-      displayNames[file.name],
-  }}
-  url={url}
-  onDelete={() => deleteFile(file.name)}
-/>
+    <FileItem
+      key={file.name}
+      file={{
+        ...file,
+        storage_name: file.name,
+        display_name:
+          displayNames[file.name] ||
+          file.name,
+      }}
+      url={url}
+      onDelete={() => deleteFile(file.name)}
+      onRename={renameFile}
+    />
   );
 })}
 
+      </div>
+    )}       
+  </main>
 </div>
-)}
-</main>
-</div>
-
 );
 }
