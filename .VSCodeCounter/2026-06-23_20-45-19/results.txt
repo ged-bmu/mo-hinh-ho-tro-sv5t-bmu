@@ -1,0 +1,107 @@
+Date : 2026-06-23 20:45:19
+Directory : c:\Users\DELL\sv5t-bmu
+Total : 42 files,  14333 codes, 14 comments, 757 blanks, all 15104 lines
+
+Languages
++--------------------+------------+------------+------------+------------+------------+
+| language           | files      | code       | comment    | blank      | total      |
++--------------------+------------+------------+------------+------------+------------+
+| JSON               |          2 |      7,897 |          0 |          2 |      7,899 |
+| TypeScript JSX     |         21 |      5,894 |          5 |        656 |      6,555 |
+| TypeScript         |          7 |        431 |          5 |         71 |        507 |
+| JSON with Comments |          1 |         34 |          0 |          1 |         35 |
+| Markdown           |          3 |         30 |          2 |         17 |         49 |
+| PostCSS            |          1 |         22 |          0 |          5 |         27 |
+| JavaScript         |          2 |         20 |          2 |          5 |         27 |
+| XML                |          5 |          5 |          0 |          0 |          5 |
++--------------------+------------+------------+------------+------------+------------+
+
+Directories
++-------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                        | files      | code       | comment    | blank      | total      |
++-------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                           |         42 |     14,333 |         14 |        757 |     15,104 |
+| . (Files)                                                   |          9 |      7,985 |          5 |         28 |      8,018 |
+| app                                                         |         27 |      6,336 |          9 |        727 |      7,072 |
+| app (Files)                                                 |          3 |        391 |          0 |         42 |        433 |
+| app\admin                                                   |          7 |      2,977 |          5 |        255 |      3,237 |
+| app\admin (Files)                                           |          1 |        838 |          0 |         65 |        903 |
+| app\admin\create-user                                       |          1 |        172 |          0 |         12 |        184 |
+| app\admin\statistics                                        |          1 |        574 |          2 |         54 |        630 |
+| app\admin\students                                          |          2 |        849 |          3 |         69 |        921 |
+| app\admin\students (Files)                                  |          1 |         66 |          0 |          8 |         74 |
+| app\admin\students\[id]                                     |          1 |        783 |          3 |         61 |        847 |
+| app\admin\users                                             |          2 |        544 |          0 |         55 |        599 |
+| app\admin\users (Files)                                     |          1 |        418 |          0 |         40 |        458 |
+| app\admin\users\edit                                        |          1 |        126 |          0 |         15 |        141 |
+| app\admin\users\edit\[id]                                   |          1 |        126 |          0 |         15 |        141 |
+| app\api                                                     |          5 |        420 |          4 |         66 |        490 |
+| app\api\create-user                                         |          1 |         56 |          0 |          8 |         64 |
+| app\api\delete-user                                         |          1 |         46 |          0 |          6 |         52 |
+| app\api\export-all-student                                  |          1 |        162 |          3 |         24 |        189 |
+| app\api\export-student                                      |          1 |        124 |          1 |         23 |        148 |
+| app\api\export-student\[id]                                 |          1 |        124 |          1 |         23 |        148 |
+| app\api\reset-password                                      |          1 |         32 |          0 |          5 |         37 |
+| app\bao-cao                                                 |          1 |        323 |          0 |         43 |        366 |
+| app\components                                              |          2 |        284 |          0 |         25 |        309 |
+| app\dao-duc                                                 |          1 |        251 |          0 |         40 |        291 |
+| app\doi-mat-khau                                            |          1 |        136 |          0 |         23 |        159 |
+| app\hoc-tap                                                 |          1 |        251 |          0 |         40 |        291 |
+| app\hoi-nhap                                                |          1 |        251 |          0 |         40 |        291 |
+| app\login                                                   |          1 |        141 |          0 |         14 |        155 |
+| app\register                                                |          1 |        158 |          0 |         19 |        177 |
+| app\the-luc                                                 |          1 |        251 |          0 |         40 |        291 |
+| app\tinh-nguyen                                             |          1 |        251 |          0 |         40 |        291 |
+| app\uu-tien                                                 |          1 |        251 |          0 |         40 |        291 |
+| lib                                                         |          1 |          7 |          0 |          2 |          9 |
+| public                                                      |          5 |          5 |          0 |          0 |          5 |
++-------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| filename                                                    | language           | code       | comment    | blank      | total      |
++-------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| c:\Users\DELL\sv5t-bmu\AGENTS.md                            | Markdown           |          2 |          2 |          2 |          6 |
+| c:\Users\DELL\sv5t-bmu\CLAUDE.md                            | Markdown           |          1 |          0 |          1 |          2 |
+| c:\Users\DELL\sv5t-bmu\README.md                            | Markdown           |         27 |          0 |         14 |         41 |
+| c:\Users\DELL\sv5t-bmu\app\admin\create-user\page.tsx       | TypeScript JSX     |        172 |          0 |         12 |        184 |
+| c:\Users\DELL\sv5t-bmu\app\admin\page.tsx                   | TypeScript JSX     |        838 |          0 |         65 |        903 |
+| c:\Users\DELL\sv5t-bmu\app\admin\statistics\page.tsx        | TypeScript JSX     |        574 |          2 |         54 |        630 |
+| c:\Users\DELL\sv5t-bmu\app\admin\students\[id]\page.tsx     | TypeScript JSX     |        783 |          3 |         61 |        847 |
+| c:\Users\DELL\sv5t-bmu\app\admin\students\page.tsx          | TypeScript JSX     |         66 |          0 |          8 |         74 |
+| c:\Users\DELL\sv5t-bmu\app\admin\users\edit\[id]\page.tsx   | TypeScript JSX     |        126 |          0 |         15 |        141 |
+| c:\Users\DELL\sv5t-bmu\app\admin\users\page.tsx             | TypeScript JSX     |        418 |          0 |         40 |        458 |
+| c:\Users\DELL\sv5t-bmu\app\api\create-user\route.ts         | TypeScript         |         56 |          0 |          8 |         64 |
+| c:\Users\DELL\sv5t-bmu\app\api\delete-user\route.ts         | TypeScript         |         46 |          0 |          6 |         52 |
+| c:\Users\DELL\sv5t-bmu\app\api\export-all-student\route.ts  | TypeScript         |        162 |          3 |         24 |        189 |
+| c:\Users\DELL\sv5t-bmu\app\api\export-student\[id]\route.ts | TypeScript         |        124 |          1 |         23 |        148 |
+| c:\Users\DELL\sv5t-bmu\app\api\reset-password\route.ts      | TypeScript         |         32 |          0 |          5 |         37 |
+| c:\Users\DELL\sv5t-bmu\app\bao-cao\page.tsx                 | TypeScript JSX     |        323 |          0 |         43 |        366 |
+| c:\Users\DELL\sv5t-bmu\app\components\FileItem.tsx          | TypeScript JSX     |         86 |          0 |          4 |         90 |
+| c:\Users\DELL\sv5t-bmu\app\components\Sidebar.tsx           | TypeScript JSX     |        198 |          0 |         21 |        219 |
+| c:\Users\DELL\sv5t-bmu\app\dao-duc\page.tsx                 | TypeScript JSX     |        251 |          0 |         40 |        291 |
+| c:\Users\DELL\sv5t-bmu\app\doi-mat-khau\page.tsx            | TypeScript JSX     |        136 |          0 |         23 |        159 |
+| c:\Users\DELL\sv5t-bmu\app\globals.css                      | PostCSS            |         22 |          0 |          5 |         27 |
+| c:\Users\DELL\sv5t-bmu\app\hoc-tap\page.tsx                 | TypeScript JSX     |        251 |          0 |         40 |        291 |
+| c:\Users\DELL\sv5t-bmu\app\hoi-nhap\page.tsx                | TypeScript JSX     |        251 |          0 |         40 |        291 |
+| c:\Users\DELL\sv5t-bmu\app\layout.tsx                       | TypeScript JSX     |         29 |          0 |          5 |         34 |
+| c:\Users\DELL\sv5t-bmu\app\login\page.tsx                   | TypeScript JSX     |        141 |          0 |         14 |        155 |
+| c:\Users\DELL\sv5t-bmu\app\page.tsx                         | TypeScript JSX     |        340 |          0 |         32 |        372 |
+| c:\Users\DELL\sv5t-bmu\app\register\page.tsx                | TypeScript JSX     |        158 |          0 |         19 |        177 |
+| c:\Users\DELL\sv5t-bmu\app\the-luc\page.tsx                 | TypeScript JSX     |        251 |          0 |         40 |        291 |
+| c:\Users\DELL\sv5t-bmu\app\tinh-nguyen\page.tsx             | TypeScript JSX     |        251 |          0 |         40 |        291 |
+| c:\Users\DELL\sv5t-bmu\app\uu-tien\page.tsx                 | TypeScript JSX     |        251 |          0 |         40 |        291 |
+| c:\Users\DELL\sv5t-bmu\eslint.config.mjs                    | JavaScript         |         14 |          2 |          3 |         19 |
+| c:\Users\DELL\sv5t-bmu\lib\supabase.ts                      | TypeScript         |          7 |          0 |          2 |          9 |
+| c:\Users\DELL\sv5t-bmu\next.config.ts                       | TypeScript         |          4 |          1 |          3 |          8 |
+| c:\Users\DELL\sv5t-bmu\package-lock.json                    | JSON               |      7,865 |          0 |          1 |      7,866 |
+| c:\Users\DELL\sv5t-bmu\package.json                         | JSON               |         32 |          0 |          1 |         33 |
+| c:\Users\DELL\sv5t-bmu\postcss.config.mjs                   | JavaScript         |          6 |          0 |          2 |          8 |
+| c:\Users\DELL\sv5t-bmu\public\file.svg                      | XML                |          1 |          0 |          0 |          1 |
+| c:\Users\DELL\sv5t-bmu\public\globe.svg                     | XML                |          1 |          0 |          0 |          1 |
+| c:\Users\DELL\sv5t-bmu\public\next.svg                      | XML                |          1 |          0 |          0 |          1 |
+| c:\Users\DELL\sv5t-bmu\public\vercel.svg                    | XML                |          1 |          0 |          0 |          1 |
+| c:\Users\DELL\sv5t-bmu\public\window.svg                    | XML                |          1 |          0 |          0 |          1 |
+| c:\Users\DELL\sv5t-bmu\tsconfig.json                        | JSON with Comments |         34 |          0 |          1 |         35 |
+| Total                                                       |                    |     14,333 |         14 |        757 |     15,104 |
++-------------------------------------------------------------+--------------------+------------+------------+------------+------------+

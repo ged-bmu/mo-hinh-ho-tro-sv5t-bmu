@@ -1,0 +1,44 @@
+"filename", "language", "XML", "JSON with Comments", "Markdown", "JSON", "TypeScript", "TypeScript JSX", "JavaScript", "PostCSS", "comment", "blank", "total"
+"c:\Users\DELL\sv5t-bmu\AGENTS.md", "Markdown", 0, 0, 2, 0, 0, 0, 0, 0, 2, 2, 6
+"c:\Users\DELL\sv5t-bmu\CLAUDE.md", "Markdown", 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 2
+"c:\Users\DELL\sv5t-bmu\README.md", "Markdown", 0, 0, 27, 0, 0, 0, 0, 0, 0, 14, 41
+"c:\Users\DELL\sv5t-bmu\app\admin\create-user\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 172, 0, 0, 0, 12, 184
+"c:\Users\DELL\sv5t-bmu\app\admin\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 838, 0, 0, 0, 65, 903
+"c:\Users\DELL\sv5t-bmu\app\admin\statistics\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 574, 0, 0, 2, 54, 630
+"c:\Users\DELL\sv5t-bmu\app\admin\students\[id]\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 783, 0, 0, 3, 61, 847
+"c:\Users\DELL\sv5t-bmu\app\admin\students\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 66, 0, 0, 0, 8, 74
+"c:\Users\DELL\sv5t-bmu\app\admin\users\edit\[id]\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 126, 0, 0, 0, 15, 141
+"c:\Users\DELL\sv5t-bmu\app\admin\users\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 418, 0, 0, 0, 40, 458
+"c:\Users\DELL\sv5t-bmu\app\api\create-user\route.ts", "TypeScript", 0, 0, 0, 0, 56, 0, 0, 0, 0, 8, 64
+"c:\Users\DELL\sv5t-bmu\app\api\delete-user\route.ts", "TypeScript", 0, 0, 0, 0, 46, 0, 0, 0, 0, 6, 52
+"c:\Users\DELL\sv5t-bmu\app\api\export-all-student\route.ts", "TypeScript", 0, 0, 0, 0, 162, 0, 0, 0, 3, 24, 189
+"c:\Users\DELL\sv5t-bmu\app\api\export-student\[id]\route.ts", "TypeScript", 0, 0, 0, 0, 124, 0, 0, 0, 1, 23, 148
+"c:\Users\DELL\sv5t-bmu\app\api\reset-password\route.ts", "TypeScript", 0, 0, 0, 0, 32, 0, 0, 0, 0, 5, 37
+"c:\Users\DELL\sv5t-bmu\app\bao-cao\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 323, 0, 0, 0, 43, 366
+"c:\Users\DELL\sv5t-bmu\app\components\FileItem.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 86, 0, 0, 0, 4, 90
+"c:\Users\DELL\sv5t-bmu\app\components\Sidebar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 198, 0, 0, 0, 21, 219
+"c:\Users\DELL\sv5t-bmu\app\dao-duc\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 251, 0, 0, 0, 40, 291
+"c:\Users\DELL\sv5t-bmu\app\doi-mat-khau\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 136, 0, 0, 0, 23, 159
+"c:\Users\DELL\sv5t-bmu\app\globals.css", "PostCSS", 0, 0, 0, 0, 0, 0, 0, 22, 0, 5, 27
+"c:\Users\DELL\sv5t-bmu\app\hoc-tap\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 251, 0, 0, 0, 40, 291
+"c:\Users\DELL\sv5t-bmu\app\hoi-nhap\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 251, 0, 0, 0, 40, 291
+"c:\Users\DELL\sv5t-bmu\app\layout.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 29, 0, 0, 0, 5, 34
+"c:\Users\DELL\sv5t-bmu\app\login\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 141, 0, 0, 0, 14, 155
+"c:\Users\DELL\sv5t-bmu\app\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 340, 0, 0, 0, 32, 372
+"c:\Users\DELL\sv5t-bmu\app\register\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 158, 0, 0, 0, 19, 177
+"c:\Users\DELL\sv5t-bmu\app\the-luc\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 251, 0, 0, 0, 40, 291
+"c:\Users\DELL\sv5t-bmu\app\tinh-nguyen\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 251, 0, 0, 0, 40, 291
+"c:\Users\DELL\sv5t-bmu\app\uu-tien\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 251, 0, 0, 0, 40, 291
+"c:\Users\DELL\sv5t-bmu\eslint.config.mjs", "JavaScript", 0, 0, 0, 0, 0, 0, 14, 0, 2, 3, 19
+"c:\Users\DELL\sv5t-bmu\lib\supabase.ts", "TypeScript", 0, 0, 0, 0, 7, 0, 0, 0, 0, 2, 9
+"c:\Users\DELL\sv5t-bmu\next.config.ts", "TypeScript", 0, 0, 0, 0, 4, 0, 0, 0, 1, 3, 8
+"c:\Users\DELL\sv5t-bmu\package-lock.json", "JSON", 0, 0, 0, 7865, 0, 0, 0, 0, 0, 1, 7866
+"c:\Users\DELL\sv5t-bmu\package.json", "JSON", 0, 0, 0, 32, 0, 0, 0, 0, 0, 1, 33
+"c:\Users\DELL\sv5t-bmu\postcss.config.mjs", "JavaScript", 0, 0, 0, 0, 0, 0, 6, 0, 0, 2, 8
+"c:\Users\DELL\sv5t-bmu\public\file.svg", "XML", 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+"c:\Users\DELL\sv5t-bmu\public\globe.svg", "XML", 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+"c:\Users\DELL\sv5t-bmu\public\next.svg", "XML", 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+"c:\Users\DELL\sv5t-bmu\public\vercel.svg", "XML", 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+"c:\Users\DELL\sv5t-bmu\public\window.svg", "XML", 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+"c:\Users\DELL\sv5t-bmu\tsconfig.json", "JSON with Comments", 0, 34, 0, 0, 0, 0, 0, 0, 0, 1, 35
+"Total", "-", 5, 34, 30, 7897, 431, 5894, 20, 22, 14, 757, 15104

@@ -10,6 +10,8 @@ export default function StatisticsPage() {
     useState("");
   const [selectedStudents, setSelectedStudents] =
     useState<any[]>([]);    
+    const [studentSearch, setStudentSearch] =
+  useState("");
 
   useEffect(() => {
     loadData();
@@ -171,6 +173,50 @@ const stats = {
     }),
   };
 
+  const sortedStudents = [...selectedStudents]
+  .filter((sv) =>
+    (
+      (sv.ho_ten || "") +
+      (sv.mssv || "") +
+      (sv.lop || "")
+    )
+      .toLowerCase()
+      .includes(studentSearch.toLowerCase())
+  )
+  .sort((a, b) => {
+    const getKhoa = (sv: any) => {
+      const lop = sv.lop || "";
+
+      // lớp cũ: 22DA1, 24YA2...
+      const oldMatch = lop.match(/^(\d{2})/);
+
+      if (oldMatch) {
+        return parseInt(oldMatch[1]);
+      }
+
+      // lớp mới: ĐD25-02, YK26-01...
+      const newMatch = lop.match(/(\d{2})/);
+
+      if (newMatch) {
+        return parseInt(newMatch[1]);
+      }
+
+      return 99;
+    };
+
+    const khoaA = getKhoa(a);
+    const khoaB = getKhoa(b);
+
+    if (khoaA !== khoaB) {
+      return khoaA - khoaB;
+    }
+
+    return (a.mssv || "").localeCompare(
+      b.mssv || "",
+      undefined,
+      { numeric: true }
+    );
+  });
  return (
   <div
     style={{
@@ -262,6 +308,7 @@ const stats = {
 >
   <thead>
     <tr>
+      
       <th
   style={{
     width: "35%",
@@ -543,7 +590,34 @@ const stats = {
         "0 2px 10px rgba(0,0,0,0.08)",
     }}
   >
-    <h2>{selectedTitle}</h2>
+    <div
+  style={{
+    display: "flex",
+    justifyContent:
+      "space-between",
+    alignItems: "center",
+    marginBottom: "15px",
+  }}
+>
+  <h2>{selectedTitle}</h2>
+
+  <input
+    placeholder="🔍 Tìm MSSV hoặc họ tên..."
+    value={studentSearch}
+    onChange={(e) =>
+      setStudentSearch(
+        e.target.value
+      )
+    }
+    style={{
+      width: "320px",
+      padding: "10px",
+      border:
+        "1px solid #dbe2ea",
+      borderRadius: "8px",
+    }}
+  />
+</div>
 
    <table
   style={{
@@ -558,6 +632,16 @@ const stats = {
             background: "#f8fafc",
           }}
         >
+          <th
+  style={{
+    width: "60px",
+    padding: "12px",
+    textAlign: "center",
+  }}
+>
+  STT
+</th>
+
           <th
             style={{
               padding: "12px",
@@ -588,39 +672,48 @@ const stats = {
       </thead>
 
       <tbody>
-        {selectedStudents.map((sv) => (
-          <tr
-            key={sv.id}
-            style={{
-              borderBottom:
-                "1px solid #e2e8f0",
-            }}
-          >
-            <td
-              style={{
-                padding: "12px",
-              }}
-            >
-              {sv.ho_ten}
-            </td>
+       {sortedStudents.map(
+  (sv, index) => (
+    <tr
+      key={sv.id}
+      style={{
+        borderBottom:
+          "1px solid #e2e8f0",
+      }}
+    >
+      <td
+        style={{
+          padding: "12px",
+        }}
+      >
+        {index + 1}
+      </td>
 
-            <td
-              style={{
-                padding: "12px",
-              }}
-            >
-              {sv.lop}
-            </td>
+      <td
+        style={{
+          padding: "12px",
+        }}
+      >
+        {sv.ho_ten}
+      </td>
 
-            <td
-              style={{
-                padding: "12px",
-              }}
-            >
-              {sv.mssv}
-            </td>
-          </tr>
-        ))}
+      <td
+        style={{
+          padding: "12px",
+        }}
+      >
+        {sv.lop}
+      </td>
+
+      <td
+        style={{
+          padding: "12px",
+        }}
+      >
+        {sv.mssv}
+      </td>
+    </tr>
+))}
       </tbody>
     </table>
   </div>

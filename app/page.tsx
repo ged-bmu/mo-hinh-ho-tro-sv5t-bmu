@@ -302,9 +302,10 @@ minHeight: "100vh",
   style={{
     color: "#666",
     marginTop: "8px",
+    fontSize: "14px",
   }}
 >
-  Xem và quản lý minh chứng
+  Nhấn để xem và quản lý minh chứng
 </p>
 
           </a>

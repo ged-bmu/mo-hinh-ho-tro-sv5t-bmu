@@ -12,6 +12,8 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [showSidebar, setShowSidebar] = useState(false);
   const totalStudents = students.length;
+  const [showExportMenu, setShowExportMenu] =
+  useState(false);
   const [filterResult, setFilterResult] =
   useState("all");
   const menuStyle = {
@@ -88,11 +90,17 @@ const filteredStudents =
   .from("profiles")
   .select("*")
   .eq("role", "student")
-  .order("lop", { ascending: true })
-  .order("mssv", { ascending: true });
 
 if (studentsData) {
-  setStudents(studentsData);
+  const sorted = [...studentsData].sort((a, b) =>
+    (a.mssv || "").localeCompare(
+      b.mssv || "",
+      undefined,
+      { numeric: true }
+    )
+  );
+
+  setStudents(sorted);
 }
   }
 async function updateCriteria(
@@ -371,32 +379,41 @@ const exportExcel = async () => {
   <h1
     style={{
       marginBottom: "5px",
+      fontSize: "18px",
+      fontWeight: 500,
       color: "#0f172a",
     }}
   >
-    <b>CÂU LẠC BỘ SINH VIÊN 5 TỐT</b>
+    <b>CÂU LẠC BỘ SINH VIÊN 5 TỐT TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT</b>
   </h1>
 
-  <h2
-    style={{
-      fontSize: "18px",
-      fontWeight: 500,
-      color: "#475569",
-    }}
-  >
-    <b>TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT</b>
-  </h2>
+   <p
+  style={{
+    textAlign: "center",
+    fontSize: "24px",
+    fontWeight: "bold",
+    marginTop: "0px",
+    color: "#0f65de",
+  }}
+>
+    Mô Hình hỗ trợ sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt các cấp
+  </p>
 </div>
-<div
+
+    <hr
+      style={{
+        margin: "20px 0",
+      }}
+    />
+
+    <div
   style={{
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: "20px",
-    marginBottom: "30px",
   }}
 >
-<div
+ <div
   style={{
     display: "flex",
     width: "420px",
@@ -451,65 +468,14 @@ const exportExcel = async () => {
   </select>
 </div>
 
+
+ <div style={{ position: "relative" }}>
   <button
     onClick={() =>
-  window.open(
-    `/api/export-all-student?filter=${filterResult}`,
-    "_blank"
-  )
-}
+      setShowExportMenu(!showExportMenu)
+    }
     style={{
-      background: "#16a34a",
-      color: "white",
-      border: "none",
-      padding: "14px 20px",
-      borderRadius: "12px",
-      cursor: "pointer",
-      fontWeight: 600,
-      whiteSpace: "nowrap",
-    }}
-  >
-    🗂️ Xuất hồ sơ
-  </button>
-</div>
-   <p
-  style={{
-    textAlign: "center",
-    fontSize: "20px",
-    fontWeight: "bold",
-    marginTop: "-20px",
-    color: "#334155",
-  }}
->
-    Mô Hình hỗ trợ sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt các cấp
-  </p>
-
-    <hr
-      style={{
-        margin: "20px 0",
-      }}
-    />
-
-    <div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "20px",
-  }}
->
-  <h2
-    style={{
-      margin: 0,
-    }}
-  >
-    <b>Danh sách sinh viên</b>
-  </h2>
-
-  <button
-    onClick={exportExcel}
-    style={{
-      padding: "10px 16px",
+      padding: "12px 18px",
       borderRadius: "10px",
       border: "none",
       background: "#16a34a",
@@ -518,8 +484,57 @@ const exportExcel = async () => {
       cursor: "pointer",
     }}
   >
-    Xuất Excel
+    Xuất
   </button>
+
+  {showExportMenu && (
+    <div
+      style={{
+        position: "absolute",
+        top: "110%",
+        right: 0,
+        background: "white",
+        border: "1px solid #ddd",
+        borderRadius: "10px",
+        boxShadow:
+          "0 4px 12px rgba(0,0,0,0.15)",
+        minWidth: "200px",
+        zIndex: 999,
+      }}
+    >
+      <div
+        onClick={() => {
+          exportExcel();
+          setShowExportMenu(false);
+        }}
+        style={{
+          padding: "12px",
+          cursor: "pointer",
+          borderBottom:
+            "1px solid #eee",
+        }}
+      >
+        📊 Xuất Excel
+      </div>
+
+      <div
+        onClick={() => {
+          window.open(
+  `/api/export-all-student?filter=${filterResult}&search=${encodeURIComponent(search)}`,
+  "_blank"
+)
+          setShowExportMenu(false);
+        }}
+        style={{
+          padding: "12px",
+          cursor: "pointer",
+        }}
+      >
+        🗂️ Xuất toàn bộ hồ sơ
+      </div>
+    </div>
+  )}
+</div>
 </div>
     <div
   style={{
@@ -538,7 +553,7 @@ const exportExcel = async () => {
     <thead>
       <tr
         style={{
-          background: "#f1f5f9",
+          background: "#dbeafe",
         }}
       >
         <th style={{ padding: "14px" }}>STT</th>

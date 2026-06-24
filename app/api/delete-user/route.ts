@@ -13,15 +13,45 @@ export async function POST(
     const { uid } =
       await req.json();
 
-    await supabaseAdmin
-      .from("profiles")
-      .delete()
-      .eq("id", uid);
+    // 1. Lấy toàn bộ file của user
 
-    const { error } =
-      await supabaseAdmin.auth.admin.deleteUser(
-        uid
-      );
+const { data: files } =
+  await supabaseAdmin
+    .from("uploaded_files")
+    .select("*")
+    .eq("user_id", uid);
+
+// 2. Xóa file trong Storage
+
+if (files && files.length > 0) {
+  const paths = files.map(
+    (file) =>
+      `${uid}/${file.folder}/${file.storage_name}`
+  );
+
+  await supabaseAdmin.storage
+    .from("Ho so SV5T")
+    .remove(paths);
+}
+
+// 3. Xóa dữ liệu uploaded_files
+
+await supabaseAdmin
+  .from("uploaded_files")
+  .delete()
+  .eq("user_id", uid);
+
+// 4. Xóa profile
+
+await supabaseAdmin
+  .from("profiles")
+  .delete()
+  .eq("id", uid);
+
+// 5. Xóa Auth User
+
+const { error } =
+  await supabaseAdmin.auth.admin.deleteUser(uid);
 
     if (error) {
       return NextResponse.json(

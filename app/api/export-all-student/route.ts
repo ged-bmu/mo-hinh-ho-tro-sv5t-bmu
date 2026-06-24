@@ -16,6 +16,9 @@ export async function GET(
     const filter =
       searchParams.get("filter");
 
+      const search =
+  searchParams.get("search") || "";
+  
     const zip = new JSZip();
 
     const folderNames: Record<
@@ -30,22 +33,29 @@ export async function GET(
       "uu-tien": "Tiêu chuẩn ưu tiên",
     };
 
-    const { data: students, error } =
-      await supabase
-        .from("profiles")
-        .select(`
-          id,
-          ho_ten,
-          lop,
-          mssv,
-          "dao-duc",
-          "hoc-tap",
-          "the-luc",
-          "tinh-nguyen",
-          "hoi-nhap"
-         `)
-    .neq("role", "admin");
+   let query = supabase
+  .from("profiles")
+  .select(`
+      id,
+      ho_ten,
+      lop,
+      mssv,
+      "dao-duc",
+      "hoc-tap",
+      "the-luc",
+      "tinh-nguyen",
+      "hoi-nhap"
+  `)
+  .neq("role", "admin");
 
+if (search) {
+  query = query.or(
+    `ho_ten.ilike.%${search}%,mssv.ilike.%${search}%,lop.ilike.%${search}%`
+  );
+}
+
+const { data: students, error } =
+  await query;
     if (error) throw error;
 
     let filteredStudents =
@@ -81,11 +91,15 @@ export async function GET(
     }
 
     for (const student of filteredStudents) {
-      const studentFolderName =
-        `${student.ho_ten}-${student.lop}-${student.mssv}`;
 
-      const studentFolder =
-        zip.folder(studentFolderName);
+  const classFolder =
+    zip.folder(student.lop);
+
+  const studentFolderName =
+    `${student.ho_ten}-${student.mssv}`;
+
+  const studentFolder =
+    classFolder?.folder(studentFolderName);
 
       [
         "Đạo đức tốt",
@@ -94,7 +108,6 @@ export async function GET(
         "Tình nguyện tốt",
         "Hội nhập tốt",
         "Tiêu chuẩn ưu tiên",
-        "Báo cáo",
       ].forEach((folderName) => {
         studentFolder?.folder(
           folderName
@@ -170,7 +183,7 @@ export async function GET(
         "Content-Type":
           "application/zip",
         "Content-Disposition":
-          'attachment; filename="HoSoSV5T-ToanBo.zip"',
+          'attachment; filename="Ho-So-SV5T.zip"',
       },
     });
   } catch (err) {
