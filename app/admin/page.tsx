@@ -5,6 +5,8 @@ import { supabase } from "../../lib/supabase";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import Image from "next/image";
+import NotificationBell from "../components/NotificationBell";
+import { usePathname } from "next/navigation";
 
 export default function AdminPage() {
   const [profile, setProfile] = useState<any>(null);
@@ -28,6 +30,7 @@ export default function AdminPage() {
 };
   const keyword =
   search.toLowerCase();
+  const pathname = usePathname();
 
 const filteredStudents =
   students.filter((sv) => {
@@ -92,13 +95,23 @@ const filteredStudents =
   .eq("role", "student")
 
 if (studentsData) {
-  const sorted = [...studentsData].sort((a, b) =>
-    (a.mssv || "").localeCompare(
-      b.mssv || "",
-      undefined,
-      { numeric: true }
-    )
+ const sorted = [...studentsData].sort((a, b) => {
+  const lopCompare = (a.lop || "").localeCompare(
+    b.lop || "",
+    undefined,
+    { numeric: true }
   );
+
+  if (lopCompare !== 0) {
+    return lopCompare;
+  }
+
+  return (a.mssv || "").localeCompare(
+    b.mssv || "",
+    undefined,
+    { numeric: true }
+  );
+});
 
   setStudents(sorted);
 }
@@ -255,7 +268,24 @@ const exportExcel = async () => {
     >
       ☰
     </button>
-
+    <div
+  style={{
+    position: "fixed",
+    top: "20px",
+    right: "30px",
+    width: "50px",
+    height: "50px",
+    borderRadius: "12px",
+    background: "#ffffff",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 999,
+    cursor: "pointer",
+  }}
+></div>
+<NotificationBell />
     {showSidebar && (
       <div
         onMouseLeave={() =>
@@ -312,6 +342,23 @@ const exportExcel = async () => {
   style={menuStyle}
 >
   📊 Thống kê
+</a>
+<a
+  href="/admin/activity"
+  style={{
+    ...menuStyle,
+    background:
+      pathname === "/admin/activity"
+        ? "#5686ed"
+        : "#f3f4f6",
+    color:
+      pathname === "/admin/activity"
+        ? "white"
+        : "#111827",
+    fontWeight: 600,
+  }}
+>
+  🔔 Thông báo
 </a>
 <a
   href="/doi-mat-khau"

@@ -37,6 +37,9 @@ const { data, error } = await supabase
   .single();
 console.log("PROFILE =", data);
 console.log("ERROR =", error);
+if (data) {
+  setProfile(data);
+}
   const { data: fileData } = await supabase.storage
     .from("Ho so SV5T")
     .list(`${user.id}/bao-cao`);
@@ -74,6 +77,7 @@ if (uploadedFiles) {
 
 }
 async function uploadFile(file: File) {
+  console.log("UPLOAD FILE DUOC GOI");
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -105,6 +109,26 @@ const fileName =
     storage_name: fileName,
     display_name: file.name,
   });
+console.log("TOI DANG GHI LOG");
+const result = await supabase
+  .from("activity_logs")
+  .insert({
+    user_id: user.id,
+    ho_ten: profile?.ho_ten || "test",
+    lop: profile?.lop || "test",
+    
+
+    action_type: "upload",
+
+    target_folder: "bao-cao",
+    target_file: file.name,
+  });
+  await fetch("/api/cleanup-logs", {
+  method: "POST",
+});
+  
+
+console.log("LOG RESULT =", result);
 
   if (error) {
     alert(error.message);
@@ -140,6 +164,21 @@ if (error) {
   alert(error.message);
   return;
 }
+await supabase
+  .from("activity_logs")
+  .insert({
+    user_id: user.id,
+    ho_ten: profile?.ho_ten,
+    lop: profile?.lop,
+
+    action_type: "delete",
+
+    target_folder: "bao-cao",
+    target_file: name,
+  });
+  await fetch("/api/cleanup-logs", {
+  method: "POST",
+});
 
 loadData();
 }
@@ -155,10 +194,26 @@ async function renameFile(file: any) {
     .update({
       display_name: newName,
     })
+    await supabase
+  .from("activity_logs")
+  .insert({
+    user_id: userId,
+    ho_ten: profile?.ho_ten,
+    lop: profile?.lop,
+
+    action_type: "rename",
+
+    target_folder: "bao-cao",
+    target_file: newName,
+  })
+  
     .eq(
       "storage_name",
       file.storage_name || file.name
     );
+    await fetch("/api/cleanup-logs", {
+  method: "POST",
+});
 
   loadData();
 }

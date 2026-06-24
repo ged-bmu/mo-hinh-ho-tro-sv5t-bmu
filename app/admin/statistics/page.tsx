@@ -173,7 +173,7 @@ const stats = {
     }),
   };
 
-  const sortedStudents = [...selectedStudents]
+ const sortedStudents = [...selectedStudents]
   .filter((sv) =>
     (
       (sv.ho_ten || "") +
@@ -184,31 +184,14 @@ const stats = {
       .includes(studentSearch.toLowerCase())
   )
   .sort((a, b) => {
-    const getKhoa = (sv: any) => {
-      const lop = sv.lop || "";
+    const lopCompare = (a.lop || "").localeCompare(
+      b.lop || "",
+      undefined,
+      { numeric: true }
+    );
 
-      // lớp cũ: 22DA1, 24YA2...
-      const oldMatch = lop.match(/^(\d{2})/);
-
-      if (oldMatch) {
-        return parseInt(oldMatch[1]);
-      }
-
-      // lớp mới: ĐD25-02, YK26-01...
-      const newMatch = lop.match(/(\d{2})/);
-
-      if (newMatch) {
-        return parseInt(newMatch[1]);
-      }
-
-      return 99;
-    };
-
-    const khoaA = getKhoa(a);
-    const khoaB = getKhoa(b);
-
-    if (khoaA !== khoaB) {
-      return khoaA - khoaB;
+    if (lopCompare !== 0) {
+      return lopCompare;
     }
 
     return (a.mssv || "").localeCompare(

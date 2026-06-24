@@ -98,7 +98,27 @@ const { data, error: insertError } = await supabase
 
 console.log("INSERT DATA:", data);
 console.log("INSERT ERROR:", insertError);
+const { data: profile } = await supabase
+  .from("profiles")
+  .select("ho_ten, lop")
+  .eq("id", user.id)
+  .single();
 
+await supabase
+  .from("activity_logs")
+  .insert({
+    user_id: user.id,
+    ho_ten: profile?.ho_ten,
+    lop: profile?.lop,
+
+    action_type: "upload",
+
+    target_folder: "hoc-tap",
+    target_file: file.name,
+  });
+await fetch("/api/cleanup-logs", {
+  method: "POST",
+});
   loadFiles();
 }
 async function handleUpload(
@@ -121,7 +141,27 @@ console.log("AUTH ID =", user?.id);
     await supabase.storage
       .from("Ho so SV5T")
       .remove([`${user.id}/hoc-tap/${name}`]);
+      const { data: profile } = await supabase
+  .from("profiles")
+  .select("ho_ten, lop")
+  .eq("id", user.id)
+  .single();
 
+await supabase
+  .from("activity_logs")
+  .insert({
+    user_id: user.id,
+    ho_ten: profile?.ho_ten,
+    lop: profile?.lop,
+
+    action_type: "delete",
+
+    target_folder: "hoc-tap",
+    target_file: name,
+  });
+await fetch("/api/cleanup-logs", {
+  method: "POST",
+});
     loadFiles();
   }
   async function renameFile(file: any) {
@@ -138,7 +178,32 @@ console.log("AUTH ID =", user?.id);
       display_name: newName,
     })
     .eq("storage_name", file.storage_name || file.name)
+    
+     const {
+  data: { user },
+} = await supabase.auth.getUser();
 
+const { data: profile } = await supabase
+  .from("profiles")
+  .select("ho_ten, lop")
+  .eq("id", user?.id)
+  .single();
+
+await supabase
+  .from("activity_logs")
+  .insert({
+    user_id: user?.id,
+    ho_ten: profile?.ho_ten,
+    lop: profile?.lop,
+
+    action_type: "rename",
+
+    target_folder: "hoc-tap",
+    target_file: newName,
+  });
+  await fetch("/api/cleanup-logs", {
+  method: "POST",
+});
   loadFiles();
 }
 
