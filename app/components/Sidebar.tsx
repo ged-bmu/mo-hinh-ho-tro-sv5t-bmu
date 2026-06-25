@@ -11,7 +11,7 @@ const pathname = usePathname();
 if (pathname === "doi-mat-khau") {
   return null;
 }
-const [collapsed, setCollapsed] = useState(false);
+const [collapsed, setCollapsed] = useState(true);
 const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 useEffect(() => {
   checkRole();

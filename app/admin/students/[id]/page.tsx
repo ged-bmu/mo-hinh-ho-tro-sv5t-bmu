@@ -570,6 +570,11 @@ return (
     boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
   }}
 >
+  <div
+  style={{
+    overflowX: "auto",
+  }}
+>
         <table
           style={{
             width: "100%",
@@ -841,6 +846,7 @@ return (
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

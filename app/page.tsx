@@ -4,6 +4,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import Sidebar from "./components/Sidebar";
+import Footer from "./components/Footer";
+import Image from "next/image";
 
 export default function Home() {
     const [profile, setProfile] = useState<any>(null);
@@ -104,11 +106,19 @@ alignItems: "center",
 
 return (
 <div
-style={{
-display: "flex",
-minHeight: "100vh",
-}}
-> <Sidebar />
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    minHeight: "100vh",
+  }}
+>
+  <div
+    style={{
+      display: "flex",
+      flex: 1,
+    }}
+  >
+<Sidebar />
 
   <main
     style={{
@@ -124,36 +134,50 @@ minHeight: "100vh",
     margin: "0 auto",
   }}
 >
-
+ <div
+  style={{
+    marginBottom: "20px",
+    paddingBottom: "15px",
+    borderBottom: "1px solid #e5e7eb",
+    display: "flex",
+    justifyContent: "center",
+  }}
+>
+    <Image
+      src="/logo-header.png"
+      alt="Logo"
+      width={220}
+      height={80}
+      style={{
+        marginTop: "15px",
+        width: "30%",
+        height: "auto",
+      }}
+    />
+  </div>
       <h1
-        style={{
-          textAlign: "center",
-          fontSize: "26px",
-          marginBottom: "10px",
-        }}
-      >
-        CÂU LẠC BỘ SINH VIÊN 5 TỐT
-      </h1>
+    style={{
+      marginBottom: "5px",
+      fontSize: "18px",
+      fontWeight: 500,
+      textAlign: "center",
+      color: "#0f172a",
+    }}
+  >
+    <b>CÂU LẠC BỘ SINH VIÊN 5 TỐT TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT</b>
+  </h1>
 
-      <h1
-        style={{
-          textAlign: "center",
-          fontSize: "26px",
-          marginBottom: "10px",
-        }}
-      >
-        TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT
-      </h1>
-
-      <h1
-        style={{
-          textAlign: "center",
-          fontSize: "18px",
-          marginBottom: "40px",
-        }}
-      >
-        Mô hình hỗ trợ Sinh viên phấn đấu đạt danh hiệu "Sinh viên 5 tốt" các cấp
-      </h1>
+   <p
+  style={{
+    textAlign: "center",
+    fontSize: "24px",
+    fontWeight: "bold",
+    marginTop: "0px",
+    color: "#0f65de",
+  }}
+>
+    Mô Hình hỗ trợ sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt các cấp
+  </p>
         <div
   style={{
     background: "white",
@@ -364,9 +388,11 @@ minHeight: "100vh",
     <i>{profile?.nhan_xet || "Chưa có nhận xét"}</i>
   </div>
 </div>
-    </div>
-  </main>
-</div>
+       </div>
+    </main>
+  </div>
 
+  <Footer />
+</div>
 );
 }

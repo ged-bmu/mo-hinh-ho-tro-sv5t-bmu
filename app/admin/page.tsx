@@ -7,6 +7,7 @@ import { saveAs } from "file-saver";
 import Image from "next/image";
 import NotificationBell from "../components/NotificationBell";
 import { usePathname } from "next/navigation";
+import Footer from "../components/Footer";
 
 export default function AdminPage() {
   const [profile, setProfile] = useState<any>(null);
@@ -245,7 +246,14 @@ const exportExcel = async () => {
   );
 };
  return (
-  <>
+<div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    minHeight: "100vh",
+  }}
+>
+  <div style={{ flex: 1 }}>
     <button
       onMouseEnter={() =>
         setShowSidebar(true)
@@ -345,18 +353,7 @@ const exportExcel = async () => {
 </a>
 <a
   href="/admin/activity"
-  style={{
-    ...menuStyle,
-    background:
-      pathname === "/admin/activity"
-        ? "#5686ed"
-        : "#f3f4f6",
-    color:
-      pathname === "/admin/activity"
-        ? "white"
-        : "#111827",
-    fontWeight: 600,
-  }}
+  style={menuStyle}
 >
   🔔 Thông báo
 </a>
@@ -589,6 +586,11 @@ const exportExcel = async () => {
     borderRadius: "16px",
     overflow: "hidden",
     boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+  }}
+>
+  <div
+  style={{
+    overflowX: "auto",
   }}
 >
   <table
@@ -920,10 +922,14 @@ const exportExcel = async () => {
       ))}
     </tbody>
   </table>
+  </div>
 </div>
   </div>
   
-  </>
+  </div>
+
+  <Footer />
+</div>
 );
 }
 function DashboardCard({

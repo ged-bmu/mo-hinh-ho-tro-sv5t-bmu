@@ -283,6 +283,11 @@ const stats = {
       "0 2px 10px rgba(0,0,0,0.08)",
   }}
 >
+  <div
+  style={{
+    overflowX: "auto",
+  }}
+>
 <table
   style={{
     width: "100%",
@@ -441,6 +446,7 @@ const stats = {
   </tbody>
 </table>
 </div>
+</div>
       {/* THỐNG KÊ MỨC ĐỘ */}
 
      <div
@@ -454,7 +460,11 @@ const stats = {
       "0 2px 10px rgba(0,0,0,0.08)",
   }}
 >
- 
+ <div
+  style={{
+    overflowX: "auto",
+  }}
+>
  <table
   style={{
     width: "85%",
@@ -560,6 +570,7 @@ const stats = {
     </tbody>
   </table>
   </div>
+  </div>
 </div>
 {selectedStudents.length > 0 && (
   <div
@@ -601,7 +612,11 @@ const stats = {
     }}
   />
 </div>
-
+<div
+  style={{
+    overflowX: "auto",
+  }}
+>
    <table
   style={{
     width: "85%",
@@ -699,6 +714,7 @@ const stats = {
 ))}
       </tbody>
     </table>
+    </div>
   </div>
 )}
     </div>

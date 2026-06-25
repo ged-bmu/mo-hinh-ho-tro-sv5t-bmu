@@ -117,6 +117,11 @@ export default function UserManagement() {
     }}
   />
 </div>
+<div
+  style={{
+    overflowX: "auto",
+  }}
+>
   <table
     style={{
       width: "100%",
@@ -451,6 +456,7 @@ onClick={async () => {
       ))}
     </tbody>
   </table>
+  </div>
 </div>
 
   </div>
