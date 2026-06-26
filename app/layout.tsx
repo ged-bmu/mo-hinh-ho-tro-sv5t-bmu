@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Hệ thống hỗ trợ Sinh viên 5 Tốt BMU",
-  description: "Website hỗ trợ đăng ký và quản lý Sinh viên 5 Tốt BMU",
+  description: "Mô hình hỗ trợ sin viên phấn đấu đạt danh hiệu Sinh viên 5 tốt các cấp",
   verification: {
     google: "THB1FKLIDQzUeTh3dgTRWz7t-ySjHjpDiuclP6zV83g"
   },
