@@ -25,10 +25,10 @@ export default function Footer() {
           >
             MÔ HÌNH HỖ TRỢ SINH VIÊN PHẤN ĐẤU ĐẠT DANH HIỆU SINH VIÊN 5 TỐT CÁC CẤP
           </h3>
+        
 
           <p style={{ color: "#6b7280" }}>
-            Hệ thống theo dõi, quản lý và đánh giá hồ sơ 
-            Sinh viên 5 tốt Trường Đại học Y Dược Buôn Ma Thuột
+            Hệ thống theo dõi hồ sơ Sinh viên 5 thuốc thuộc Câu lạc bộ Sinh viên 5 tốt Trường Đại học Y Dược Buôn Ma Thuột
           </p>
 
           <div style={{ marginTop: "20px" }}>
@@ -97,11 +97,11 @@ export default function Footer() {
         }}
       >
         <span>
-          © 2026 Hệ thống được phát triển bởi Sinh viên Trần Hà Xuân Hiển
+          © 2026 Hệ thống được phát triển bởi Trần Hà Xuân Hiển • Phiên bản 1.0
         </span>
     
         <span>
-          Lớp 22DA1, Trường Đại học Y Dược Buôn Ma Thuột
+          Sinh viên lớp 22DA1, Trường Đại học Y Dược Buôn Ma Thuột
         </span>
       </div>
     </div>

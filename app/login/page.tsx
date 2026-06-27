@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
+import Footer from "../components/Footer";
 
 export default function LoginPage() {
   const [mssv, setMssv] = useState("");
@@ -39,14 +40,22 @@ export default function LoginPage() {
     window.location.href = "/";
   }
 }
-  return (
+ return (
+  <div
+    style={{
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      background: "linear-gradient(180deg, #f8fbff, #eef4ff)",
+    }}
+  >
     <main
       style={{
-        minHeight: "100vh",
+        flex: 1,
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background: "#f5f7fb",
+        padding: "30px 20px",
       }}
     >
       <div
@@ -59,58 +68,64 @@ export default function LoginPage() {
         }}
       >
         <div
-  style={{
-    textAlign: "center",
-    marginBottom: "25px",
+          style={{
+            textAlign: "center",
+            marginBottom: "25px",
+          }}
+        >
+          <img
+            src="/logo-header.png"
+            alt="Logo BMU"
+            style={{
+              width: "250px",
+              height: "100px",
+              objectFit: "contain",
+              display: "block",
+              margin: "0 auto 15px",
+            }}
+          />
+
+          <h1
+            style={{
+              fontSize: "20px",
+              fontWeight: "700",
+              lineHeight: "1.4",
+              marginBottom: "10px",
+            }}
+          >
+            CÂU LẠC BỘ SINH VIÊN 5 TỐT
+            <br />
+            TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT
+          </h1>
+
+          <div
+            style={{
+              fontSize: "16px",
+              color: "#64748b",
+              lineHeight: "1.5",
+            }}
+          >
+            MÔ HÌNH HỖ TRỢ SINH VIÊN PHẤN ĐẤU
+            <br />
+            ĐẠT DANH HIỆU SINH VIÊN 5 TỐT CÁC CẤP
+          </div>
+
+          <div
+            style={{
+              marginTop: "15px",
+              fontSize: "20px",
+              fontWeight: "600",
+            }}
+          >
+            🔐 ĐĂNG NHẬP
+          </div>
+        </div>
+<form
+  onSubmit={(e) => {
+    e.preventDefault();
+    handleLogin();
   }}
 >
-  <img
-  src="/logo-header.png"
-  alt="Logo BMU"
-  style={{
-    width: "300px",
-    height: "140px",
-    objectFit: "contain",
-    display: "block",
-    margin: "0 auto 15px",
-  }}
-/>
-  <h1
-    style={{
-      fontSize: "20px",
-      fontWeight: "700",
-      lineHeight: "1.4",
-      marginBottom: "10px",
-    }}
-  >
-    CÂU LẠC BỘ SINH VIÊN 5 TỐT
-    <br />
-    TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT
-  </h1>
-
-  <div
-    style={{
-      fontSize: "16px",
-      color: "#64748b",
-      lineHeight: "1.5",
-    }}
-  >
-    MÔ HÌNH HỖ TRỢ SINH VIÊN PHẤN ĐẤU
-    <br />
-    ĐẠT DANH HIỆU SINH VIÊN 5 TỐT CÁC CẤP
-  </div>
-
-  <div
-    style={{
-      marginTop: "15px",
-      fontSize: "20px",
-      fontWeight: "600",
-    }}
-  >
-    🔐 ĐĂNG NHẬP
-  </div>
-</div>
-
         <input
           placeholder="MSSV"
           value={mssv}
@@ -135,21 +150,24 @@ export default function LoginPage() {
         />
 
         <button
-          onClick={handleLogin}
-          style={{
-            width: "100%",
-            marginTop: "20px",
-            padding: "12px",
-            border: "none",
-            background: "#2563eb",
-            color: "white",
-            borderRadius: "8px",
-            cursor: "pointer",
-          }}
-        >
-          Đăng nhập
-        </button>
+  type="submit"
+  style={{
+    width: "100%",
+    marginTop: "20px",
+    padding: "12px",
+    border: "none",
+    background: "#2563eb",
+    color: "white",
+    borderRadius: "8px",
+    cursor: "pointer",
+  }}
+>
+  Đăng nhập
+</button>
+</form>
       </div>
     </main>
-  );
+    <Footer />
+  </div>
+);
 }
