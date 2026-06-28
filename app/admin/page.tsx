@@ -73,7 +73,7 @@ const filteredStudents =
     } = await supabase.auth.getUser();
 
     if (!user) {
-      window.location.href = "/login";
+      window.location.href = "/introduce";
       return;
     }
 
@@ -367,7 +367,7 @@ const exportExcel = async () => {
           onClick={async () => {
             await supabase.auth.signOut();
             window.location.href =
-              "/login";
+              "/introduce";
           }}
           style={{
             marginTop: "auto",

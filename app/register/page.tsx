@@ -62,7 +62,7 @@ export default function RegisterPage() {
 
     alert("Đăng ký thành công!");
 
-    window.location.href = "/login";
+    window.location.href = "/introduce";
   }
 
   return (

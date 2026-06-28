@@ -47,7 +47,6 @@ export default function StudentsDetailPage() {
     }
 
     setProfile(data);
-    setTrangThai(data.trang_thai || "cho-duyet");
     setNhanXet(data.nhan_xet || "");
   }
 async function updateCriteria(
@@ -509,29 +508,6 @@ return (
   </button>
 </div>
 
-<div style={{ marginBottom: "12px" }}>
-  <label>
-    <b>Trạng thái hồ sơ:</b>
-  </label>
-
-  <select
-    value={trangThai}
-    onChange={(e) => setTrangThai(e.target.value)}
-    style={{
-      marginLeft: "10px",
-      padding: "8px",
-      borderRadius: "8px",
-    }}
-  >
-    <option value="cho-duyet">
-      Hoàn thiện
-    </option>
-
-    <option value="can_bo_sung">
-      Cần bổ sung
-    </option>
-  </select>
-</div>
          <div
   style={{
     background: "#f1f5f9",

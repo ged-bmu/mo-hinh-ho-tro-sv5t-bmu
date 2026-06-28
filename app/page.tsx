@@ -25,7 +25,7 @@ data: { user },
 } = await supabase.auth.getUser();
 
 if (!user) {
-  window.location.href = "/login";
+  window.location.href = "/introduce";
   return;
 }
 
@@ -203,20 +203,7 @@ return (
   >
     👋 Xin chào, {profile?.ho_ten}
   </h2>
-<div
-  style={{
-    marginTop: "0px",
-    fontWeight: "600",
-  }}
->
-  
-  {profile?.trang_thai === "cho-duyet" &&
-    "🟢 Hồ sơ đã đầy đủ"}
 
-  {profile?.trang_thai === "can_bo_sung" &&
-    "🔴 Hồ sơ cần bổ sung"}
-
-</div>
   <a
     href="/bao-cao"
     style={{
