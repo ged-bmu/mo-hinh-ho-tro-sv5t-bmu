@@ -13,10 +13,28 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mô hình hỗ trợ SV5T BMU",
-  description:   "Website hỗ trợ sinh viên của Câu lạc bộ Sinh viên 5 tốt Trường Đại học Y Dược Buôn Ma Thuột đăng ký, quản lý và theo dõi quá trình phấn đấu đạt danh hiệu Sinh viên 5 Tốt các cấp.",
+  title: "Hệ thống hỗ trợ Sinh viên 5 Tốt BMU",
+  description:
+    "Website hỗ trợ sinh viên của Câu lạc bộ Sinh viên 5 Tốt Trường Đại học Y Dược Buôn Ma Thuột đăng ký, quản lý và theo dõi quá trình phấn đấu đạt danh hiệu Sinh viên 5 Tốt các cấp.",
+
+  applicationName: "Hệ thống hỗ trợ Sinh viên 5 Tốt BMU",
+
   verification: {
     google: "THB1FKLIDQzUeTh3dgTRWz7t-ySjHjpDiuclP6zV83g"
+  },
+   openGraph: {
+    title: "Hệ thống hỗ trợ Sinh viên 5 Tốt BMU",
+    description:
+      "Website hỗ trợ sinh viên của Câu lạc bộ Sinh viên 5 Tốt Trường Đại học Y Dược Buôn Ma Thuột.",
+    siteName: "Hệ thống hỗ trợ Sinh viên 5 Tốt BMU",
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Hệ thống hỗ trợ Sinh viên 5 Tốt BMU",
+    description:
+      "Website hỗ trợ sinh viên của Câu lạc bộ Sinh viên 5 Tốt Trường Đại học Y Dược Buôn Ma Thuột.",
   },
 };
 
