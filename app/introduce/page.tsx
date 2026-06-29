@@ -125,7 +125,7 @@ async function loadCriteria() {
       >
         <div
           style={{
-            background: "rgba(255,255,255,0.96)",
+            background: "rgba(255, 255, 255, 0.72)",
             borderRadius: "28px",
             padding: "25px 55px 70px",
             maxWidth: "1100px",
@@ -223,11 +223,23 @@ async function loadCriteria() {
     >
       <b>GIỚI THIỆU</b>
     </h1>
-
+  <div style={{ display: "flex", justifyContent: "center", marginBottom: "20px" }}>
+      <img
+        src="/gioithieu.avif"
+        alt="Gioithieu"
+        style={{
+          width: "100%",
+          maxWidth: "800px",
+          height: "auto",
+          borderRadius: "8px",
+        }}
+      />
+    </div>
 
     <p style={{ fontSize: 18, lineHeight: 2, textAlign: "justify" }}>
-      Hệ thống <b>Sinh viên 5 tốt BMU</b> là nền tảng trực tuyến được phát triển
+      <b> Hệ thống hỗ trợ Sinh viên 5 tốt BMU</b> là nền tảng trực tuyến được phát triển
       bởi <b>Câu lạc bộ Sinh viên 5 tốt Trường Đại học Y Dược Buôn Ma Thuột </b>
+       . Đây là nội dung thuộc<b> Mô hình hỗ trợ Sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt các cấp </b>
        nhằm hỗ trợ sinh viên trong quá trình chuẩn bị hồ sơ xét danh hiệu
       <b> Sinh viên 5 tốt</b>.
     </p>

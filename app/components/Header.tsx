@@ -15,7 +15,7 @@ export default function Header({
     <header
       style={{
         background: "#fff",
-        padding: "20px 40px",
+        padding: "14px 28px",
         borderBottom: "1px solid #eee",
       }}
     >
@@ -32,7 +32,7 @@ export default function Header({
           src="/logo-header.png"
           alt="Logo"
           style={{
-            height: 70,
+            height: 55,
             cursor: "pointer",
           }}
           onClick={() => window.location.href = "/"}
@@ -47,7 +47,7 @@ export default function Header({
                   <button
             onClick={openCriteria}
             style={{
-              padding: "10px 22px",
+              padding: "10px 18px",
               border: "none",
               borderRadius: 12,
               cursor: "pointer",
