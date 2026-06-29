@@ -1,12 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Footer from "../components/Footer";
+import { supabase } from "@/lib/supabase";
 
 export default function IntroducePage() {
   const [tab, setTab] = useState("home");
+ const [criteria, setCriteria] = useState<any[]>([]);
 
+useEffect(() => {
+  loadCriteria();
+}, []);
+
+async function loadCriteria() {
+  const { data, error } = await supabase
+    .from("criteria_contents")
+    .select("*")
+    .order("id");
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  setCriteria(data || []);
+}
+
+  
   return (
     <div
       style={{
@@ -15,92 +36,78 @@ export default function IntroducePage() {
         flexDirection: "column",
       }}
     >
-      {/* Header */}
-      <div
+{/* Header */}
+<div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "12px 35px",
+    background: "white",
+    borderBottom: "1px solid #eee",
+    position: "sticky",
+    top: 0,
+    zIndex: 100,
+  }}
+>
+  <img
+    src="/logo-header.png"
+    alt="Logo"
+    style={{
+      height: "52px", // trước là 70
+      objectFit: "contain",
+    }}
+  />
+
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+    }}
+  >
+    {[
+      { id: "home", label: "Trang chủ" },
+      { id: "about", label: "Giới thiệu" },
+      { id: "criteria", label: "Tiêu chí" },
+    ].map((item) => (
+      <button
+        key={item.id}
+        onClick={() => setTab(item.id)}
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "20px 50px",
-          background: "white",
-          borderBottom: "1px solid #eee",
+          padding: "9px 18px",
+          border: "none",
+          borderRadius: "10px",
+          cursor: "pointer",
+          fontWeight: 600,
+          fontSize: "15px",
+          transition: "0.2s",
+          background:
+            tab === item.id ? "#2563eb" : "#f3f4f6",
+          color:
+            tab === item.id ? "white" : "#111",
         }}
       >
-        <img
-          src="/logo-header.png"
-          alt="Logo"
-          style={{
-            height: "70px",
-          }}
-        />
+        {item.label}
+      </button>
+    ))}
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "15px",
-          }}
-        >
-          <button
-            onClick={() => setTab("home")}
-            style={{
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "10px",
-              cursor: "pointer",
-              fontWeight: 600,
-              background: tab === "home" ? "#2563eb" : "#f3f4f6",
-              color: tab === "home" ? "white" : "#111",
-            }}
-          >
-            Trang chủ
-          </button>
-
-          <button
-            onClick={() => setTab("about")}
-            style={{
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "10px",
-              cursor: "pointer",
-              fontWeight: 600,
-              background: tab === "about" ? "#2563eb" : "#f3f4f6",
-              color: tab === "about" ? "white" : "#111",
-            }}
-          >
-            Giới thiệu
-          </button>
-
-          <button
-            onClick={() => setTab("criteria")}
-            style={{
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "10px",
-              cursor: "pointer",
-              fontWeight: 600,
-              background: tab === "criteria" ? "#2563eb" : "#f3f4f6",
-              color: tab === "criteria" ? "white" : "#111",
-            }}
-          >
-            Tiêu chí
-          </button>
-
-          <Link
-            href="/login"
-            style={{
-              background: "#bababa",
-              color: "white",
-              textDecoration: "none",
-              padding: "10px 22px",
-              borderRadius: "10px",
-              fontWeight: 600,
-            }}
-          >
-            Đăng nhập
-          </Link>
-        </div>
-      </div>
+    <Link
+      href="/login"
+      style={{
+        background: "#f8fafc",
+        color: "Black",
+        textDecoration: "none",
+        padding: "9px 18px",
+        borderRadius: "10px",
+        fontWeight: 600,
+        fontSize: "15px",
+      }}
+    >
+      Đăng nhập
+    </Link>
+  </div>
+</div>
 
       {/* Banner + nội dung */}
       <main
@@ -153,22 +160,7 @@ export default function IntroducePage() {
     >
       Mô hình hỗ trợ sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt các cấp
     </p>
-    <p
-      style={{
-        fontSize: "18px",
-        lineHeight: "2",
-        textAlign: "justify",
-        marginTop: "20px",
-        
-      }}
-    >
-      Hệ thống Sinh viên 5 tốt BMU là nền tảng trực tuyến được xây dựng và quản
-      lý bởi <b>Câu lạc bộ Sinh viên 5 tốt Trường Đại học Y Dược Buôn Ma Thuột</b>,
-      nhằm hỗ trợ sinh viên trong quá trình đăng ký, lưu trữ minh chứng và hoàn thiện hồ sơ xét
-      chọn danh hiệu Sinh viên 5 tốt các cấp.
-    </p>
-
-    <p
+      <p
       style={{
         fontSize: "18px",
         lineHeight: "2",
@@ -177,7 +169,7 @@ export default function IntroducePage() {
         
       }}
     >
-      Với định hướng chuyển đổi số trong công tác Đoàn – Hội, hệ thống giúp đơn
+      Với định hướng chuyển đổi số trong công tác Đoàn – Hội, Hệ thống Hỗ trợ Sinh viên 5 tốt BMU giúp đơn
       giản hóa quy trình chuẩn bị hồ sơ, tăng tính minh bạch trong xét duyệt và tạo
       môi trường thuận lợi để sinh viên chủ động theo dõi quá trình phấn đấu của
       mình.
@@ -220,34 +212,11 @@ export default function IntroducePage() {
 )}
 {tab === "about" && (
   <>
-  <h1
-      style={{
-        marginBottom: "5px",
-        fontSize: "18px",
-        fontWeight: 500,
-        textAlign: "center",
-        color: "#0f172a",
-      }}
-    >
-      <b>CÂU LẠC BỘ SINH VIÊN 5 TỐT TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT</b>
-    </h1>
-
-    <p
+     <h1
       style={{
         textAlign: "center",
-        fontSize: "24px",
-        fontWeight: "bold",
-        marginTop: "0px",
-        color: "#0f65de",
-      }}
-    >
-      Mô hình hỗ trợ sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt các cấp
-    </p>
-    <h1
-      style={{
-        textAlign: "center",
-        color: "#000000",
-        marginTop: "10px",
+        color: "#2563eb",
+                marginTop: "10px",
         marginBottom: "20px",
         fontSize: "24px",
       }}
@@ -364,58 +333,103 @@ export default function IntroducePage() {
     
   </>
 )}
+
 {tab === "criteria" && (
-  <>
+  <div>
     <h1
       style={{
         textAlign: "center",
         color: "#2563eb",
-        marginBottom: "30px",
+        marginBottom: "35px",
+        fontSize: "24px",
       }}
     >
-      TIÊU CHÍ SINH VIÊN 5 TỐT
+  <b> TIÊU CHUẨN SINH VIÊN 5 TỐT CẤP TRƯỜNG</b>
     </h1>
 
     <div
       style={{
-        background: "#f8fafc",
-        border: "2px dashed #cbd5e1",
-        borderRadius: "16px",
-        padding: "50px 30px",
-        textAlign: "center",
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(450px,1fr))",
+        gap: "25px",
       }}
     >
-      <div
-        style={{
-          fontSize: "64px",
-          marginBottom: "20px",
-        }}
-      >
-        🚧
-      </div>
+      {criteria.map((item: any) => (
+        <div
+          key={item.id}
+          style={{
+            background: "#fff",
+            borderRadius: "18px",
+            padding: "28px",
+            boxShadow: "0 8px 20px rgba(0,0,0,.08)",
+          }}
+        >
+          <h2
+            style={{
+              marginTop: 0,
+              color: "#2563eb",
+              fontSize: "26px",
+            }}
+          >
+            {item.title}
+          </h2>
 
-      <h2
-        style={{
-          color: "#2563eb",
-          marginBottom: "10px",
-        }}
-      >
-        Chưa cập nhật
-      </h2>
+          <div
+            style={{
+              marginTop: "18px",
+              whiteSpace: "pre-wrap",
+              lineHeight: "1.8",
+              minHeight: "250px",
+              fontSize: "17px",
+            }}
+          >
+            {item.content?.trim() || "Chưa cập nhật"}
+          </div>
 
-      <p
-        style={{
-          fontSize: "18px",
-          color: "#64748b",
-          lineHeight: "1.8",
-        }}
-      >
-        Nội dung tiêu chí Sinh viên 5 tốt đang được cập nhật.
-        <br />
-        Vui lòng quay lại trong thời gian tới.
-      </p>
+          <div
+            style={{
+              marginTop: "20px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span
+              style={{
+                background:
+                  item.content?.trim()
+                    ? "#DCFCE7"
+                    : "#FEF3C7",
+                color:
+                  item.content?.trim()
+                    ? "#15803D"
+                    : "#B45309",
+                padding: "6px 14px",
+                borderRadius: "999px",
+                fontWeight: 600,
+                fontSize: "14px",
+              }}
+            >
+              {item.content?.trim()
+                ? "Đã cập nhật"
+                : "Chưa cập nhật"}
+            </span>
+
+            <span
+              style={{
+                color: "#64748b",
+                fontSize: "13px",
+              }}
+            >
+              {new Date(item.updated_at).toLocaleString(
+                "vi-VN"
+              )}
+            </span>
+          </div>
+        </div>
+      ))}
     </div>
-  </>
+  </div>
 )}
 
           <div

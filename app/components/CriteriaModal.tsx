@@ -22,10 +22,10 @@ export default function CriteriaModal({
   }, []);
 
   async function loadData() {
-    const { data } = await supabase
-      .from("criteria_contents")
-      .select("*")
-      .order("id");
+    const { data, error } = await supabase
+  .from("criteria_contents")
+  .select("*")
+  .order("id");
 
     if (data) setCriteria(data);
   }
