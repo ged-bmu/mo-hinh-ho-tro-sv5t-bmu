@@ -358,6 +358,12 @@ const exportExcel = async () => {
   🔔 Thông báo
 </a>
 <a
+  href="/admin/criteria"
+  style={menuStyle}
+>
+  📑 Tiêu chí
+</a>
+<a
   href="/doi-mat-khau"
   style={menuStyle}
 >

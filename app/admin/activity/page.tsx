@@ -163,7 +163,16 @@ export default function ActivityPage() {
     >
       🔔 Thông báo
     </a>
-
+        <a
+          href="/admin/criteria"
+          style={{
+            ...menuStyle,
+            background: "#ffffff",
+            color: "#000000",
+          }}
+        >
+          📑 Tiêu chí
+        </a>
     <a
       href="/doi-mat-khau"
       style={menuStyle}

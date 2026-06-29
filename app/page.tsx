@@ -5,11 +5,15 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
+import Header from "./components/Header";
 import Image from "next/image";
+import CriteriaModal from "./components/CriteriaModal";
 
 export default function Home() {
     const [profile, setProfile] = useState<any>(null);
-const [loading, setLoading] = useState(true);
+    const [tab, setTab] = useState("proof");
+    const [loading, setLoading] = useState(true);
+    const [showCriteria,setShowCriteria]=useState(false);
 
 useEffect(() => {
 checkUser();
@@ -129,7 +133,18 @@ return (
     }}
   >
 <Sidebar />
-
+ <div
+      style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Header
+    tab={tab}
+    setTab={setTab}
+    openCriteria={() => setShowCriteria(true)}
+/>
   <main
     style={{
       flex: 1,
@@ -144,31 +159,11 @@ return (
     margin: "0 auto",
   }}
 >
- <div
-  style={{
-    marginBottom: "20px",
-    paddingBottom: "15px",
-    borderBottom: "1px solid #e5e7eb",
-    display: "flex",
-    justifyContent: "center",
-  }}
->
-    <Image
-      src="/logo-header.png"
-      alt="Logo"
-      width={220}
-      height={80}
-      style={{
-        marginTop: "15px",
-        width: "30%",
-        height: "auto",
-      }}
-    />
-  </div>
+
       <h1
     style={{
       marginBottom: "5px",
-      fontSize: "18px",
+      fontSize: "20px",
       fontWeight: 500,
       textAlign: "center",
       color: "#0f172a",
@@ -180,9 +175,9 @@ return (
    <p
   style={{
     textAlign: "center",
-    fontSize: "24px",
+    fontSize: "26px",
     fontWeight: "bold",
-    marginTop: "0px",
+    marginBottom: "30px",
     color: "#0f65de",
   }}
 >
@@ -192,7 +187,7 @@ return (
   style={{
     background: "white",
     borderRadius: "16px",
-    padding: "20px",
+    padding: "16px",
     marginBottom: "30px",
     boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
   }}
@@ -214,19 +209,24 @@ return (
     👋 Xin chào, {profile?.ho_ten}
   </h2>
 
-  <a
-    href="/bao-cao"
-    style={{
-      background: "#2563eb",
-      color: "white",
-      textDecoration: "none",
-      padding: "12px 20px",
-      borderRadius: "12px",
-      fontWeight: "600",
-    }}
-  >
-    📑 Gửi báo cáo
-  </a>
+<a
+  href="/bao-cao"
+  style={{
+    background: "#2563eb",
+    color: "white",
+    textDecoration: "none",
+    padding: "12px 20px",
+    borderRadius: "12px",
+    fontWeight: "600",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "48px",
+    boxSizing: "border-box",
+  }}
+>
+  📑 Gửi báo cáo
+</a>
   
   <button
   onClick={() => {
@@ -388,7 +388,13 @@ return (
        </div>
     </main>
   </div>
-
+  
+ </div>
+ {showCriteria && (
+  <CriteriaModal
+    onClose={() => setShowCriteria(false)}
+  />
+)}
   <Footer />
 </div>
 );

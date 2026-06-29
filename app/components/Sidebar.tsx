@@ -112,24 +112,18 @@ flexDirection: "column",
 }}
 >
 {!collapsed && (
-  <div
-    style={{
-      marginBottom: "20px",
-      paddingBottom: "15px",
-      borderBottom: "1px solid #e5e7eb",
-    }}
-  >
-    <Image
-      src="/logo-header.png"
-      alt="Logo"
-      width={220}
-      height={80}
-      style={{
-        width: "100%",
-        height: "auto",
-      }}
-    />
-  </div>
+  <h2
+  style={{
+    textAlign: "center",
+    fontSize: "22px",
+    fontWeight: "700",
+    color: "#1e3a8a",
+    marginTop: "10px",
+    marginBottom: "40px",
+  }}
+>
+  ☰ Menu
+</h2>
 )}
 
   <div
@@ -193,7 +187,7 @@ flexDirection: "column",
     zIndex: 100,
   }}
 >
-  {collapsed ? ">" : "<"}
+  {collapsed ? "❯" : "❮"}
 </button>
 
 <button
