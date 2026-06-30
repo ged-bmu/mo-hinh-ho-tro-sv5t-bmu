@@ -13,11 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://mo-hinh-ho-tro-sv5t-bmu.vercel.app"),
   title: "Hệ thống hỗ trợ Sinh viên 5 Tốt BMU",
   description:
     "Website hỗ trợ sinh viên của Câu lạc bộ Sinh viên 5 Tốt Trường Đại học Y Dược Buôn Ma Thuột đăng ký, quản lý và theo dõi quá trình phấn đấu đạt danh hiệu Sinh viên 5 Tốt các cấp.",
 
-  applicationName: "Hệ thống hỗ trợ Sinh viên 5 Tốt BMU",
+  applicationName:
+  "CLB Sinh viên 5 tốt Trường Đại học Y Dược Buôn Ma Thuột",
 
   verification: {
     google: "THB1FKLIDQzUeTh3dgTRWz7t-ySjHjpDiuclP6zV83g"
@@ -26,7 +28,8 @@ export const metadata: Metadata = {
     title: "Hệ thống hỗ trợ Sinh viên 5 Tốt BMU",
     description:
       "Website hỗ trợ sinh viên của Câu lạc bộ Sinh viên 5 Tốt Trường Đại học Y Dược Buôn Ma Thuột.",
-    siteName: "Hệ thống hỗ trợ Sinh viên 5 Tốt BMU",
+    siteName:
+  "CLB Sinh viên 5 tốt Trường Đại học Y Dược Buôn Ma Thuột",
     type: "website",
   },
 
@@ -45,10 +48,29 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="vi"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name:
+                "CLB Sinh viên 5 tốt Trường Đại học Y Dược Buôn Ma Thuột",
+              alternateName:
+                "Hệ thống hỗ trợ Sinh viên 5 Tốt BMU",
+              url: "https://mo-hinh-ho-tro-sv5t-bmu.vercel.app",
+            }),
+          }}
+        />
+
+        {children}
+
+      </body>
     </html>
   );
 }
