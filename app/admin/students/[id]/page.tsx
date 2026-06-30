@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
+import { sendNotification } from "@/lib/notification";
 
 export default function StudentsDetailPage() {
   const params = useParams();
@@ -60,12 +61,35 @@ async function updateCriteria(
     })
     .eq("id", id);
 
-  if (!error) {
-    setProfile({
-      ...profile,
-      [field]: value,
-    });
+  if (error) {
+    alert("Cập nhật thất bại");
+    return;
   }
+
+  setProfile({
+    ...profile,
+    [field]: value,
+  });
+
+  const titleMap: Record<string, string> = {
+    "dao-duc": "Đạo đức tốt",
+    "hoc-tap": "Học tập tốt",
+    "the-luc": "Thể lực tốt",
+    "tinh-nguyen": "Tình nguyện tốt",
+    "hoi-nhap": "Hội nhập tốt",
+  };
+
+  await sendNotification(
+    id,
+    "criteria",
+    value
+      ? "Bạn vừa đạt một tiêu chí mới 🎉"
+      : "Tiêu chí của bạn vừa được cập nhật",
+    value
+      ? `Tiêu chí ${titleMap[field]} đã được xác nhận đạt.`
+      : `Tiêu chí ${titleMap[field]} không còn được đánh dấu đạt.`,
+    "/"
+  );
 }
   async function loadFiles() {
     const folders = [
@@ -477,23 +501,30 @@ return (
 
   <button
     onClick={async () => {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-  nhan_xet: nhanXet,
-  trang_thai: trangThai,
-  ngay_nhan_xet: new Date().toISOString(),
-}
-)
-        .eq("id", id);
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      nhan_xet: nhanXet,
+      trang_thai: trangThai,
+      ngay_nhan_xet: new Date().toISOString(),
+    })
+    .eq("id", id);
 
-      if (error) {
-        alert("Lưu thất bại");
-        return;
-      }
+  if (error) {
+    alert("Lưu thất bại");
+    return;
+  }
 
-      alert("Đã lưu nhận xét");
-    }}
+  await sendNotification(
+    id,
+    "review",
+    "Bạn vừa có nhận xét mới",
+    "Ban chủ nhiệm vừa nhận xét hồ sơ của bạn.",
+    "/"
+  );
+
+  alert("Đã lưu nhận xét");
+}}
     style={{
       padding: "8px 12px",
       border: "none",
@@ -507,6 +538,7 @@ return (
     💾 Lưu nhận xét
   </button>
 </div>
+
 
          <div
   style={{

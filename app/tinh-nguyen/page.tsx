@@ -4,11 +4,17 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import Sidebar from "../components/Sidebar";
 import FileItem from "../components/FileItem";
+import CriteriaModal from "../components/CriteriaModal";
+import BellUserTemp from "../components/BellUserTemp";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 export default function TinhNguyenPage() {
   const [files, setFiles] = useState<any[]>([]);
   const [userId, setUserId] = useState("");
   const [dragging, setDragging] = useState(false);
+   const [showCriteria,setShowCriteria]=useState(false);
+    const [tab, setTab] = useState("proof");
   const [displayNames, setDisplayNames] = useState<
   Record<string, string>
 >({});
@@ -207,9 +213,29 @@ await fetch("/api/cleanup-logs", {
   loadFiles();
 }
 
-  return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      <Sidebar />
+ return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+      
+        <Header
+          tab={tab}
+          setTab={setTab}
+          openCriteria={() => setShowCriteria(true)}
+        />
+       
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+          }}
+        >
+      
+          <Sidebar />
 
       <main
         style={{
@@ -349,8 +375,10 @@ await fetch("/api/cleanup-logs", {
     />
   );
 })}
-        </div>
-      </main>
-    </div>
-  );
-}
+            </div>
+                        </main>
+                      </div>
+                    <Footer />
+                  </div>
+                  );
+                }

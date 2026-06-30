@@ -80,6 +80,11 @@ const menus = [
     icon: "⭐",
     href: "/uu-tien",
   },
+  {
+    name:"Chi tiết thông báo",
+    icon:"🔔",
+    href: "/thongbaouser",
+  },
 
   ...(isAdmin === false
     ? [
@@ -89,6 +94,7 @@ const menus = [
           href: "/doi-mat-khau",
         },
       ]
+
     : []),
 ];
 

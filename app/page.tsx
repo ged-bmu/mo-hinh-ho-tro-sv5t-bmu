@@ -5,9 +5,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
-import Header from "./components/Header";
 import Image from "next/image";
 import CriteriaModal from "./components/CriteriaModal";
+import BellUserTemp from "./components/BellUserTemp";
+import Header from "./components/Header";
 
 export default function Home() {
     const [profile, setProfile] = useState<any>(null);
@@ -121,38 +122,46 @@ alignItems: "center",
 return (
 <div
   style={{
+    minHeight: "100vh",
     display: "flex",
     flexDirection: "column",
-    minHeight: "100vh",
   }}
 >
+
+  
+  <Header
+    tab={tab}
+    setTab={setTab}
+    openCriteria={() => setShowCriteria(true)}
+  />
+  
+  <div
+    style={{
+      position: "fixed",
+      top: 90,
+      right: 20,
+      zIndex: 9999,
+    }}
+  >
+    <BellUserTemp />
+  </div>
+
   <div
     style={{
       display: "flex",
       flex: 1,
     }}
   >
-<Sidebar />
- <div
+
+    <Sidebar />
+
+    <main
       style={{
         flex: 1,
-        display: "flex",
-        flexDirection: "column",
+        background: "#f5f7fb",
+        padding: "30px",
       }}
     >
-      <Header
-    tab={tab}
-    setTab={setTab}
-    openCriteria={() => setShowCriteria(true)}
-/>
-  <main
-    style={{
-      flex: 1,
-      minHeight: "100vh",
-      background: "#f5f7fb",
-      padding: "30px",
-    }}
-  >
     <div
   style={{
     maxWidth: "900px",
@@ -386,16 +395,16 @@ return (
   </div>
 </div>
        </div>
-    </main>
+       </main>
+
   </div>
-  
- </div>
+<Footer />
+</div>
+);
  {showCriteria && (
   <CriteriaModal
     onClose={() => setShowCriteria(false)}
   />
 )}
-  <Footer />
-</div>
-);
+  
 }

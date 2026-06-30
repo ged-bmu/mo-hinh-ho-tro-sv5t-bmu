@@ -4,10 +4,16 @@ import FileItem from "../components/FileItem";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import Sidebar from "../components/Sidebar";
+import CriteriaModal from "../components/CriteriaModal";
+import BellUserTemp from "../components/BellUserTemp";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 export default function BaoCaoPage() {
 const [profile, setProfile] = useState<any>(null);
 const [loading, setLoading] = useState(true);
+ const [showCriteria,setShowCriteria]=useState(false);
+   const [tab, setTab] = useState("proof");
 const [displayNames, setDisplayNames] =
   useState<Record<string, string>>(
     {}
@@ -218,12 +224,28 @@ async function renameFile(file: any) {
   loadData();
 }
 return (
-<div
-style={{
-display: "flex",
-minHeight: "100vh",
-}}
-> <Sidebar />
+  <div
+    style={{
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column",
+    }}
+  >
+ 
+    <Header
+      tab={tab}
+      setTab={setTab}
+      openCriteria={() => setShowCriteria(true)}
+    />
+
+    <div
+      style={{
+        display: "flex",
+        flex: 1,
+      }}
+    >
+  
+      <Sidebar />
 
   <main
     style={{
@@ -416,6 +438,9 @@ minHeight: "100vh",
       </div>
     )}       
   </main>
-</div>
-);
-}
+                     </div>
+                   <Footer />
+                 </div>
+                 );
+               }
+                       

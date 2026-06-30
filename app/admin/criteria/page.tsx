@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { sendNotification } from "@/lib/notification";
 
 type Criteria = {
   id: number;
@@ -61,7 +62,24 @@ export default function CriteriaAdminPage() {
 
         if (error) throw error;
       }
+const { data: students } = await supabase
+  .from("profiles")
+  .select("id");
 
+if (students) {
+  const notifications = students.map((student) => ({
+    user_id: student.id,
+    type: "criteria_update",
+    title: "Tiêu chuẩn vừa được cập nhật",
+    content:
+      "Ban chủ nhiệm vừa cập nhật nội dung tiêu chuẩn Sinh viên 5 Tốt. Hãy kiểm tra lại hồ sơ của bạn.",
+    target_url: "/introduce",
+  }));
+
+  await supabase
+    .from("notifications")
+    .insert(notifications);
+}
       alert("Đã lưu thành công!");
       await loadCriteria();
     } catch (err) {
