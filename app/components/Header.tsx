@@ -38,6 +38,13 @@ export default function Header({
           onClick={() => window.location.href = "/"}
         />
 
+ <img
+    src="/Tenhethong.png"
+    style={{
+      height: "48px",
+      objectFit: "contain",
+    }}
+  />
         <div
           style={{
             display: "flex",

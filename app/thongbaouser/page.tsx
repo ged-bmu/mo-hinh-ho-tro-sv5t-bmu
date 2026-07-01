@@ -127,30 +127,24 @@ export default function ThongBaoUser() {
             }}
           />
 
-          <select
-            value={typeFilter}
-            onChange={(e) =>
-              setTypeFilter(e.target.value)
-            }
-            style={{
-              width: 220,
-              borderRadius: 12,
-              border: "1px solid #ddd",
-              padding: 12,
-              fontSize: 15,
-            }}
-          >
-            <option value="all">Tất cả</option>
-            <option value="review">
-              Nhận xét hồ sơ
-            </option>
-            <option value="criteria">
-              Tiêu chí hoàn thành
-            </option>
-            <option value="completed">
-              Cập nhật tiêu chuẩn
-            </option>
-          </select>
+       <select
+  value={typeFilter}
+  onChange={(e) => setTypeFilter(e.target.value)}
+>
+  <option value="all">Tất cả</option>
+
+  <option value="review">
+    Nhận xét hồ sơ
+  </option>
+
+  <option value="criteria">
+    Tiêu chí hoàn thành
+  </option>
+
+  <option value="criteria_update">
+    Cập nhật tiêu chuẩn
+  </option>
+</select>
         </div>
 
         <div
@@ -178,7 +172,6 @@ export default function ThongBaoUser() {
                 <th style={th}>Loại</th>
                 <th style={th}>Thời gian</th>
                 <th style={th}>Trạng thái</th>
-                <th style={th}>Chi tiết</th>
               </tr>
             </thead>
 
@@ -235,7 +228,7 @@ export default function ThongBaoUser() {
                       {item.type === "criteria" &&
                         "✅ Đánh giá"}
 
-                      {item.type === "completed" &&
+                      {item.type === "criteria_update" &&
                         "📋 Tiêu chuẩn"}
                     </td>
 
@@ -265,23 +258,8 @@ export default function ThongBaoUser() {
                           Chưa đọc
                         </span>
                       )}
-                    </td>
-
-                    <td style={td}>
-                      <Link
-                        href={
-                          item.target_url || "#"
-                        }
-                        style={{
-                          color: "#2563eb",
-                          textDecoration: "none",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Xem →
-                      </Link>
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
                 ))}
 
               {!loading &&

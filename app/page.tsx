@@ -398,13 +398,13 @@ return (
        </main>
 
   </div>
-<Footer />
-</div>
-);
- {showCriteria && (
+  {showCriteria && (
   <CriteriaModal
     onClose={() => setShowCriteria(false)}
   />
 )}
-  
+<Footer />
+</div>
+);
+ 
 }

@@ -54,7 +54,15 @@ async function loadCriteria() {
     src="/logo-header.png"
     alt="Logo"
     style={{
-      height: "52px", // trước là 70
+      height: "52px",
+      objectFit: "contain",
+    }}
+  />
+
+  <img
+    src="/Tenhethong.png"
+    style={{
+      height: "48px",
       objectFit: "contain",
     }}
   />
@@ -169,10 +177,10 @@ async function loadCriteria() {
         
       }}
     >
-      Với định hướng chuyển đổi số trong công tác Đoàn – Hội, Hệ thống Hỗ trợ Sinh viên 5 tốt BMU giúp đơn
-      giản hóa quy trình chuẩn bị hồ sơ, tăng tính minh bạch trong xét duyệt và tạo
-      môi trường thuận lợi để sinh viên chủ động theo dõi quá trình phấn đấu của
-      mình.
+      Với mục tiêu tăng cường ứng dụng công nghệ và thúc đẩy chuyển đổi số trong công tác Đoàn – Hội, 
+      <b> Hệ thống Hỗ trợ Sinh viên 5 Tốt BMU</b> là nền tảng trực tuyến do
+      <b> Câu lạc bộ Sinh viên 5 Tốt Trường Đại học Y Dược Buôn Ma Thuột</b> xây dựng
+      nhằm hỗ trợ sinh viên trong quá trình chuẩn bị hồ sơ xét danh hiệu Sinh viên 5 tốt các cấp.
     </p>
      <p
       style={{
@@ -182,32 +190,11 @@ async function loadCriteria() {
         marginTop: "15px",
               }}
     >
-      Thông qua hệ thống, sinh viên có thể lưu trữ minh chứng theo từng tiêu chí, theo dõi tiến độ hoàn thiện hồ sơ, nhận góp ý từ Ban Chủ nhiệm Câu lạc bộ và xuất hồ sơ khi tham gia các đợt xét chọn. Mọi minh chứng được quản lý tập trung, giúp giảm thời gian tổng hợp hồ sơ và hạn chế sai sót trong quá trình chuẩn bị.
+      Hệ thống cho phép sinh viên quản lý minh chứng theo từng tiêu chí, 
+      theo dõi tiến độ hoàn thiện hồ sơ, tiếp nhận nhận xét từ Ban Chủ nhiệm Câu lạc bộ và xuất hồ sơ 
+      phục vụ công tác xét chọn. Việc quản lý minh chứng tập trung giúp nâng cao tính khoa học, 
+      giảm thời gian tổng hợp hồ sơ và hạn chế sai sót trong quá trình chuẩn bị.
     </p>
-
-    <h3
-      style={{
-        marginTop: "35px",
-        color: "#2563eb",
-        fontSize: "24px",
-      }}
-    >
-      🖥 Hệ thống hỗ trợ
-    </h3>
-
-    <ul
-      style={{
-        fontSize: "18px",
-        lineHeight: "2",
-        paddingLeft: "25px",
-      }}
-    >
-      
-      <li>📂 Lưu trữ minh chứng trực tuyến theo từng tiêu chí.</li>
-      <li>📊 Theo dõi tiến độ hoàn thiện hồ sơ Sinh viên 5 tốt.</li>
-      <li>💬 Nhận góp ý và hướng dẫn từ Ban Chủ nhiệm Câu lạc bộ.</li>
-      <li>📄 Xuất hồ sơ nhanh chóng khi có nhu cầu đăng ký xét danh hiệu.</li>
-    </ul>
       </>
 )}
 {tab === "about" && (
@@ -245,9 +232,10 @@ async function loadCriteria() {
     </p>
 
     <p style={{ fontSize: 18, lineHeight: 2, textAlign: "justify" }}>
-      Hệ thống được xây dựng với mục tiêu giúp sinh viên quản lý minh chứng một
-      cách khoa học, theo dõi tiến độ hoàn thiện hồ sơ và nhận góp ý từ Ban Chủ
-      nhiệm Câu lạc bộ trong suốt quá trình phấn đấu.
+      Hệ thống được xây dựng với mục tiêu giúp sinh viên quản lý minh chứng một cách khoa học,
+       theo dõi tiến độ hoàn thiện hồ sơ, tiếp nhận nhận xét từ Ban Chủ nhiệm Câu lạc bộ
+        và xuất hồ sơ phục vụ công tác xét chọn. Việc quản lý minh chứng tập trung
+         góp phần giảm thời gian chuẩn bị hồ sơ, hạn chế sai sót và nâng cao hiệu quả trong quá trình xét duyệt.
     </p>
 <h3
       style={{
@@ -339,7 +327,7 @@ async function loadCriteria() {
       <li>Quản lý hồ sơ sinh viên tập trung.</li>
       <li>Kiểm tra và đánh giá minh chứng trực tuyến.</li>
       <li>Gửi nhận xét, yêu cầu chỉnh sửa.</li>
-      <li>Theo dõi tiến độ xét duyệt.</li>
+      <li>Theo dõi lịch sử thao tác và quá trình cập nhật hồ sơ.</li>
       <li>Thống kê dữ liệu phục vụ báo cáo và tổng kết.</li>
     </ul>
     
@@ -356,13 +344,25 @@ async function loadCriteria() {
         fontSize: "24px",
       }}
     >
-  <b> TIÊU CHUẨN SINH VIÊN 5 TỐT CẤP TRƯỜNG</b>
+  <b> TIÊU CHUẨN SINH VIÊN 5 TỐT CẤP TRƯỜNG NHIỆM KỲ 2025 - 2028</b>
+   <h1
+      style={{
+        textAlign: "center",
+        color: "#636363",
+        marginBottom: "20px",
+        fontSize: "16px",
+      }}
+    >
+  <i> (Theo quyết định Số.../QĐ-HSV ngày...tháng...năm 2026 của BCH Hội Sinh viên Việt Nam
+    Trường Đại học Y Dược Buôn Ma Thuột)
+  </i>
     </h1>
+      </h1>
 
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit,minmax(450px,1fr))",
+        gridTemplateColumns: "1fr",
         gap: "25px",
       }}
     >

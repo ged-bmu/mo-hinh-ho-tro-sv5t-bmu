@@ -64,9 +64,10 @@ export default function CriteriaModal({
             marginBottom: 30,
           }}
         >
-          <h1><b>📑 Tiêu chuẩn Sinh viên 5 tốt cấp Trường</b></h1>
-
-          <button
+          <h1><b>📑 Tiêu chuẩn Sinh viên 5 tốt cấp Trường nhiệm kỳ 2025 - 2028</b>
+          <i> (Theo quyết định số:...QĐ/HSV của Ban Thư ký Hội sinh viên Trường)</i></h1>
+      
+       <button
             onClick={onClose}
             style={{
               width: 42,
@@ -84,7 +85,7 @@ export default function CriteriaModal({
           style={{
             display: "grid",
             gridTemplateColumns:
-              "repeat(auto-fit,minmax(450px,1fr))",
+              "repeat(1fr)",
             gap: 25,
           }}
         >
