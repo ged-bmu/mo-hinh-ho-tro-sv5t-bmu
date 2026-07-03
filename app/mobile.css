@@ -208,4 +208,234 @@
   }
 
 }
+@media (max-width: 768px) {
+
+  /* ===== PAGE WRAPPER ===== */
+  main {
+    padding: 12px !important;
+    align-items: flex-start !important;
+  }
+
+  /* ===== CONTAINER CARD ===== */
+  main > div {
+    padding: 16px 14px !important;
+    border-radius: 16px !important;
+  }
+
+  /* ===== HEADER ===== */
+  .header-mobile {
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+
+  .header-mobile img {
+    height: 34px !important;
+  }
+
+  .header-buttons {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px !important;
+  }
+
+  .header-buttons button {
+    padding: 7px 10px !important;
+    font-size: 13px !important;
+    border-radius: 8px !important;
+  }
+
+  /* ===== CRITERIA CARD ===== */
+  .criteria-card {
+    padding: 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .criteria-content {
+    font-size: 14px !important;
+    min-height: auto !important;
+  }
+
+  /* ===== CTA BUTTON ===== */
+  .cta-btn {
+    width: 100% !important;
+    font-size: 15px !important;
+    padding: 12px !important;
+  }
+}
+/* ======================================================
+   INTRODUCE PAGE (DESKTOP GIỮ NGUYÊN)
+====================================================== */
+
+/* Desktop */
+@media (min-width:769px){
+
+  .hamburger-btn{
+    display:none !important;
+  }
+
+  .mobile-dropdown{
+    display:none !important;
+  }
+
+}
+
+
+/* ======================================================
+   INTRODUCE PAGE MOBILE
+====================================================== */
+
+@media (max-width:768px){
+
+  /* Header */
+
+  .intro-header{
+    position:sticky !important;
+    top:0;
+    z-index:100;
+    background:#fff;
+
+    display:flex !important;
+    justify-content:space-between !important;
+    align-items:center !important;
+
+    padding:10px 14px !important;
+  }
+
+  /* Logo + tên */
+
+ /* Desktop */
+.intro-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .intro-brand {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .intro-logo {
+    height: 42px !important;
+  }
+
+  .intro-title {
+    height: 36px !important;
+  }
+}
+  /* Nút desktop */
+
+  .intro-header-buttons{
+    display:none !important;
+  }
+
+  /* Hamburger */
+
+  .hamburger-btn{
+    display:flex !important;
+    align-items:center;
+    justify-content:center;
+
+    width:42px;
+    height:42px;
+
+    border:none;
+    background:none;
+
+    font-size:28px;
+    cursor:pointer;
+  }
+
+  /* Dropdown */
+
+  .mobile-dropdown{
+    position:sticky;
+    top:72px;
+
+    background:#fff;
+
+    display:flex;
+    flex-direction:column;
+
+    gap:8px;
+
+    padding:12px;
+
+    border-bottom:1px solid #eee;
+
+    box-shadow:0 6px 16px rgba(0,0,0,.08);
+
+    z-index:99;
+  }
+
+  .mobile-dropdown button,
+  .mobile-dropdown a{
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    width:100%;
+
+    padding:12px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#f3f4f6;
+
+    text-decoration:none;
+
+    color:#111;
+
+    font-size:15px;
+
+    font-weight:600;
+  }
+
+  /* Main */
+
+  .intro-main{
+    padding:12px !important;
+    align-items:flex-start !important;
+  }
+
+  .intro-box{
+    padding:16px !important;
+    border-radius:16px !important;
+    box-shadow:none !important;
+  }
+
+  /* Criteria */
+
+  .criteria-card{
+    padding:16px !important;
+    border-radius:14px !important;
+  }
+
+  /* CTA */
+
+  .cta-wrapper{
+    margin-top:20px !important;
+    padding:0 !important;
+  }
+
+  .cta-btn{
+    display:block !important;
+    width:100% !important;
+
+    text-align:center;
+
+    padding:12px !important;
+
+    font-size:15px !important;
+
+    border-radius:10px !important;
+  }
+
+}
 }

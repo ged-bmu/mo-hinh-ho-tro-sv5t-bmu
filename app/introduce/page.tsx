@@ -5,8 +5,11 @@ import Link from "next/link";
 import Footer from "../components/Footer";
 import { supabase } from "@/lib/supabase";
 
+
 export default function IntroducePage() {
-  const [tab, setTab] = useState("home");
+ const [tab, setTab] = useState("home");
+ const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
+ const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
  const [criteria, setCriteria] = useState<any[]>([]);
 
 useEffect(() => {
@@ -38,9 +41,10 @@ async function loadCriteria() {
     >
 {/* Header */}
 <div
+  className="intro-header"
   style={{
     display: "flex",
-    justifyContent: "space-between",
+    justifyContent: isMobile ? "center" : "space-between",
     alignItems: "center",
     padding: "12px 35px",
     background: "white",
@@ -50,75 +54,163 @@ async function loadCriteria() {
     zIndex: 100,
   }}
 >
-  <img
-    src="/logo-header.png"
-    alt="Logo"
-    style={{
-      height: "52px",
-      objectFit: "contain",
-    }}
-  />
-
-  <img
-    src="/Tenhethong.png"
-    style={{
-      height: "48px",
-      objectFit: "contain",
-    }}
-  />
-
+  {/* Logo + Tên */}
   <div
     style={{
       display: "flex",
+      flexDirection: isMobile ? "column" : "row",
       alignItems: "center",
-      gap: "10px",
+      justifyContent: "center",
+      gap: isMobile ? "8px" : "12px",
+      flex: isMobile ? 1 : "unset",
     }}
   >
-    {[
-      { id: "home", label: "Trang chủ" },
-      { id: "about", label: "Giới thiệu" },
-      { id: "criteria", label: "Tiêu chí" },
-    ].map((item) => (
-      <button
-        key={item.id}
-        onClick={() => setTab(item.id)}
-        style={{
-          padding: "9px 18px",
-          border: "none",
-          borderRadius: "10px",
-          cursor: "pointer",
-          fontWeight: 600,
-          fontSize: "15px",
-          transition: "0.2s",
-          background:
-            tab === item.id ? "#2563eb" : "#f3f4f6",
-          color:
-            tab === item.id ? "white" : "#111",
-        }}
-      >
-        {item.label}
-      </button>
-    ))}
-
-    <Link
-      href="/login"
+    <img
+      className="intro-logo"
+      src="/logo-header.png"
+      alt="Logo"
       style={{
-        background: "#f8fafc",
-        color: "Black",
-        textDecoration: "none",
-        padding: "9px 18px",
-        borderRadius: "10px",
-        fontWeight: 600,
-        fontSize: "15px",
+        height: isMobile ? "42px" : "52px",
+        objectFit: "contain",
+      }}
+    />
+
+    <img
+      className="intro-title"
+      src="/Tenhethong.png"
+      alt="Tên hệ thống"
+      style={{
+        height: isMobile ? "36px" : "48px",
+        objectFit: "contain",
+      }}
+    />
+  </div>
+
+  {/* Nút menu mobile */}
+  {isMobile && (
+    <button
+      className="hamburger-btn"
+      onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+      style={{
+        position: "absolute",
+        right: "16px",
+        top: "30%",
+        transform: "translateY(-50%)",
+        border: "none",
+        background: "transparent",
+        fontSize: "22px",
+        cursor: "pointer",
       }}
     >
-      Đăng nhập
-    </Link>
-  </div>
+      ☰
+    </button>
+  )}
+
+  {/* Menu desktop */}
+  {!isMobile && (
+    <div
+      className="intro-header-buttons"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+      }}
+    >
+      {[
+        { id: "home", label: "Trang chủ" },
+        { id: "about", label: "Giới thiệu" },
+        { id: "criteria", label: "Tiêu chí" },
+      ].map((item) => (
+        <button
+          key={item.id}
+          onClick={() => setTab(item.id)}
+          style={{
+            padding: "9px 18px",
+            border: "none",
+            borderRadius: "10px",
+            cursor: "pointer",
+            fontWeight: 600,
+            fontSize: "15px",
+            transition: "0.2s",
+            background: tab === item.id ? "#2563eb" : "#f3f4f6",
+            color: tab === item.id ? "white" : "#111",
+          }}
+        >
+          {item.label}
+        </button>
+      ))}
+
+      <Link
+        href="/login"
+        className="cta-btn"
+        style={{
+          background: "#f8fafc",
+          color: "black",
+          textDecoration: "none",
+          padding: "9px 18px",
+          borderRadius: "10px",
+          fontWeight: 600,
+          fontSize: "15px",
+        }}
+      >
+        Đăng nhập
+      </Link>
+    </div>
+  )}
 </div>
+{mobileMenuOpen && (
+  <div className="mobile-dropdown">
+
+    <button
+  onClick={() => { setTab("home"); setMobileMenuOpen(false); }}
+  style={{
+    background: tab === "home" ? "#2563eb" : "#f3f4f6",
+    color: tab === "home" ? "white" : "#111",
+    textAlign: "center"
+  }}
+>
+  Trang chủ
+</button>
+
+    <button
+  onClick={() => { setTab("about"); setMobileMenuOpen(false); }}
+  style={{
+    background: tab === "about" ? "#2563eb" : "#f3f4f6",
+    color: tab === "about" ? "white" : "#111",
+    textAlign: "center"
+  }}
+>
+  Giới thiệu
+</button>
+    <button
+  onClick={() => { setTab("criteria"); setMobileMenuOpen(false); }}
+  style={{
+    background: tab === "criteria" ? "#2563eb" : "#f3f4f6",
+    color: tab === "criteria" ? "white" : "#111",
+    textAlign: "center"
+  }}
+>
+  Tiêu chí
+</button>
+
+    <Link
+  href="/login"
+  onClick={() => setMobileMenuOpen(false)}
+  style={{
+    background: "#f3f4f6",
+    color: "#111",
+    textAlign: "center"
+  }}
+>
+  Đăng nhập
+</Link>
+
+  </div>
+)}
 
       {/* Banner + nội dung */}
       <main
+       className="intro-main"
         style={{
           flex: 1,
           display: "flex",
@@ -132,6 +224,7 @@ async function loadCriteria() {
         }}
       >
         <div
+          className="intro-box"
           style={{
             background: "rgba(255, 255, 255, 0.72)",
             borderRadius: "28px",
@@ -145,38 +238,87 @@ async function loadCriteria() {
     {tab === "home" && (
   <>
   
-   <h1
+{/* HEADER TEXT BLOCK */}
+<div
+  style={{
+    textAlign: "center",
+    marginBottom: isMobile ? "18px" : "10px",
+    padding: isMobile ? "16px" : "0",
+    background: isMobile ? "#ffffff" : "transparent",
+    borderRadius: isMobile ? "16px" : "0",
+    }}
+>
+
+  {!isMobile && (
+  <div style={{ textAlign: "center", marginBottom: "10px" }}>
+    <h1
       style={{
-        marginBottom: "5px",
-        fontSize: "18px",
-        fontWeight: 500,
-        textAlign: "center",
+        fontSize: "20px",
+        fontWeight: 600,
         color: "#0f172a",
+        marginBottom: "6px",
       }}
     >
-      <b>CÂU LẠC BỘ SINH VIÊN 5 TỐT TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT</b>
+      CÂU LẠC BỘ SINH VIÊN 5 TỐT TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT
     </h1>
 
     <p
       style={{
-        textAlign: "center",
         fontSize: "24px",
-        fontWeight: "bold",
-        marginTop: "0px",
+        fontWeight: 700,
         color: "#0f65de",
+        marginBottom: "10px",
       }}
     >
       Mô hình hỗ trợ sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt các cấp
     </p>
-      <p
+
+  </div>
+)}
+
+{isMobile && (
+  <div
+    style={{
+      textAlign: "center",
+      marginBottom: "18px",
+      }}
+  >
+    <h1
       style={{
         fontSize: "18px",
-        lineHeight: "2",
-        textAlign: "justify",
-        marginTop: "15px",
-        
+        fontWeight: 600,
+        color: "#0f172a",
+        marginBottom: "6px",
       }}
     >
+      CLB SINH VIÊN 5 TỐT BMU
+    </h1>
+
+    <p
+  style={{
+    fontSize: "18px",
+    fontWeight: 700,
+    color: "#0f65de",
+    marginBottom: "0px",
+    lineHeight: 1.4,
+  }}
+>
+     Mô hình hỗ trợ sinh viên phấn đấu
+      <br />
+      đạt danh hiệu Sinh viên 5 tốt các cấp
+    </p>
+
+  </div>
+)}
+</div>
+  <p
+  style={{
+    fontSize:"18px",
+    lineHeight: isMobile ? "1.5" : "2",
+    textAlign: "justify",
+    margin: "0",
+  }}
+>
       Với mục tiêu tăng cường ứng dụng công nghệ và thúc đẩy chuyển đổi số trong công tác Đoàn – Hội, 
       <b> Hệ thống Hỗ trợ Sinh viên 5 Tốt BMU</b> là nền tảng trực tuyến do
       <b> Câu lạc bộ Sinh viên 5 Tốt Trường Đại học Y Dược Buôn Ma Thuột</b> xây dựng
@@ -210,18 +352,24 @@ async function loadCriteria() {
     >
       <b>GIỚI THIỆU</b>
     </h1>
-  <div style={{ display: "flex", justifyContent: "center", marginBottom: "20px" }}>
-      <img
-        src="/gioithieu.avif"
-        alt="Gioithieu"
-        style={{
-          width: "100%",
-          maxWidth: "800px",
-          height: "auto",
-          borderRadius: "8px",
-        }}
-      />
-    </div>
+  <div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    padding: "20px 0",
+  }}
+>
+  <img
+    src="/gioithieu.avif"
+    alt="Gioithieu"
+    style={{
+      width: "100%",
+      maxWidth: "800px",
+      height: "auto",
+      borderRadius: "8px",
+    }}
+  />
+</div>
 
     <p style={{ fontSize: 18, lineHeight: 2, textAlign: "justify" }}>
       <b> Hệ thống hỗ trợ Sinh viên 5 tốt BMU</b> là nền tảng trực tuyến được phát triển
@@ -340,11 +488,12 @@ async function loadCriteria() {
       style={{
         textAlign: "center",
         color: "#2563eb",
-        marginBottom: "35px",
+        marginBottom: "2px",
         fontSize: "24px",
       }}
     >
-  <b> TIÊU CHUẨN SINH VIÊN 5 TỐT CẤP TRƯỜNG NHIỆM KỲ 2025 - 2028</b>
+      <b> TIÊU CHUẨN SINH VIÊN 5 TỐT CẤP TRƯỜNG NHIỆM KỲ 2025 - 2028</b>
+  </h1>
    <h1
       style={{
         textAlign: "center",
@@ -357,8 +506,7 @@ async function loadCriteria() {
     Trường Đại học Y Dược Buôn Ma Thuột)
   </i>
     </h1>
-      </h1>
-
+      
     <div
       style={{
         display: "grid",
@@ -368,6 +516,7 @@ async function loadCriteria() {
     >
       {criteria.map((item: any) => (
         <div
+          className="criteria-card"
           key={item.id}
           style={{
             background: "#fff",
@@ -387,6 +536,7 @@ async function loadCriteria() {
           </h2>
 
           <div
+            className="criteria-content"
             style={{
               marginTop: "18px",
               whiteSpace: "pre-wrap",
@@ -445,25 +595,27 @@ async function loadCriteria() {
 )}
 
           <div
-            style={{
-              marginTop: 40,
-              textAlign: "center",
-            }}
-          >
+  className="cta-wrapper"
+  style={{
+    marginTop: 40,
+    textAlign: "center",
+  }}
+>
             <Link
-              href="/login"
-              style={{
-                background: "#2563eb",
-                color: "white",
-                padding: "15px 35px",
-                borderRadius: "12px",
-                textDecoration: "none",
-                fontWeight: 600,
-                fontSize: "18px",
-              }}
-            >
-              Đăng nhập hệ thống
-            </Link>
+  href="/login"
+  className="cta-btn"
+  style={{
+    background: "#2563eb",
+    color: "white",
+    padding: "15px 35px",
+    borderRadius: "12px",
+    textDecoration: "none",
+    fontWeight: 600,
+    fontSize: "18px",
+  }}
+>
+  Đăng nhập hệ thống
+</Link>
           </div>
         </div>
       </main>
