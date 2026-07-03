@@ -14,8 +14,8 @@ export default function Home() {
     const [profile, setProfile] = useState<any>(null);
     const [tab, setTab] = useState("proof");
     const [loading, setLoading] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
     const [showCriteria,setShowCriteria]=useState(false);
-
 useEffect(() => {
 checkUser();
 }, []);
@@ -23,7 +23,19 @@ useEffect(() => {
   checkUser();
   loadProfile();
 }, []);
+useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth <= 768);
+  };
 
+  checkMobile();
+
+  window.addEventListener("resize", checkMobile);
+
+  return () => {
+    window.removeEventListener("resize", checkMobile);
+  };
+}, []);
 async function checkUser() {
   const {
     data: { user },
@@ -157,14 +169,17 @@ return (
 
     <main
       style={{
-        flex: 1,
-        background: "#f5f7fb",
-        padding: "30px",
-      }}
+    flex: 1,
+    background: "#f5f7fb",
+    padding: isMobile ? "16px" : "30px",
+    paddingBottom: isMobile ? "90px" : "30px",
+    overflowX: "hidden",
+  }}
     >
     <div
   style={{
-    maxWidth: "900px",
+    width: "100%",
+    maxWidth: isMobile ? "100%" : "900px",
     margin: "0 auto",
   }}
 >
@@ -172,26 +187,45 @@ return (
       <h1
     style={{
       marginBottom: "5px",
-      fontSize: "20px",
+      fontSize: isMobile ? "16px" : "20px",
+      lineHeight: isMobile ? "1.4" : "1.5",
       fontWeight: 500,
       textAlign: "center",
       color: "#0f172a",
     }}
   >
-    <b>CÂU LẠC BỘ SINH VIÊN 5 TỐT TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT</b>
+   <b>
+  {isMobile ? (
+    <>
+      CÂU LẠC BỘ SINH VIÊN 5 TỐT BMU
+    </>
+  ) : (
+    "CÂU LẠC BỘ SINH VIÊN 5 TỐT TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT"
+  )}
+</b>
   </h1>
 
-   <p
+  <p
   style={{
     textAlign: "center",
-    fontSize: "26px",
-    fontWeight: "bold",
-    marginBottom: "30px",
+    fontSize: isMobile ? "18px" : "24px",
+    fontWeight: "700",
+    lineHeight: 1.4,
     color: "#0f65de",
+    maxWidth: isMobile ? "320px" : "900px",
+    margin: "5px auto 30px",
   }}
 >
-    Mô Hình hỗ trợ sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt các cấp
-  </p>
+  {isMobile ? (
+    <>
+      Mô hình hỗ trợ sinh viên phấn đấu
+      <br />
+      đạt danh hiệu Sinh viên 5 tốt các cấp
+    </>
+  ) : (
+    "Mô hình hỗ trợ sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt các cấp"
+  )}
+</p>
         <div
   style={{
     background: "white",
@@ -204,34 +238,43 @@ return (
  <div
   style={{
     display: "flex",
+    flexDirection: isMobile ? "column" : "row",
+    alignItems: isMobile ? "stretch" : "center",
     justifyContent: "space-between",
-    alignItems: "center",
+    gap: isMobile ? "14px" : "20px",
   }}
 >
   <h2
-    style={{
-      margin: 0,
-      fontSize: "20px",
-      fontWeight: "700",
-    }}
-  >
-    👋 Xin chào, {profile?.ho_ten}
-  </h2>
-
+  style={{
+    margin: 0,
+    fontSize: isMobile ? "18px" : "20px",
+    fontWeight: 700,
+    textAlign: isMobile ? "center" : "left",
+  }}
+>
+  👋 Xin chào, {profile?.ho_ten}
+</h2>
+<div
+  style={{
+    display: "flex",
+    flexDirection: isMobile ? "column" : "row",
+    gap: "12px",
+    width: isMobile ? "100%" : "auto",
+  }}
+></div>
 <a
   href="/bao-cao"
   style={{
     background: "#2563eb",
-    color: "white",
+    color: "#fff",
     textDecoration: "none",
-    padding: "12px 20px",
+    padding: "12px 18px",
     borderRadius: "12px",
-    fontWeight: "600",
+    fontWeight: 600,
     display: "flex",
-    alignItems: "center",
     justifyContent: "center",
-    height: "48px",
-    boxSizing: "border-box",
+    alignItems: "center",
+    width: isMobile ? "100%" : "auto",
   }}
 >
   📑 Gửi báo cáo
@@ -239,12 +282,18 @@ return (
   
   <button
   onClick={() => {
-    window.open(
-      `/api/export-student/${profile.id}`,
-      "_blank"
-    );
+    window.open(`/api/export-student/${profile.id}`, "_blank");
   }}
-  className="bg-green-600 text-white px-5 py-3 rounded-xl font-semibold"
+  style={{
+    background: "#16a34a",
+    color: "#fff",
+    border: "none",
+    padding: "12px 18px",
+    borderRadius: "12px",
+    fontWeight: 600,
+    cursor: "pointer",
+    width: isMobile ? "100%" : "auto",
+  }}
 >
   🗂️ Xuất hồ sơ
 </button>
@@ -253,8 +302,9 @@ return (
       <div
         style={{
           display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(250px, 1fr))",
+          gridTemplateColumns: isMobile
+                               ? "1fr"
+                               : "repeat(auto-fit, minmax(250px, 1fr))",
           gap: "20px",
         }}
       >

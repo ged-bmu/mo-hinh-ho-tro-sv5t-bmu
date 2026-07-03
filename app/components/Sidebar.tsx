@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 export default function Sidebar() {
+const [mobileMenu, setMobileMenu] = useState(false);
 const pathname = usePathname();
 if (pathname === "doi-mat-khau") {
   return null;
@@ -102,117 +103,178 @@ async function handleLogout() {
 await supabase.auth.signOut();
 window.location.href = "/introduce";
 }
+const [isMobile, setIsMobile] = useState(false);
 
-return (
-<aside
-style={{
-width: collapsed ? "80px" : "280px",
-transition: "0.3s",
-position: "relative",
-minHeight: "100vh",
-background: "white",
-borderRight: "1px solid #e5e7eb",
-padding: "20px",
-display: "flex",
-flexDirection: "column",
-}}
->
-{!collapsed && (
-  <h2
-  style={{
-    textAlign: "center",
-    fontSize: "22px",
-    fontWeight: "700",
-    color: "#1e3a8a",
-    marginTop: "10px",
-    marginBottom: "40px",
-  }}
->
-  ☰ Menu
-</h2>
+useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth <= 768);
+  };
+
+  checkMobile();
+
+  window.addEventListener("resize", checkMobile);
+
+  return () => window.removeEventListener("resize", checkMobile);
+}, []);
+// =======================
+// MOBILE
+// =======================
+if (isMobile) {
+  return (
+    <>
+ {mobileMenu && (
+  <div
+    className="mobile-menu-overlay"
+    onClick={() => setMobileMenu(false)}
+  >
+    <div
+      className="mobile-menu"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {menus.map((item) => (
+  <Link
+    key={item.href}
+    href={item.href}
+    onClick={() => setMobileMenu(false)}
+    className={pathname === item.href ? "active" : ""}
+  >
+    {item.icon} {item.name}
+  </Link>
+))}
+
+      <button onClick={handleLogout}>
+        🚪 Đăng xuất
+      </button>
+    </div>
+  </div>
 )}
 
-  <div
+      <nav className="mobile-bottom-nav">
+
+  {/* Menu */}
+  <button onClick={() => setMobileMenu(true)}>
+    ☰
+  </button>
+
+  {/* Trang chủ */}
+  <Link
+    href="/"
+    className={pathname === "/" ? "active" : ""}
+  >
+    <div>🏠</div>
+  </Link>
+
+  {/* Thông báo */}
+  <Link
+    href="/thongbaouser"
+    className={pathname === "/thongbaouser" ? "active" : ""}
+  >
+    <div>🔔</div>
+  </Link>
+
+</nav>
+    </>
+  );
+}
+
+// =======================
+// DESKTOP
+// =======================
+
+return (
+  <aside
+    className="sidebar desktop-sidebar"
     style={{
+      width: collapsed ? "80px" : "280px",
+      transition: "0.3s",
+      position: "relative",
+      minHeight: "100vh",
+      background: "#fff",
+      borderRight: "1px solid #e5e7eb",
+      padding: "20px",
       display: "flex",
       flexDirection: "column",
-      gap: "8px",
     }}
   >
-    {menus.map((item) => {
-      const active = pathname === item.href;
+    {!collapsed && (
+      <h2
+        style={{
+          textAlign: "center",
+          fontSize: 22,
+          fontWeight: 700,
+          color: "#1e3a8a",
+          marginBottom: 30,
+        }}
+      >
+        ☰ Menu
+      </h2>
+    )}
 
-      return (
-        <Link
-          key={item.href}
-          href={item.href}
-          style={{
-            padding: "12px 14px",
-            borderRadius: "12px",
-            textDecoration: "none",
-            fontSize: "17px",
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
+      {menus.map((item) => {
+        const active = pathname === item.href;
 
-            background: active
-              ? "#2563eb"
-              : "transparent",
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 12,
+              textDecoration: "none",
+              background: active ? "#2563eb" : "transparent",
+              color: active ? "#fff" : "#111",
+              fontWeight: active ? 600 : 400,
+            }}
+          >
+            {collapsed ? item.icon : `${item.icon} ${item.name}`}
+          </Link>
+        );
+      })}
+    </div>
 
-            color: active
-              ? "white"
-              : "#111827",
+    <div style={{ flex: 1 }} />
 
-            fontWeight: active
-              ? "600"
-              : "400",
+    <button
+      className="sidebar-collapse"
+      onClick={() => setCollapsed(!collapsed)}
+      style={{
+        position: "absolute",
+        right: -15,
+        top: "50%",
+        transform: "translateY(-50%)",
+        width: 30,
+        height: 30,
+        borderRadius: "50%",
+        border: "none",
+        background: "#b9b9b9",
+        color: "#fff",
+        cursor: "pointer",
+      }}
+    >
+      {collapsed ? "❯" : "❮"}
+    </button>
 
-            transition: "0.2s",
-          }}
-        >
-          {collapsed ? item.icon : `${item.icon} ${item.name}`}
-        </Link>
-      );
-    })}
-  </div>
-
-  <div style={{ flex: 1 }} />
-
-<button
-  onClick={() => setCollapsed(!collapsed)}
-  style={{
-    position: "absolute",
-    right: "-15px",
-    top: "50%",
-    transform: "translateY(-50%)",
-    width: "30px",
-    height: "30px",
-    borderRadius: "50%",
-    border: "none",
-    background: "#b9b9b9",
-    color: "white",
-    cursor: "pointer",
-    fontWeight: "bold",
-    zIndex: 100,
-  }}
->
-  {collapsed ? "❯" : "❮"}
-</button>
-
-<button
-  onClick={handleLogout}
-  style={{
-    border: "none",
-    background: "#ef4444",
-    color: "white",
-    padding: "14px",
-    borderRadius: "12px",
-    cursor: "pointer",
-    fontSize: "17px",
-    fontWeight: "600",
-  }}
->
-  {collapsed ? "🚪" : "🚪 Đăng xuất"}
-</button>
-</aside>
-
-
+    <button
+      onClick={handleLogout}
+      style={{
+        border: "none",
+        background: "#ef4444",
+        color: "#fff",
+        padding: 14,
+        borderRadius: 12,
+        cursor: "pointer",
+        fontWeight: 600,
+      }}
+    >
+      {collapsed ? "🚪" : "🚪 Đăng xuất"}
+    </button>
+  </aside>
 );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 type HeaderProps = {
   tab: string;
   setTab: (tab: string) => void;
@@ -11,63 +13,141 @@ export default function Header({
   setTab,
   openCriteria,
 }: HeaderProps) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   return (
     <header
+      className="header"
       style={{
         background: "#fff",
         padding: "14px 28px",
         borderBottom: "1px solid #eee",
       }}
     >
-      <div
-        style={{
-          maxWidth: "1400px",
-          margin: "0 auto",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <img
-          src="/logo-header.png"
-          alt="Logo"
-          style={{
-            height: 55,
-            cursor: "pointer",
-          }}
-          onClick={() => window.location.href = "/"}
-        />
-
- <img
-    src="/Tenhethong.png"
-    style={{
-      height: "48px",
-      objectFit: "contain",
-    }}
-  />
+      {isMobile ? (
         <div
-          style={{
-            display: "flex",
-            gap: 15,
-          }}
-        >
-                  <button
-            onClick={openCriteria}
+  className="header-container-mobile"
+  style={{
+    maxWidth: "1400px",
+    margin: "0 auto",
+  }}
+>
+          
+          <div
             style={{
-              padding: "10px 18px",
-              border: "none",
-              borderRadius: 12,
-              cursor: "pointer",
-              fontWeight: 600,
-              transition: ".2s",
-              background: "#0055ff",
-              color: "#ffffff",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            📑 Xem tiêu chí
-          </button>
+            <img
+              className="header-logo"
+              src="/logo-header.png"
+              alt="Logo"
+              style={{
+                height: 38,
+                cursor: "pointer",
+              }}
+              onClick={() => (window.location.href = "/")}
+            />
+
+            <button
+              className="header-btn"
+              onClick={openCriteria}
+              style={{
+                padding: "8px 10px",
+                border: "none",
+                borderRadius: 10,
+                cursor: "pointer",
+                fontWeight: 600,
+                background: "#0055ff",
+                color: "#fff",
+                fontSize: "12px",
+              }}
+            >
+              📑 Xem tiêu chí
+            </button>
+          </div>
+
+          {/* Hàng dưới */}
+          <img
+            className="header-title"
+            src="/Tenhethong.png"
+            alt="Tên hệ thống"
+            style={{
+              marginTop: 8,
+              width: 220,
+              height: "auto",
+            }}
+          />
         </div>
-      </div>
+      ) : (
+        <div
+          className="header-container"
+          style={{
+            maxWidth: "1400px",
+            margin: "0 auto",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <img
+            className="header-logo"
+            src="/logo-header.png"
+            alt="Logo"
+            style={{
+              height: 55,
+              cursor: "pointer",
+            }}
+            onClick={() => (window.location.href = "/")}
+          />
+
+          <img
+            className="header-title"
+            src="/Tenhethong.png"
+            alt="Tên hệ thống"
+            style={{
+              height: 48,
+              objectFit: "contain",
+            }}
+          />
+
+          <div
+            className="header-right"
+            style={{
+              display: "flex",
+              gap: 15,
+            }}
+          >
+            <button
+              className="header-btn"
+              onClick={openCriteria}
+              style={{
+                padding: "10px 18px",
+                border: "none",
+                borderRadius: 12,
+                cursor: "pointer",
+                fontWeight: 600,
+                transition: ".2s",
+                background: "#0055ff",
+                color: "#fff",
+              }}
+            >
+              📑 Xem tiêu chí
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
