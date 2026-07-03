@@ -164,13 +164,45 @@ if (isMobile) {
     <div>🏠</div>
   </Link>
 
-  {/* Thông báo */}
+{/* Đạo đức */}
   <Link
-    href="/thongbaouser"
-    className={pathname === "/thongbaouser" ? "active" : ""}
-  >
-    <div>🔔</div>
-  </Link>
+  href="/dao-duc"
+  className={pathname === "/dao-duc" ? "active" : ""}
+>
+  <div>❤️</div>
+</Link>
+
+{/* Học tập */}
+<Link
+  href="/hoc-tap"
+  className={pathname === "/hoc-tap" ? "active" : ""}
+>
+  <div>📚</div>
+</Link>
+
+{/* Thể lực */}
+<Link
+  href="/the-luc"
+  className={pathname === "/the-luc" ? "active" : ""}
+>
+  <div>💪</div>
+</Link>
+
+{/* Tình nguyện */}
+<Link
+  href="/tinh-nguyen"
+  className={pathname === "/tinh-nguyen" ? "active" : ""}
+>
+  <div>🤝</div>
+</Link>
+
+{/* Hội nhập */}
+<Link
+  href="/hoi-nhap"
+  className={pathname === "/hoi-nhap" ? "active" : ""}
+>
+  <div>🌏</div>
+</Link>
 
 </nav>
     </>
