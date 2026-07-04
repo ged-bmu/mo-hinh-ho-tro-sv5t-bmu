@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { LogOut } from "lucide-react";
 
 export default function Sidebar() {
 const [mobileMenu, setMobileMenu] = useState(false);
@@ -142,9 +143,22 @@ if (isMobile) {
   </Link>
 ))}
 
-      <button onClick={handleLogout}>
-        🚪 Đăng xuất
-      </button>
+     <button
+  onClick={handleLogout}
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    background: "#ef4444",
+    color: "#fff",
+  }}
+>
+  <LogOut
+    size={20}
+    style={{ transform: "scaleX(-1)" }}
+  />
+  <span>Đăng xuất</span>
+</button>
     </div>
   </div>
 )}
@@ -293,20 +307,27 @@ return (
       {collapsed ? "❯" : "❮"}
     </button>
 
-    <button
-      onClick={handleLogout}
-      style={{
-        border: "none",
-        background: "#ef4444",
-        color: "#fff",
-        padding: 14,
-        borderRadius: 12,
-        cursor: "pointer",
-        fontWeight: 600,
-      }}
-    >
-      {collapsed ? "🚪" : "🚪 Đăng xuất"}
-    </button>
+   <button
+  onClick={handleLogout}
+  style={{
+  border: "none",
+  background: "#ef4444",
+  color: "#fff",
+  padding: "14px 16px",
+  borderRadius: 12,
+  cursor: "pointer",
+  fontWeight: 600,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+}}
+>
+  <LogOut size={20}
+   style={{ transform: "scaleX(-1)" }}
+   />
+    {!collapsed && <span>Đăng xuất</span>}
+</button>
   </aside>
 );
 }
