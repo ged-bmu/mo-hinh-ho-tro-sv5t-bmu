@@ -6,13 +6,11 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { LogOut } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 
 export default function Sidebar() {
 const [mobileMenu, setMobileMenu] = useState(false);
 const pathname = usePathname();
-if (pathname === "doi-mat-khau") {
-  return null;
-}
 const [collapsed, setCollapsed] = useState(true);
 const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 useEffect(() => {
@@ -32,9 +30,6 @@ async function checkRole() {
     .eq("id", user.id)
     .single();
 
-  if (data?.role === "admin") {
-    setIsAdmin(true);
-  }
   if (data?.role === "admin") {
   setIsAdmin(true);
 } else {
@@ -233,34 +228,34 @@ return (
     style={{
       width: collapsed ? "80px" : "280px",
       transition: "0.3s",
-      position: "relative",
-      minHeight: "100vh",
+      height: "100vh",
+      position: "sticky",
+      top: 0,
       background: "#fff",
       borderRight: "1px solid #e5e7eb",
-      padding: "20px",
       display: "flex",
       flexDirection: "column",
+      zIndex: 1000
     }}
   >
-    {!collapsed && (
-      <h2
-        style={{
-          textAlign: "center",
-          fontSize: 22,
-          fontWeight: 700,
-          color: "#1e3a8a",
-          marginBottom: 30,
-        }}
-      >
-        ☰ Menu
-      </h2>
-    )}
+    {/* ================= HEADER ================= */}
+    <div style={{ padding: "20px 0", textAlign: "center", flexShrink: 0 }}>
+      {!collapsed && (
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#1e3a8a" }}>
+          ☰ Menu
+        </h2>
+      )}
+    </div>
 
+    {/* ================= MENU (SCROLL AREA) ================= */}
     <div
       style={{
+        flex: 1,
+        overflowY: "auto",
         display: "flex",
         flexDirection: "column",
         gap: 8,
+        padding: "0 10px",
       }}
     >
       {menus.map((item) => {
@@ -277,6 +272,8 @@ return (
               background: active ? "#2563eb" : "transparent",
               color: active ? "#fff" : "#111",
               fontWeight: active ? 600 : 400,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
             }}
           >
             {collapsed ? item.icon : `${item.icon} ${item.name}`}
@@ -285,48 +282,65 @@ return (
       })}
     </div>
 
-    <div style={{ flex: 1 }} />
-
-    <button
-      className="sidebar-collapse"
-      onClick={() => setCollapsed(!collapsed)}
-      style={{
-        position: "absolute",
-        right: -15,
-        top: "50%",
-        transform: "translateY(-50%)",
-        width: 30,
-        height: 30,
-        borderRadius: "50%",
-        border: "none",
-        background: "#b9b9b9",
-        color: "#fff",
-        cursor: "pointer",
-      }}
-    >
-      {collapsed ? "❯" : "❮"}
-    </button>
-
-   <button
-  onClick={handleLogout}
+    {/* ================= FOOTER (LOGOUT FIXED) ================= */}
+    <div
   style={{
-  border: "none",
-  background: "#ef4444",
-  color: "#fff",
-  padding: "14px 16px",
-  borderRadius: 12,
-  cursor: "pointer",
-  fontWeight: 600,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 8,
-}}
+    marginTop: "auto",
+    padding: "12px",
+    flexShrink: 0,
+  }}
 >
-  <LogOut size={20}
-   style={{ transform: "scaleX(-1)" }}
-   />
-    {!collapsed && <span>Đăng xuất</span>}
+      <button
+        onClick={handleLogout}
+        style={{
+          width: "100%",
+          border: "none",
+          background: "#ef4444",
+          color: "#fff",
+          padding: "14px 16px",
+          borderRadius: 12,
+          cursor: "pointer",
+          fontWeight: 600,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+        }}
+      >
+        <LogOut size={20} style={{ transform: "scaleX(-1)" }} />
+        {!collapsed && <span>Đăng xuất</span>}
+      </button>
+    </div>
+
+    {/* ================= TOGGLE (FLOAT FIXED FEEL) ================= */}
+    <button
+  onClick={() => setCollapsed(!collapsed)}
+  style={{
+    position: "absolute",
+    right: -15,
+    top: "50%",
+    transform: "translateY(-50%)",
+    width: 34,
+    height: 34,
+    borderRadius: "50%",
+    border: "none",
+    background: "#858585",
+    color: "#fff",
+    cursor: "pointer",
+    zIndex: 10,
+    fontSize: 18,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  }}
+>
+  <ChevronLeft
+  size={18}
+  style={{
+    transform: collapsed ? "rotate(180deg)" : "rotate(0deg)",
+    transition: "0.3s",
+  }}
+/>
 </button>
   </aside>
 );

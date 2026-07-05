@@ -13,8 +13,8 @@ export default function UuTienPage() {
   const [files, setFiles] = useState<any[]>([]);
   const [userId, setUserId] = useState("");
   const [dragging, setDragging] = useState(false);
-   const [showCriteria,setShowCriteria]=useState(false);
-    const [tab, setTab] = useState("proof");
+  const [showCriteria,setShowCriteria]=useState(false);
+  const [tab, setTab] = useState("proof");
   const [displayNames, setDisplayNames] = useState<
   Record<string, string>
 >({});

@@ -3,11 +3,17 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import Sidebar from "../components/Sidebar";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import CriteriaModal from "../components/CriteriaModal";
 
 export default function DoiMatKhauPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showCriteria,setShowCriteria]=useState(false);
+  const [tab, setTab] = useState("proof");
   const [isAdmin, setIsAdmin] = useState(false);
+  
 
   useEffect(() => {
   checkRole();
@@ -72,14 +78,34 @@ if (data?.role === "admin") {
   }
 
   return (
-    <div
-      style={{
-        display: isAdmin ? "block" : "flex",
-        minHeight: "100vh",
-      }}
-    >
-      {!isAdmin && <Sidebar />}
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+        
+          <Header
+            tab={tab}
+            setTab={setTab}
+            openCriteria={() => setShowCriteria(true)}
+          />
+   
+          <div
+            style={{
+              display: "flex",
+              flex: 1,
+            }}
+          >
+        
+            <Sidebar />
 
+    {/* BODY */}
+    <div style={{ flex: 1, display: "flex" }}>
+      
+    
+      
       <main
         style={{
           flex: 1,
@@ -95,6 +121,7 @@ if (data?.role === "admin") {
             padding: "30px",
             borderRadius: "16px",
             boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+           
           }}
         >
           <h1 style={{ marginBottom: "25px" }}>
@@ -103,13 +130,10 @@ if (data?.role === "admin") {
 
           <div style={{ marginBottom: "15px" }}>
             <label>Mật khẩu mới</label>
-
             <input
               type="password"
               value={password}
-              onChange={(e) =>
-                setPassword(e.target.value)
-              }
+              onChange={(e) => setPassword(e.target.value)}
               style={{
                 width: "100%",
                 padding: "12px",
@@ -122,13 +146,10 @@ if (data?.role === "admin") {
 
           <div style={{ marginBottom: "20px" }}>
             <label>Xác nhận mật khẩu</label>
-
             <input
               type="password"
               value={confirm}
-              onChange={(e) =>
-                setConfirm(e.target.value)
-              }
+              onChange={(e) => setConfirm(e.target.value)}
               style={{
                 width: "100%",
                 padding: "12px",
@@ -148,6 +169,7 @@ if (data?.role === "admin") {
               padding: "12px 20px",
               borderRadius: "8px",
               cursor: "pointer",
+              width: "100%",
             }}
           >
             Lưu mật khẩu mới
@@ -155,5 +177,9 @@ if (data?.role === "admin") {
         </div>
       </main>
     </div>
-  );
+</div>
+    {/* FOOTER */}
+    <Footer />
+  </div>
+);
 }
