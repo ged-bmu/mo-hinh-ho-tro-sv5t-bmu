@@ -8,12 +8,13 @@ import CriteriaModal from "../components/CriteriaModal";
 import BellUserTemp from "../components/BellUserTemp";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import Spinner from "../components/Spinner";
 
 export default function BaoCaoPage() {
 const [profile, setProfile] = useState<any>(null);
 const [loading, setLoading] = useState(true);
- const [showCriteria,setShowCriteria]=useState(false);
-   const [tab, setTab] = useState("proof");
+const [showCriteria,setShowCriteria]=useState(false);
+const [tab, setTab] = useState("proof");
 const [displayNames, setDisplayNames] =
   useState<Record<string, string>>(
     {}
@@ -255,8 +256,17 @@ return (
     }}
   >
     {loading ? (
-      <div>Đang tải...</div>
-    ) : (
+  <div
+    style={{
+      minHeight: "300px",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+    }}
+  >
+    <Spinner />
+  </div>
+) : (
       <div
         style={{
           maxWidth: "900px",
@@ -438,9 +448,14 @@ return (
       </div>
     )}       
   </main>
-                     </div>
-                   <Footer />
-                 </div>
-                 );
-               }
+</div>
+                   {showCriteria && (
+                   <CriteriaModal
+                     onClose={() => setShowCriteria(false)}
+             />
+      )}
+   <Footer />
+    </div>
+);
+}
                        

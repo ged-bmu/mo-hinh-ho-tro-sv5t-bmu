@@ -178,7 +178,11 @@ if (data?.role === "admin") {
       </main>
     </div>
 </div>
-    {/* FOOTER */}
+     {showCriteria && (
+      <CriteriaModal
+        onClose={() => setShowCriteria(false)}
+      />
+    )}
     <Footer />
   </div>
 );

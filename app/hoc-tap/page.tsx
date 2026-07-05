@@ -379,6 +379,11 @@ await supabase
                 </div>
               </main>
             </div>
+             {showCriteria && (
+              <CriteriaModal
+                onClose={() => setShowCriteria(false)}
+              />
+            )}
             <Footer />
             </div>
           );

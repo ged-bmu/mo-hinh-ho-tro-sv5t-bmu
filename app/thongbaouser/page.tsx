@@ -287,6 +287,11 @@ export default function ThongBaoUser() {
         </div>
       </main>
     </div>
+     {showCriteria && (
+      <CriteriaModal
+        onClose={() => setShowCriteria(false)}
+      />
+    )}
                 <Footer />
               </div>
               );

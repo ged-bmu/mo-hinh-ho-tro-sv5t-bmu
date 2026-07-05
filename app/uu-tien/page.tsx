@@ -379,6 +379,11 @@ await fetch("/api/cleanup-logs", {
                        </main>
                      </div>
                    <Footer />
+                    {showCriteria && (
+                     <CriteriaModal
+                       onClose={() => setShowCriteria(false)}
+                     />
+                   )}
                  </div>
                  );
                }

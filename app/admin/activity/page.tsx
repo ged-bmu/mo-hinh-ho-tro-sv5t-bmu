@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 import Link from "next/link";
+import Spinner from "../../components/Spinner";
 
 export default function ActivityPage() {
   const [logs, setLogs] = useState<any[]>([]);
@@ -266,11 +267,18 @@ export default function ActivityPage() {
         </select>
       </div>
 
-      {loading && (
-        <div>
-          Đang tải...
-        </div>
-      )}
+     {loading && (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      minHeight: "200px",
+    }}
+  >
+    <Spinner />
+  </div>
+)}
 
       {!loading && (
         <div

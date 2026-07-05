@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { sendNotification } from "@/lib/notification";
+import Spinner from "../../components/Spinner";
 
 type Criteria = {
   id: number;
@@ -91,17 +92,19 @@ if (students) {
   }
 
   if (loading) {
-    return (
-      <div
-        style={{
-          padding: 40,
-          textAlign: "center",
-        }}
-      >
-        Đang tải...
-      </div>
-    );
-  }
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Spinner />
+    </div>
+  );
+}
 
   return (
     <div
@@ -161,21 +164,23 @@ if (students) {
     </p>
   </div>
 
-  <button
-    onClick={saveAll}
-    style={{
-      padding: "14px 26px",
-      borderRadius: 12,
-      background: "#2563eb",
-      color: "#fff",
-      border: "none",
-      cursor: "pointer",
-      fontWeight: 700,
-      fontSize: 15,
-    }}
-  >
-    💾 Lưu tất cả
-  </button>
+ <button
+  onClick={saveAll}
+  disabled={saving}
+  style={{
+    padding: "14px 26px",
+    borderRadius: 12,
+    background: "#2563eb",
+    color: "#fff",
+    border: "none",
+    cursor: saving ? "not-allowed" : "pointer",
+    fontWeight: 700,
+    fontSize: 15,
+    opacity: saving ? 0.7 : 1,
+  }}
+>
+  {saving ? "Đang lưu..." : "💾 Lưu tất cả"}
+</button>
 </div>
 
       <div

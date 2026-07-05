@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import Sidebar from "./components/Sidebar";
@@ -9,53 +8,55 @@ import Image from "next/image";
 import CriteriaModal from "./components/CriteriaModal";
 import BellUserTemp from "./components/BellUserTemp";
 import Header from "./components/Header";
+import Spinner from "./components/Spinner";
 
 export default function Home() {
-    const [profile, setProfile] = useState<any>(null);
-    const [tab, setTab] = useState("proof");
-    const [loading, setLoading] = useState(true);
-    const [isMobile, setIsMobile] = useState(false);
-    const [showCriteria,setShowCriteria]=useState(false);
-useEffect(() => {
-checkUser();
-}, []);
-useEffect(() => {
-  checkUser();
-  loadProfile();
-}, []);
-useEffect(() => {
-  const checkMobile = () => {
-    setIsMobile(window.innerWidth <= 768);
-  };
+  const [profile, setProfile] = useState<any>(null);
+  const [tab, setTab] = useState("proof");
+  const [loading, setLoading] = useState(true);
 
-  checkMobile();
+  const [isMobile, setIsMobile] = useState(false);
+  const [showCriteria, setShowCriteria] = useState(false);
 
-  window.addEventListener("resize", checkMobile);
+  useEffect(() => {
+    checkUser();
+    loadProfile();
+  }, []);
 
-  return () => {
-    window.removeEventListener("resize", checkMobile);
-  };
-}, []);
-async function checkUser() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
 
-  if (!user) {
-    window.location.href = "/introduce";
-    return;
-  }
+    checkMobile();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+    window.addEventListener("resize", checkMobile);
 
-  if (profile?.role === "admin") {
-    window.location.href = "/admin";
-    return;
-  }
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+    };
+  }, []);
+
+  async function checkUser() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      window.location.href = "/introduce";
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.role === "admin") {
+      window.location.href = "/admin";
+      return;
+    }
 
   setLoading(false);
 }
@@ -118,17 +119,19 @@ if (data) {
 }
 }
 if (loading) {
-return (
-<div
-style={{
-minHeight: "100vh",
-display: "flex",
-justifyContent: "center",
-alignItems: "center",
-}}
->
-Đang tải... </div>
-);
+  
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Spinner />
+    </div>
+  );
 }
 
 return (
