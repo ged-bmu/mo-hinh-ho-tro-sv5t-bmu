@@ -6,6 +6,15 @@ import Link from "next/link";
 
 export default function BellUserTemp() {
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+  const check = () => setIsMobile(window.innerWidth <= 768);
+
+  check();
+  window.addEventListener("resize", check);
+
+  return () => window.removeEventListener("resize", check);
+}, []);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
 
@@ -75,17 +84,17 @@ export default function BellUserTemp() {
           }
         }}
         style={{
-          width: 50,
-          height: 50,
+          width: isMobile ? 32 : 50,
+          height: isMobile ? 32 : 50,
           borderRadius: 12,
           border: "none",
           background: "#fff",
           boxShadow: "0 3px 10px rgba(0,0,0,.15)",
           cursor: "pointer",
-          fontSize: 22,
+          fontSize: isMobile ? 16 : 22,
         }}
       >
-        🔔
+       🔔
       </button>
 
       {unreadCount > 0 && (

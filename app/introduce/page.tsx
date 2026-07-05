@@ -8,7 +8,18 @@ import { supabase } from "@/lib/supabase";
 
 export default function IntroducePage() {
  const [tab, setTab] = useState("home");
- const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
+ const [isMobile, setIsMobile] = useState(false);
+
+useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth <= 768);
+  };
+
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+
+  return () => window.removeEventListener("resize", checkMobile);
+}, []);
  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
  const [criteria, setCriteria] = useState<any[]>([]);
 
