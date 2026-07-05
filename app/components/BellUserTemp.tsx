@@ -143,6 +143,12 @@ export default function BellUserTemp() {
             Thông báo
           </div>
 
+<div
+  style={{
+    maxHeight: 320,
+    overflowY: "auto",
+  }}
+>
           {notifications.length === 0 ? (
             <div
               style={{
@@ -193,7 +199,7 @@ export default function BellUserTemp() {
               </div>
             ))
           )}
-
+</div>
           <Link
             href="/thongbaouser"
             style={{

@@ -83,7 +83,7 @@ async function updateCriteria(
     id,
     "criteria",
     value
-      ? "Bạn vừa đạt một tiêu chí mới 🎉"
+      ? "Bạn vừa Đạt tiêu chí mới 🎉"
       : "Tiêu chí của bạn vừa được cập nhật",
     value
       ? `Tiêu chí ${titleMap[field]} đã được xác nhận đạt.`

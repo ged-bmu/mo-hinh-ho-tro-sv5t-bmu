@@ -12,13 +12,28 @@ import Sidebar from "../components/Sidebar";
 export default function ThongBaoUser() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
- const [showCriteria,setShowCriteria]=useState(false);
-    const [tab, setTab] = useState("proof");
+  const [showCriteria,setShowCriteria]=useState(false);
+  const [tab, setTab] = useState("proof");
   const [keyword, setKeyword] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth <= 768);
+  };
+
+  checkMobile();
+
+  window.addEventListener("resize", checkMobile);
+
+  return () => {
+    window.removeEventListener("resize", checkMobile);
+  };
+}, []);
   const [typeFilter, setTypeFilter] = useState("all");
 
   useEffect(() => {
     loadNotifications();
+    
   }, []);
 
   async function loadNotifications() {
@@ -78,13 +93,13 @@ export default function ThongBaoUser() {
       <main
         style={{
           flex: 1,
-          padding: "25px 30px",
+           padding: isMobile ? 16 : "25px 30px",
         }}
       >
         <h1
           style={{
-            fontSize: "24px",
-            marginBottom: 18,
+            fontSize:isMobile ? 22 : 24,
+            marginBottom: isMobile ? 12 : 18,
           }}
         >
           🔔 <b>Nhật ký thông báo</b>
@@ -94,8 +109,8 @@ export default function ThongBaoUser() {
           href="/"
           style={{
             display: "inline-block",
-            marginBottom: 18,
-            padding: "12px 20px",
+            marginBottom: isMobile ? 10 : 18,
+            padding:isMobile ? "10px 14px" : "12px 20px",
             border: "1px solid #ddd",
             borderRadius: 12,
             background: "#fff",
@@ -110,8 +125,9 @@ export default function ThongBaoUser() {
         <div
           style={{
             display: "flex",
+            flexDirection: isMobile ? "column" : "row",
             gap: 12,
-            marginBottom: 20,
+            marginBottom: isMobile ? 12 : 20,
           }}
         >
           <input
@@ -120,16 +136,25 @@ export default function ThongBaoUser() {
             onChange={(e) => setKeyword(e.target.value)}
             style={{
               flex: 1,
-              padding: 15,
+              width: "100%",
+              padding: isMobile ? "11px 14px" : 15,
               borderRadius: 12,
               border: "1px solid #ddd",
               fontSize: 15,
             }}
           />
 
-       <select
+<select
   value={typeFilter}
   onChange={(e) => setTypeFilter(e.target.value)}
+  style={{
+    width: isMobile ? "100%" : 220,
+    padding: isMobile ? "10px 14px" : "14px",
+    borderRadius: 12,
+    border: "1px solid #ddd",
+    fontSize: isMobile ? 15 : 16,
+    height: isMobile ? 38 : 54,
+  }}
 >
   <option value="all">Tất cả</option>
 
@@ -149,11 +174,13 @@ export default function ThongBaoUser() {
 
         <div
           style={{
+            marginTop: isMobile ? 6 : 0,
             background: "#fff",
             borderRadius: 16,
             overflow: "hidden",
-            boxShadow:
-              "0 5px 20px rgba(0,0,0,.06)",
+            WebkitOverflowScrolling:"touch",
+            boxShadow:"0 5px 20px rgba(0,0,0,.06)"
+              
           }}
         >
           <table
@@ -165,13 +192,14 @@ export default function ThongBaoUser() {
             <thead
               style={{
                 background: "#dcecff",
+                padding: isMobile ? "10px 8px" : "18px",
+                fontSize: isMobile ? "14px" : 18,
               }}
             >
               <tr>
                 <th style={th}>Tiêu đề</th>
                 <th style={th}>Loại</th>
                 <th style={th}>Thời gian</th>
-                <th style={th}>Trạng thái</th>
               </tr>
             </thead>
 
@@ -206,7 +234,7 @@ export default function ThongBaoUser() {
                       <div
                         style={{
                           fontWeight: 600,
-                          marginBottom: 6,
+                          marginBottom: isMobile ? 3 : 6,
                         }}
                       >
                         {item.title}
@@ -237,29 +265,7 @@ export default function ThongBaoUser() {
                         item.created_at
                       ).toLocaleString("vi-VN")}
                     </td>
-
-                    <td style={td}>
-                      {item.is_read ? (
-                        <span
-                          style={{
-                            color: "#16a34a",
-                            fontWeight: 600,
-                          }}
-                        >
-                          Đã đọc
-                        </span>
-                      ) : (
-                        <span
-                          style={{
-                            color: "#2563eb",
-                            fontWeight: 600,
-                          }}
-                        >
-                          Chưa đọc
-                        </span>
-                      )}
-                      </td>
-                    </tr>
+                  </tr>
                 ))}
 
               {!loading &&
