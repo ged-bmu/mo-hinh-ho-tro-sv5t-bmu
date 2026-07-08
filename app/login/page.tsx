@@ -1,11 +1,23 @@
 "use client";
 
-import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 import Footer from "../components/Footer";
+import { useEffect, useState } from "react";
 
 export default function LoginPage() {
   const [mssv, setMssv] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+
+useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth <= 768);
+  };
+
+  checkMobile(); // kiểm tra lần đầu
+  window.addEventListener("resize", checkMobile);
+
+  return () => window.removeEventListener("resize", checkMobile);
+}, []);
   const [password, setPassword] = useState("");
 
  async function handleLogin() {
@@ -60,65 +72,77 @@ export default function LoginPage() {
     >
       <div
         style={{
-          width: "520px",
+          width: "min(92vw, 480px)",
           background: "white",
           padding: "30px",
           borderRadius: "16px",
           boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
         }}
       >
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: "25px",
-          }}
-        >
-          <img
-            src="/logo-header.png"
-            alt="Logo BMU"
-            style={{
-              width: "250px",
-              height: "100px",
-              objectFit: "contain",
-              display: "block",
-              margin: "0 auto 15px",
-            }}
-          />
+       <div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "15px",
+    marginBottom: "12px",
+  }}
+>
+ <img
+  src="/logo-header.png"
+  style={{
+    width: "min(220px, 65vw)",
+    height: "auto",
+  }}
+/>
 
-          <h1
-            style={{
-              fontSize: "20px",
-              fontWeight: "700",
-              lineHeight: "1.4",
-              marginBottom: "10px",
-            }}
-          >
-            CÂU LẠC BỘ SINH VIÊN 5 TỐT
-            <br />
-            TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT
-          </h1>
+<img
+  src="/Tenhethong.png"
+  style={{
+    width: "min(360px, 82vw)",
+    height: "auto",
+  }}
+/>
 
-          <div
-            style={{
-              fontSize: "16px",
-              color: "#64748b",
-              lineHeight: "1.5",
-            }}
-          >
-            MÔ HÌNH HỖ TRỢ SINH VIÊN PHẤN ĐẤU
-            <br />
-            ĐẠT DANH HIỆU SINH VIÊN 5 TỐT CÁC CẤP
-          </div>
-
-          <div
-            style={{
-              marginTop: "15px",
-              fontSize: "20px",
-              fontWeight: "600",
-            }}
-          >
-            🔐 ĐĂNG NHẬP
-          </div>
+<div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+    gap: "14px",
+  }}
+>
+  
+  <div
+    style={{
+      fontSize: isMobile ? "13px" : "16px",
+      fontWeight: "700",
+      lineHeight: "1.5",
+      color: "#1e293b",
+      marginTop: "30px",
+    }}
+  >
+    CÂU LẠC BỘ SINH VIÊN 5 TỐT
+    <br />
+    TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT
+  </div>
+  <div
+    style={{
+      marginTop: "8px",
+      fontSize: "20px",
+      fontWeight: "700",
+      color: "#4168bb",
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+    }}
+  >
+    <span>🔐</span>
+    <span>ĐĂNG NHẬP</span>
+  </div>
+</div>
         </div>
 <form
   onSubmit={(e) => {

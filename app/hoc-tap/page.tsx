@@ -305,7 +305,23 @@ await fetch("/api/cleanup-logs", {
   }}
 >
   <h3 style={{ marginTop: 0 }}>📝 Nhập Báo cáo Tiêu chí học tập tốt</h3>
-
+ {lastSaved && (
+    <span
+      style={{
+        fontSize: "12px",
+        color: "#6e6c6c",
+      }}
+    >
+      Cập nhật:{" "}
+{lastSaved.toLocaleString("vi-VN", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+})}
+    </span>
+  )}
 <ReportEditor
   value={report}
   onChange={setReport}
@@ -318,22 +334,22 @@ await fetch("/api/cleanup-logs", {
     marginTop: "16px",
   }}
 >
-<button
-  onClick={saveReport}
-  disabled={savingReport}
-  style={{
-    padding: "6px 14px",
-    background: "#2563eb",
-    color: "#fff",
-    border: "1px solid #2563eb",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "14px",
-    fontWeight: 500,
-  }}
->
-  {savingReport ? "Đang lưu..." : <b>💾 Lưu</b>}
-</button>
+  <button
+    onClick={saveReport}
+    disabled={savingReport}
+    style={{
+      padding: "6px 14px",
+      background: "#2563eb",
+      color: "#fff",
+      border: "1px solid #2563eb",
+      borderRadius: "6px",
+      cursor: "pointer",
+      fontSize: "14px",
+      fontWeight: 500,
+    }}
+  >
+    {savingReport ? "Đang lưu..." : <b>💾 Lưu</b>}
+  </button>
 </div>
 </div>
           <div
