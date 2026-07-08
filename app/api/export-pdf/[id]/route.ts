@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 
+export const runtime = "nodejs";
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -162,14 +164,11 @@ Thông tin sinh viên
 </html>
 `;
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-      ],
-    });
-
+ const browser = await puppeteer.launch({
+  args: chromium.args,
+  executablePath: await chromium.executablePath(),
+  headless: true,
+});
     const page = await browser.newPage();
 
     await page.setContent(reportHTML, {
