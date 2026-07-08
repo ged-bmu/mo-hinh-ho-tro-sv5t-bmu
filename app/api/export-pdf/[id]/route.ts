@@ -181,6 +181,7 @@ const pdf = await page.pdf({
   printBackground: true,
   preferCSSPageSize: true,
 });
+await browser.close();
 
 const buffer = Buffer.from(pdf);
 
@@ -190,10 +191,10 @@ return new NextResponse(buffer, {
     "Content-Disposition": 'attachment; filename="Bao-cao-SV5T.pdf"',
   },
 });
-  } catch (err) {
-    console.error(err);
+} catch (err) {
+  console.error("EXPORT PDF ERROR:", err);
 
-    return NextResponse.json(
+  return NextResponse.json(
       {
         success: false,
         error: String(err),
