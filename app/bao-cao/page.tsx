@@ -10,6 +10,19 @@ import Spinner from "../components/Spinner";
 import { FaFilePdf } from "react-icons/fa";
 
 export default function BaoCaoPage() {
+  const [isMobile, setIsMobile] = useState(false);
+
+useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth <= 768);
+  };
+
+  checkMobile();
+
+  window.addEventListener("resize", checkMobile);
+
+  return () => window.removeEventListener("resize", checkMobile);
+}, []);
   const [profile, setProfile] = useState<any>(null);
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -190,7 +203,9 @@ return (
   style={{
     background: "#fff",
     borderRadius: "20px",
-    padding: "24px 28px",
+    padding: "16px",
+    overflow: "hidden",
+    width: "100%",
     maxWidth: "1600px",
     margin: "0 auto",
     boxShadow: "0 12px 40px rgba(0,0,0,.08)",
@@ -276,10 +291,15 @@ return (
                     }}
                   />
                 </div>
-
+<div
+  style={{
+    width: "100%",
+     overflowX: isMobile ? "scroll" : "hidden",
+  }}
+>
                 <table
                   style={{
-                    width: "100%",
+                    width: isMobile ? "900px" : "100%",
                     tableLayout: "fixed",
                     borderCollapse: "collapse",
                   }}
@@ -288,7 +308,7 @@ return (
                     <tr>
                       <th
                         style={{
-                          width: "280px",
+                          width: isMobile ? "250px" : "280px",
                           border:
                             "1px solid #cbd5e1",
                           background:
@@ -414,6 +434,7 @@ return (
           </tr>
          </tbody>
         </table>
+        </div>
       </div>
     </div>
     )}
