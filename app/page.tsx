@@ -280,7 +280,7 @@ return (
     width: isMobile ? "100%" : "auto",
   }}
 >
-  📑 Gửi báo cáo
+  📑 Xem báo cáo
 </a>
   
   <button

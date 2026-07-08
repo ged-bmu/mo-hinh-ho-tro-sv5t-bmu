@@ -8,16 +8,18 @@ import CriteriaModal from "../components/CriteriaModal";
 import BellUserTemp from "../components/BellUserTemp";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import ReportEditor from "../components/ReportEditor";
 
 export default function HocTapPage() {
   const [files, setFiles] = useState<any[]>([]);
   const [userId, setUserId] = useState("");
   const [dragging, setDragging] = useState(false);
   const [showCriteria,setShowCriteria]=useState(false);
-   const [tab, setTab] = useState("proof");
-  const [displayNames, setDisplayNames] = useState<
-  Record<string, string>
->({});
+  const [tab, setTab] = useState("proof");
+  const [displayNames, setDisplayNames] = useState<  Record<string, string>>({});
+  const [report, setReport] = useState("");
+  const [savingReport, setSavingReport] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   useEffect(() => {
     loadFiles();
@@ -61,7 +63,45 @@ export default function HocTapPage() {
     });
 
     setDisplayNames(map);
+    const { data: reportData } = await supabase
+  .from("reports")
+  .select("content")
+  .eq("user_id", user.id)
+  .eq("criteria", "hoc-tap")
+  .maybeSingle();
+
+setReport(reportData?.content ?? "");
   }
+}
+async function saveReport() {
+  if (!userId) return;
+
+  setSavingReport(true);
+
+  const { error } = await supabase
+  .from("reports")
+  .upsert(
+    {
+      user_id: userId,
+      criteria: "hoc-tap",
+      content: report,
+      updated_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "user_id,criteria",
+    }
+  );
+
+  setSavingReport(false);
+
+if (error) {
+  console.error(error);
+  setSavingReport(false);
+  return;
+}
+
+setSavingReport(false);
+setLastSaved(new Date());
 }
 async function uploadFile(file: File) {
   const {
@@ -104,6 +144,7 @@ const { data, error: insertError } = await supabase
 
 console.log("INSERT DATA:", data);
 console.log("INSERT ERROR:", insertError);
+
 const { data: profile } = await supabase
   .from("profiles")
   .select("ho_ten, lop")
@@ -122,9 +163,10 @@ await supabase
     target_folder: "hoc-tap",
     target_file: file.name,
   });
-await fetch("/api/cleanup-logs", {
+  await fetch("/api/cleanup-logs", {
   method: "POST",
 });
+
   loadFiles();
 }
 async function handleUpload(
@@ -171,12 +213,11 @@ await fetch("/api/cleanup-logs", {
     loadFiles();
   }
   async function renameFile(file: any) {
-  const newName = prompt(
-    "Nhập tên mới:",
-    file.display_name
-  );
-
-  if (!newName) return;
+  const ext = file.name.slice(file.name.lastIndexOf("."));
+  const currentName = (file.display_name || file.name).replace(/\.[^/.]+$/, "");
+  const input = prompt("Nhập tên mới:", currentName);
+      if (!input) return;
+  const newName = input.trim() + ext;
 
   await supabase
     .from("uploaded_files")
@@ -184,8 +225,7 @@ await fetch("/api/cleanup-logs", {
       display_name: newName,
     })
     .eq("storage_name", file.storage_name || file.name)
-    
-     const {
+    const {
   data: { user },
 } = await supabase.auth.getUser();
 
@@ -207,36 +247,36 @@ await supabase
     target_folder: "hoc-tap",
     target_file: newName,
   });
-  await fetch("/api/cleanup-logs", {
+await fetch("/api/cleanup-logs", {
   method: "POST",
 });
   loadFiles();
 }
 
-   return (
+  return (
+  <div
+    style={{
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column",
+    }}
+  >
+  
+  
+    <Header
+      tab={tab}
+      setTab={setTab}
+      openCriteria={() => setShowCriteria(true)}
+    />
+
     <div
       style={{
-        minHeight: "100vh",
         display: "flex",
-        flexDirection: "column",
+        flex: 1,
       }}
     >
-    
-      {/* Header luôn nằm trên cùng */}
-      <Header
-        tab={tab}
-        setTab={setTab}
-        openCriteria={() => setShowCriteria(true)}
-      />
-      
-      <div
-        style={{
-          display: "flex",
-          flex: 1,
-        }}
-      >
-    
-        <Sidebar />
+  
+      <Sidebar />
 
       <main
         style={{
@@ -255,7 +295,47 @@ await supabase
           >
              📚 Học tập tốt
           </h1>
+<div
+  style={{
+    background: "white",
+    padding: "10px",
+    borderRadius: "16px",
+    marginBottom: "10px",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+  }}
+>
+  <h3 style={{ marginTop: 0 }}>📝 Nhập Báo cáo Tiêu chí học tập tốt</h3>
 
+<ReportEditor
+  value={report}
+  onChange={setReport}
+/>
+<div
+  style={{
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginTop: "16px",
+  }}
+>
+<button
+  onClick={saveReport}
+  disabled={savingReport}
+  style={{
+    padding: "6px 14px",
+    background: "#2563eb",
+    color: "#fff",
+    border: "1px solid #2563eb",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: 500,
+  }}
+>
+  {savingReport ? "Đang lưu..." : <b>💾 Lưu</b>}
+</button>
+</div>
+</div>
           <div
             style={{
               background: "white",
@@ -376,15 +456,15 @@ await supabase
     />
   );
 })}
-                </div>
-              </main>
-            </div>
-             {showCriteria && (
-              <CriteriaModal
-                onClose={() => setShowCriteria(false)}
-              />
-            )}
-            <Footer />
-            </div>
-          );
-        }
+        </div>
+      </main>
+    </div>
+     {showCriteria && (
+      <CriteriaModal
+        onClose={() => setShowCriteria(false)}
+      />
+    )}
+    <Footer />
+    </div>
+  );
+}

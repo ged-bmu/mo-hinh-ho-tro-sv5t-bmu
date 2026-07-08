@@ -4,8 +4,15 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 import { sendNotification } from "@/lib/notification";
+import { createPortal } from "react-dom";
+import { FaFilePdf } from "react-icons/fa";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import Spinner from "../../../components/Spinner";
 
 export default function StudentsDetailPage() {
+  const [reports, setReports] = useState<any[]>([]);
+  const [reportRef, setReportRef] = useState<HTMLDivElement | null>(null);
   const params = useParams();
   const id = params.id as string;
   const [profile, setProfile] = useState<any>(null);
@@ -19,11 +26,20 @@ export default function StudentsDetailPage() {
   const [baoCaoFiles, setBaoCaoFiles] = useState<any[]>([]);
   const [trangThai, setTrangThai] = useState("");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const [menuPos, setMenuPos] = useState({
-  top: 0,
-  left: 0,
-});
-  const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState({top: 0,left: 0,});
+  const [previewFolder, setPreviewFolder] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<any>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [reportOpen, setReportOpen] = useState(false);
+  const criteriaList = [
+  { key: "dao-duc", title: "❤️ Đạo đức tốt" },
+  { key: "hoc-tap", title: "📚 Học tập tốt" },
+  { key: "the-luc", title: "💪 Thể lực tốt" },
+  { key: "tinh-nguyen", title: "🤝 Tình nguyện tốt" },
+  { key: "hoi-nhap", title: "🌍 Hội nhập tốt" },
+   { key: "uu-tien", title: "⭐ Thành tích khác" },
+];
   const [displayNames, setDisplayNames] = useState<
   Record<string, string>
 >({});
@@ -33,8 +49,25 @@ export default function StudentsDetailPage() {
 
     loadStudent();
     loadFiles();
+    loadReports();
   }, [id]);
+async function loadReports() {
+  console.log("ĐANG LOAD REPORT VỚI ID:", id);
 
+  const { data, error } = await supabase
+    .from("reports")
+    .select("*")
+    .eq("user_id", id);
+
+  console.log("DATA REPORT:", data);
+  console.log("ERROR REPORT:", error);
+
+  if (error) {
+    return;
+  }
+
+  setReports(data || []);
+}
   async function loadStudent() {
     const { data, error } = await supabase
       .from("profiles")
@@ -54,12 +87,13 @@ async function updateCriteria(
   field: string,
   value: boolean
 ) {
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      [field]: value,
-    })
-    .eq("id", id);
+const { error } = await supabase
+  .from("profiles")
+  .update({
+    nhan_xet: nhanXet,
+    ngay_nhan_xet: new Date().toISOString(),
+  })
+  .eq("id", id);
 
   if (error) {
     alert("Cập nhật thất bại");
@@ -166,7 +200,7 @@ if (uploadedFiles) {
   function renderFiles(
     files: any[],
     folder: string
-  ) {
+  ) { 
     if (files.length === 0) {
       return (
         <div
@@ -185,16 +219,39 @@ if (uploadedFiles) {
         process.env
           .NEXT_PUBLIC_SUPABASE_URL +
         `/storage/v1/object/public/Ho%20so%20SV5T/${id}/${folder}/${file.name}`;
-const baoCao =
-  baoCaoFiles.length > 0
-    ? baoCaoFiles[0]
-    : null;
+async function exportReportPDF() {
+  if (!reportRef) return;
 
-const baoCaoUrl = baoCao
-  ? process.env
-      .NEXT_PUBLIC_SUPABASE_URL +
-    `/storage/v1/object/public/Ho%20so%20SV5T/${id}/bao-cao/${baoCao.name}`
-  : "";
+  const canvas = await html2canvas(reportRef, {
+    scale: 2,
+    useCORS: true,
+  });
+
+  const imgData = canvas.toDataURL("image/png");
+
+  const pdf = new jsPDF({
+    orientation: "landscape",
+    unit: "mm",
+    format: "a4",
+  });
+
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight =
+    (canvas.height * pdfWidth) / canvas.width;
+
+  pdf.addImage(
+    imgData,
+    "PNG",
+    0,
+    0,
+    pdfWidth,
+    pdfHeight
+  );
+
+  pdf.save(
+    `Bao-cao-SV5T-${profile?.ho_ten}.pdf`
+  );
+}
       return (
   <div
     key={file.name}
@@ -281,7 +338,14 @@ const baoCaoUrl = baoCao
     </div>
 
 <div
-  onClick={() => setSelectedPdf(url)}
+  onClick={() => {
+    console.log("PREVIEW URL:", url);
+    setPreviewFile(file);
+    setPreviewUrl(url);
+    setPreviewFolder(folder);
+    setPreviewOpen(true);
+    setOpenMenu(null);
+  }}
   style={{
     display: "block",
     padding: "8px",
@@ -318,27 +382,100 @@ async function exportStudentFolder() {
 
   link.remove();
 }
-  const baoCao =
-  baoCaoFiles.length > 0
-    ? baoCaoFiles[0]
-    : null;
 
-const baoCaoUrl = baoCao
-  ? process.env.NEXT_PUBLIC_SUPABASE_URL +
-    `/storage/v1/object/public/Ho%20so%20SV5T/${id}/bao-cao/${baoCao.name}`
-  : "";
-  if (!profile) {
-    return (
-      <div
-        style={{
-          padding: "30px",
-        }}
-      >
-        Đang tải...
-      </div>
-    );
+if (!profile) {
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "#f1f5f9",
+      }}
+    >
+      <Spinner />
+    </div>
+  );
+}
+async function renameFile(folder: string, file: any) {
+  const newName = prompt(
+    "Nhập tên mới:",
+    displayNames[file.name] || file.name.replace(/^\d+-/, "")
+  );
+
+  if (!newName) return;
+
+  const { error } = await supabase
+    .from("uploaded_files")
+    .update({
+      display_name: newName,
+    })
+    .eq("storage_name", file.name);
+
+  if (error) {
+    alert(error.message);
+    return;
   }
-  
+
+ window.location.reload();
+}
+async function deleteFile(folder: string, fileName: string) {
+  const ok = window.confirm("Bạn có chắc muốn xóa file này không?");
+
+  if (!ok) return;
+
+  const { error } = await supabase.storage
+    .from("Ho so SV5T")
+    .remove([`${id}/${folder}/${fileName}`]);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await supabase
+    .from("uploaded_files")
+    .delete()
+    .eq("storage_name", fileName);
+
+  window.location.reload();
+}
+async function exportReportPDF() {
+  try {
+    const res = await fetch(
+      `/api/export-pdf/${id}`
+    );
+
+    if (!res.ok) {
+      alert("Xuất PDF thất bại");
+      return;
+    }
+
+    const blob = await res.blob();
+
+    const url =
+      window.URL.createObjectURL(blob);
+
+    const a =
+      document.createElement("a");
+
+    a.href = url;
+    a.download = "Báo cáo Sinh viên 5 tốt cấp Trường.pdf";
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+    window.URL.revokeObjectURL(url);
+
+  } catch (err) {
+    console.error(err);
+    alert("Có lỗi khi xuất PDF");
+  }
+}
 return (
   <div
     style={{
@@ -353,7 +490,7 @@ return (
         marginBottom: "25px",
       }}
     >
-      🏆 Hồ sơ Sinh viên 5 Tốt cấp Trường
+      📂 Hồ sơ Sinh viên 5 Tốt cấp Trường
     </h1>
 
     <div
@@ -410,46 +547,23 @@ return (
           </div>
 
           <div style={{ marginTop: "40px" }}>
-            <b>Báo cáo:</b>
+  <b>Báo cáo:</b>
 
-            {baoCao ? (
-              <>
-                <a
-                  href={baoCaoUrl}
-                  target="_blank"
-                  style={{
-                    marginLeft: "10px",
-                    color: "#2563eb",
-                    textDecoration: "none",
-                  }}
-                >
-                  👁 Xem
-                </a>
-
-                <a
-                  href={baoCaoUrl}
-                  download
-                  style={{
-                    marginLeft: "10px",
-                    color: "#16a34a",
-                    textDecoration: "none",
-                  }}
-                >
-                  ⬇ Tải
-                </a>
-              </>
-            ) : (
-              <span
-                style={{
-                  color: "#94a3b8",
-                  marginLeft: "10px",
-                }}
-              >
-                Chưa có báo cáo
-              </span>
-            )}
-          </div>
-        </div>
+  <button
+    onClick={() => setReportOpen(true)}
+    style={{
+      marginLeft: "10px",
+      border: "none",
+      background: "none",
+      color: "#2563eb",
+      cursor: "pointer",
+      fontWeight: "600",
+    }}
+  >
+    👁 Xem
+  </button>
+</div>
+</div>
 
         {/* Cột 2 */}
         <div>
@@ -505,15 +619,15 @@ return (
     .from("profiles")
     .update({
       nhan_xet: nhanXet,
-      trang_thai: trangThai,
       ngay_nhan_xet: new Date().toISOString(),
     })
     .eq("id", id);
 
-  if (error) {
-    alert("Lưu thất bại");
-    return;
-  }
+if (error) {
+  console.log("LỖI UPDATE:", error);
+  alert(error.message);
+  return;
+}
 
   await sendNotification(
     id,
@@ -856,6 +970,393 @@ return (
         </table>
         </div>
       </div>
+{reportOpen &&
+  createPortal(
+    <div
+      onClick={() => setReportOpen(false)}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,.6)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 999999,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "90%",
+          height: "90%",
+          background: "#f1f5f9",
+          borderRadius: "16px",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* HEADER */}
+        <div
+          style={{
+            height: "60px",
+            flexShrink: 0,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "0 20px",
+            background: "#fff",
+            borderBottom: "1px solid #e5e7eb",
+          }}
+        >
+          <div
+  style={{
+    display:"flex",
+    alignItems:"center",
+    gap:"10px",
+  }}
+>
+ 
+  <button
+  onClick={exportReportPDF}
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    background: "#dc2626",
+    color: "#fff",
+    border: "none",
+    padding: "10px 16px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: 600,
+    fontSize: "14px",
+  }}
+>
+  <FaFilePdf size={18} />
+  Xuất
+</button>
+</div>
+
+
+          <button
+            onClick={() => setReportOpen(false)}
+            style={{
+              width: "36px",
+              height: "36px",
+              border: "none",
+              borderRadius: "50%",
+              background: "#64748b",
+              color: "#fff",
+              cursor: "pointer",
+              fontSize: "18px",
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* BODY */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "30px",
+            display: "flex",
+            justifyContent: "center",
+            background: "#f1f5f9",
+          }}
+        >
+<div
+ ref={setReportRef}
+  style={{
+    width:"297mm",
+    minHeight:"420mm",
+    background:"#fff",
+    padding:"30px",
+    borderRadius:"8px",
+    boxSizing:"border-box",
+    boxShadow:"0 10px 30px rgba(0,0,0,.15)",
+    fontFamily:"Times New Roman, serif",
+    fontSize:"13pt",
+  }}
+>
+  {/* Tiêu đề */}
+
+  <div
+    style={{
+      textAlign: "center",
+      marginBottom: "18px",
+    }}
+  >
+    <div
+      style={{
+    fontFamily:"Times New Roman",
+    fontSize:"16pt",
+    fontWeight:700,
+}}
+    >
+      <b>BÁO CÁO THÀNH TÍCH</b>
+    </div>
+
+    <div
+      style={{
+    fontFamily:"Times New Roman",
+    fontSize:"16pt",
+    fontWeight:700,
+}}
+    >
+      <b>ĐỀ NGHỊ CÔNG NHẬN DANH HIỆU SINH VIÊN 5 TỐT CẤP TRƯỜNG</b>
+
+    </div>
+
+    <div
+      style={{
+       fontFamily:"Times New Roman",
+    fontSize:"13pt",
+    fontWeight:700,
+      }}
+    >
+      <b>Năm học 2025 – 2026</b>
+    </div>
+
+    <hr
+      style={{
+        marginTop: 14,
+        border: "none",
+        borderTop: "2px solid #dbeafe",
+      }}
+    />
+  </div>
+
+  <table
+    style={{
+    width:"100%",
+    borderCollapse:"collapse",
+    tableLayout:"fixed",
+    fontFamily:"Times New Roman",
+    fontSize:"13pt",
+}}
+  >
+    <thead>
+      <tr>
+        <th
+          style={{
+            width: "280px",
+            border: "1px solid #cbd5e1",
+            background: "#eff6ff",
+            padding: "14px 10px",
+            fontWeight: 700,
+            fontSize: 16,
+          }}
+        >
+          Thông tin sinh viên
+        </th>
+
+        {criteriaList.map((item) => (
+          <th
+            key={item.key}
+            style={{
+              border: "1px solid #cbd5e1",
+              background: "#eff6ff",
+              padding: "14px 10px",
+              fontWeight: 700,
+              fontSize: 16,
+            }}
+          >
+            {item.title}
+          </th>
+        ))}
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td
+          style={{
+            border: "1px solid #cbd5e1",
+            padding: "16px",
+            verticalAlign: "top",
+            lineHeight: "1.6",
+            fontSize: "15px",
+          }}
+        >
+          <div><b>Họ và tên:</b> {profile?.ho_ten}</div>
+          <div><b>MSSV:</b> {profile?.mssv}</div>
+          <div><b>Nam/Nữ:</b></div>
+          <div><b>Năm sinh:</b></div>
+          <div><b>Dân tộc:</b></div>
+          <div><b>Sinh viên năm thứ:</b></div>
+          <div><b>Lớp:</b> {profile?.lop}, Trường Đại học Y Dược Buôn Ma Thuột</div>
+          <div><b>Chức vụ Đoàn - Hội:</b></div>
+          <div><b>Đảng viên/Đoàn viên:</b></div>
+          <div><b>Số điện thoại:</b></div>
+          <div><b>Email:</b> {profile?.email}</div>
+        </td>
+
+        {criteriaList.map((item) => {
+  const report = reports.find(
+    (r) => r.criteria === item.key
+  );
+
+  return (
+    <td
+      key={item.key}
+      style={{
+        border: "1px solid #cbd5e1",
+        verticalAlign: "top",
+        padding: "14px",
+      }}
+    >
+      <div
+        style={{
+          minHeight: "520px",
+          lineHeight: "1.6",
+          fontSize: "15px",
+          wordBreak: "break-word",
+          overflowWrap: "anywhere",
+        }}
+        dangerouslySetInnerHTML={{
+  __html:
+    report?.content ||
+    "<i>Chưa có nội dung báo cáo</i>",
+}}
+      />
+    </td>
+  );
+})}
+      </tr>
+    </tbody>
+  </table>
+</div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )}
+
+{previewOpen &&
+  createPortal(
+    <div
+      onClick={() => setPreviewOpen(false)}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,.6)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 999999,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "90%",
+          height: "90%",
+          background: "#fff",
+          borderRadius: "12px",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* HEADER */}
+<div
+  style={{
+    height: "55px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "0 14px",
+    borderBottom: "1px solid #eee",
+  }}
+>
+  <strong>
+    {previewFile &&
+      (displayNames[previewFile.name] ||
+        previewFile.name.replace(/^\d+-/, ""))}
+  </strong>
+
+  <div
+    style={{
+      display: "flex",
+      gap: "8px",
+      alignItems: "center",
+    }}
+  >
+    {/* TẢI FILE */}
+    <button
+      onClick={async () => {
+        const res = await fetch(previewUrl);
+        const blob = await res.blob();
+
+        const blobUrl = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download =
+          displayNames[previewFile.name] ||
+          previewFile.name;
+
+        a.click();
+
+        URL.revokeObjectURL(blobUrl);
+      }}
+      style={{
+        background: "#2563eb",
+        color: "white",
+        border: "none",
+        padding: "8px 14px",
+        borderRadius: "8px",
+        cursor: "pointer",
+        fontWeight: "600",
+      }}
+    >
+      ⬇ Tải file
+    </button>
+
+
+    {/* ĐÓNG */}
+    <button
+      onClick={() => setPreviewOpen(false)}
+      style={{
+        background: "#64748b",
+        color: "white",
+        border: "none",
+        width: "38px",
+        height: "38px",
+        borderRadius: "50%",
+        cursor: "pointer",
+        fontSize: "18px",
+        fontWeight: "bold",
+      }}
+    >
+      ✕
+    </button>
+  </div>
+</div>
+
+        {/* BODY */}
+        <div
+          style={{
+            flex: 1,
+            background: "#f1f5f9",
+          }}
+        >
+          <iframe
+            src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+            style={{
+              width: "100%",
+              height: "100%",
+              border: "none",
+            }}
+          />
+        </div>
+      </div>
+    </div>,
+    document.body
+  )}
     </div>
   );
 }

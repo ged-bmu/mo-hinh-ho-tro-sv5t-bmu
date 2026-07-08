@@ -16,7 +16,6 @@ export default function FileItem({
 }) {
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  // khóa scroll khi mở modal
   useEffect(() => {
     if (previewOpen) {
       document.body.style.overflow = "hidden";

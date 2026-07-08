@@ -1,229 +1,163 @@
 "use client";
 
-import FileItem from "../components/FileItem";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import Sidebar from "../components/Sidebar";
 import CriteriaModal from "../components/CriteriaModal";
-import BellUserTemp from "../components/BellUserTemp";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Spinner from "../components/Spinner";
+import { FaFilePdf } from "react-icons/fa";
 
 export default function BaoCaoPage() {
-const [profile, setProfile] = useState<any>(null);
-const [loading, setLoading] = useState(true);
-const [showCriteria,setShowCriteria]=useState(false);
-const [tab, setTab] = useState("proof");
-const [displayNames, setDisplayNames] =
-  useState<Record<string, string>>(
-    {}
-  );
-const [files, setFiles] = useState<any[]>([]);
-const [userId, setUserId] = useState("");
-const [dragging, setDragging] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCriteria, setShowCriteria] = useState(false);
+  const [tab, setTab] = useState("proof");
+  const [isMobile, setIsMobile] = useState(false);
 
-useEffect(() => {
-loadData();
-}, []);
+  const criteriaList = [
+    { key: "dao-duc", title: "Đạo đức tốt" },
+    { key: "hoc-tap", title: "Học tập tốt" },
+    { key: "the-luc", title: "Thể lực tốt" },
+    { key: "tinh-nguyen", title: "Tình nguyện tốt" },
+    { key: "hoi-nhap", title: "Hội nhập tốt" },
+    { key: "uu-tien", title: "Thành tích khác" },
+  ];
 
-async function loadData() {
-try {
-const {
-data: {user},
-} = await supabase.auth.getUser();
+  // =========================
+  // INIT
+  // =========================
 
-  if (!user) return;
-console.log("USER ID =", user.id);
-  setUserId(user.id);
+  useEffect(() => {
+    init();
+  }, []);
 
-const { data, error } = await supabase
-  .from("profiles")
-  .select("*")
-  .eq("id", user.id)
-  .single();
-console.log("PROFILE =", data);
-console.log("ERROR =", error);
-if (data) {
-  setProfile(data);
-}
-  const { data: fileData } = await supabase.storage
-    .from("Ho so SV5T")
-    .list(`${user.id}/bao-cao`);
+  useEffect(() => {
+    const resize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
 
-  if (fileData) {
-    setFiles(fileData);
+    resize();
+
+    window.addEventListener("resize", resize);
+
+    return () =>
+      window.removeEventListener("resize", resize);
+  }, []);
+
+  async function init() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    await Promise.all([
+      loadProfile(user.id),
+      loadReports(user.id),
+    ]);
+
+    setLoading(false);
   }
-  const { data: uploadedFiles } =
-  await supabase
-    .from("uploaded_files")
-    .select(
-      "storage_name, display_name"
-    )
-    .eq("folder", "bao-cao");
 
-if (uploadedFiles) {
-  const map: Record<
-    string,
-    string
-  > = {};
+  // =========================
+  // PROFILE
+  // =========================
 
-  uploadedFiles.forEach((f) => {
-    map[f.storage_name] =
-      f.display_name;
-  });
+  async function loadProfile(userId: string) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
 
-  setDisplayNames(map);
-}
+    if (data) {
+      setProfile(data);
+    }
+  }
 
-  setLoading(false);
-} catch (err) {
-  console.error(err);
-  setLoading(false);
-}
+  // =========================
+  // REPORT
+  // =========================
 
-}
-async function uploadFile(file: File) {
-  console.log("UPLOAD FILE DUOC GOI");
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  async function loadReports(userId: string) {
+    const { data } = await supabase
+      .from("reports")
+      .select("*")
+      .eq("user_id", userId);
 
-  if (!user) return;
+    if (data) {
+      setReports(data);
+      console.log("Reports:", reports);
+    }
+  }
 
- const safeName = file.name
-  .normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "")
-  .replace(/[^a-zA-Z0-9._-]/g, "_");
+  // =========================
+  // EXPORT PDF
+  // =========================
 
-const fileName =
-  `${Date.now()}-${safeName}`;
+  async function exportPDF() {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-  const { error } = await supabase.storage
-    .from("Ho so SV5T")
-    .upload(
-      `${user.id}/bao-cao/${fileName}`,
-      file,
-      {
-        upsert: true,
+      if (!user) {
+        alert("Bạn chưa đăng nhập.");
+        return;
       }
-    );
-    await supabase
-  .from("uploaded_files")
-  .insert({
-    user_id: user.id,
-    folder: "bao-cao",
-    storage_name: fileName,
-    display_name: file.name,
-  });
-console.log("TOI DANG GHI LOG");
-const result = await supabase
-  .from("activity_logs")
-  .insert({
-    user_id: user.id,
-    ho_ten: profile?.ho_ten || "test",
-    lop: profile?.lop || "test",
-    
 
-    action_type: "upload",
+      // API chỉ xuất PDF
+      const res = await fetch(
+        `/api/export-pdf/${user.id}`
+      );
 
-    target_folder: "bao-cao",
-    target_file: file.name,
-  });
-  await fetch("/api/cleanup-logs", {
-  method: "POST",
-});
-  
+      if (!res.ok) {
+        const text = await res.text();
 
-console.log("LOG RESULT =", result);
+        console.error(text);
 
-  if (error) {
-    alert(error.message);
-    return;
+        alert("Xuất PDF thất bại.");
+
+        return;
+      }
+
+      const blob = await res.blob();
+
+      const url =
+        window.URL.createObjectURL(blob);
+
+      const a =
+        document.createElement("a");
+
+      a.href = url;
+      a.download = "Bao-cao-SV5T.pdf";
+      a.click();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("Có lỗi xảy ra.");
+    }
   }
 
-  loadData();
-}
-async function handleUpload(
-  event: React.ChangeEvent<HTMLInputElement>
-) {
-  const file = event.target.files?.[0];
+  // =========================
+  // PRINT
+  // =========================
 
-  if (!file) return;
+  function printReport() {
+    window.print();
+  }
 
-  uploadFile(file);
-}
+  // =========================
+  // RETURN
+  // =========================
 
-async function deleteFile(name: string) {
-const {
-data: { user },
-} = await supabase.auth.getUser();
-
-if (!user) return;
-
-const { error } = await supabase.storage
-  .from("Ho so SV5T")
-  .remove([
-    `${user.id}/bao-cao/${name}`,
-  ]);
-
-if (error) {
-  alert(error.message);
-  return;
-}
-await supabase
-  .from("activity_logs")
-  .insert({
-    user_id: user.id,
-    ho_ten: profile?.ho_ten,
-    lop: profile?.lop,
-
-    action_type: "delete",
-
-    target_folder: "bao-cao",
-    target_file: name,
-  });
-  await fetch("/api/cleanup-logs", {
-  method: "POST",
-});
-
-loadData();
-}
-async function renameFile(file: any) {
-  const newName = prompt(
-    "Nhập tên mới:",
-    file.display_name
-  );
-    if (!newName) return;
-
-  await supabase
-    .from("uploaded_files")
-    .update({
-      display_name: newName,
-    })
-    await supabase
-  .from("activity_logs")
-  .insert({
-    user_id: userId,
-    ho_ten: profile?.ho_ten,
-    lop: profile?.lop,
-
-    action_type: "rename",
-
-    target_folder: "bao-cao",
-    target_file: newName,
-  })
-  
-    .eq(
-      "storage_name",
-      file.storage_name || file.name
-    );
-    await fetch("/api/cleanup-logs", {
-  method: "POST",
-});
-
-  loadData();
-}
 return (
   <div
     style={{
@@ -232,7 +166,6 @@ return (
       flexDirection: "column",
     }}
   >
- 
     <Header
       tab={tab}
       setTab={setTab}
@@ -245,217 +178,305 @@ return (
         flex: 1,
       }}
     >
-  
       <Sidebar />
 
-  <main
-    style={{
-      flex: 1,
-      background: "#f5f7fb",
-      padding: "30px",
-    }}
-  >
-    {loading ? (
-  <div
-    style={{
-      minHeight: "300px",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-    }}
-  >
-    <Spinner />
-  </div>
-) : (
-      <div
+      <main
         style={{
-          maxWidth: "900px",
-          margin: "0 auto",
+          flex: 1,
+          background: "#eef3f9",
+          padding: "30px",
         }}
       >
-<div
-  style={{
-    background: "white",
-    padding: "24px",
-    borderRadius: "20px",
-    marginBottom: "25px",
-    boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
-  }}
->
-          <h1
-            style={{
-              marginBottom: "25px",
-              fontSize: "24px",
-            }}
-          >
-            📑 Hồ sơ Sinh viên 5 tốt cấp Trường
-          </h1>
-
- <div
-  style={{
-    display: "grid",
-    gridTemplateColumns: "repeat(2,1fr)",
-    gap: "20px",
-    marginTop: "20px",
-  }}
->
-  <div>Sinh viên: <b>{profile?.ho_ten}</b></div>
-
-  <div>Mã số sinh viên: <b>{profile?.mssv}</b></div>
-
-  <div>Chi hội: <b>{profile?.lop}</b></div>
-
-  <div>Gmail: {profile?.email || "Chưa cập nhật"}</div>
-</div>
-        </div>
-
-        <div
-          style={{
-            background: "white",
-            padding: "20px",
-            borderRadius: "16px",
-            marginBottom: "20px",
-            boxShadow:
-              "0 2px 10px rgba(0,0,0,0.08)",
-          }}
-        >
-        <h3
-  style={{
-    marginBottom: "15px",
-  }}
->
-  📤 Tải báo cáo lên
-</h3>
-
-<div
-  onDragOver={(e) => {
-    e.preventDefault();
-    setDragging(true);
-  }}
-  onDragLeave={() => {
-    setDragging(false);
-  }}
-  onDrop={(e) => {
-    e.preventDefault();
-    setDragging(false);
-
-    const file = e.dataTransfer.files?.[0];
-
-    if (file) {
-      uploadFile(file);
-    }
-  }}
-  style={{
-    border: dragging
-      ? "3px solid #2563eb"
-      : "2px dashed #94a3b8",
-    borderRadius: "16px",
-    padding: "20px",
-    textAlign: "center",
-    background: dragging
-      ? "#eff6ff"
-      : "#f8fafc",
-  }}
->
-  <label
-    style={{
-      cursor: "pointer",
-      display: "block",
-    }}
-  >
-    <div
-      style={{
-        fontSize: "28px",
-        marginBottom: "10px",
-      }}
-    >
-      📤
-    </div>
-
-    <div
-      style={{
-        fontSize: "16px",
-        fontWeight: "600",
-      }}
-    >
-      Kéo thả báo cáo vào đây
-    </div>
-
-    <div
-      style={{
-        marginTop: "8px",
-        color: "#64748b",
-      }}
-    >
-      hoặc bấm để chọn file
-    </div>
-
-    <input
-      type="file"
-      onChange={handleUpload}
-      style={{
-        display: "none",
-      }}
-    />
-  </label>
-</div>
-        </div>
-
-        <h3
-  style={{
-    marginBottom: "15px",
-  }}
->
-  📁 Danh sách báo cáo
-</h3>
-
-        {files.length === 0 && (
+        {loading ? (
           <div
             style={{
-              background: "white",
-              padding: "20px",
-              borderRadius: "12px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: "300px",
             }}
           >
-            Chưa có báo cáo nào.
+            <Spinner />
           </div>
-        )}
-{files.map((file) => {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_URL +
-    "/storage/v1/object/public/Ho%20so%20SV5T/" +
-    userId +
-    "/bao-cao/" +
-    file.name;
+        ) : (
+          <div style={{ width: "100%" }}>
+            {isMobile ? (
+              <div
+                style={{
+                  background: "#fff",
+                  borderRadius: "16px",
+                  padding: "40px 20px",
+                  textAlign: "center",
+                  color: "#64748b",
+                  fontSize: "16px",
+                  lineHeight: "1.8",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "52px",
+                    marginBottom: "12px",
+                  }}
+                >
+                  💻
+                </div>
+
+                <b>Vui lòng sử dụng máy tính</b>
+
+                <div
+                  style={{
+                    marginTop: "8px",
+                  }}
+                >
+                  để xem chi tiết báo cáo.
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{
+                  background: "#fff",
+                  borderRadius: "20px",
+                  padding: "24px 28px",
+                  maxWidth: "1600px",
+                  margin: "0 auto",
+                  boxShadow:
+                    "0 12px 40px rgba(0,0,0,.08)",
+                  border:
+                    "1px solid #e8edf5",
+                }}
+              >
+                {/* Thanh chức năng */}
+
+<div
+  style={{
+    display: "flex",
+    justifyContent: "flex-end",
+    marginBottom: "16px",
+  }}
+>
+  <button
+  onClick={exportPDF}
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    background: "#dc2626",
+    color: "#fff",
+    border: "none",
+    padding: "10px 16px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: 600,
+    fontSize: "14px",
+  }}
+>
+  <FaFilePdf size={18} />
+  Xuất
+</button>
+</div>
+
+                {/* Tiêu đề */}
+
+                <div
+                  style={{
+                    textAlign: "center",
+                    marginBottom: "18px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "24px",
+                      fontWeight: 700,
+                      color: "#1e3a8a",
+                    }}
+                  >
+                    BÁO CÁO THÀNH TÍCH
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 4,
+                      fontSize: 18,
+                      fontWeight: 600,
+                    }}
+                  >
+                    ĐỀ NGHỊ CÔNG NHẬN
+                    DANH HIỆU SINH VIÊN
+                    5 TỐT CẤP TRƯỜNG
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 6,
+                      fontSize: 16,
+                      color: "#64748b",
+                    }}
+                  >
+                    Năm học 2025 – 2026
+                  </div>
+
+                  <hr
+                    style={{
+                      marginTop: 14,
+                      border: "none",
+                      borderTop:
+                        "2px solid #dbeafe",
+                    }}
+                  />
+                </div>
+
+                <table
+                  style={{
+                    width: "100%",
+                    tableLayout: "fixed",
+                    borderCollapse: "collapse",
+                  }}
+                >
+                  <thead>
+                    <tr>
+                      <th
+                        style={{
+                          width: "280px",
+                          border:
+                            "1px solid #cbd5e1",
+                          background:
+                            "#eff6ff",
+                          padding:
+                            "14px 10px",
+                          fontWeight: 700,
+                          fontSize: 16,
+                        }}
+                      >
+                        Thông tin sinh viên
+                      </th>
+
+                      {criteriaList.map(
+                        (item) => (
+                          <th
+                            key={item.key}
+                            style={{
+                              border:
+                                "1px solid #cbd5e1",
+                              background:
+                                "#eff6ff",
+                              padding:
+                                "14px 10px",
+                              fontWeight: 700,
+                              fontSize: 16,
+                            }}
+                          >
+                            {item.title}
+                          </th>
+                        )
+                      )}
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    <tr>
+                      <td
+                        style={{
+                          border: "1px solid #cbd5e1",
+                          padding: "16px",
+                          verticalAlign: "top",
+                          lineHeight: "1.6",
+                          fontSize: "15px",
+                        }}
+                      >
+                        <div>
+                          <b>Họ và tên:</b> {profile?.ho_ten}
+                        </div>
+
+                        <div>
+                          <b>MSSV:</b> {profile?.mssv}
+                        </div>
+
+                        <div>
+                          <b>Nam/Nữ:</b>
+                        </div>
+
+                        <div>
+                          <b>Năm sinh:</b>
+                        </div>
+
+                        <div>
+                          <b>Dân tộc:</b>
+                        </div>
+
+                        <div>
+                          <b>Sinh viên năm thứ:</b>
+                        </div>
+
+                        <div>
+                          <b>Lớp:</b> {profile?.lop},
+                          Trường Đại học Y Dược
+                          Buôn Ma Thuột
+                        </div>
+
+                        <div>
+                          <b>Chức vụ Đoàn - Hội:</b>
+                        </div>
+
+                        <div>
+                          <b>Đảng viên/Đoàn viên:</b>
+                        </div>
+
+                        <div>
+                          <b>Số điện thoại:</b>
+                        </div>
+
+                        <div>
+                          <b>Email:</b>{" "}
+                          {profile?.email}
+                        </div>
+                      </td>
+
+                     {criteriaList.map((item) => {
+  const report = reports.find(
+    (r) => r.criteria === item.key
+  );
 
   return (
-    <FileItem
-      key={file.name}
-      file={{
-        ...file,
-        storage_name: file.name,
-        display_name:
-          displayNames[file.name] ||
-          file.name,
+    <td
+      key={item.key}
+      style={{
+        border: "1px solid #cbd5e1",
+        verticalAlign: "top",
+        padding: "10px",
       }}
-      url={url}
-      onDelete={() => deleteFile(file.name)}
-      onRename={renameFile}
-    />
+    >
+      <div
+        style={{
+          minHeight: "300px",
+          lineHeight: "1.6",
+          wordBreak: "break-word",
+          overflowWrap: "anywhere",
+        }}
+        dangerouslySetInnerHTML={{
+          __html: report?.content || "",
+        }}
+      />
+    </td>
   );
 })}
+                    </tr>
+                  </tbody>
+                </table>
+                              </div>
+            )}
+          </div>
+        )}
+      </main>
+    </div>
 
-      </div>
-    )}       
-  </main>
-</div>
-                   {showCriteria && (
-                   <CriteriaModal
-                     onClose={() => setShowCriteria(false)}
-             />
-      )}
-   <Footer />
-                 </div>
-                 );
-               }
-                       
+    {showCriteria && (
+      <CriteriaModal
+        onClose={() => setShowCriteria(false)}
+      />
+    )}
+
+    <Footer />
+  </div>
+);
+}
+ 
