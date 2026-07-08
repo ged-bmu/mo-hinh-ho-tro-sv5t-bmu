@@ -15,7 +15,6 @@ export default function BaoCaoPage() {
   const [loading, setLoading] = useState(true);
   const [showCriteria, setShowCriteria] = useState(false);
   const [tab, setTab] = useState("proof");
-  const [isMobile, setIsMobile] = useState(false);
 
   const criteriaList = [
     { key: "dao-duc", title: "Đạo đức tốt" },
@@ -32,19 +31,6 @@ export default function BaoCaoPage() {
 
   useEffect(() => {
     init();
-  }, []);
-
-  useEffect(() => {
-    const resize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    resize();
-
-    window.addEventListener("resize", resize);
-
-    return () =>
-      window.removeEventListener("resize", resize);
   }, []);
 
   async function init() {
@@ -200,51 +186,17 @@ return (
           </div>
         ) : (
           <div style={{ width: "100%" }}>
-            {isMobile ? (
-              <div
-                style={{
-                  background: "#fff",
-                  borderRadius: "16px",
-                  padding: "40px 20px",
-                  textAlign: "center",
-                  color: "#64748b",
-                  fontSize: "16px",
-                  lineHeight: "1.8",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "52px",
-                    marginBottom: "12px",
-                  }}
-                >
-                  💻
-                </div>
-
-                <b>Vui lòng sử dụng máy tính</b>
-
-                <div
-                  style={{
-                    marginTop: "8px",
-                  }}
-                >
-                  để xem chi tiết báo cáo.
-                </div>
-              </div>
-            ) : (
-              <div
-                style={{
-                  background: "#fff",
-                  borderRadius: "20px",
-                  padding: "24px 28px",
-                  maxWidth: "1600px",
-                  margin: "0 auto",
-                  boxShadow:
-                    "0 12px 40px rgba(0,0,0,.08)",
-                  border:
-                    "1px solid #e8edf5",
-                }}
-              >
+           <div
+  style={{
+    background: "#fff",
+    borderRadius: "20px",
+    padding: "24px 28px",
+    maxWidth: "1600px",
+    margin: "0 auto",
+    boxShadow: "0 12px 40px rgba(0,0,0,.08)",
+    border: "1px solid #e8edf5",
+  }}
+>
                 {/* Thanh chức năng */}
 
 <div
@@ -459,15 +411,14 @@ return (
     </td>
   );
 })}
-                    </tr>
-                  </tbody>
-                </table>
-                              </div>
-            )}
-          </div>
-        )}
-      </main>
+          </tr>
+         </tbody>
+        </table>
+      </div>
     </div>
+    )}
+  </main>
+</div>
 
     {showCriteria && (
       <CriteriaModal
