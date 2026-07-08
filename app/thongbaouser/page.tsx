@@ -187,6 +187,7 @@ export default function ThongBaoUser() {
             style={{
               width: "100%",
               borderCollapse: "collapse",
+              tableLayout: "fixed",
             }}
           >
             <thead
@@ -197,10 +198,10 @@ export default function ThongBaoUser() {
               }}
             >
               <tr>
-                <th style={th}>Tiêu đề</th>
-                <th style={th}>Loại</th>
-                <th style={th}>Thời gian</th>
-              </tr>
+  <th style={{ ...th, width: "55%" }}>Tiêu đề</th>
+  <th style={{ ...th, width: "20%" }}>Loại</th>
+  <th style={{ ...th, width: "25%" }}>Thời gian</th>
+</tr>
             </thead>
 
             <tbody>

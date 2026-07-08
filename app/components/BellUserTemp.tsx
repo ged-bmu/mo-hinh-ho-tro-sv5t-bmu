@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
 export default function BellUserTemp() {
+  const [bellRotate, setBellRotate] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -75,27 +76,37 @@ export default function BellUserTemp() {
 
   return (
     <div style={{ position: "relative" }}>
-      <button
-        onClick={async () => {
-          setOpen(!open);
+    <button
+  onMouseEnter={() => setBellRotate(true)}
+  onMouseLeave={() => setBellRotate(false)}
+  onClick={async () => {
+    setOpen(!open);
 
-          if (!open) {
-            await markAsRead();
-          }
-        }}
-        style={{
-          width: isMobile ? 32 : 50,
-          height: isMobile ? 32 : 50,
-          borderRadius: 12,
-          border: "none",
-          background: "#fff",
-          boxShadow: "0 3px 10px rgba(0,0,0,.15)",
-          cursor: "pointer",
-          fontSize: isMobile ? 16 : 22,
-        }}
-      >
-       🔔
-      </button>
+    if (!open) {
+      await markAsRead();
+    }
+  }}
+  style={{
+    width: isMobile ? 32 : 50,
+    height: isMobile ? 32 : 50,
+    borderRadius: 12,
+    border: "none",
+    background: "#fff",
+    boxShadow: "0 3px 10px rgba(0,0,0,.15)",
+    cursor: "pointer",
+    fontSize: isMobile ? 16 : 22,
+  }}
+>
+  <span
+    style={{
+      display: "inline-block",
+      animation: bellRotate ? "bellShake .6s ease-in-out" : "none",
+      transformOrigin: "top center",
+    }}
+  >
+    🔔
+  </span>
+</button>
 
       {unreadCount > 0 && (
         <div
@@ -200,20 +211,27 @@ export default function BellUserTemp() {
             ))
           )}
 </div>
-          <Link
-            href="/thongbaouser"
-            style={{
-              display: "block",
-              borderTop: "1px solid #eee",
-              padding: 16,
-              color: "#2563eb",
-              textDecoration: "none",
-              fontWeight: 600,
-              textAlign: "center",
-            }}
-          >
-            Xem tất cả thông báo →
-          </Link>
+<Link
+  href="/thongbaouser"
+  onMouseEnter={(e) => {
+    e.currentTarget.style.color = "#123bad";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.color = "#2563eb";
+  }}
+  style={{
+    display: "block",
+    borderTop: "1px solid #eee",
+    padding: 16,
+    color: "#2563eb",
+    textDecoration: "none",
+    fontWeight: 600,
+    textAlign: "center",
+    transition: "color .2s ease",
+  }}
+>
+  Xem tất cả thông báo →
+</Link>
         </div>
       )}
     </div>

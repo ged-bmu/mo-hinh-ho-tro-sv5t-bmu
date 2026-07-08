@@ -129,22 +129,32 @@ export default function Header({
               gap: 15,
             }}
           >
-            <button
-              className="header-btn"
-              onClick={openCriteria}
-              style={{
-                padding: "10px 18px",
-                border: "none",
-                borderRadius: 12,
-                cursor: "pointer",
-                fontWeight: 600,
-                transition: ".2s",
-                background: "#0055ff",
-                color: "#fff",
-              }}
-            >
-              📑 Xem tiêu chí
-            </button>
+          <button
+  className="header-btn"
+  onClick={openCriteria}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.transform = "translateY(-3px) scale(1.03)";
+    e.currentTarget.style.background = "#003ecf";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = "translateY(0) scale(1)";
+    e.currentTarget.style.background = "#0055ff";
+    e.currentTarget.style.boxShadow = "none";
+  }}
+  style={{
+    padding: "10px 18px",
+    border: "none",
+    borderRadius: 12,
+    cursor: "pointer",
+    fontWeight: 600,
+    transition: "all .25s ease",
+    background: "#0055ff",
+    color: "#fff",
+    boxShadow: "0 4px 12px rgba(0,85,255,.2)",
+  }}
+>
+  📑 Xem tiêu chí
+</button>
           </div>
         </div>
       )}

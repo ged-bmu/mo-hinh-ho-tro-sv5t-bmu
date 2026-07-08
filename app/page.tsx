@@ -267,6 +267,15 @@ return (
 ></div>
 <a
   href="/bao-cao"
+  onMouseEnter={(e) => {
+    e.currentTarget.style.transform = "translateY(-3px) scale(1.03)";
+    e.currentTarget.style.background = "#1d4ed8";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = "translateY(0) scale(1)";
+    e.currentTarget.style.background = "#2563eb";
+    e.currentTarget.style.boxShadow = "none";
+  }}
   style={{
     background: "#2563eb",
     color: "#fff",
@@ -278,14 +287,24 @@ return (
     justifyContent: "center",
     alignItems: "center",
     width: isMobile ? "100%" : "auto",
+    transition: "all .25s ease",
   }}
 >
   📑 Xem báo cáo
 </a>
   
-  <button
+<button
   onClick={() => {
     window.open(`/api/export-student/${profile.id}`, "_blank");
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.transform = "translateY(-3px) scale(1.03)";
+    e.currentTarget.style.background = "#15803d";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = "translateY(0) scale(1)";
+    e.currentTarget.style.background = "#16a34a";
+    e.currentTarget.style.boxShadow = "none";
   }}
   style={{
     background: "#16a34a",
@@ -296,6 +315,7 @@ return (
     fontWeight: 600,
     cursor: "pointer",
     width: isMobile ? "100%" : "auto",
+    transition: "all .25s ease",
   }}
 >
   🗂️ Xuất hồ sơ
@@ -316,7 +336,16 @@ return (
           <a
             key={folder.name}
             href={folder.link}
+            onMouseEnter={(e) => {
+  e.currentTarget.style.transform = "translateY(-6px)";
+}}
+
+onMouseLeave={(e) => {
+  e.currentTarget.style.transform = "translateY(0)";
+}}
             style={{
+              transition: "all .25s ease",
+              cursor: "pointer",
               background: "white",
               padding: "25px",
               borderRadius: "18px",

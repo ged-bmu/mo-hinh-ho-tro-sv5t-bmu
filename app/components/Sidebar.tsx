@@ -262,20 +262,38 @@ return (
         const active = pathname === item.href;
 
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            style={{
-              padding: "12px 14px",
-              borderRadius: 12,
-              textDecoration: "none",
-              background: active ? "#2563eb" : "transparent",
-              color: active ? "#fff" : "#111",
-              fontWeight: active ? 600 : 400,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-            }}
-          >
+            <Link
+      key={item.href}
+      href={item.href}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.background = "#dbeafe";
+          e.currentTarget.style.color = "#1e3a8a";
+          e.currentTarget.style.transform = "translateX(6px)";
+          e.currentTarget.style.boxShadow =
+            "0 4px 12px rgba(37,99,235,0.15)";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.background = "transparent";
+          e.currentTarget.style.color = "#111";
+          e.currentTarget.style.transform = "translateX(0)";
+          e.currentTarget.style.boxShadow = "none";
+        }
+      }}
+      style={{
+        padding: "12px 14px",
+        borderRadius: 12,
+        textDecoration: "none",
+        background: active ? "#2563eb" : "transparent",
+        color: active ? "#fff" : "#111",
+        fontWeight: active ? 600 : 400,
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        transition: "all 0.25s ease",
+      }}
+    >
             {collapsed ? item.icon : `${item.icon} ${item.name}`}
           </Link>
         );
@@ -290,26 +308,36 @@ return (
     flexShrink: 0,
   }}
 >
-      <button
-        onClick={handleLogout}
-        style={{
-          width: "100%",
-          border: "none",
-          background: "#ef4444",
-          color: "#fff",
-          padding: "14px 16px",
-          borderRadius: 12,
-          cursor: "pointer",
-          fontWeight: 600,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-        }}
-      >
-        <LogOut size={20} style={{ transform: "scaleX(-1)" }} />
-        {!collapsed && <span>Đăng xuất</span>}
-      </button>
+<button
+  onClick={handleLogout}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.transform = "translateY(-3px) scale(1.03)";
+    e.currentTarget.style.background = "#dc2626";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = "translateY(0) scale(1)";
+    e.currentTarget.style.background = "#ef4444";
+    e.currentTarget.style.boxShadow = "none";
+  }}
+  style={{
+    width: "100%",
+    border: "none",
+    background: "#ef4444",
+    color: "#fff",
+    padding: "14px 16px",
+    borderRadius: 12,
+    cursor: "pointer",
+    fontWeight: 600,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    transition: "all .25s ease",
+  }}
+>
+  <LogOut size={20} style={{ transform: "scaleX(-1)" }} />
+  {!collapsed && <span>Đăng xuất</span>}
+</button>
     </div>
 
     {/* ================= TOGGLE (FLOAT FIXED FEEL) ================= */}

@@ -135,9 +135,15 @@ async function loadCriteria() {
         <button
           key={item.id}
           onClick={() => setTab(item.id)}
+             onMouseEnter={(e) => {
+      e.currentTarget.style.borderColor = "#2563eb";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.borderColor = "transparent";
+    }}
           style={{
             padding: "9px 18px",
-            border: "none",
+            border: "2px solid transparent",
             borderRadius: "10px",
             cursor: "pointer",
             fontWeight: 600,
@@ -152,20 +158,28 @@ async function loadCriteria() {
       ))}
 
       <Link
-        href="/login"
-        className="cta-btn"
-        style={{
-          background: "#f8fafc",
-          color: "black",
-          textDecoration: "none",
-          padding: "9px 18px",
-          borderRadius: "10px",
-          fontWeight: 600,
-          fontSize: "15px",
-        }}
-      >
-        Đăng nhập
-      </Link>
+  href="/login"
+  className="cta-btn"
+  onMouseEnter={(e) => {
+    e.currentTarget.style.borderColor = "#2563eb";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.borderColor = "transparent";
+  }}
+  style={{
+    background: "#f8fafc",
+    color: "black",
+    textDecoration: "none",
+    padding: "9px 18px",
+    borderRadius: "10px",
+    fontWeight: 600,
+    fontSize: "15px",
+    border: "2px solid transparent",
+    transition: "all 0.2s ease",
+  }}
+>
+  Đăng nhập
+</Link>
     </div>
   )}
 </div>
@@ -615,6 +629,14 @@ async function loadCriteria() {
             <Link
   href="/login"
   className="cta-btn"
+  onMouseEnter={(e) => {
+    e.currentTarget.style.transform = "translateY(-2px)";
+    e.currentTarget.style.boxShadow = "0 8px 20px rgba(37,99,235,.25)";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = "translateY(0)";
+    e.currentTarget.style.boxShadow = "none";
+  }}
   style={{
     background: "#2563eb",
     color: "white",
@@ -623,6 +645,7 @@ async function loadCriteria() {
     textDecoration: "none",
     fontWeight: 600,
     fontSize: "18px",
+    transition: "all 0.25s ease",
   }}
 >
   Đăng nhập hệ thống
