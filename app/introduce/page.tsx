@@ -81,7 +81,7 @@ async function loadCriteria() {
       src="/logo-header.png"
       alt="Logo"
       style={{
-        height: isMobile ? "42px" : "50spx",
+        height: isMobile ? "42px" : "50px",
         objectFit: "contain",
       }}
     />
