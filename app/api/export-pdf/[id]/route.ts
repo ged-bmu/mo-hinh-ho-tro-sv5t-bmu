@@ -75,8 +75,36 @@ th{
 }
 
 .student{
-    width:22%;
-    line-height:1.8;
+    width:30%;
+    vertical-align:top;
+}
+    .student-box{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+}
+
+.student-info{
+    flex:1;
+    line-height:1.7;
+}
+
+.student-photo img{
+    width:95px;
+    height:125px;
+    object-fit:cover;
+    border:1px solid #000;
+}
+
+.student-photo div{
+    width:95px;
+    height:125px;
+    border:1px solid #000;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:12px;
 }
 
 .criteria{
@@ -87,14 +115,6 @@ th{
 </head>
 
 <body>
-<div
-  style="
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    margin-bottom:15px;
-  "
->
   <div style="width:100px">
     ${
       profile?.avatar
@@ -157,6 +177,10 @@ Thông tin sinh viên
 
 <td class="student">
 
+<div class="student-box">
+
+<div class="student-info">
+
 <div><b>Họ và tên:</b> ${profile?.ho_ten ?? ""}</div>
 
 <div><b>MSSV:</b> ${profile?.mssv ?? ""}</div>
@@ -169,7 +193,7 @@ Thông tin sinh viên
 
 <div><b>Sinh viên năm thứ:</b></div>
 
-<div><b>Lớp:</b> ${profile?.lop ?? ""}, Trường Đại học Y Dược Buôn Ma Thuột</div>
+<div><b>Lớp:</b> ${profile?.lop ?? ""}</div>
 
 <div><b>Chức vụ Đoàn - Hội:</b></div>
 
@@ -178,6 +202,20 @@ Thông tin sinh viên
 <div><b>Số điện thoại:</b></div>
 
 <div><b>Email:</b></div>
+
+</div>
+
+<div class="student-photo">
+
+${
+profile?.avatar
+? `<img src="${profile.avatar}" />`
+: `<div>Ảnh 3×4</div>`
+}
+
+</div>
+
+</div>
 
 </td>
 
