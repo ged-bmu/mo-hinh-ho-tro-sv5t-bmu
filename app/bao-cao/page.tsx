@@ -11,6 +11,7 @@ import { FaFilePdf } from "react-icons/fa";
 
 export default function BaoCaoPage() {
   const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
 useEffect(() => {
   const checkMobile = () => {
@@ -172,13 +173,12 @@ return (
     />
 
     <div
-      style={{
-        display: "flex",
-        flex: 1,
-      }}
-    >
-      <Sidebar />
-
+  style={{
+    display: "flex",
+    flex: 1,
+  }}
+>
+  <Sidebar />
       <main
         style={{
           flex: 1,

@@ -81,7 +81,7 @@ async function loadCriteria() {
       src="/logo-header.png"
       alt="Logo"
       style={{
-        height: isMobile ? "42px" : "52px",
+        height: isMobile ? "42px" : "50spx",
         objectFit: "contain",
       }}
     />
@@ -91,7 +91,7 @@ async function loadCriteria() {
       src="/Tenhethong.png"
       alt="Tên hệ thống"
       style={{
-        height: isMobile ? "36px" : "48px",
+        height: isMobile ? "36px" : "46px",
         objectFit: "contain",
       }}
     />
