@@ -646,8 +646,8 @@ async function loadCriteria() {
     style={{
       background: "#2563eb",
       color: "white",
-      padding: "15px 35px",
-      borderRadius: "12px",
+      padding: "13px 35px",
+      borderRadius: "10px",
       textDecoration: "none",
       fontWeight: 600,
       fontSize: "18px",
@@ -657,7 +657,7 @@ async function loadCriteria() {
   >
     Đăng nhập hệ thống
   </Link>
-<div style={{ marginTop: "16px" }}>
+<div style={{ marginTop: "-8px" }}>
     <InstallButton />
                       </div>
                     </div>

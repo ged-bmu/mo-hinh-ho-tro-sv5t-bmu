@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Download } from "lucide-react";
+
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -70,20 +72,25 @@ export default function InstallButton() {
         e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.boxShadow = "none";
       }}
-      style={{
-        background: "#fff",
-        color: "#2563eb",
-        border: "2px solid #2563eb",
-        borderRadius: "12px",
-        padding: "15px 35px",
-        fontWeight: 600,
-        fontSize: "18px",
-        cursor: "pointer",
-        transition: "all .25s ease",
-        minWidth: "260px",
-      }}
-    >
-      📲 Cài ứng dụng
-    </button>
+  style={{
+    background: "#fff",
+    color: "#2563eb",
+    border: "2px solid #2563eb",
+    borderRadius: "12px",
+    padding: "15px 35px",
+    fontWeight: 600,
+    fontSize: "18px",
+    cursor: "pointer",
+    transition: "all .25s ease",
+    minWidth: "260px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "10px",
+  }}
+>
+  <Download size={22} />
+  Cài đặt ứng dụng
+</button>
   );
 }
