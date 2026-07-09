@@ -18,7 +18,7 @@ export async function GET(
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("ho_ten, lop, mssv, email")
+      .select("ho_ten, lop, mssv, email,avatar")
       .eq("id", id)
       .single();
 
@@ -87,7 +87,44 @@ th{
 </head>
 
 <body>
+<div
+  style="
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:15px;
+  "
+>
+  <div style="width:100px">
+    ${
+      profile?.avatar
+        ? `<img
+            src="${profile.avatar}"
+            style="
+              width:100px;
+              height:130px;
+              object-fit:cover;
+              border:1px solid #000;
+            "
+          />`
+        : `
+          <div
+            style="
+              width:100px;
+              height:130px;
+              border:1px solid #000;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+            "
+          >
+            Ảnh 3×4
+          </div>
+        `
+    }
+  </div>
 
+  <div style="flex:1;text-align:center">
 <h2>BÁO CÁO THÀNH TÍCH</h2>
 
 <h3>ĐỀ NGHỊ CÔNG NHẬN DANH HIỆU SINH VIÊN 5 TỐT CẤP TRƯỜNG</h3>
