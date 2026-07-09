@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Footer from "../components/Footer";
 import { supabase } from "@/lib/supabase";
-
+import InstallButton from "../components/InstallButton";
 
 export default function IntroducePage() {
  const [tab, setTab] = useState("home");
@@ -624,35 +624,45 @@ async function loadCriteria() {
   style={{
     marginTop: 40,
     textAlign: "center",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "16px",
   }}
 >
-            <Link
-  href="/login"
-  className="cta-btn"
-  onMouseEnter={(e) => {
-    e.currentTarget.style.transform = "translateY(-2px)";
-    e.currentTarget.style.boxShadow = "0 8px 20px rgba(37,99,235,.25)";
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.transform = "translateY(0)";
-    e.currentTarget.style.boxShadow = "none";
-  }}
-  style={{
-    background: "#2563eb",
-    color: "white",
-    padding: "15px 35px",
-    borderRadius: "12px",
-    textDecoration: "none",
-    fontWeight: 600,
-    fontSize: "18px",
-    transition: "all 0.25s ease",
-  }}
->
-  Đăng nhập hệ thống
-</Link>
-          </div>
-        </div>
-      </main>
+  {/* Đăng nhập */}
+  <Link
+    href="/login"
+    className="cta-btn"
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = "translateY(-2px)";
+      e.currentTarget.style.boxShadow =
+        "0 8px 20px rgba(37,99,235,.25)";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = "translateY(0)";
+      e.currentTarget.style.boxShadow = "none";
+    }}
+    style={{
+      background: "#2563eb",
+      color: "white",
+      padding: "15px 35px",
+      borderRadius: "12px",
+      textDecoration: "none",
+      fontWeight: 600,
+      fontSize: "18px",
+      transition: "all 0.25s ease",
+      minWidth: "260px",
+    }}
+  >
+    Đăng nhập hệ thống
+  </Link>
+<div style={{ marginTop: "16px" }}>
+    <InstallButton />
+                      </div>
+                    </div>
+              </div>
+            </main>
         <Footer />
     </div>
   );
