@@ -25,6 +25,7 @@ export default function StudentsDetailPage() {
   const [uuTienFiles, setUuTienFiles] = useState<any[]>([]);
   const [baoCaoFiles, setBaoCaoFiles] = useState<any[]>([]);
   const [trangThai, setTrangThai] = useState("");
+  const [previewAvatar, setPreviewAvatar] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState({top: 0,left: 0,});
   const [previewFolder, setPreviewFolder] = useState("");
@@ -1128,16 +1129,64 @@ if (error) {
       }}
     />
   </div>
-
-  <table
+<div
+  style={{
+    position: "relative",
+    height: 0,
+  }}
+>
+  <div
     style={{
-    width:"100%",
-    borderCollapse:"collapse",
-    tableLayout:"fixed",
-    fontFamily:"Times New Roman",
-    fontSize:"13pt",
-}}
+      position: "absolute",
+      left: 20,
+      top: -150,
+      width: 95,
+      height: 125,
+      border: "1px solid #94a3b8",
+      borderRadius: 6,
+      overflow: "hidden",
+      background: "#fff",
+      zIndex: 10,
+    }}
   >
+    {profile?.avatar ? (
+      <img
+        src={profile.avatar}
+        onClick={() => setPreviewAvatar(true)}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          cursor: "zoom-in",
+        }}
+      />
+    ) : (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          fontSize: 12,
+          color: "#64748b",
+        }}
+      >
+        Ảnh 3×4
+      </div>
+    )}
+  </div>
+</div>
+ <table
+  style={{
+    marginTop: 30,
+    width: "100%",
+    borderCollapse: "collapse",
+    tableLayout: "fixed",
+    fontFamily: "Times New Roman",
+    fontSize: "13pt",
+  }}
+>
     <thead>
       <tr>
         <th
@@ -1172,27 +1221,27 @@ if (error) {
 
     <tbody>
       <tr>
-        <td
-          style={{
-            border: "1px solid #cbd5e1",
-            padding: "16px",
-            verticalAlign: "top",
-            lineHeight: "1.6",
-            fontSize: "15px",
-          }}
-        >
-          <div><b>Họ và tên:</b> {profile?.ho_ten}</div>
-          <div><b>MSSV:</b> {profile?.mssv}</div>
-          <div><b>Nam/Nữ:</b></div>
-          <div><b>Năm sinh:</b></div>
-          <div><b>Dân tộc:</b></div>
-          <div><b>Sinh viên năm thứ:</b></div>
-          <div><b>Lớp:</b> {profile?.lop}, Trường Đại học Y Dược Buôn Ma Thuột</div>
-          <div><b>Chức vụ Đoàn - Hội:</b></div>
-          <div><b>Đảng viên/Đoàn viên:</b></div>
-          <div><b>Số điện thoại:</b></div>
-          <div><b>Email:</b> {profile?.email}</div>
-        </td>
+ <td
+  style={{
+    border: "1px solid #cbd5e1",
+    padding: "16px",
+    verticalAlign: "top",
+    fontSize: "15px",
+    lineHeight: "1.6",
+  }}
+>
+  <div><b>Họ và tên:</b> {profile?.ho_ten}</div>
+  <div><b>MSSV:</b> {profile?.mssv}</div>
+  <div><b>Nam/Nữ:</b></div>
+  <div><b>Năm sinh:</b></div>
+  <div><b>Dân tộc:</b></div>
+  <div><b>Sinh viên năm thứ:</b></div>
+  <div><b>Lớp:</b> {profile?.lop}, Trường Đại học Y Dược Buôn Ma Thuột</div>
+  <div><b>Chức vụ Đoàn - Hội:</b></div>
+  <div><b>Đảng viên/Đoàn viên:</b></div>
+  <div><b>Số điện thoại:</b></div>
+  <div><b>Email:</b> {profile?.email}</div>
+</td>
 
         {criteriaList.map((item) => {
   const report = reports.find(
@@ -1357,6 +1406,29 @@ if (error) {
     </div>,
     document.body
   )}
+  {previewAvatar && profile?.avatar && (
+  <div
+    onClick={() => setPreviewAvatar(false)}
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,.7)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 99999,
+    }}
+  >
+    <img
+      src={profile.avatar}
+      style={{
+        maxWidth: "90%",
+        maxHeight: "90%",
+        borderRadius: 10,
+      }}
+    />
+  </div>
+)}
     </div>
   );
 }
