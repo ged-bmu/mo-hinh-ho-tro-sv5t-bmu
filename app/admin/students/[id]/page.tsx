@@ -1191,7 +1191,7 @@ if (error) {
       <tr>
         <th
           style={{
-            width: "280px",
+            width: "210px",
             border: "1px solid #cbd5e1",
             background: "#eff6ff",
             padding: "14px 10px",
