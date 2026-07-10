@@ -33,6 +33,7 @@ export default function StudentsDetailPage() {
   const [previewFile, setPreviewFile] = useState<any>(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
+  const [zoom, setZoom] = useState(0.6);
   const criteriaList = [
   { key: "dao-duc", title: "❤️ Đạo đức tốt" },
   { key: "hoc-tap", title: "📚 Học tập tốt" },
@@ -44,7 +45,21 @@ export default function StudentsDetailPage() {
   const [displayNames, setDisplayNames] = useState<
   Record<string, string>
 >({});
+useEffect(() => {
+  if (!previewOpen) return;
 
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      setPreviewOpen(false);
+    }
+  }
+
+  window.addEventListener("keydown", handleKeyDown);
+
+  return () => {
+    window.removeEventListener("keydown", handleKeyDown);
+  };
+}, [previewOpen]);
   useEffect(() => {
     if (!id) return;
 
@@ -52,6 +67,21 @@ export default function StudentsDetailPage() {
     loadFiles();
     loadReports();
   }, [id]);
+  useEffect(() => {
+  if (!reportOpen) return;
+
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      setReportOpen(false);
+    }
+  }
+
+  window.addEventListener("keydown", handleKeyDown);
+
+  return () => {
+    window.removeEventListener("keydown", handleKeyDown);
+  };
+}, [reportOpen]);
 async function loadReports() {
   console.log("ĐANG LOAD REPORT VỚI ID:", id);
 
@@ -273,7 +303,12 @@ async function exportReportPDF() {
   }}
 >
   <div
-  onClick={() => window.open(url, "_blank")}
+  onClick={() => {
+  setPreviewFile(file);
+  setPreviewUrl(url);
+  setPreviewFolder(folder);
+  setPreviewOpen(true);
+}}
   style={{
     fontSize: "14px",
     whiteSpace: "nowrap",
@@ -286,82 +321,6 @@ async function exportReportPDF() {
 >
  {displayNames[file.name] || file.name.replace(/^\d+-/, "")}
 </div>
-  <div
-    style={{
-      position: "relative",
-    }}
-  >
-   <span
-  onClick={(e) => {
-  e.stopPropagation();
-
-  setOpenMenu(
-    openMenu === `${folder}-${file.name}`
-      ? null
-      : `${folder}-${file.name}`
-  );
-}}
-      style={{
-        cursor: "pointer",
-        fontSize: "20px",
-        fontWeight: "bold",
-      }}
-    >
-      ⋮
-    </span>
-
-{openMenu === `${folder}-${file.name}` && (
-  <div
-  style={{
-  position: "absolute",
-  bottom: "28px",
-  right: "0",
-  background: "white",
-  border: "1px solid #e2e8f0",
-  borderRadius: "10px",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-  zIndex: 9999,
-
-  width: "200px",
-}}
-  >
-    <div
-      style={{
-        padding: "12px",
-        fontSize: "13px",
-        background: "#f8fafc",
-        borderBottom: "1px solid #e5e7eb",
-        overflowWrap: "break-word",
-        whiteSpace: "normal",
-      }}
-    >
-      📄 {displayNames[file.name] || file.name.replace(/^\d+-/, "")}
-    </div>
-
-<div
-  onClick={() => {
-    console.log("PREVIEW URL:", url);
-    setPreviewFile(file);
-    setPreviewUrl(url);
-    setPreviewFolder(folder);
-    setPreviewOpen(true);
-    setOpenMenu(null);
-  }}
-  style={{
-    display: "block",
-    padding: "8px",
-    color: "#000",
-    fontWeight: "600",
-    fontSize: "12px",
-    background: "white",
-    cursor: "pointer",
-  }}
->
-  👁 Xem
-</div>
-  </div>
-)}
-  </div>
 </div>
 
 </div>
@@ -1365,7 +1324,45 @@ if (error) {
       ⬇ Tải file
     </button>
 
+<button
+  onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))}
+  style={{
+    width: "38px",
+    height: "38px",
+    border: "1px solid #d1d5db",
+    borderRadius: "8px",
+    background: "#fff",
+    cursor: "pointer",
+    fontSize: "18px",
+  }}
+>
+  ➖
+</button>
 
+<span
+  style={{
+    minWidth: "50px",
+    textAlign: "center",
+    fontWeight: 600,
+  }}
+>
+  {Math.round(zoom * 100)}%
+</span>
+
+<button
+  onClick={() => setZoom((z) => Math.min(3, z + 0.1))}
+  style={{
+    width: "38px",
+    height: "38px",
+    border: "1px solid #d1d5db",
+    borderRadius: "8px",
+    background: "#fff",
+    cursor: "pointer",
+    fontSize: "18px",
+  }}
+>
+  ➕
+</button>
     {/* ĐÓNG */}
     <button
       onClick={() => setPreviewOpen(false)}
@@ -1388,20 +1385,36 @@ if (error) {
 
         {/* BODY */}
         <div
-          style={{
-            flex: 1,
-            background: "#f1f5f9",
-          }}
-        >
-          <iframe
-            src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-            style={{
-              width: "100%",
-              height: "100%",
-              border: "none",
-            }}
-          />
-        </div>
+  style={{
+    flex: 1,
+    overflow: "auto",
+    background: "#f1f5f9",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    padding: "20px",
+  }}
+>
+  {previewFile?.name.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/) ? (
+    <img
+      src={previewUrl}
+      style={{
+        width: `${zoom * 100}%`,
+        height: "auto",
+        maxWidth: "none",
+      }}
+    />
+  ) : (
+    <iframe
+      src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+      style={{
+        width: `${zoom * 100}%`,
+        height: "100%",
+        border: "none",
+      }}
+    />
+  )}
+</div>
       </div>
     </div>,
     document.body

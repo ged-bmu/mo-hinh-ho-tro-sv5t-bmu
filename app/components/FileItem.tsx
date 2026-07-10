@@ -15,7 +15,7 @@ export default function FileItem({
   onRename: (file: any) => void;
 }) {
   const [previewOpen, setPreviewOpen] = useState(false);
-
+const [zoom, setZoom] = useState(0.8); 
   useEffect(() => {
     if (previewOpen) {
       document.body.style.overflow = "hidden";
@@ -184,6 +184,43 @@ export default function FileItem({
 >
   ⬇ Tải về
 </button>
+<button
+  onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))}
+  style={{
+    padding: "6px 8px",
+    borderRadius: "8px",
+    border: "1px solid #d1d5db",
+    background: "#fff",
+    cursor: "pointer",
+    fontSize: "16px",
+  }}
+>
+  ➖
+</button>
+
+<span
+  style={{
+    minWidth: 50,
+    textAlign: "center",
+    fontWeight: 600,
+  }}
+>
+  {Math.round(zoom * 100)}%
+</span>
+
+<button
+  onClick={() => setZoom((z) => Math.min(3, z + 0.1))}
+  style={{
+    padding: "6px 8px",
+    borderRadius: "8px",
+    border: "1px solid #d1d5db",
+    background: "#fff",
+    cursor: "pointer",
+    fontSize: "16px",
+  }}
+>
+  ➕
+</button>
 
             {/* RENAME */}
             <button
@@ -238,14 +275,28 @@ export default function FileItem({
         </div>
 
         {/* CONTENT */}
-        <iframe
-          src={`${url}#toolbar=0`}
-          style={{
-            width: "100%",
-            height: "100%",
-            border: "none",
-          }}
-        />
+<div
+  style={{
+    width: "100%",
+    height: "100%",
+    overflow: "auto",
+
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "flex-start",
+  }}
+>
+  <iframe
+    src={`${url}#toolbar=0`}
+    style={{
+      width: `${100 / zoom}%`,
+      height: `${100 / zoom}%`,
+      transform: `scale(${zoom})`,
+      transformOrigin: "top center",
+      border: "none",
+    }}
+  />
+</div>
       </div>
     </div>,
     document.body

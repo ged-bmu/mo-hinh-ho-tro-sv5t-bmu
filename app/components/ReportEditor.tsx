@@ -2,8 +2,7 @@
 
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect, useRef } from "react";
-
+import { useEffect } from "react";
 type Props = {
   value: string;
   onChange: (value: string) => void;
@@ -13,7 +12,7 @@ export default function ReportEditor({
   value,
   onChange,
 }: Props) {
-    const isFirstLoad = useRef(true);
+
   const editor = useEditor({
   extensions: [
   StarterKit.configure({
@@ -33,9 +32,8 @@ export default function ReportEditor({
 useEffect(() => {
   if (!editor) return;
 
-  if (isFirstLoad.current && value) {
+  if (value !== editor.getHTML()) {
     editor.commands.setContent(value);
-    isFirstLoad.current = false;
   }
 }, [editor, value]);
   if (!editor) return null;

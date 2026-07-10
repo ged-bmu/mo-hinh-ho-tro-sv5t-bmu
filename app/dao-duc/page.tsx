@@ -20,6 +20,15 @@ export default function DaoDucPage() {
   const [report, setReport] = useState("");
   const [savingReport, setSavingReport] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+ const defaultReport = `
+<p>1. Không vi phạm pháp luật của Nhà nước, nội quy, quy chế của nhà trường; không bị xử lý kỷ luật trong năm học.</p>
+
+<p>2. Điểm rèn luyện năm học 2025 - 2026: /100.</p>
+
+<p>3. Tham gia đầy đủ các buổi sinh hoạt chính trị, sinh hoạt công dân.</p>
+
+<p>4.&nbsp; </p>
+`;
 
   useEffect(() => {
     loadFiles();
@@ -70,7 +79,11 @@ export default function DaoDucPage() {
   .eq("criteria", "dao-duc")
   .maybeSingle();
 
-setReport(reportData?.content ?? "");
+setReport(
+  reportData?.content?.trim()
+    ? reportData.content
+    : defaultReport
+);
   }
 }
 async function saveReport() {
@@ -323,32 +336,71 @@ await fetch("/api/cleanup-logs", {
     </span>
   )}
 <ReportEditor
+  key="dao-duc"
   value={report}
   onChange={setReport}
 />
+
 <div
   style={{
     display: "flex",
     justifyContent: "flex-end",
-    alignItems: "center",
+    gap: "8px",
     marginTop: "16px",
   }}
 >
+<button
+  onClick={async () => {
+    if (!confirm("Tạo lại mẫu báo cáo?")) return;
+
+    setReport(defaultReport);
+
+    await supabase
+      .from("reports")
+      .upsert(
+        {
+          user_id: userId,
+          criteria: "dao-duc",
+          content: defaultReport,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "user_id,criteria",
+        }
+      );
+
+    setLastSaved(new Date());
+  }}
+  style={{
+    padding: "6px 10px",
+    background: "#fff",
+    color: "#2563eb",
+    border: "1px solid #2563eb",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "13px",
+    fontWeight: 500,
+  }}
+>
+  ↺ Tạo lại mẫu
+</button>
+
   <button
     onClick={saveReport}
     disabled={savingReport}
     style={{
-      padding: "6px 14px",
+      padding: "6px 12px",
       background: "#2563eb",
       color: "#fff",
       border: "1px solid #2563eb",
       borderRadius: "6px",
-      cursor: "pointer",
-      fontSize: "14px",
+      cursor: savingReport ? "not-allowed" : "pointer",
+      fontSize: "13px",
       fontWeight: 500,
+      opacity: savingReport ? 0.7 : 1,
     }}
   >
-    {savingReport ? "Đang lưu..." : <b>💾 Lưu</b>}
+    {savingReport ? "Đang lưu..." : "💾 Lưu"}
   </button>
 </div>
 </div>
