@@ -161,24 +161,48 @@ export default function InstallButton() {
                 textAlign: "center",
               }}
             >
-              🍎 Cài đặt trên iPhone
+              Cài đặt trên iPhone
             </h2>
 
             <p style={{ lineHeight: 1.8 }}>
               Để thêm ứng dụng vào Màn hình chính:
             </p>
 
-            <ol
-              style={{
-                lineHeight: 2,
-                paddingLeft: "20px",
-              }}
-            >
-              <li>Nhấn nút <b>Chia sẻ</b> (□↑) trong Safari.</li>
-              <li>Chọn <b>Thêm vào Màn hình chính</b>.</li>
-              <li>Nhấn <b>Thêm</b>.</li>
-            </ol>
+<ol
+  style={{
+    lineHeight: 2,
+    paddingLeft: "20px",
+  }}
+>
+  <li
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "6px",
+      flexWrap: "wrap",
+    }}
+  >
+    Nhấn nút <b>Chia sẻ</b>
 
+
+  <img
+    src="/share-ios.png"
+    alt="Chia sẻ"
+    style={{
+      width: "18px",
+      height: "18px",
+      objectFit: "contain",
+    }}
+  />
+
+    ở thanh dưới của Safari.
+  </li>
+
+  <li>Chọn <b>Thêm vào Màn hình chính</b>.</li>
+
+  <li>Nhấn <b>Thêm</b> để hoàn tất.</li>
+  <li>Bật <b>Mở dưới dạng ứng dụng web</b></li>
+</ol>
             <button
               onClick={() => setShowIOSGuide(false)}
               style={{
