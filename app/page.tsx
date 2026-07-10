@@ -14,6 +14,7 @@ export default function Home() {
   const [profile, setProfile] = useState<any>(null);
   const [tab, setTab] = useState("proof");
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   const [isMobile, setIsMobile] = useState(false);
   const [showCriteria, setShowCriteria] = useState(false);
@@ -133,6 +134,15 @@ if (loading) {
     </div>
   );
 }
+const handleExport = () => {
+  setExporting(true);
+
+  window.open(`/api/export-student/${profile.id}`, "_blank");
+
+  setTimeout(() => {
+    setExporting(false);
+  }, 3000);
+};
 
 return (
 <div
@@ -294,9 +304,8 @@ return (
 </a>
   
 <button
-  onClick={() => {
-    window.open(`/api/export-student/${profile.id}`, "_blank");
-  }}
+  onClick={handleExport}
+disabled={exporting}
   onMouseEnter={(e) => {
     e.currentTarget.style.transform = "translateY(-3px) scale(1.03)";
     e.currentTarget.style.background = "#15803d";
@@ -318,7 +327,7 @@ return (
     transition: "all .25s ease",
   }}
 >
-  🗂️ Xuất hồ sơ
+  {exporting ? "⏳ Đang xuất hồ sơ..." : "🗂️ Xuất hồ sơ"}
 </button>
 </div>
 </div>
