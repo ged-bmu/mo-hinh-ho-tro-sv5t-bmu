@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import JSZip from "jszip";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 
 export async function GET(
   request: Request,
@@ -217,10 +218,10 @@ export async function GET(
     // HTML -> PDF (PUPEETER)
     // =========================
 const browser = await puppeteer.launch({
+  args: chromium.args,
+  executablePath: await chromium.executablePath(),
   headless: true,
-  args: ["--no-sandbox", "--disable-setuid-sandbox"],
 });
-
 const page = await browser.newPage();
 
 await page.setViewport({
