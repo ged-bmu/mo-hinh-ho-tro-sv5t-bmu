@@ -124,7 +124,7 @@ async function loadCriteria() {
       style={{
         display: "flex",
         alignItems: "center",
-        gap: "10px",
+        gap: "8px",
       }}
     >
       {[
@@ -268,7 +268,7 @@ async function loadCriteria() {
   style={{
     textAlign: "center",
     marginBottom: isMobile ? "18px" : "10px",
-    padding: isMobile ? "16px" : "0",
+    padding: isMobile ? "0px" : "0",
     background: isMobile ? "#ffffff" : "transparent",
     borderRadius: isMobile ? "16px" : "0",
     }}
@@ -321,7 +321,7 @@ async function loadCriteria() {
 
     <p
   style={{
-    fontSize: "18px",
+    fontSize: "16px",
     fontWeight: 700,
     color: "#0f65de",
     marginBottom: "0px",
@@ -341,7 +341,7 @@ async function loadCriteria() {
     fontSize:"18px",
     lineHeight: isMobile ? "1.5" : "2",
     textAlign: "justify",
-    margin: "0",
+    marginTop: "-10",
   }}
 >
       Với mục tiêu tăng cường ứng dụng công nghệ và thúc đẩy chuyển đổi số trong công tác Đoàn – Hội, 
@@ -622,12 +622,13 @@ async function loadCriteria() {
           <div
   className="cta-wrapper"
   style={{
-    marginTop: 40,
+    marginTop: 25,
+    marginBottom: 0,
     textAlign: "center",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "16px",
+    gap: "10px",
   }}
 >
   {/* Đăng nhập */}
@@ -657,7 +658,7 @@ async function loadCriteria() {
   >
     Đăng nhập hệ thống
   </Link>
-<div style={{ marginTop: "-8px" }}>
+<div style={{ marginTop: "0px" }}>
     <InstallButton />
                       </div>
                     </div>

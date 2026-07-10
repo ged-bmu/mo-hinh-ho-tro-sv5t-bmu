@@ -269,12 +269,13 @@ return (
 >
   <Sidebar />
       <main
-        style={{
-          flex: 1,
-          background: "#eef3f9",
-          padding: "30px",
-        }}
-      >
+  style={{
+    flex: 1,
+    minWidth: 0,
+    background: "#eef3f9",
+    padding: isMobile ? "12px" : "30px",
+  }}
+>
         {loading ? (
           <div
             style={{
@@ -292,8 +293,8 @@ return (
   style={{
     background: "#fff",
     borderRadius: "20px",
-    padding: "16px",
-    overflow: "visible",
+    padding: isMobile ? "10px" : "16px",
+    overflow: "hidden",
     width: "100%",
     maxWidth: "1600px",
     margin: "0 auto",
@@ -303,38 +304,41 @@ return (
 >
                 {/* Thanh chức năng */}
 
-<div
-  style={{
-    display: "flex",
-    justifyContent: "flex-end",
-    marginBottom: "16px",
-  }}
->
-  <button
-  onClick={exportPDF}
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    background: "#dc2626",
-    color: "#fff",
-    border: "none",
-    padding: "10px 16px",
-    borderRadius: "10px",
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: "14px",
-  }}
->
-  <FaFilePdf size={18} />
-  Xuất
-</button>
-</div>
+{!isMobile && (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "flex-end",
+      marginBottom: "16px",
+    }}
+  >
+    <button
+      onClick={exportPDF}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        background: "#dc2626",
+        color: "#fff",
+        border: "none",
+        padding: "10px 16px",
+        borderRadius: "10px",
+        cursor: "pointer",
+        fontWeight: 600,
+        fontSize: "14px",
+      }}
+    >
+      <FaFilePdf size={18} />
+      Xuất
+    </button>
+  </div>
+)}
 
                 <div
   style={{
     position: "relative",
     textAlign: "center",
+    paddingTop: isMobile ? "10px" : 0,
     marginBottom: "18px",
   }}
 >
@@ -342,11 +346,13 @@ return (
   <div
     ref={avatarRef}
     style={{
-      position: "absolute",
-      left: 60,
-      top: -60,
-      width: 120,
-      height: 160,
+  position: isMobile ? "relative" : "absolute",
+  left: isMobile ? "50%" : 60,
+  transform: isMobile ? "translateX(-50%)" : "none",
+  top: isMobile ? 0 : -60,
+  marginBottom: isMobile ? 16 : 0,
+      width: isMobile ? 100 : 120,
+      height: isMobile ? 133 : 160,
       border: "1px solid #94a3b8",
       borderRadius: 6,
       overflow: "visible",
@@ -558,20 +564,54 @@ return (
       borderTop: "2px solid #dbeafe",
     }}
   />
+  {isMobile && (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "center",
+      marginTop: 16,
+      marginBottom: 20,
+    }}
+  >
+    <button
+      onClick={exportPDF}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        background: "#dc2626",
+        color: "#fff",
+        border: "none",
+        padding: "10px 18px",
+        borderRadius: 10,
+        cursor: "pointer",
+        fontWeight: 600,
+        fontSize: 14,
+      }}
+    >
+      <FaFilePdf size={18} />
+      Xuất PDF
+    </button>
+  </div>
+)}
 </div>
 <div
   style={{
     width: "100%",
-     overflowX: isMobile ? "scroll" : "hidden",
+    maxWidth: "100%",
+    overflowX: "auto",
+    overflowY: "hidden",
+    WebkitOverflowScrolling: "touch",
   }}
 >
                 <table
-                  style={{
-                    width: isMobile ? "900px" : "100%",
-                    tableLayout: "fixed",
-                    borderCollapse: "collapse",
-                  }}
-                >
+  style={{
+    minWidth: isMobile ? "900px" : "100%",
+    width: "100%",
+    tableLayout: "fixed",
+    borderCollapse: "collapse",
+  }}
+>
                   <thead>
                     <tr>
                       <th
