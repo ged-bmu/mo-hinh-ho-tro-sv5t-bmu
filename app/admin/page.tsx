@@ -8,9 +8,11 @@ import Image from "next/image";
 import NotificationBell from "../components/NotificationBell";
 import { usePathname } from "next/navigation";
 import Footer from "../components/Footer";
+import Spinner from "../components/Spinner";
 
 export default function AdminPage() {
   const [profile, setProfile] = useState<any>(null);
+  const [exporting, setExporting] = useState(false);
   const [students, setStudents] = useState<any[]>([])
   const [search, setSearch] = useState("");
   const [showSidebar, setShowSidebar] = useState(false);
@@ -567,21 +569,37 @@ const exportExcel = async () => {
         📊 Xuất Excel
       </div>
 
-      <div
-        onClick={() => {
-          window.open(
-  `/api/export-all-student?filter=${filterResult}&search=${encodeURIComponent(search)}`,
-  "_blank"
-)
-          setShowExportMenu(false);
-        }}
-        style={{
-          padding: "12px",
-          cursor: "pointer",
-        }}
-      >
-        🗂️ Xuất toàn bộ hồ sơ
-      </div>
+<div
+  onClick={() => {
+    setExporting(true);
+
+    window.open(
+      `/api/export-all-student?filter=${filterResult}&search=${encodeURIComponent(search)}`,
+      "_blank"
+    );
+
+    setShowExportMenu(false);
+
+    setTimeout(() => {
+      setExporting(false);
+    }, 2000);
+  }}
+  style={{
+    padding: "12px",
+    cursor: exporting ? "not-allowed" : "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  }}
+>
+  {exporting && <Spinner size={16} />}
+
+  <span>
+    {exporting
+      ? "Đang xuất hồ sơ..."
+      : "🗂️ Xuất toàn bộ hồ sơ"}
+  </span>
+</div>
     </div>
   )}
 </div>

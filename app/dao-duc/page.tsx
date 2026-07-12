@@ -9,9 +9,11 @@ import BellUserTemp from "../components/BellUserTemp";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ReportEditor from "../components/ReportEditor";
+import Spinner from "../components/Spinner";
 
 export default function DaoDucPage() {
   const [files, setFiles] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [userId, setUserId] = useState("");
   const [dragging, setDragging] = useState(false);
   const [showCriteria,setShowCriteria]=useState(false);
@@ -189,7 +191,13 @@ async function handleUpload(
 
   if (!file) return;
 
-  uploadFile(file);
+  setUploading(true);
+
+  try {
+    await uploadFile(file);
+  } finally {
+    setUploading(false);
+  }
 }
 
   async function deleteFile(name: string) {
@@ -450,6 +458,27 @@ await fetch("/api/cleanup-logs", {
       display: "block",
     }}
   >
+ {uploading ? (
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: "12px",
+    }}
+  >
+    <Spinner size={32} />
+
+    <div
+      style={{
+        fontWeight: 600,
+      }}
+    >
+      Đang tải file...
+    </div>
+  </div>
+) : (
+  <>
     <div
       style={{
         fontSize: "42px",
@@ -476,6 +505,8 @@ await fetch("/api/cleanup-logs", {
     >
       hoặc bấm để chọn file
     </div>
+  </>
+)}
 
     <input
       type="file"

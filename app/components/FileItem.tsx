@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import Spinner from "./Spinner";
 
 export default function FileItem({
   file,
@@ -15,7 +16,8 @@ export default function FileItem({
   onRename: (file: any) => void;
 }) {
   const [previewOpen, setPreviewOpen] = useState(false);
-const [zoom, setZoom] = useState(0.8); 
+  const [deleting, setDeleting] = useState(false);
+  const [zoom, setZoom] = useState(0.6); 
   useEffect(() => {
     if (previewOpen) {
       document.body.style.overflow = "hidden";
@@ -44,14 +46,35 @@ const [zoom, setZoom] = useState(0.8);
       {/* LEFT */}
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-        }}
-      >
-        <span>📄 {file.display_name || file.name}</span>
+           display: "flex",
+           alignItems: "center",
+           gap: "10px",
+           flex: 1,
+           minWidth: 0,
+         }}
+>
+        <span
+  style={{
+    flex: 1,
+    minWidth: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  }}
+>
+  📄 {file.display_name || file.name}
+</span>
 
-        <div style={{ display: "flex", gap: "8px" }}>
+       <div
+  style={{
+  border: "none",
+  color: "white",
+  padding: "8px 12px",
+  borderRadius: "8px",
+  cursor: "pointer",
+  flexShrink: 0,
+}}
+>
           <button
             onClick={() => setPreviewOpen(true)}
             style={{
@@ -83,10 +106,17 @@ const [zoom, setZoom] = useState(0.8);
       </div>
 
 <button
-  onClick={() => {
+  disabled={deleting}
+  onClick={async () => {
     const ok = window.confirm("Bạn có chắc muốn xóa file này không?");
-    if (ok) {
-      onDelete();
+    if (!ok) return;
+
+    setDeleting(true);
+
+    try {
+      await onDelete();
+    } finally {
+      setDeleting(false);
     }
   }}
   style={{
@@ -95,10 +125,11 @@ const [zoom, setZoom] = useState(0.8);
     color: "white",
     padding: "8px 12px",
     borderRadius: "8px",
-    cursor: "pointer",
+    cursor: deleting ? "not-allowed" : "pointer",
+    opacity: deleting ? 0.7 : 1,
   }}
 >
-  🗑 Xóa
+  {deleting ? <Spinner size={18} /> : "🗑 Xóa"}
 </button>
 
       {/* MODAL PREVIEW (PORTAL) */}

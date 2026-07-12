@@ -91,18 +91,21 @@ export default function NotificationBell() {
 
       {open && (
         <div
-          style={{
-            position: "absolute",
-            top: "35px",
-            right: 0,
-            width: "380px",
-            background: "white",
-            borderRadius: "12px",
-            boxShadow:
-              "0 10px 30px rgba(0,0,0,0.15)",
-            padding: "15px",
-          }}
+style={{
+  position: "absolute",
+  top: "35px",
+  right: 0,
+  width: "380px",
+  height: "500px",
+  background: "white",
+  borderRadius: "12px",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+  padding: "15px",
+  display: "flex",
+  flexDirection: "column",
+}}
         >
+          
           <h3
             style={{
               marginBottom: "12px",
@@ -110,7 +113,12 @@ export default function NotificationBell() {
           >
             <b>Thông báo</b>
           </h3>
-
+<div
+  style={{
+    flex: 1,
+    overflowY: "auto",
+  }}
+>
           {logs.length === 0 ? (
             <div
               style={{
@@ -177,7 +185,7 @@ export default function NotificationBell() {
               </div>
             ))
           )}
-
+</div>
           <div
             style={{
               marginTop: "10px",

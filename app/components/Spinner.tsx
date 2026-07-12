@@ -1,6 +1,12 @@
 "use client";
 
-export default function Spinner() {
+export default function Spinner({
+  size = 40,
+}: {
+  size?: number;
+}) {
+  const border = Math.max(2, Math.round(size / 10));
+
   return (
     <>
       <style>{`
@@ -12,10 +18,10 @@ export default function Spinner() {
 
       <div
         style={{
-          width: "40px",
-          height: "40px",
-          border: "4px solid #e5e7eb",
-          borderTop: "4px solid #2563eb",
+          width: `${size}px`,
+          height: `${size}px`,
+          border: `${border}px solid #e5e7eb`,
+          borderTop: `${border}px solid #2563eb`,
           borderRadius: "50%",
           animation: "spin 0.8s linear infinite",
         }}

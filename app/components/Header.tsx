@@ -28,9 +28,9 @@ export default function Header({
     <header
       className="header"
       style={{
-        background: "#fff",
+        background: "#ffffff",
         padding: "14px 28px",
-        borderBottom: "1px solid #eee",
+        borderBottom: "1px solid #c0c0c0",
       }}
     >
       {isMobile ? (

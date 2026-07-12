@@ -121,6 +121,7 @@ async function updateCriteria(
 const { error } = await supabase
   .from("profiles")
   .update({
+    [field]: value,
     nhan_xet: nhanXet,
     ngay_nhan_xet: new Date().toISOString(),
   })
