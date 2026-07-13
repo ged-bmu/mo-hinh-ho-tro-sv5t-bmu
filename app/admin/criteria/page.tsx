@@ -73,7 +73,7 @@ if (students) {
     type: "criteria_update",
     title: "Tiêu chuẩn vừa được cập nhật",
     content:
-      "Ban chủ nhiệm vừa cập nhật nội dung tiêu chuẩn Sinh viên 5 Tốt. Hãy kiểm tra trong mục <b>Xem tiêu chí</b>.",
+      "Ban chủ nhiệm vừa cập nhật nội dung tiêu chuẩn Sinh viên 5 Tốt. Hãy kiểm tra trong mục Xem tiêu chí.",
     target_url: "/introduce",
   }));
 
