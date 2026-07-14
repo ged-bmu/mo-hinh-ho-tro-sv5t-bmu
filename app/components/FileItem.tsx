@@ -19,6 +19,7 @@ export default function FileItem({
   const [deleting, setDeleting] = useState(false);
   const [zoom, setZoom] = useState(0.6); 
   const [isMobile, setIsMobile] = useState(false);
+  
 
 useEffect(() => {
   const check = () => setIsMobile(window.innerWidth <= 768);
@@ -57,11 +58,11 @@ useEffect(() => {
   }}
 >
       {/* LEFT */}
-      <div
+<div
   style={{
     display: "flex",
     flexDirection: isMobile ? "column" : "row",
-    alignItems: isMobile ? "flex-start" : "center",
+    alignItems: isMobile ? "stretch" : "center",
     gap: "10px",
     flex: 1,
     minWidth: 0,
@@ -69,28 +70,18 @@ useEffect(() => {
 >
 <span
   style={{
-    display: "block",
     width: "100%",
-    whiteSpace: isMobile ? "normal" : "nowrap",
-    overflow: isMobile ? "visible" : "hidden",
-    textOverflow: isMobile ? "clip" : "ellipsis",
     overflowWrap: "anywhere",
-    wordBreak: "break-word",
+    wordBreak: "break-all",
   }}
 >
-  📄 {isMobile
-  ? (file.display_name || file.name).length > 28
-    ? (file.display_name || file.name).slice(0, 28) + "..."
-    : (file.display_name || file.name)
-  : (file.display_name || file.name)}
+  📄 {file.display_name || file.name}
 </span>
-
        <div
   style={{
     display: "flex",
     gap: "8px",
-    alignSelf: isMobile ? "stretch" : "auto",
-width: isMobile ? "100%" : "auto",
+    width: isMobile ? "100%" : "auto",
     flexShrink: 0,
   }}
 >
