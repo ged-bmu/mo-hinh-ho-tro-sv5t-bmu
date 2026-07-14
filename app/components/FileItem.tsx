@@ -18,6 +18,17 @@ export default function FileItem({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [zoom, setZoom] = useState(0.6); 
+  const [isMobile, setIsMobile] = useState(false);
+
+useEffect(() => {
+  const check = () => setIsMobile(window.innerWidth <= 768);
+
+  check();
+
+  window.addEventListener("resize", check);
+
+  return () => window.removeEventListener("resize", check);
+}, []);
   useEffect(() => {
     if (previewOpen) {
       document.body.style.overflow = "hidden";
@@ -32,48 +43,56 @@ export default function FileItem({
 
   return (
     <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        background: "white",
-        padding: "15px 20px",
-        marginTop: "12px",
-        borderRadius: "12px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-      }}
-    >
-      {/* LEFT */}
-      <div
-        style={{
-           display: "flex",
-           alignItems: "center",
-           gap: "10px",
-           flex: 1,
-           minWidth: 0,
-         }}
->
-        <span
   style={{
-    flex: 1,
-    minWidth: 0,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: isMobile ? "stretch" : "center",
+    background: "white",
+    padding: "15px 20px",
+    marginTop: "12px",
+    borderRadius: "12px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+    flexDirection: isMobile ? "column" : "row",
+    gap: isMobile ? "12px" : "16px",
   }}
 >
-  📄 {file.display_name || file.name}
+      {/* LEFT */}
+      <div
+  style={{
+    display: "flex",
+    flexDirection: isMobile ? "column" : "row",
+    alignItems: isMobile ? "flex-start" : "center",
+    gap: "10px",
+    flex: 1,
+    minWidth: 0,
+  }}
+>
+<span
+  style={{
+    display: "block",
+    width: "100%",
+    whiteSpace: isMobile ? "normal" : "nowrap",
+    overflow: isMobile ? "visible" : "hidden",
+    textOverflow: isMobile ? "clip" : "ellipsis",
+    overflowWrap: "anywhere",
+    wordBreak: "break-word",
+  }}
+>
+  📄 {isMobile
+  ? (file.display_name || file.name).length > 28
+    ? (file.display_name || file.name).slice(0, 28) + "..."
+    : (file.display_name || file.name)
+  : (file.display_name || file.name)}
 </span>
 
        <div
   style={{
-  border: "none",
-  color: "white",
-  padding: "8px 12px",
-  borderRadius: "8px",
-  cursor: "pointer",
-  flexShrink: 0,
-}}
+    display: "flex",
+    gap: "8px",
+    alignSelf: isMobile ? "stretch" : "auto",
+width: isMobile ? "100%" : "auto",
+    flexShrink: 0,
+  }}
 >
           <button
             onClick={() => setPreviewOpen(true)}
@@ -84,6 +103,7 @@ export default function FileItem({
               padding: "6px 12px",
               borderRadius: "8px",
               cursor: "pointer",
+              width:isMobile ? "calc(50% - 4px)" : "auto",
             }}
           >
             👁 Xem
@@ -95,9 +115,10 @@ export default function FileItem({
               background: "#22c55e",
               color: "white",
               border: "none",
-              padding: "6px 12px",
+              padding: isMobile ? "4px 8px" : "6px 12px",
               borderRadius: "8px",
               cursor: "pointer",
+              width:isMobile ? "calc(50% - 4px)" : "auto",
             }}
           >
             ✍️ Đổi tên
@@ -127,6 +148,8 @@ export default function FileItem({
     borderRadius: "8px",
     cursor: deleting ? "not-allowed" : "pointer",
     opacity: deleting ? 0.7 : 1,
+    width:isMobile ? "100%" : "auto",
+    marginTop:isMobile ? "8px" : 0,
   }}
 >
   {deleting ? <Spinner size={18} /> : "🗑 Xóa"}
