@@ -74,7 +74,7 @@ export default function Header({
                 fontSize: "12px",
               }}
             >
-              📑 Xem tiêu chí
+              📑 Xem tiêu chuẩn
             </button>
           </div>
 
@@ -153,7 +153,7 @@ export default function Header({
     boxShadow: "0 4px 12px rgba(0,85,255,.2)",
   }}
 >
-  📑 Xem tiêu chí
+  📑 Xem tiêu chuẩn
 </button>
           </div>
         </div>

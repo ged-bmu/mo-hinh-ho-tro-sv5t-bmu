@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 import Link from "next/link";
 import Spinner from "../../components/Spinner";
+import AdminSidebar from "../../components/AdminSidebar";
+import NotificationBell from "../../components/NotificationBell";
 
 export default function ActivityPage() {
   const [logs, setLogs] = useState<any[]>([]);
@@ -81,117 +83,8 @@ export default function ActivityPage() {
         padding: "30px",
       }}
     >
-        <button
-  onMouseEnter={() =>
-    setShowSidebar(true)
-  }
-  style={{
-    position: "fixed",
-    top: "20px",
-    left: "20px",
-    width: "50px",
-    height: "50px",
-    border: "none",
-    borderRadius: "12px",
-    background: "#ffffff",
-    boxShadow:
-      "0 2px 10px rgba(0,0,0,0.1)",
-    cursor: "pointer",
-    fontSize: "24px",
-    zIndex: 999,
-  }}
->
-  ☰
-</button>
-{showSidebar && (
-  <div
-    onMouseLeave={() =>
-      setShowSidebar(false)
-    }
-    style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "260px",
-      height: "100vh",
-      background: "#ffffff",
-      boxShadow:
-        "4px 0 20px rgba(0,0,0,0.1)",
-      padding: "20px",
-      zIndex: 998,
-      display: "flex",
-      flexDirection: "column",
-    }}
-  >
-    <h2
-      style={{
-        marginTop: "70px",
-        marginBottom: "30px",
-      }}
-    >
-      🛠 Menu
-    </h2>
-
-    <a
-      href="/admin"
-      style={menuStyle}
-    >
-      📋 Danh sách sinh viên
-    </a>
-
-    <a
-      href="/admin/users"
-      style={menuStyle}
-    >
-      👥 Quản lý tài khoản
-    </a>
-
-    <a
-      href="/admin/statistics"
-      style={menuStyle}
-    >
-      📊 Thống kê
-    </a>
-
-    <a
-      href="/admin/activity"
-      style={{
-        ...menuStyle,
-        background: "#5686ed",
-        color: "white",
-        fontWeight: 600,
-      }}
-    >
-      🔔 Thông báo
-    </a>
-        <a
-          href="/admin/criteria"
-          style={{
-            ...menuStyle,
-            background: "#ffffff",
-            color: "#000000",
-          }}
-        >
-          📑 Tiêu chí
-        </a>
-    <a
-      href="/doi-mat-khau"
-      style={menuStyle}
-    >
-      🔐 Đổi mật khẩu
-    </a>
-  </div>
-)}
-   
-      <h1
-        style={{
-          fontSize: "28px",
-          marginBottom: "10px",
-          marginLeft: "50px",
-        }}
-      >
-        🔔 Nhật ký hoạt động
-      </h1>
+       <AdminSidebar />
+       <NotificationBell />
  <Link
       href="/admin"
       style={{

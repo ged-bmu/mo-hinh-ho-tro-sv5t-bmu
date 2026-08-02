@@ -5,17 +5,18 @@ import { supabase } from "../../lib/supabase";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import Image from "next/image";
-import NotificationBell from "../components/NotificationBell";
 import { usePathname } from "next/navigation";
 import Footer from "../components/Footer";
 import Spinner from "../components/Spinner";
+import Header from "../components/Header";
+import AdminSidebar from "../components/AdminSidebar";
+import NotificationBell from "../components/NotificationBell";
 
 export default function AdminPage() {
   const [profile, setProfile] = useState<any>(null);
   const [exporting, setExporting] = useState(false);
   const [students, setStudents] = useState<any[]>([])
   const [search, setSearch] = useState("");
-  const [showSidebar, setShowSidebar] = useState(false);
   const totalStudents = students.length;
   const [showExportMenu, setShowExportMenu] =
   useState(false);
@@ -248,6 +249,7 @@ const exportExcel = async () => {
   );
 };
  return (
+ 
 <div
   style={{
     display: "flex",
@@ -256,143 +258,8 @@ const exportExcel = async () => {
   }}
 >
   <div style={{ flex: 1 }}>
-    <button
-      onMouseEnter={() =>
-        setShowSidebar(true)
-      }
-      style={{
-        position: "fixed",
-        top: "20px",
-        left: "20px",
-        width: "50px",
-        height: "50px",
-        border: "none",
-        borderRadius: "12px",
-        background: "#ffffff",
-        boxShadow:
-          "0 2px 10px rgba(0,0,0,0.1)",
-        cursor: "pointer",
-        fontSize: "24px",
-        zIndex: 999,
-      }}
-    >
-      ☰
-    </button>
-    <div
-  style={{
-    position: "fixed",
-    top: "20px",
-    right: "30px",
-    width: "50px",
-    height: "50px",
-    borderRadius: "12px",
-    background: "#ffffff",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 999,
-    cursor: "pointer",
-  }}
-></div>
+<AdminSidebar />
 <NotificationBell />
-    {showSidebar && (
-      <div
-        onMouseLeave={() =>
-          setShowSidebar(false)
-        }
-        style={{
-  position: "fixed",
-  top: 0,
-  left: 0,
-  width: "260px",
-  height: "100vh",
-  background: "#ffffff",
-  boxShadow:
-    "4px 0 20px rgba(0,0,0,0.1)",
-  padding: "20px",
-  zIndex: 998,
-
-  display: "flex",
-  flexDirection: "column",
-}}
-      >
-        <h2
-          style={{
-            marginTop: "70px",
-            marginBottom: "30px",
-          }}
-        >
-          🛠 Menu
-        </h2>
-
-        <a
-           href="/admin"
-  style={{
-    display: "block",
-    padding: "12px 16px",
-    borderRadius: "10px",
-    textDecoration: "none",
-    color: "white",
-    marginBottom: "10px",
-    background: "#5686ed",
-    fontWeight: 600,
-  }}
-        >
-          📋 Danh sách sinh viên
-        </a>
-      <a
-  href="/admin/users"
-  style={menuStyle}
->
-  👥 Quản lý tài khoản
-</a>
-<a
-  href="/admin/statistics"
-  style={menuStyle}
->
-  📊 Thống kê
-</a>
-<a
-  href="/admin/activity"
-  style={menuStyle}
->
-  🔔 Thông báo
-</a>
-<a
-  href="/admin/criteria"
-  style={menuStyle}
->
-  📑 Tiêu chí
-</a>
-<a
-  href="/doi-mat-khau"
-  style={menuStyle}
->
-  🔐 Đổi mật khẩu
-</a>
-        <button
-          onClick={async () => {
-            await supabase.auth.signOut();
-            window.location.href =
-              "/introduce";
-          }}
-          style={{
-            marginTop: "auto",
-            width: "100%",
-            padding: "12px",
-            border: "none",
-            borderRadius: "10px",
-            background: "#ef4444",
-            color: "white",
-            cursor: "pointer",
-          }}
-        >
-          Đăng xuất
-        </button>
-      </div>
-    )}
-
   <div
     style={{
       padding: "60px",

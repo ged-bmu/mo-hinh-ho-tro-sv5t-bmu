@@ -106,7 +106,7 @@ export default function Footer() {
         }}
       >
         <span>
-          © 2026 Hệ thống được phát triển bởi Trần Hà Xuân Hiển • Phiên bản 1.0.1
+          © 2026 Hệ thống được phát triển bởi Trần Hà Xuân Hiển • Phiên bản 1.2.0
         </span>
 
         <span>

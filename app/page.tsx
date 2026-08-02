@@ -15,7 +15,6 @@ export default function Home() {
   const [tab, setTab] = useState("proof");
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
-
   const [isMobile, setIsMobile] = useState(false);
   const [showCriteria, setShowCriteria] = useState(false);
 
@@ -183,7 +182,12 @@ return (
     <main
       style={{
     flex: 1,
-    background: "#f5f7fb",
+    backgroundImage:
+  "linear-gradient(rgba(245,247,251,.88), rgba(245,247,251,.88)), url('/gioithieu.avif')",
+backgroundSize: "cover",
+backgroundPosition: "center",
+backgroundRepeat: "no-repeat",
+backgroundAttachment: "fixed",
     padding: isMobile ? "16px" : "30px",
     paddingBottom: isMobile ? "90px" : "30px",
     overflowX: "hidden",
@@ -331,111 +335,111 @@ disabled={exporting}
 </button>
 </div>
 </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: isMobile
-                               ? "1fr"
-                               : "repeat(auto-fit, minmax(250px, 1fr))",
-          gap: "20px",
-        }}
-      >
-
-        {folders.map((folder) => (
-          <a
-            key={folder.name}
-            href={folder.link}
-            onMouseEnter={(e) => {
-  e.currentTarget.style.transform = "translateY(-6px)";
-}}
-
-onMouseLeave={(e) => {
-  e.currentTarget.style.transform = "translateY(0)";
-}}
-            style={{
-              transition: "all .25s ease",
-              cursor: "pointer",
-              background: "white",
-              padding: "25px",
-              borderRadius: "18px",
-              textDecoration: "none",
-              color: "#111",
-              boxShadow:
-                "0 4px 12px rgba(0,0,0,0.08)",
-            }}
-          >
-            <div
+<div
   style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    marginBottom: "10px",
+    display: "grid",
+    gridTemplateColumns: isMobile
+      ? "1fr"
+      : "repeat(3, minmax(250px, 1fr))",
+    gap: "20px",
+    marginBottom: "30px",
   }}
 >
-  <span
+  {/* Quản lý tiêu chí */}
+  <a
+    href="/tieuchi"
     style={{
-      fontSize: "28px",
+      background: "#F3E8FF",
+      borderRadius: "18px",
+      padding: "24px",
+      textDecoration: "none",
+      color: "#111827",
+      boxShadow: "0 4px 12px rgba(0,0,0,.08)",
+      transition: ".25s",
     }}
+    onMouseEnter={(e) =>
+      (e.currentTarget.style.transform = "translateY(-5px)")
+    }
+    onMouseLeave={(e) =>
+      (e.currentTarget.style.transform = "translateY(0)")
+    }
   >
-    {folder.icon}
-  </span>
+    <div style={{ fontSize: 38 }}>📋</div>
 
-  <div>
-    
-    <h2
-      style={{
-        margin: 0,
-        fontSize: "18px",
-        fontWeight: "600",
-      }}
-    >
-      {folder.name}
-    </h2>
+    <h3 style={{ margin: "15px 0 8px", fontSize: 22 }}>
+      Quản lý tiêu chí
+    </h3>
 
- {folder.name !== "Tiêu chuẩn ưu tiên" && (
-  <div
+    <p style={{ margin: 0, color: "#8796aa" }}>
+      Quản lý minh chứng theo từng tiêu chí Sinh viên 5 Tốt.
+    </p>
+  </a>
+  
+
+  {/* Bảng điểm */}
+  <a
+    href="/bang-diem"
     style={{
-      marginTop: "4px",
-      display: "inline-block",
-      padding: "2px 8px",
-      borderRadius: "999px",
-      background:
-        profile?.[folder.field]
-          ? "#dcfce7"
-          : "#f3f4f6",
-      color:
-        profile?.[folder.field]
-          ? "#166534"
-          : "#f36060",
-      fontSize: "12px",
-      fontWeight: "600",
+      background: "#DCFCE7",
+      borderRadius: "18px",
+      padding: "24px",
+      textDecoration: "none",
+      color: "#111827",
+      boxShadow: "0 4px 12px rgba(0,0,0,.08)",
+      transition: ".25s",
     }}
+    onMouseEnter={(e) =>
+      (e.currentTarget.style.transform = "translateY(-5px)")
+    }
+    onMouseLeave={(e) =>
+      (e.currentTarget.style.transform = "translateY(0)")
+    }
   >
-    {profile?.[folder.field]
-      ? "✅ Đạt"
-      : "❌ Chưa đạt"}
-  </div>
-)}
-  </div>
+    <div style={{ fontSize: 38 }}>📊</div>
+
+    <h3 style={{ margin: "15px 0 8px", fontSize: 22 }}>
+      Bảng điểm
+    </h3>
+
+    <p style={{ margin: 0, color: "#64748b" }}>
+      Theo dõi kết quả học tập của bạn.
+    </p>
+  </a>
+{/* Hoạt động tháng này */}
+  <a
+    href="/hoat-dong"
+    style={{
+      background: "#E0F2FE",
+      borderRadius: "18px",
+      padding: "24px",
+      textDecoration: "none",
+      color: "#111827",
+      boxShadow: "0 4px 12px rgba(0,0,0,.08)",
+      transition: ".25s",
+    }}
+    onMouseEnter={(e) =>
+      (e.currentTarget.style.transform = "translateY(-5px)")
+    }
+    onMouseLeave={(e) =>
+      (e.currentTarget.style.transform = "translateY(0)")
+    }
+  >
+    <div style={{ fontSize: "38px" }}>📅</div>
+
+    <h3 style={{ margin: "15px 0 8px", fontSize: 22 }}>
+      Hoạt động tháng này
+    </h3>
+
+    <p style={{ margin: 0, color: "#64748b" }}>
+      Xem các hoạt động và chương trình trong tháng.
+    </p>
+  </a>
+  
 </div>
-
-<p
-  style={{
-    color: "#666",
-    marginTop: "8px",
-    fontSize: "14px",
-  }}
->
-  Nhấn để xem và quản lý minh chứng
-</p>
-
-          </a>
-        ))}
-      </div>
       <div
   style={{
     marginTop: "25px",
-    background: "white",
+    background:  "white",
     borderRadius: "16px",
     padding: "25px",
     boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
