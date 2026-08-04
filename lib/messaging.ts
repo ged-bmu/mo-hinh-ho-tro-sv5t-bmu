@@ -89,7 +89,6 @@ export async function requestNotificationPermission() {
     user_id: user.id,
     token,
     device: navigator.userAgent,
-    notification_permission: Notification.permission,
   },
       );
 
