@@ -184,6 +184,23 @@ const proofPaths = [
                 />
                 <span>Đăng xuất</span>
               </button>
+              <Link
+  href="/notifications"
+  onClick={() => setMobileMenu(false)}
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "12px",
+    borderRadius: 10,
+    textDecoration: "none",
+    background: "#eff6ff",
+    color: "#1e3a8a",
+    fontWeight: 600,
+  }}
+>
+  🔔 Bật thông báo
+</Link>
             </div>
           </div>
         )}
