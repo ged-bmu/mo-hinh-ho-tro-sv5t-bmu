@@ -52,16 +52,17 @@ export async function registerFCMToken() {
 
     // Lưu token vào Supabase
     const { error } = await supabase
-      .from("notification_tokens")
-      .upsert(
-        {
-          user_id: user.id,
-          token,
-        },
-        {
-          onConflict: "token",
-        }
-      );
+  .from("notification_tokens")
+  .upsert(
+    {
+      user_id: user.id,
+      token,
+      device: navigator.userAgent,
+    },
+    {
+      onConflict: "token",
+    }
+  );
 
     if (error) {
       console.error(

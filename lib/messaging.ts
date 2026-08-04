@@ -82,15 +82,18 @@ export async function requestNotificationPermission() {
     // Lưu token vào Supabase
     console.log("10. Đang lưu token vào Supabase");
 
-    const { error } = await supabase
-      .from("notification_tokens")
-.upsert(
-  {
-    user_id: user.id,
-    token,
-    device: navigator.userAgent,
-  },
-      );
+   const { error } = await supabase
+  .from("notification_tokens")
+  .upsert(
+    {
+      user_id: user.id,
+      token,
+      device: navigator.userAgent,
+    },
+    {
+      onConflict: "token",
+    }
+  );
 
     if (error) {
       console.error(
