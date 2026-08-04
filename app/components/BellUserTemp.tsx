@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { registerFCMToken } from "@/lib/firebase-messaging";
 
 export default function BellUserTemp() {
   const [bellRotate, setBellRotate] = useState(false);
@@ -18,7 +19,9 @@ export default function BellUserTemp() {
 }, []);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
-
+useEffect(() => {
+  registerFCMToken();
+}, []);
   useEffect(() => {
     loadNotifications();
   }, []);
