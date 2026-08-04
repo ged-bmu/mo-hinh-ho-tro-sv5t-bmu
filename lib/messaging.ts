@@ -115,6 +115,6 @@ export async function requestNotificationPermission() {
       error
     );
 
-    return null;
+    throw error;
   }
 }
