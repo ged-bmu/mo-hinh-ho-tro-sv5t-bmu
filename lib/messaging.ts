@@ -1,88 +1,120 @@
-import { getMessaging, getToken } from "firebase/messaging";
+"use client";
+
+import {
+  getMessaging,
+  getToken,
+  isSupported,
+} from "firebase/messaging";
+
 import { firebaseApp } from "./firebase";
 import { supabase } from "./supabase";
 
-
 export async function requestNotificationPermission() {
+  try {
+    console.log("1. Bắt đầu đăng ký thông báo");
 
-  const permission =
-    await Notification.requestPermission();
+    // Kiểm tra trình duyệt có hỗ trợ Firebase Messaging
+    const supported = await isSupported();
 
+    console.log("2. Firebase Messaging supported:", supported);
 
-  if (permission !== "granted") {
-    console.log("Chưa cấp quyền thông báo");
-    return null;
-  }
-
-
-  const {
-    data: {
-      user
+    if (!supported) {
+      console.log("Trình duyệt không hỗ trợ thông báo");
+      return null;
     }
-  } = await supabase.auth.getUser();
 
+    // Kiểm tra đăng nhập
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    console.log("Chưa đăng nhập");
-    return null;
-  }
+    console.log("3. User:", user?.id);
 
+    if (!user) {
+      console.log("Chưa đăng nhập");
+      return null;
+    }
 
-  const messaging =
-    getMessaging(firebaseApp);
+    // Xin quyền thông báo
+    console.log("4. Đang xin quyền thông báo");
 
+    const permission =
+      await Notification.requestPermission();
 
-  const token =
-    await getToken(
-      messaging,
-      {
-        vapidKey:
-          process.env
-          .NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-      }
+    console.log("5. Permission:", permission);
+
+    if (permission !== "granted") {
+      console.log("Chưa cấp quyền thông báo");
+      return null;
+    }
+
+    // Đăng ký Firebase Service Worker
+    console.log("6. Đăng ký Service Worker");
+
+    const registration =
+      await navigator.serviceWorker.register(
+        "/firebase-messaging-sw.js"
+      );
+
+    console.log(
+      "7. Service Worker đã đăng ký:",
+      registration
     );
 
+    // Lấy FCM token
+    console.log("8. Đang lấy FCM token");
 
-  if (!token) {
-    console.log("Không lấy được FCM token");
-    return null;
-  }
+    const messaging = getMessaging(firebaseApp);
 
+    const token = await getToken(messaging, {
+      vapidKey:
+        process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+      serviceWorkerRegistration: registration,
+    });
 
-  console.log(
-    "FCM TOKEN:",
-    token
-  );
+    console.log("9. FCM TOKEN:", token);
 
+    if (!token) {
+      console.log("Không lấy được FCM token");
+      return null;
+    }
 
-  // lưu token vào Supabase
-  const { error } =
-    await supabase
+    // Lưu token vào Supabase
+    console.log("10. Đang lưu token vào Supabase");
+
+    const { error } = await supabase
       .from("notification_tokens")
       .upsert(
         {
           user_id: user.id,
-          token: token,
-          device:
-            navigator.userAgent,
+          token,
+          device: navigator.userAgent,
         },
         {
           onConflict: "token",
         }
       );
 
+    if (error) {
+      console.error(
+        "Lỗi lưu token Supabase:",
+        error
+      );
 
-  if (error) {
+      return null;
+    }
+
     console.log(
-      "Lỗi lưu token:",
+      "11. Đã lưu token Supabase ✅"
+    );
+
+    return token;
+  } catch (error) {
+    console.error(
+      "Lỗi đăng ký thông báo:",
       error
     );
-  } else {
-    console.log(
-      "Đã lưu token Supabase ✅"
-    );
+
+    return null;
   }
-
-
-  return token;
 }
