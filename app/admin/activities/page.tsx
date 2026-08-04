@@ -146,8 +146,8 @@ if (editingId) {
       status,
     })
     .eq("id", editingId));
-} else {
-  ({ error } = await supabase
+}else {
+  const { data, error: insertError } = await supabase
     .from("activities")
     .insert({
       title,
@@ -159,7 +159,17 @@ if (editingId) {
       end_time: timeType === "range" ? endTime || null : null,
       registration_deadline: deadline || null,
       status,
-    }));
+    })
+    .select()
+    .single();
+
+  error = insertError;
+
+  if (!insertError && data) {
+    console.log("Hoạt động mới:", data);
+
+    // chỗ này lát gắn gửi thông báo
+  }
 }
 
     setLoading(false);

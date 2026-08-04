@@ -390,35 +390,7 @@ backgroundAttachment: "fixed",
 >
   📑 Xem báo cáo
 </a>
-<a
-  href="/notifications"
-  style={{
-    background: "#7c3aed",
-    color: "#fff",
-    textDecoration: "none",
-    padding: "12px 18px",
-    borderRadius: "12px",
-    fontWeight: 600,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "8px",
-    width: isMobile ? "100%" : "auto",
-    transition: "all .25s ease",
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.transform =
-      "translateY(-3px) scale(1.03)";
-    e.currentTarget.style.background = "#6d28d9";
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.transform =
-      "translateY(0) scale(1)";
-    e.currentTarget.style.background = "#7c3aed";
-  }}
->
-  🔔 Bật thông báo
-</a>
+
   <a
   href="/trao-doi"
 onClick={async () => {

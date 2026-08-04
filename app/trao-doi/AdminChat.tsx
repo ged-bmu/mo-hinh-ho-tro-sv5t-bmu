@@ -288,6 +288,19 @@ if (!error) {
   await supabase.rpc("increment_unread_user", {
     conversation_id_input: selected.id,
   });
+
+  // Gửi thông báo cho sinh viên
+  await fetch("/api/send-notification", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      title: "💬 Tin nhắn mới từ CLB SV5T",
+      message: text || "Bạn có một tin nhắn mới.",
+      userId: selected.user_id,
+    }),
+  });
 }
 if (error) {
   console.log(error);
