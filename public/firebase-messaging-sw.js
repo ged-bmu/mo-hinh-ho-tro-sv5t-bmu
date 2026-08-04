@@ -16,27 +16,3 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-
-
-messaging.onBackgroundMessage((payload) => {
-  console.log(
-    "Received background message:",
-    payload
-  );
-
-  const notificationTitle =
-    payload.notification?.title || "SV5T BMU";
-
-  const notificationOptions = {
-    body:
-      payload.notification?.body ||
-      "Bạn có thông báo mới",
-    icon: "/icon-192.png",
-  };
-
-
-  self.registration.showNotification(
-    notificationTitle,
-    notificationOptions
-  );
-});
