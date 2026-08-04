@@ -96,6 +96,7 @@ export async function requestNotificationPermission() {
     if (error) {
       console.error(
         "Lỗi lưu token Supabase:",
+        JSON.stringify(error, null, 2),
         error
       );
 
