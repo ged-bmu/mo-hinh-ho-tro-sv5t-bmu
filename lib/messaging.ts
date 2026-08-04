@@ -84,15 +84,13 @@ export async function requestNotificationPermission() {
 
     const { error } = await supabase
       .from("notification_tokens")
-      .upsert(
-        {
-          user_id: user.id,
-          token,
-          device: navigator.userAgent,
-        },
-        {
-          onConflict: "token",
-        }
+.upsert(
+  {
+    user_id: user.id,
+    token,
+    device: navigator.userAgent,
+    notification_permission: Notification.permission,
+  },
       );
 
     if (error) {
