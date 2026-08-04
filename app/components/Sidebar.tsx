@@ -289,7 +289,26 @@ return (
         </h2>
       )}
     </div>
-
+<div style={{ padding: "0 10px 10px" }}>
+  <Link
+    href="/notifications"
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: collapsed ? "center" : "flex-start",
+      gap: 10,
+      padding: "12px 14px",
+      borderRadius: 12,
+      textDecoration: "none",
+      background: "#eff6ff",
+      color: "#1e3a8a",
+      fontWeight: 600,
+      transition: ".25s",
+    }}
+  >
+    🔔 {!collapsed && "Bật thông báo"}
+  </Link>
+</div>
     {/* MENU */}
     <div
       style={{
