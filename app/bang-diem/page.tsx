@@ -272,7 +272,7 @@ const gpa4Year =
         marginBottom: 6,
       }}
     >
-      Tổng tín chỉ
+      Tổng số tín chỉ
     </div>
 
     <div

@@ -17,7 +17,7 @@ type Activity = {
   end_time: string | null;
   registration_deadline: string | null;
   created_at: string;
-  
+  status: string;
 };
 
 const criterionLabel: Record<string, string> = {
@@ -29,20 +29,8 @@ const criterionLabel: Record<string, string> = {
   khac: "Khác",
 };
 
-function formatDate(date?: string | null) {
-  if (!date) return "Chưa có";
-
-  const d = new Date(date);
-
-  if (isNaN(d.getTime())) return "Không hợp lệ";
-
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(d);
+function formatDate(date?: string |null) {
+  return date || "Chưa có";
 }
 export default function ActivitiesAdminPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -62,6 +50,8 @@ export default function ActivitiesAdminPage() {
   const [endTime, setEndTime] = useState("");
   const [timeType, setTimeType] = useState<"single" | "range">("single");
   const [deadline, setDeadline] = useState("");
+  const [isActive, setIsActive] = useState(true);
+  const [status, setStatus] = useState("upcoming");
   const criterionStyle: Record<
   string,
   { bg: string; text: string }
@@ -79,8 +69,8 @@ export default function ActivitiesAdminPage() {
     text: "text-orange-700",
   },
   tinh_nguyen: {
-    bg: "bg-green-100",
-    text: "text-green-700",
+    bg: "bg-blue-100",
+    text: "text-blue-700",
   },
   hoi_nhap: {
     bg: "bg-purple-100",
@@ -139,16 +129,38 @@ if (documentFile) {
 
   documentUrl = data.publicUrl;
 }
-const { error } = await supabase.from("activities").insert({
-  title,
-  criterion: criterion || null,
-  organizer: organizer || null,
-  document: documentUrl,
-  detail_content: detailContent || null,
-  event_time: eventTime || null,
-  end_time: timeType === "range" ? endTime || null : null,
-  registration_deadline: deadline || null,
-});
+let error;
+
+if (editingId) {
+  ({ error } = await supabase
+    .from("activities")
+    .update({
+      title,
+      criterion: criterion || null,
+      organizer: organizer || null,
+      document: documentUrl,
+      detail_content: detailContent || null,
+      event_time: eventTime || null,
+      end_time: timeType === "range" ? endTime || null : null,
+      registration_deadline: deadline || null,
+      status,
+    })
+    .eq("id", editingId));
+} else {
+  ({ error } = await supabase
+    .from("activities")
+    .insert({
+      title,
+      criterion: criterion || null,
+      organizer: organizer || null,
+      document: documentUrl,
+      detail_content: detailContent || null,
+      event_time: eventTime || null,
+      end_time: timeType === "range" ? endTime || null : null,
+      registration_deadline: deadline || null,
+      status,
+    }));
+}
 
     setLoading(false);
 
@@ -156,14 +168,19 @@ const { error } = await supabase.from("activities").insert({
       alert(error.message);
       return;
     }
+setEditingId(null);
 
-    setTitle("");
-    setOrganizer("");
-    setDetailContent("");
-    setEventTime("");
-    setDeadline("");
+setTitle("");
+setCriterion("hoc_tap");
+setOrganizer("");
+setDetailContent("");
+setEventTime("");
+setEndTime("");
+setDeadline("");
+setDocumentFile(null);
+setIsActive(true);
 
-    loadActivities();
+loadActivities();
   }
 
   async function handleDelete(id: string) {
@@ -175,13 +192,14 @@ const { error } = await supabase.from("activities").insert({
   }
 function handleEdit(activity: Activity) {
   setEditingId(activity.id);
-
+  setDocumentFile(null);
   setTitle(activity.title);
   setCriterion(activity.criterion || "hoc_tap");
   setOrganizer(activity.organizer || "");
   setDetailContent(activity.detail_content || "");
   setEventTime(activity.event_time || "");
   setDeadline(activity.registration_deadline || "");
+  setStatus(activity.status || "upcoming");
 }
   return (
     <div className="min-h-screen bg-gray-50">
@@ -216,22 +234,18 @@ function handleEdit(activity: Activity) {
       <p className="text-xs font-medium text-gray-500">
         Tổng hoạt động
       </p>
-      <p className="mt-1 text-2xl font-bold text-green-600">
+      <p className="mt-1 text-2xl font-bold text-blue-600">
         {activities.length}
       </p>
     </div>
 
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <p className="text-xs font-medium text-gray-500">
-        Sắp diễn ra
+        Chưa diễn ra
       </p>
       <p className="mt-1 text-2xl font-bold text-blue-600">
         {
-          activities.filter(
-            (a) =>
-              a.event_time &&
-              new Date(a.event_time) >= new Date()
-          ).length
+activities.filter((a) => a.status === "upcoming").length
         }
       </p>
     </div>
@@ -242,11 +256,7 @@ function handleEdit(activity: Activity) {
       </p>
       <p className="mt-1 text-2xl font-bold text-red-600">
         {
-          activities.filter(
-            (a) =>
-              a.registration_deadline &&
-              new Date(a.registration_deadline) < new Date()
-          ).length
+activities.filter((a) => a.status === "ended").length
         }
       </p>
     </div>
@@ -273,8 +283,8 @@ function handleEdit(activity: Activity) {
 </label>
 
 <input
-  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-200"
-  placeholder="Ví dụ: Mùa Hè Xanh 2026"
+  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+  placeholder="Nhập tên hoạt động"
   value={title}
   onChange={(e) => setTitle(e.target.value)}
 />
@@ -285,7 +295,7 @@ function handleEdit(activity: Activity) {
                     Tiêu chí
                   </label>
                   <select
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                     value={criterion}
                     onChange={(e) => setCriterion(e.target.value)}
                   >
@@ -302,7 +312,7 @@ function handleEdit(activity: Activity) {
                     Đơn vị tổ chức
                   </label>
                   <input
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                     placeholder="Đoàn trường, Hội Sinh viên..."
                     value={organizer}
                     onChange={(e) => setOrganizer(e.target.value)}
@@ -367,7 +377,7 @@ function handleEdit(activity: Activity) {
                     Chi tiết / Liên kết
                   </label>
                   <textarea
-                    className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                    className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                     rows={4}
                     placeholder="Mô tả ngắn hoặc đường dẫn chi tiết..."
                     value={detailContent}
@@ -381,9 +391,9 @@ function handleEdit(activity: Activity) {
                       Thời gian diễn ra
                     </label>
                     <input
-                      type="datetime-local"
+                      type="text"
                       step="60"
-                      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                       value={eventTime}
                       onChange={(e) => setEventTime(e.target.value)}
                     />
@@ -394,20 +404,61 @@ function handleEdit(activity: Activity) {
                       Hạn đăng ký
                     </label>
                     <input
-                      type="date"
-                      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                      type="text"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                       value={deadline}
                       onChange={(e) => setDeadline(e.target.value)}
                     />
                   </div>
-                </div>
+  <div>
+  <label className="mb-2 block text-sm font-semibold text-gray-700">
+    Trạng thái
+  </label>
 
-                <button
-                  onClick={handleSave}
-                  className="w-full rounded-xl bg-green-600 py-3.5 text-base font-semibold text-white transition hover:bg-green-700 active:scale-[0.99]"
-                >
-                  {loading ? "Đang lưu hoạt động..." : "Lưu hoạt động"}
-                </button>
+  <select
+    value={status}
+    onChange={(e) => setStatus(e.target.value)}
+    className="w-full rounded-xl border border-gray-300 px-4 py-3"
+  >
+    <option value="upcoming"> Chưa diễn ra</option>
+    <option value="ongoing"> Sắp diễn ra</option>
+    <option value="ended"> Đã kết thúc</option>
+  </select>
+</div>'
+                </div>
+<div className="mt-4 flex gap-3">
+  <button
+    onClick={handleSave}
+    className="flex-1 rounded-xl bg-blue-600 py-3.5 text-base font-semibold text-white transition hover:bg-blue-700 active:scale-[0.99]"
+  >
+    {loading
+      ? "Đang lưu..."
+      : editingId
+      ? "Cập nhật hoạt động"
+      : "Lưu hoạt động"}
+  </button>
+
+  {editingId && (
+    <button
+      type="button"
+      onClick={() => {
+        setEditingId(null);
+        setTitle("");
+        setCriterion("hoc_tap");
+        setOrganizer("");
+        setDetailContent("");
+        setEventTime("");
+        setEndTime("");
+        setDeadline("");
+        setDocumentFile(null);
+        setStatus("upcoming");
+      }}
+      className="rounded-xl border border-gray-300 px-6 py-3 font-semibold transition hover:bg-gray-100"
+    >
+      Hủy
+    </button>
+  )}
+</div>
               </div>
             </div>
           </div>
@@ -456,21 +507,37 @@ function handleEdit(activity: Activity) {
     {activity.title}
   </h4>
 
-  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-<span
-  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-    criterionStyle[activity.criterion || "khac"]?.bg
-  } ${
-    criterionStyle[activity.criterion || "khac"]?.text
-  }`}
->
-  {criterionLabel[activity.criterion || ""] || "Chưa có"}
-</span>
+<div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+  <span
+    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+      criterionStyle[activity.criterion || "khac"]?.bg
+    } ${
+      criterionStyle[activity.criterion || "khac"]?.text
+    }`}
+  >
+    {criterionLabel[activity.criterion || ""] || "Chưa có"}
+  </span>
 
-    <span className="text-gray-500">
-      📅 {formatDate(activity.event_time)}
-    </span>
-  </div>
+  <span className="text-gray-500">
+    📅 {formatDate(activity.event_time)}
+  </span>
+
+  <span
+    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+      activity.status === "upcoming"
+        ? "bg-green-100 text-green-700"
+        : activity.status === "ongoing"
+        ? "bg-blue-100 text-blue-700"
+        : "bg-gray-200 text-gray-700"
+    }`}
+  >
+    {activity.status === "upcoming"
+      ? " Chưa diễn ra"
+      : activity.status === "ongoing"
+      ? " Sắp diễn ra"
+      : " Đã kết thúc"}
+  </span>
+</div>
 </div>
 
                         <div className="text-2xl text-gray-400">

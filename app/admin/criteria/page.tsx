@@ -11,47 +11,99 @@ type Criteria = {
   title: string;
   content: string;
   updated_at: string;
+  type: "school" | "province" | "central" | "update";
+};
+
+type CriteriaHeader = {
+  id: number;
+  type: "school" | "province" | "central" | "update";
+  title: string;
+  period: string;
+  decision: string;
+  description: string;
+  update_note: string;
+  updated_at: string;
 };
 
 export default function CriteriaAdminPage() {
   const [criteria, setCriteria] = useState<Criteria[]>([]);
+  const [header, setHeader] = useState<CriteriaHeader>({
+  id: 0,
+  type: "school",
+  title: "",
+  period: "",
+  decision: "",
+  description: "",
+  update_note: "",
+  updated_at: "",
+});
+const [tab, setTab] = useState<
+  "school" | "province" | "central" | "update"
+>("school");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    loadCriteria();
-  }, []);
+useEffect(() => {
+  loadCriteria();
+}, [tab]);
   const [showSidebar, setShowSidebar] = useState(false)
 
-  async function loadCriteria() {
-    setLoading(true);
+ async function loadCriteria() {
+  setLoading(true);
 
-    const { data, error } = await supabase
-      .from("criteria_contents")
+  const { data: headerData, error: headerError } =
+    await supabase
+      .from("criteria_headers")
       .select("*")
-      .order("id");
+      .eq("type", tab)
+      .single();
 
-    if (error) {
-      console.error(error);
-      alert("Không tải được dữ liệu");
-      setLoading(false);
-      return;
-    }
+if (!headerError && headerData) {
+  setHeader(headerData);
+}
 
-    setCriteria(
-      (data ?? []).map((item) => ({
-        ...item,
-        content: item.content ?? "",
-      }))
-    );
+  const { data, error } = await supabase
+    .from("criteria_contents")
+    .select("*")
+    .eq("type", tab)
+    .order("id");
 
+  if (error) {
+    console.error(error);
+    alert("Không tải được dữ liệu");
     setLoading(false);
+    return;
   }
+
+  setCriteria(
+    (data ?? []).map((item) => ({
+      ...item,
+      content: item.content ?? "",
+    }))
+  );
+
+  setLoading(false);
+}
 
   async function saveAll() {
     setSaving(true);
 
     try {
+      if (header.id !== 0) {
+  const { error } = await supabase
+    .from("criteria_headers")
+    .update({
+      title: header.title,
+      period: header.period,
+      decision: header.decision,
+      description: header.description,
+      update_note: header.update_note,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", header.id);
+
+  if (error) throw error;
+}
       for (const item of criteria) {
         const { error } = await supabase
           .from("criteria_contents")
@@ -149,7 +201,7 @@ if (students) {
         fontWeight: 700,
       }}
     >
-      Tiêu chuẩn Sinh viên 5 Tốt cấp Trường
+      Tiêu chuẩn Sinh viên 5 Tốt
     </h1>
     
 
@@ -183,14 +235,208 @@ if (students) {
 </button>
 </div>
 
+<div
+  style={{
+    display: "flex",
+    gap: 12,
+    marginBottom: 25,
+    overflowX: "auto",
+  }}
+>
+  {[
+    { key: "school", label: "Cấp Trường" },
+    { key: "province", label: "Cấp Tỉnh" },
+    { key: "central", label: "Trung ương" },
+    { key: "update", label: "Cập nhật mới" },
+  ].map((item) => (
+    <button
+      key={item.key}
+      onClick={() => setTab(item.key as any)}
+      style={{
+        padding: "10px 20px",
+        borderRadius: 12,
+        border: "none",
+        cursor: "pointer",
+        fontWeight: 600,
+        background: tab === item.key ? "#2563eb" : "#fff",
+        color: tab === item.key ? "#fff" : "#333",
+        boxShadow:
+          tab === item.key
+            ? "0 6px 18px rgba(37,99,235,.25)"
+            : "0 2px 8px rgba(0,0,0,.06)",
+      }}
+    >
+      {item.label}
+    </button>
+  ))}
+</div>
+<div
+  style={{
+    background: "#fff",
+    borderRadius: 16,
+    padding: "12px 18px",
+    marginBottom: 10,
+    border: "1px solid #eee",
+    boxShadow: "0 4px 20px rgba(0,0,0,.04)",
+  }}
+>
+  <h2 style={{ marginTop: 0, marginBottom: 20 }}>
+    Thông tin chung
+  </h2>
+
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 20,
+    }}
+  >
+    <div>
+      <div style={{ marginBottom: 6, fontWeight: 600 }}>
+        Tiêu đề
+      </div>
+
+      <input
+        value={header?.title ?? ""}
+        onChange={(e) =>
+          setHeader((prev) =>
+            prev
+              ? { ...prev, title: e.target.value }
+              : prev
+          )
+        }
+        style={{
+          width: "100%",
+          padding: 12,
+          borderRadius: 10,
+          border: "1px solid #ddd",
+        }}
+      />
+    </div>
+
+    <div>
+      <div style={{ marginBottom: 6, fontWeight: 600 }}>
+        Năm học / Giai đoạn
+      </div>
+
+      <input
+        value={header?.period ?? ""}
+        onChange={(e) =>
+          setHeader((prev) =>
+            prev
+              ? { ...prev, period: e.target.value }
+              : prev
+          )
+        }
+        style={{
+          width: "100%",
+          padding: 12,
+          borderRadius: 10,
+          border: "1px solid #ddd",
+        }}
+      />
+    </div>
+
+    <div>
+      <div style={{ marginBottom: 6, fontWeight: 600 }}>
+        Quyết định
+      </div>
+
+      <input
+        value={header?.decision ?? ""}
+        onChange={(e) =>
+          setHeader((prev) =>
+            prev
+              ? { ...prev, decision: e.target.value }
+              : prev
+          )
+        }
+        style={{
+          width: "100%",
+          padding: 12,
+          borderRadius: 10,
+          border: "1px solid #ddd",
+        }}
+      />
+    </div>
+
+    <div>
+      <div style={{ marginBottom: 6, fontWeight: 600 }}>
+        Mô tả
+      </div>
+
+      <input
+        value={header?.description ?? ""}
+        onChange={(e) =>
+          setHeader((prev) =>
+            prev
+              ? { ...prev, description: e.target.value }
+              : prev
+          )
+        }
+        style={{
+          width: "100%",
+          padding: 12,
+          borderRadius: 10,
+          border: "1px solid #ddd",
+        }}
+      />
+    </div>
+  </div>
+</div>
       <div
         style={{
           display: "grid",
-           gridTemplateColumns: "repeat(2,minmax(0,1fr))",
+           gridTemplateColumns: "repeat(1,minmax(0,1fr))",
           gap: 24,
         }}
       >
-        {criteria.map((item) => (
+        {tab === "update" && (
+  <div
+    style={{
+      background: "#fff",
+      borderRadius: 18,
+      padding: 24,
+      border: "1px solid #eee",
+      boxShadow: "0 8px 30px rgba(0,0,0,.05)",
+      marginBottom: 24,
+    }}
+  >
+    <h2
+      style={{
+        marginTop: 0,
+        marginBottom: 16,
+      }}
+    >
+      Nội dung cập nhật mới
+    </h2>
+
+    <textarea
+      value={header?.update_note ?? ""}
+      onChange={(e) =>
+        setHeader((prev) =>
+          prev
+            ? {
+                ...prev,
+                update_note: e.target.value,
+              }
+            : prev
+        )
+      }
+      placeholder="Nhập nội dung cập nhật..."
+      style={{
+        width: "100%",
+        minHeight: 180,
+        padding: 16,
+        borderRadius: 12,
+        border: "1px solid #ddd",
+        fontSize: 15,
+        lineHeight: 1.6,
+      }}
+    />
+  </div>
+)}
+        {tab !== "update" && criteria.map((item) => (
           <div
             key={item.id}
             style={{

@@ -18,6 +18,7 @@ type Activity = {
   event_time: string | null;
   registration_deadline: string | null;
   created_at: string;
+  status: string;
 };
 
 const criterionLabel: Record<string, string> = {
@@ -30,16 +31,7 @@ const criterionLabel: Record<string, string> = {
 };
 
 function formatDate(date?: string | null) {
-  if (!date) return "Chưa có";
-
-  return new Intl.DateTimeFormat("vi-VN", {
-    weekday: "long",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(date));
+  return date || "Chưa có";
 }
 
 export default function ActivitiesPage() {
@@ -82,15 +74,9 @@ export default function ActivitiesPage() {
       activity.criterion === filterCriterion;
 
 
-    // Lọc trạng thái
-    const status = getStatus(
-      activity.event_time,
-      activity.registration_deadline
-    );
-
-    const matchStatus =
-      filterStatus === "all" ||
-      status.text === filterStatus;
+const matchStatus =
+  filterStatus === "all" ||
+  activity.status === filterStatus;
 
 
     return matchCriterion && matchStatus;
@@ -101,50 +87,6 @@ export default function ActivitiesPage() {
   filterCriterion,
   filterStatus
 ]);
-  function getStatus(
-  eventTime?: string | null,
-  deadline?: string | null
-) {
-  const now = new Date();
-
-  // Hết hạn đăng ký
-  if (deadline && new Date(deadline) < now) {
-    return {
-      text: "Hết hạn đăng ký",
-      color: "bg-red-100 text-red-700",
-    };
-  }
-
-  // Chưa có ngày diễn ra
-  if (!eventTime) {
-    return {
-      text: "Chưa cập nhật",
-      color: "bg-gray-100 text-gray-600",
-    };
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const eventDate = new Date(eventTime);
-  eventDate.setHours(0, 0, 0, 0);
-
-  const diff =
-    (eventDate.getTime() - today.getTime()) /
-    (1000 * 60 * 60 * 24);
-
-  if (diff > 0) {
-    return {
-      text: "Sắp diễn ra",
-      color: "bg-green-100 text-green-700",
-    };
-  }
-
-  return {
-    text: "Đã kết thúc",
-    color: "bg-red-100 text-red-600",
-  };
-}
 
 if (loading) {
   return (
@@ -202,44 +144,40 @@ return (
 </p>
   </div>
 
-  <div className="grid grid-cols-3 gap-4">
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <p className="text-xs font-medium text-gray-500">
-        Số hoạt động
-      </p>
-      <p className="mt-1 text-2xl font-bold text-green-600">
-        {activities.length}
-      </p>
-    </div>
+<div className="grid grid-cols-3 gap-4">
+  <div className="rounded-xl border border-gray-200 bg-white p-4">
+    <p className="text-xs font-medium text-gray-500">
+      Số hoạt động
+    </p>
+    <p className="mt-1 text-2xl font-bold text-green-600">
+      {activities.length}
+    </p>
+  </div>
 
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <p className="text-xs font-medium text-gray-500">
-        Sắp diễn ra
-      </p>
-      <p className="mt-1 text-2xl font-bold text-blue-600">
-        {
-          activities.filter(
-            (a) =>
-              a.event_time &&
-              new Date(a.event_time) >= new Date()
-          ).length
-        }
-      </p>
-    </div>
+<div className="rounded-xl border border-gray-200 bg-white p-4">
+  <p className="text-xs font-medium text-gray-500">
+    Sắp diễn ra
+  </p>
 
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <p className="text-xs font-medium text-gray-500">
-        Hết hạn
-      </p>
-      <p className="mt-1 text-2xl font-bold text-red-600">
-        {
-          activities.filter(
-            (a) =>
-              a.registration_deadline &&
-              new Date(a.registration_deadline) < new Date()
-          ).length
-        }
-      </p>
+  <p className="mt-1 text-2xl font-bold text-cyan-600">
+    {
+      activities.filter(
+        (a) => a.status === "ongoing"
+      ).length
+    }
+  </p>
+</div>
+  <div className="rounded-xl border border-gray-200 bg-white p-4">
+    <p className="text-xs font-medium text-gray-500">
+      Đã kết thúc
+    </p>
+    <p className="mt-1 text-2xl font-bold text-red-600">
+      {
+        activities.filter(
+          (a) => a.status === "ended"
+        ).length
+      }
+    </p>
     </div>
   </div>
 </div>
@@ -332,16 +270,16 @@ return (
             Tất cả trạng thái
           </option>
 
-          <option value="Sắp diễn ra">
-            🟢 Sắp diễn ra
+          <option value="Chưa diễn ra">
+             Chưa diễn ra
           </option>
 
           <option value="Đã kết thúc">
-            ⚪ Đã kết thúc
+             Đã kết thúc
           </option>
 
           <option value="Hết hạn đăng ký">
-            🔴 Hết hạn đăng ký
+             Hết hạn đăng ký
           </option>
 
         </select>
@@ -367,10 +305,21 @@ return (
           ) : (
             <div className="space-y-4">
               {filteredActivities.map((activity) => {
-                const status = getStatus(
-  activity.event_time,
-  activity.registration_deadline
-);
+  const status =
+    activity.status === "upcoming"
+      ? {
+          text: "Chưa diễn ra",
+          color: "bg-green-100 text-green-700",
+        }
+      : activity.status === "ongoing"
+      ? {
+          text: "Sắp diễn ra",
+          color: "bg-blue-100 text-blue-700",
+        }
+      : {
+          text: "Đã kết thúc",
+          color: "bg-red-200 text-red-700",
+        };
                 const open = openId === activity.id;
 
                 return (

@@ -22,16 +22,34 @@ useEffect(() => {
 }, []);
  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
  const [criteria, setCriteria] = useState<any[]>([]);
+ const [header, setHeader] = useState<any>(null);
+ const [level, setLevel] = useState<
+  "school" | "province" | "central"
+>("school");
 
 useEffect(() => {
   loadCriteria();
-}, []);
+}, [level]);
 
 async function loadCriteria() {
+
+  // lấy thông tin chung
+  const { data: headerData } = await supabase
+    .from("criteria_headers")
+    .select("*")
+    .eq("type", level)
+    .single();
+
+  setHeader(headerData);
+
+
+  // lấy tiêu chí
   const { data, error } = await supabase
     .from("criteria_contents")
     .select("*")
+    .eq("type", level)
     .order("id");
+
 
   if (error) {
     console.error(error);
@@ -40,7 +58,6 @@ async function loadCriteria() {
 
   setCriteria(data || []);
 }
-
   
   return (
     <div
@@ -509,6 +526,54 @@ async function loadCriteria() {
 
 {tab === "criteria" && (
   <div>
+    <div
+style={{
+display:"flex",
+justifyContent:"center",
+gap:"12px",
+marginBottom:"25px",
+flexWrap:"wrap"
+}}
+>
+
+{[
+{
+key:"school",
+label:"Cấp Trường"
+},
+{
+key:"province",
+label:"Cấp Tỉnh"
+},
+{
+key:"central",
+label:"Cấp Trung ương"
+}
+].map((item)=>(
+<button
+key={item.key}
+onClick={()=>setLevel(item.key as any)}
+style={{
+padding:"10px 20px",
+borderRadius:"12px",
+border:"none",
+cursor:"pointer",
+fontWeight:600,
+background:
+level===item.key
+?"#2563eb"
+:"#f1f5f9",
+color:
+level===item.key
+?"white"
+:"#334155"
+}}
+>
+{item.label}
+</button>
+))}
+
+</div>
     <h1
       style={{
         textAlign: "center",
@@ -517,21 +582,42 @@ async function loadCriteria() {
         fontSize: "24px",
       }}
     >
-      <b> TIÊU CHUẨN SINH VIÊN 5 TỐT CẤP TRƯỜNG NHIỆM KỲ 2025 - 2028</b>
+      TIÊU CHUẨN SINH VIÊN 5 TỐT 
+{
+level==="school"
+?" CẤP TRƯỜNG"
+:
+level==="province"
+?" CẤP TỈNH"
+:
+" CẤP TRUNG ƯƠNG"
+}
   </h1>
-   <h1
-      style={{
-        textAlign: "center",
-        color: "#636363",
-        marginBottom: "20px",
-        fontSize: "16px",
-      }}
-    >
-  <i> (Theo quyết định Số.../QĐ-HSV ngày...tháng...năm 2026 của BCH Hội Sinh viên Việt Nam
-    Trường Đại học Y Dược Buôn Ma Thuột)
-  </i>
-    </h1>
-      
+     {header && (
+<div
+style={{
+background:"#fff",
+padding:"20px",
+borderRadius:"16px",
+marginBottom:"25px",
+boxShadow:"0 8px 20px rgba(0,0,0,.08)"
+}}
+>
+
+<p>
+<b>Năm học:</b> {header.period}
+</p>
+
+<p>
+<b>Quyết định:</b> {header.decision}
+</p>
+
+<p>
+{header.description}
+</p>
+
+</div>
+)}
     <div
       style={{
         display: "grid",
