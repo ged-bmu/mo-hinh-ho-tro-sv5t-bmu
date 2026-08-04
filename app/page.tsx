@@ -132,6 +132,55 @@ useEffect(() => {
 
   loadUnread();
 }, []);
+useEffect(() => {
+  let channel: any;
+
+  const init = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const loadUnread = async () => {
+      const { data } = await supabase
+        .from("conversations")
+        .select("unread_user")
+        .eq("user_id", user.id)
+        .single();
+
+      setUnreadMessages(data?.unread_user || 0);
+    };
+
+    // load lần đầu
+    loadUnread();
+
+    // realtime
+    channel = supabase
+      .channel("conversation-unread")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "conversations",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          setUnreadMessages(payload.new.unread_user || 0);
+        }
+      )
+      .subscribe();
+  };
+
+  init();
+
+  return () => {
+    if (channel) {
+      supabase.removeChannel(channel);
+    }
+  };
+}, []);
 async function loadProfile() {
   const {
     data: { user },
@@ -341,34 +390,7 @@ backgroundAttachment: "fixed",
 >
   📑 Xem báo cáo
 </a>
-  
-<button
-  onClick={handleExport}
-disabled={exporting}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.transform = "translateY(-3px) scale(1.03)";
-    e.currentTarget.style.background = "#15803d";
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.transform = "translateY(0) scale(1)";
-    e.currentTarget.style.background = "#16a34a";
-    e.currentTarget.style.boxShadow = "none";
-  }}
-  style={{
-    background: "#16a34a",
-    color: "#fff",
-    border: "none",
-    padding: "12px 18px",
-    borderRadius: "12px",
-    fontWeight: 600,
-    cursor: "pointer",
-    width: isMobile ? "100%" : "auto",
-    transition: "all .25s ease",
-  }}
->
-  {exporting ? "⏳ Đang xuất hồ sơ..." : "🗂️ Xuất hồ sơ"}
-</button>
-<a
+  <a
   href="/trao-doi"
 onClick={async () => {
   const { error } = await supabase
@@ -383,7 +405,7 @@ onClick={async () => {
   setUnreadMessages(0);
 }}
   style={{
-    background: "#f59e0b",
+    background: "#f49510",
     color: "#fff",
     textDecoration: "none",
     padding: "12px 18px",
@@ -405,7 +427,7 @@ onClick={async () => {
   onMouseLeave={(e) => {
     e.currentTarget.style.transform =
       "translateY(0) scale(1)";
-    e.currentTarget.style.background = "#f59e0b";
+    e.currentTarget.style.background = "#f49510";
   }}
 >
   💬 Nhắn tin
@@ -432,6 +454,33 @@ onClick={async () => {
     </span>
   )}
 </a>
+<button
+  onClick={handleExport}
+disabled={exporting}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.transform = "translateY(-3px) scale(1.03)";
+    e.currentTarget.style.background = "#15803d";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = "translateY(0) scale(1)";
+    e.currentTarget.style.background = "#16a34a";
+    e.currentTarget.style.boxShadow = "none";
+  }}
+  style={{
+    background: "#16a34a",
+    color: "#fff",
+    border: "none",
+    padding: "12px 18px",
+    borderRadius: "12px",
+    fontWeight: 600,
+    cursor: "pointer",
+    width: isMobile ? "100%" : "auto",
+    transition: "all .25s ease",
+  }}
+>
+  {exporting ? "⏳ Đang xuất hồ sơ..." : "🗂️ Xuất hồ sơ"}
+</button>
+
 </div>
 <div
   style={{
@@ -690,7 +739,7 @@ onClick={async () => {
     </h3>
 
     <p style={{ margin: 0, color: "#64748b" }}>
-      Xem các hoạt động và chương trình sắp diễn ra trong thời gian tới.
+      Xem các hoạt động sắp diễn ra trong thời gian tới.
     </p>
   </a>
   

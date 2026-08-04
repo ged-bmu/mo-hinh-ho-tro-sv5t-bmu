@@ -55,9 +55,16 @@ export default function StudentChat({
       .single();
 
     if (data) {
-      setConversationId(data.id);
-      return;
-    }
+  await supabase
+    .from("conversations")
+    .update({
+      unread_user: 0,
+    })
+    .eq("id", data.id);
+
+  setConversationId(data.id);
+  return;
+}
 
     if (
       error &&

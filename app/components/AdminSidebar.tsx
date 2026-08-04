@@ -81,7 +81,9 @@ export default function AdminSidebar() {
           <a href="/admin/statistics" style={menuStyle}>
             📊 Thống kê
           </a>
-
+          <a href="/trao-doi" style={menuStyle}>
+          💬 Nhắn tin
+          </a>
           <a href="/admin/activity" style={menuStyle}>
             🔔 Thông báo
           </a>

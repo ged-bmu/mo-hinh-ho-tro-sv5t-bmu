@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
+import Link from "next/link";
 
 type Message = {
   id: number;
@@ -283,7 +284,11 @@ const { error } =
       file_url: fileUrl,
       file_name: fileName,
     });
-
+if (!error) {
+  await supabase.rpc("increment_unread_user", {
+    conversation_id_input: selected.id,
+  });
+}
 if (error) {
   console.log(error);
   return;
@@ -422,7 +427,8 @@ bg-slate-100
         {selected ? (
           <>
 
-           <div className="
+<div
+  className="
 relative
 flex
 items-center
@@ -431,7 +437,27 @@ bg-white
 px-4
 py-3
 shadow-sm
-">
+"
+>
+  <Link
+    href="/admin"
+    className="
+      mr-3
+      flex
+      h-9
+      items-center
+      rounded-lg
+      border
+      border-slate-200
+      px-3
+      text-sm
+      font-medium
+      text-slate-700
+      hover:bg-slate-100
+    "
+  >
+    ← Trang chủ
+  </Link>
 
   <button
     onClick={() => setShowSidebar(true)}
