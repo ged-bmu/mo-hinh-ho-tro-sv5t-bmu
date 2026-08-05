@@ -1,0 +1,193 @@
+/* =========================================================
+   INTRODUCE PAGE - MOBILE
+========================================================= */
+
+@media (max-width:768px){
+
+  .intro-header{
+    position:sticky;
+    top:0;
+    z-index:100;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    padding:10px 14px;
+
+    background:#fff;
+    border-bottom:1px solid #e5e7eb;
+  }
+
+  .intro-logo{
+    height:42px !important;
+    width:auto;
+  }
+
+  .intro-title{
+    height:36px !important;
+    width:auto;
+  }
+
+  .hamburger-btn{
+    display:flex !important;
+    justify-content:center;
+    align-items:center;
+
+    position:absolute;
+    right:14px;
+    top:50%;
+
+    transform:translateY(-50%);
+
+    width:42px;
+    height:42px;
+
+    border:none;
+    background:transparent;
+
+    font-size:28px;
+    cursor:pointer;
+  }
+
+  .intro-header-buttons{
+    display:none !important;
+  }
+
+  .mobile-dropdown{
+
+    position:sticky;
+    top:64px;
+
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+
+    padding:12px;
+
+    background:#fff;
+
+    border-bottom:1px solid #eee;
+
+    z-index:99;
+  }
+
+  .mobile-dropdown a,
+  .mobile-dropdown button{
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    width:100%;
+
+    padding:12px;
+
+    border:none;
+    border-radius:10px;
+
+    background:#f3f4f6;
+
+    color:#111;
+    text-decoration:none;
+
+    font-weight:600;
+    font-size:15px;
+  }
+
+  .intro-main{
+
+    padding:12px !important;
+
+    justify-content:flex-start !important;
+    align-items:flex-start !important;
+
+    overflow-x:hidden;
+  }
+
+  .intro-box{
+
+    width:100%;
+
+    padding:18px !important;
+
+    border-radius:18px;
+
+    box-shadow:none !important;
+  }
+
+  .intro-box h1{
+
+    font-size:20px !important;
+    line-height:1.4;
+  }
+
+  .intro-box h2{
+
+    font-size:18px !important;
+  }
+
+  .intro-box h3{
+
+    font-size:18px !important;
+  }
+
+  .intro-box p{
+
+    font-size:16px !important;
+    line-height:1.7 !important;
+  }
+
+  .intro-box ul{
+
+    padding-left:22px;
+  }
+
+  .intro-box li{
+
+    font-size:16px;
+    line-height:1.7;
+  }
+
+  .criteria-card{
+
+    padding:18px !important;
+
+    border-radius:16px !important;
+  }
+
+  .criteria-content{
+
+    min-height:auto !important;
+
+    font-size:15px !important;
+
+    line-height:1.8;
+  }
+
+  .cta-wrapper{
+
+    margin-top:24px !important;
+  }
+
+  .cta-btn{
+
+    width:100% !important;
+
+    padding:13px 16px !important;
+
+    font-size:16px !important;
+
+    border-radius:12px !important;
+  }
+
+}
+
+@media (min-width:769px){
+
+  .hamburger-btn,
+  .mobile-dropdown{
+    display:none !important;
+  }
+
+}

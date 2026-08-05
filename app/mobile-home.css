@@ -1,0 +1,77 @@
+/* =========================================================
+   HOME PAGE - MOBILE
+========================================================= */
+
+@media (max-width:768px){
+
+  .home-layout{
+    display:block !important;
+  }
+
+  .home-main{
+    width:100%;
+    padding:16px !important;
+    padding-bottom:90px !important;
+    overflow-x:hidden;
+  }
+
+  .home-container{
+    width:100%;
+    max-width:100% !important;
+    margin:0 auto !important;
+    padding:0 !important;
+  }
+
+  .home-card{
+    width:100%;
+    margin-bottom:16px;
+    padding:16px !important;
+    border-radius:16px !important;
+  }
+
+  .home-grid{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:16px !important;
+  }
+
+  .home-title{
+    font-size:20px !important;
+    line-height:1.4;
+  }
+
+  .home-subtitle{
+    font-size:15px !important;
+  }
+
+  .home-actions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .home-actions a,
+  .home-actions button{
+    width:100%;
+  }
+
+  .home-banner{
+    width:100%;
+    border-radius:16px;
+    overflow:hidden;
+  }
+
+  .home-banner img{
+    width:100%;
+    height:auto;
+    display:block;
+  }
+
+  table{
+    display:block;
+    overflow-x:auto;
+    white-space:nowrap;
+    font-size:13px;
+  }
+
+}
