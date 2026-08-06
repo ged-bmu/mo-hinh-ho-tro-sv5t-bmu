@@ -21,11 +21,10 @@
   90%  { transform: rotate(-8deg); }
   100% { transform: rotate(0deg); }
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #171717;
 }
 
 body {
