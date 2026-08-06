@@ -42,6 +42,10 @@ const [tab, setTab] = useState<
 >("school");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editingPeriod, setEditingPeriod] = useState(false);
+  const [editingDecision, setEditingDecision] = useState(false);
+  const [savingPeriod, setSavingPeriod] = useState(false);
+  const [savingDecision, setSavingDecision] = useState(false);
 
 useEffect(() => {
   loadCriteria();
@@ -84,7 +88,76 @@ if (!headerError && headerData) {
 
   setLoading(false);
 }
+async function savePeriod() {
+  if (header.id === 0) return;
 
+  setSavingPeriod(true);
+
+  try {
+    const { data, error } = await supabase
+      .from("criteria_headers")
+      .update({
+        period: header.period,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", header.id)
+      .select()
+      .single();
+
+    console.log("✅ UPDATE PERIOD DATA:", data);
+    console.log("❌ UPDATE PERIOD ERROR:", error);
+
+    if (error) throw error;
+
+    // Lấy lại dữ liệu thật từ Supabase
+    const { data: freshData, error: reloadError } = await supabase
+      .from("criteria_headers")
+      .select("*")
+      .eq("id", header.id)
+      .single();
+
+    console.log("🔄 DATA SAU KHI LƯU:", freshData);
+    console.log("❌ RELOAD ERROR:", reloadError);
+
+    if (reloadError) throw reloadError;
+
+    setHeader(freshData);
+    setEditingPeriod(false);
+
+    alert("Đã lưu Năm học / Giai đoạn!");
+  } catch (err) {
+    console.error("❌ SAVE PERIOD ERROR:", err);
+    alert("Lưu Năm học / Giai đoạn thất bại!");
+  } finally {
+    setSavingPeriod(false);
+  }
+}
+
+async function saveDecision() {
+  if (header.id === 0) return;
+
+  setSavingDecision(true);
+
+  try {
+    const { error } = await supabase
+      .from("criteria_headers")
+      .update({
+        decision: header.decision,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", header.id);
+
+    if (error) throw error;
+
+    setEditingDecision(false);
+    alert("Đã lưu Quyết định!");
+  } catch (err) {
+    console.error(err);
+    alert("Lưu Quyết định thất bại!");
+  } finally {
+    setSavingDecision(false);
+  }
+}
   async function saveAll() {
     setSaving(true);
 
@@ -273,14 +346,20 @@ if (students) {
 <div
   style={{
     background: "#fff",
-    borderRadius: 16,
-    padding: "12px 18px",
-    marginBottom: 10,
+    borderRadius: 18,
+    padding: 24,
+    marginBottom: 24,
     border: "1px solid #eee",
-    boxShadow: "0 4px 20px rgba(0,0,0,.04)",
+    boxShadow: "0 8px 30px rgba(0,0,0,.05)",
   }}
 >
-  <h2 style={{ marginTop: 0, marginBottom: 20 }}>
+  <h2
+    style={{
+      marginTop: 0,
+      marginBottom: 20,
+      fontSize: 20,
+    }}
+  >
     Thông tin chung
   </h2>
 
@@ -291,96 +370,272 @@ if (students) {
       gap: 20,
     }}
   >
-    <div>
-      <div style={{ marginBottom: 6, fontWeight: 600 }}>
-        Tiêu đề
+    {/* NĂM HỌC / GIAI ĐOẠN */}
+    <div
+  onClick={() => {
+    if (!editingPeriod && !header.period) {
+      setEditingPeriod(true);
+    }
+  }}
+  style={{
+    border: header.period
+      ? "1px solid #e5e7eb"
+      : "1px solid #93c5fd",
+    borderRadius: 14,
+    padding: 18,
+    background: header.period
+      ? "#fafafa"
+      : "#eff6ff",
+    cursor: !editingPeriod && !header.period
+      ? "pointer"
+      : "default",
+  }}
+>
+      <div
+        style={{
+          fontSize: 14,
+          color: "#64748b",
+          marginBottom: 8,
+          fontWeight: 600,
+        }}
+      >
+        📅 Năm học / Giai đoạn
       </div>
 
-      <input
-        value={header?.title ?? ""}
-        onChange={(e) =>
-          setHeader((prev) =>
-            prev
-              ? { ...prev, title: e.target.value }
-              : prev
-          )
-        }
-        style={{
-          width: "100%",
-          padding: 12,
-          borderRadius: 10,
-          border: "1px solid #ddd",
-        }}
-      />
+      {editingPeriod ? (
+        <div>
+          <input
+            value={header.period}
+            onChange={(e) =>
+              setHeader((prev) => ({
+                ...prev,
+                period: e.target.value,
+              }))
+            }
+            autoFocus
+            style={{
+              width: "100%",
+              padding: "12px 14px",
+              borderRadius: 10,
+              border: "1px solid #2563eb",
+              fontSize: 15,
+              outline: "none",
+              boxSizing: "border-box",
+              background: "#fff",
+            }}
+          />
+
+          <div
+  style={{
+    display: "flex",
+    gap: 8,
+    marginTop: 10,
+  }}
+>
+  <button
+    onClick={savePeriod}
+    disabled={savingPeriod}
+    style={{
+      padding: "8px 14px",
+      borderRadius: 9,
+      border: "none",
+      background: "#2563eb",
+      color: "#fff",
+      cursor: savingPeriod ? "not-allowed" : "pointer",
+      fontWeight: 600,
+      opacity: savingPeriod ? 0.7 : 1,
+    }}
+  >
+    {savingPeriod ? "Đang lưu..." : "💾 Lưu"}
+  </button>
+
+<button
+  onClick={() => setEditingPeriod(false)}
+  disabled={savingPeriod}
+    style={{
+      padding: "8px 14px",
+      borderRadius: 9,
+      border: "1px solid #e2e8f0",
+      background: "#fff",
+      color: "#475569",
+      cursor: "pointer",
+      fontWeight: 600,
+    }}
+  >
+    Hủy
+  </button>
+</div>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 17,
+              fontWeight: 700,
+              color: header.period ? "#1e293b" : "#2563eb",
+            }}
+          >
+            {header.period || "Chưa nhập – Bấm để nhập"}
+          </div>
+
+          <button
+            onClick={() => setEditingPeriod(true)}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 9,
+              border: "1px solid #dbeafe",
+              background: "#eff6ff",
+              color: "#2563eb",
+              cursor: "pointer",
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Chỉnh sửa
+          </button>
+        </div>
+      )}
     </div>
 
-    <div>
-      <div style={{ marginBottom: 6, fontWeight: 600 }}>
-        Năm học / Giai đoạn
+    {/* QUYẾT ĐỊNH */}
+   <div
+  onClick={() => {
+    if (!editingDecision && !header.decision) {
+      setEditingDecision(true);
+    }
+  }}
+  style={{
+    border: header.decision
+      ? "1px solid #e5e7eb"
+      : "1px solid #93c5fd",
+    borderRadius: 14,
+    padding: 18,
+    background: header.decision
+      ? "#fafafa"
+      : "#eff6ff",
+    cursor: !editingDecision && !header.decision
+      ? "pointer"
+      : "default",
+  }}
+>
+      <div
+        style={{
+          fontSize: 14,
+          color: "#64748b",
+          marginBottom: 8,
+          fontWeight: 600,
+        }}
+      >
+        📜 Quyết định
       </div>
 
-      <input
-        value={header?.period ?? ""}
-        onChange={(e) =>
-          setHeader((prev) =>
-            prev
-              ? { ...prev, period: e.target.value }
-              : prev
-          )
-        }
-        style={{
-          width: "100%",
-          padding: 12,
-          borderRadius: 10,
-          border: "1px solid #ddd",
-        }}
-      />
-    </div>
+      {editingDecision ? (
+        <div>
+          <input
+            value={header.decision}
+            onChange={(e) =>
+              setHeader((prev) => ({
+                ...prev,
+                decision: e.target.value,
+              }))
+            }
+            autoFocus
+            style={{
+              width: "100%",
+              padding: "12px 14px",
+              borderRadius: 10,
+              border: "1px solid #2563eb",
+              fontSize: 15,
+              outline: "none",
+              boxSizing: "border-box",
+              background: "#fff",
+            }}
+          />
 
-    <div>
-      <div style={{ marginBottom: 6, fontWeight: 600 }}>
-        Quyết định
-      </div>
+          <div
+  style={{
+    display: "flex",
+    gap: 8,
+    marginTop: 10,
+  }}
+>
+  <button
+    onClick={saveDecision}
+    disabled={savingDecision}
+    style={{
+      padding: "8px 14px",
+      borderRadius: 9,
+      border: "none",
+      background: "#2563eb",
+      color: "#fff",
+      cursor: savingDecision ? "not-allowed" : "pointer",
+      fontWeight: 600,
+      opacity: savingDecision ? 0.7 : 1,
+    }}
+  >
+    {savingDecision ? "Đang lưu..." : "💾 Lưu"}
+  </button>
 
-      <input
-        value={header?.decision ?? ""}
-        onChange={(e) =>
-          setHeader((prev) =>
-            prev
-              ? { ...prev, decision: e.target.value }
-              : prev
-          )
-        }
-        style={{
-          width: "100%",
-          padding: 12,
-          borderRadius: 10,
-          border: "1px solid #ddd",
-        }}
-      />
-    </div>
+<button
+  onClick={() => setEditingDecision(false)}
+  disabled={savingDecision}
+    style={{
+      padding: "8px 14px",
+      borderRadius: 9,
+      border: "1px solid #e2e8f0",
+      background: "#fff",
+      color: "#475569",
+      cursor: "pointer",
+      fontWeight: 600,
+    }}
+  >
+    Hủy
+  </button>
+</div>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 17,
+              fontWeight: 700,
+              color: header.decision ? "#1e293b" : "#2563eb",
+            }}
+          >
+            {header.decision || "Chưa nhập – Bấm để nhập"}
+          </div>
 
-    <div>
-      <div style={{ marginBottom: 6, fontWeight: 600 }}>
-        Mô tả
-      </div>
-
-      <input
-        value={header?.description ?? ""}
-        onChange={(e) =>
-          setHeader((prev) =>
-            prev
-              ? { ...prev, description: e.target.value }
-              : prev
-          )
-        }
-        style={{
-          width: "100%",
-          padding: 12,
-          borderRadius: 10,
-          border: "1px solid #ddd",
-        }}
-      />
+          <button
+            onClick={() => setEditingDecision(true)}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 9,
+              border: "1px solid #dbeafe",
+              background: "#eff6ff",
+              color: "#2563eb",
+              cursor: "pointer",
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Chỉnh sửa
+          </button>
+        </div>
+      )}
     </div>
   </div>
 </div>

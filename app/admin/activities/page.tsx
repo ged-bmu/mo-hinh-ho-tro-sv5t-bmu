@@ -434,7 +434,7 @@ activities.filter((a) => a.status === "ended").length
     <option value="ongoing"> Sắp diễn ra</option>
     <option value="ended"> Đã kết thúc</option>
   </select>
-</div>'
+</div>
                 </div>
 <div className="mt-4 flex gap-3">
   <button

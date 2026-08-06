@@ -9,6 +9,7 @@ import "./mobile-introduce.css";
 import "./mobile-chat.css";
 import "./mobile-profile.css";
 import "./mobile-admin.css";
+import UserGuide from "./components/UserGuide";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -79,6 +80,7 @@ export default function RootLayout({
         />
 
         {children}
+        <UserGuide />
 
       </body>
     </html>

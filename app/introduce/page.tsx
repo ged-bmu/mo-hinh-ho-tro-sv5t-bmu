@@ -18,8 +18,15 @@ useEffect(() => {
   checkMobile();
   window.addEventListener("resize", checkMobile);
 
+
   return () => window.removeEventListener("resize", checkMobile);
 }, []);
+useEffect(() => {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}, [tab]);
  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
  const [criteria, setCriteria] = useState<any[]>([]);
  const [header, setHeader] = useState<any>(null);
@@ -147,7 +154,7 @@ async function loadCriteria() {
       {[
         { id: "home", label: "Trang chủ" },
         { id: "about", label: "Giới thiệu" },
-        { id: "criteria", label: "Tiêu chí" },
+        { id: "criteria", label: "Tiêu chuẩn" },
       ].map((item) => (
         <button
           key={item.id}
@@ -254,16 +261,18 @@ async function loadCriteria() {
       <main
        className="intro-main"
         style={{
-          flex: 1,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: "40px",
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url('/banner.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
+  flex: 1,
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  padding: "40px",
+  backgroundImage:
+    "linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url('/banner.png')",
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  backgroundAttachment: "fixed",
+  backgroundRepeat: "no-repeat",
+}}
       >
         <div
           className="intro-box"
@@ -574,49 +583,71 @@ level===item.key
 ))}
 
 </div>
+{header && (
+  <div
+    style={{
+      textAlign: "center",
+      marginBottom: "25px",
+    }}
+  >
     <h1
       style={{
-        textAlign: "center",
         color: "#2563eb",
-        marginBottom: "2px",
+        margin: "0 0 6px",
         fontSize: "24px",
+        fontWeight: 700,
+        lineHeight: 1.5,
       }}
     >
-      TIÊU CHUẨN SINH VIÊN 5 TỐT 
-{
-level==="school"
-?" CẤP TRƯỜNG"
-:
-level==="province"
-?" CẤP TỈNH"
-:
-" CẤP TRUNG ƯƠNG"
-}
-  </h1>
-     {header && (
-<div
-style={{
-background:"#fff",
-padding:"20px",
-borderRadius:"16px",
-marginBottom:"25px",
-boxShadow:"0 8px 20px rgba(0,0,0,.08)"
-}}
->
+      Tiêu chuẩn Sinh viên 5 tốt{" "}
+      {level === "school"
+        ? "Cấp Trường"
+        : level === "province"
+        ? "Cấp Tỉnh"
+        : "Cấp Trung Ương"}
 
-<p>
-<b>Năm học:</b> {header.period}
-</p>
+      {header.period && (
+        <span
+          style={{
+            fontWeight: 600,
+          }}
+        >
+          {" "} {header.period}
+        </span>
+      )}
+    </h1>
 
-<p>
-<b>Quyết định:</b> {header.decision}
-</p>
+   {header.decision && (
+  <p
+    style={{
+      margin: "4px 0 0",
+      fontSize: "14px",
+      color: "#64748b",
+      fontStyle: "italic",
+    }}
+  >
+    {header.decision}{" "}
+    {level === "school"
+      ? "của Ban Chấp hành Hội Sinh viên Việt Nam Trường Đại học Y Dược Buôn Ma Thuột"
+      : level === "province"
+      ? "của Ban Chấp hành Hội Sinh viên Việt Nam Tỉnh Đắk Lắk"
+      : "của Ban Chấp hành Trung ương Hội Sinh viên Việt Nam"}
+  </p>
+)}
 
-<p>
-{header.description}
-</p>
-
-</div>
+    {header.description && (
+      <p
+        style={{
+          margin: "10px 0 0",
+          fontSize: "15px",
+          color: "#475569",
+          lineHeight: 1.7,
+        }}
+      >
+        {header.description}
+      </p>
+    )}
+  </div>
 )}
     <div
       style={{

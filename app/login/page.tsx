@@ -3,6 +3,7 @@
 import { supabase } from "../../lib/supabase";
 import Footer from "../components/Footer";
 import { useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const [mssv, setMssv] = useState("");
@@ -19,6 +20,8 @@ useEffect(() => {
   return () => window.removeEventListener("resize", checkMobile);
 }, []);
   const [password, setPassword] = useState("");
+  const [rememberLogin, setRememberLogin] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
  async function handleLogin() {
   const email = `${mssv}@clbsv5tbmu.com`;
@@ -150,29 +153,151 @@ useEffect(() => {
     handleLogin();
   }}
 >
-        <input
-          placeholder="MSSV"
-          value={mssv}
-          onChange={(e) => setMssv(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "15px",
-          }}
-        />
 
-        <input
-          type="password"
-          placeholder="Mật khẩu"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "10px",
-          }}
-        />
+<label
+  style={{
+    display: "block",
+    marginTop: "15px",
+    marginBottom: "3px",
+    marginLeft: "3px",
+    fontSize: "14px",
+    fontWeight: 500,
+    color: "#94a3b8",
+  }}
+>
+  Mã số sinh viên
+</label>
 
+<input
+  placeholder="Nhập mã số sinh viên"
+  value={mssv}
+  onChange={(e) => setMssv(e.target.value)}
+  style={{
+    width: "100%",
+    padding: "12px 14px",
+    boxSizing: "border-box",
+    border: "1px solid #d9dee7",
+    borderRadius: "10px",
+    outline: "none",
+    fontSize: "15px",
+    color: "#000000",
+    background: "#fff",
+  }}
+/>
+
+<label
+  style={{
+    display: "block",
+    marginTop: "14px",
+    marginBottom: "3px",
+    marginLeft: "3px",
+    fontSize: "14px",
+    fontWeight: 500,
+    color: "#94a3b8",
+  }}
+>
+  Mật khẩu
+</label>
+
+<div
+  style={{
+    position: "relative",
+    width: "100%",
+  }}
+>
+  <input
+    type={showPassword ? "text" : "password"}
+    placeholder="Nhập mật khẩu"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+    style={{
+      width: "100%",
+      padding: "12px 45px 12px 14px",
+      boxSizing: "border-box",
+      border: "1px solid #d9dee7",
+      borderRadius: "10px",
+      outline: "none",
+      fontSize: "15px",
+      color: "#000000",
+      background: "#fff",
+    }}
+  />
+
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    style={{
+      position: "absolute",
+      right: "12px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      border: "none",
+      background: "transparent",
+      padding: "4px",
+      cursor: "pointer",
+      fontSize: "18px",
+      color: "#94a3b8",
+    }}
+    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+  >
+    {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+  </button>
+</div>
+<div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: "6px",
+    marginLeft: "3px",
+    marginRight: "3px",
+    height: "28px",
+  }}
+>
+  {/* LƯU ĐĂNG NHẬP */}
+  <label
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "7px",
+      fontSize: "14px",
+      color: "#7a7c80",
+      cursor: "pointer",
+      lineHeight: 1,
+      margin: 0,
+    }}
+  >
+    <input
+      type="checkbox"
+      checked={rememberLogin}
+      onChange={(e) => setRememberLogin(e.target.checked)}
+      style={{
+        width: "18px",
+        height: "18px",
+        margin: 0,
+        cursor: "pointer",
+        accentColor: "#2563eb",
+      }}
+    />
+
+    <span>Lưu đăng nhập</span>
+  </label>
+
+  {/* ĐĂNG KÝ */}
+  <a
+    href="/register"
+    style={{
+      fontSize: "15px",
+      color: "#3485f8",
+      textDecoration: "none",
+      cursor: "pointer",
+      lineHeight: 1,
+      marginTop: "3px",
+    }}
+  >
+    Đăng ký
+  </a>
+</div>
         <button
   type="submit"
   style={{

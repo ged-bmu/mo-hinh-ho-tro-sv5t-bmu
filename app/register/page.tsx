@@ -4,8 +4,8 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 export default function RegisterPage() {
-  const [mssv, setMssv] = useState("");
   const [hoTen, setHoTen] = useState("");
+  const [mssv, setMssv] = useState("");
   const [lop, setLop] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] =
@@ -16,7 +16,8 @@ export default function RegisterPage() {
       !mssv ||
       !hoTen ||
       !lop ||
-      !password
+      !password ||
+      !confirmPassword
     ) {
       alert("Vui lòng nhập đầy đủ thông tin");
       return;
@@ -27,7 +28,7 @@ export default function RegisterPage() {
       return;
     }
 
-    const email = `${mssv}@gmail.com`;
+    const email = `${mssv}@clbsv5tbmu.com`;
 
     const { data, error } =
       await supabase.auth.signUp({
@@ -69,48 +70,51 @@ export default function RegisterPage() {
     <main
       style={{
         minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
+        padding: "40px 20px",
         background: "#f5f7fb",
       }}
     >
       <div
         style={{
-          width: "450px",
+          maxWidth: "700px",
+          margin: "0 auto",
           background: "white",
           padding: "30px",
           borderRadius: "16px",
           boxShadow:
-            "0 2px 10px rgba(0,0,0,0.1)",
+            "0 2px 10px rgba(0,0,0,0.08)",
         }}
       >
-        <h1>📝 Đăng ký tài khoản</h1>
-
-        <input
-          placeholder="MSSV"
-          value={mssv}
-          onChange={(e) =>
-            setMssv(e.target.value)
-          }
+        <a
+          href="/login"
           style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "15px",
+            display: "inline-block",
+            marginBottom: "20px",
+            textDecoration: "none",
+            color: "#2563eb",
+            fontWeight: 600,
+            fontSize: "16px",
           }}
-        />
+        >
+          ← Quay về đăng nhập
+        </a>
+
+        <h1
+          style={{
+            marginBottom: "25px",
+            fontSize: "26px",
+          }}
+        >
+          Tạo tài khoản
+        </h1>
 
         <input
-          placeholder="Họ và tên"
+          placeholder="Họ tên"
           value={hoTen}
           onChange={(e) =>
             setHoTen(e.target.value)
           }
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "10px",
-          }}
+          style={inputStyle}
         />
 
         <input
@@ -119,10 +123,26 @@ export default function RegisterPage() {
           onChange={(e) =>
             setLop(e.target.value)
           }
+          style={inputStyle}
+        />
+
+        <input
+          placeholder="MSSV"
+          value={mssv}
+          onChange={(e) =>
+            setMssv(e.target.value)
+          }
+          style={inputStyle}
+        />
+
+        <input
+          placeholder="Email"
+          value={`${mssv ? `${mssv}@clbsv5tbmu.com` : ""}`}
+          readOnly
           style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "10px",
+            ...inputStyle,
+            background: "#f8fafc",
+            color: "#64748b",
           }}
         />
 
@@ -133,11 +153,7 @@ export default function RegisterPage() {
           onChange={(e) =>
             setPassword(e.target.value)
           }
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "10px",
-          }}
+          style={inputStyle}
         />
 
         <input
@@ -145,28 +161,23 @@ export default function RegisterPage() {
           placeholder="Xác nhận mật khẩu"
           value={confirmPassword}
           onChange={(e) =>
-            setConfirmPassword(
-              e.target.value
-            )
+            setConfirmPassword(e.target.value)
           }
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "10px",
-          }}
+          style={inputStyle}
         />
 
         <button
           onClick={handleRegister}
           style={{
             width: "100%",
-            marginTop: "20px",
-            padding: "12px",
+            padding: "14px",
             border: "none",
+            borderRadius: "12px",
             background: "#2563eb",
             color: "white",
-            borderRadius: "8px",
+            fontWeight: 600,
             cursor: "pointer",
+            fontSize: "15px",
           }}
         >
           Đăng ký
@@ -175,3 +186,12 @@ export default function RegisterPage() {
     </main>
   );
 }
+
+const inputStyle = {
+  width: "100%",
+  padding: "12px",
+  marginBottom: "15px",
+  borderRadius: "10px",
+  border: "1px solid #dbe2ea",
+  boxSizing: "border-box" as const,
+};

@@ -38,12 +38,16 @@ body {
   }
 
   input,
-  select,
-  button {
+  select {
     width: 100%;
   }
-  .home-container{
-    max-width:900px;
-    margin:0 auto;
-}
+
+  .home-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .user-guide-button {
+    display: none !important;
+  }
 }
