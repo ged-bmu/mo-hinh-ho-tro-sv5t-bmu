@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabase";
 import Footer from "../../components/Footer";
 import Header from "../../components/Header";
 import CriteriaModal from "../../components/CriteriaModal";
-const [showProfile, setShowProfile] = useState(false);
 
 type Activity = {
   id: string;
@@ -53,6 +52,7 @@ export default function ActivitiesAdminPage() {
   const [deadline, setDeadline] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [status, setStatus] = useState("upcoming");
+  const [showProfile, setShowProfile] = useState(false);
   const criterionStyle: Record<
   string,
   { bg: string; text: string }
