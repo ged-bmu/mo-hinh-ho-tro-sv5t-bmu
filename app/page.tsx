@@ -17,6 +17,7 @@ export default function Home() {
   const [exporting, setExporting] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showCriteria, setShowCriteria] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [nextActivities, setNextActivities] = useState<any[]>([]);
   const [showActivities, setShowActivities] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
@@ -167,10 +168,14 @@ useEffect(() => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          setUnreadMessages(payload.new.unread_user || 0);
-        }
+  console.log("ĐÃ NHẬN EVENT", payload);
+  setUnreadMessages(payload.new.unread_user || 0);
+}
       )
-      .subscribe();
+      .subscribe((status, err) => {
+  console.log("Realtime status:", status);
+  console.log("Realtime error:", err);
+});
   };
 
   init();
@@ -185,6 +190,7 @@ async function loadProfile() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  console.log("USER:", user);
 
   if (!user) return;
 
@@ -199,6 +205,39 @@ if (data) {
   setProfile(data);
 }
 }
+useEffect(() => {
+  let channel: any;
+
+  const init = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    channel = supabase
+      .channel(`profile-${user.id}`)
+      .on(
+  "postgres_changes",
+  {
+    event: "UPDATE",
+    schema: "public",
+    table: "profiles",
+  },
+  (payload) => {
+    console.log("PROFILE UPDATED", payload);
+    loadProfile();
+  }
+)
+      .subscribe();
+  };
+
+  init();
+
+  return () => {
+    if (channel) supabase.removeChannel(channel);
+  };
+}, []);
 async function loadNextActivity() {
   const { data } = await supabase
     .from("activities")
@@ -244,10 +283,11 @@ return (
 
   
   <Header
-    tab={tab}
-    setTab={setTab}
-    openCriteria={() => setShowCriteria(true)}
-  />
+  tab={tab}
+  setTab={setTab}
+  openCriteria={() => setShowCriteria(true)}
+  openProfile={() => setShowProfile(true)}
+/>
   
   <div
     style={{

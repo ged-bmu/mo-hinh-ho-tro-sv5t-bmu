@@ -15,6 +15,7 @@ export default function TieuChiPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [tab, setTab] = useState("proof");
    const [showCriteria, setShowCriteria] = useState(false);
+   const [showProfile, setShowProfile] = useState(false);
 
 
   useEffect(() => {
@@ -124,10 +125,11 @@ const percent = (completed / 5) * 100;
       }}
     >
  <Header
-    tab={tab}
-    setTab={setTab}
-    openCriteria={() => setShowCriteria(true)}
-  />
+  tab={tab}
+  setTab={setTab}
+  openCriteria={() => setShowCriteria(true)}
+  openProfile={() => setShowProfile(true)}
+/>
   
       <div
         style={{

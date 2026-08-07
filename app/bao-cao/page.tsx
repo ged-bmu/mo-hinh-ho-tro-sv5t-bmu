@@ -57,6 +57,7 @@ useEffect(() => {
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCriteria, setShowCriteria] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [tab, setTab] = useState("proof");
 
   const criteriaList = [
@@ -256,10 +257,11 @@ return (
     }}
   >
     <Header
-      tab={tab}
-      setTab={setTab}
-      openCriteria={() => setShowCriteria(true)}
-    />
+  tab={tab}
+  setTab={setTab}
+  openCriteria={() => setShowCriteria(true)}
+  openProfile={() => setShowProfile(true)}
+/>
 
     <div
   style={{

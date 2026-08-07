@@ -11,6 +11,7 @@ export default function BangDiemPage() {
 
   const [showSemester3, setShowSemester3] = useState(false);
   const [showCriteria, setShowCriteria] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [tab, setTab] = useState("proof");
   const [subjectsHK1, setSubjectsHK1] = useState<any[]>([]);
   const [subjectsHK2, setSubjectsHK2] = useState<any[]>([]);
@@ -210,11 +211,12 @@ const gpa4Year =
       ) / totalCreditsYear;
   return (
     <>
-      <Header
-        tab={tab}
-        setTab={setTab}
-        openCriteria={() => setShowCriteria(true)}
-      />
+     <Header
+  tab={tab}
+  setTab={setTab}
+  openCriteria={() => setShowCriteria(true)}
+  openProfile={() => setShowProfile(true)}
+/>
 
       <div
         style={{
@@ -928,7 +930,7 @@ s.total || "-"
   </div>
 
   <div>
-    <b>ĐTB HK dự kiến (Hệ 4)</b>
+    <b>ĐTB HK mục tiêu (Hệ 4)</b>
     <div
       style={{
         fontSize: 16,

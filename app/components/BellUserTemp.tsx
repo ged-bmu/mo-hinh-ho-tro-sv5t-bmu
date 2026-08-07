@@ -8,8 +8,7 @@ import { registerFCMToken } from "@/lib/firebase-messaging";
 export default function BellUserTemp() {
   const [bellRotate, setBellRotate] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
+  const [isMobile, setIsMobile] = useState(false);useEffect(() => {
   const check = () => setIsMobile(window.innerWidth <= 768);
 
   check();
@@ -25,6 +24,71 @@ useEffect(() => {
   useEffect(() => {
     loadNotifications();
   }, []);
+ useEffect(() => {
+  let channel: any = null;
+  let cancelled = false;
+
+  async function subscribeNotifications() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    // Effect đã bị cleanup trong lúc đang await
+    if (!user || cancelled) return;
+
+    // Tạo channel
+    const newChannel = supabase
+      .channel(`notifications-realtime-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log("🔔 Có thông báo mới:", payload.new);
+
+          setNotifications((prev) =>
+            [payload.new, ...prev].slice(0, 5)
+          );
+
+          setUnreadCount((prev) => prev + 1);
+
+          setBellRotate(true);
+
+          setTimeout(() => {
+            setBellRotate(false);
+          }, 700);
+        }
+      );
+
+    // Nếu effect đã cleanup trong lúc tạo channel
+    if (cancelled) {
+      await supabase.removeChannel(newChannel);
+      return;
+    }
+
+    channel = newChannel;
+
+    // subscribe PHẢI là bước cuối
+    channel.subscribe((status: string) => {
+      console.log("📡 Notifications realtime:", status);
+    });
+  }
+
+  subscribeNotifications();
+
+  return () => {
+    cancelled = true;
+
+    if (channel) {
+      supabase.removeChannel(channel);
+      channel = null;
+    }
+  };
+}, []);
 
   async function loadNotifications() {
     const {

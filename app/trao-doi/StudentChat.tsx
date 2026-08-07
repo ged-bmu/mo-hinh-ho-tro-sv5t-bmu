@@ -29,6 +29,7 @@ export default function StudentChat({
   const [tab, setTab] = useState("proof");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [showCriteria, setShowCriteria] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
@@ -312,12 +313,11 @@ console.log(data?.[0]);
     return (
     <>
       <Header
-        tab={tab}
-        setTab={setTab}
-        openCriteria={() =>
-          setShowCriteria(true)
-        }
-      />
+  tab={tab}
+  setTab={setTab}
+  openCriteria={() => setShowCriteria(true)}
+  openProfile={() => setShowProfile(true)}
+/>
 
       <div className="flex h-[calc(100vh-80px)]">
         <main className="flex-1">
