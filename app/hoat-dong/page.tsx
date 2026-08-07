@@ -20,7 +20,7 @@ type Activity = {
   created_at: string;
   status: string;
 };
-const [showProfile, setShowProfile] = useState(false);
+
 const criterionLabel: Record<string, string> = {
   dao_duc: "Đạo đức tốt",
   hoc_tap: "Học tập tốt",
@@ -44,6 +44,7 @@ export default function ActivitiesPage() {
   const [tab, setTab] = useState("proof");
   const [filterCriterion, setFilterCriterion] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     loadActivities();
