@@ -13,6 +13,7 @@ export default function DoiMatKhauPage() {
   const [showCriteria,setShowCriteria]=useState(false);
   const [tab, setTab] = useState("proof");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   
 
   useEffect(() => {
@@ -90,6 +91,7 @@ if (data?.role === "admin") {
             tab={tab}
             setTab={setTab}
             openCriteria={() => setShowCriteria(true)}
+            openProfile={() => setShowProfile(true)}
           />
    
           <div

@@ -16,6 +16,7 @@ export default function ThongBaoUser() {
   const [tab, setTab] = useState("proof");
   const [keyword, setKeyword] = useState("");
   const [isMobile, setIsMobile] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   useEffect(() => {
   const checkMobile = () => {
     setIsMobile(window.innerWidth <= 768);
@@ -79,6 +80,7 @@ export default function ThongBaoUser() {
            tab={tab}
            setTab={setTab}
            openCriteria={() => setShowCriteria(true)}
+           openProfile={() => setShowProfile(true)}
          />
          
          <div
