@@ -22,6 +22,7 @@ export default function TheLucPage() {
   const [report, setReport] = useState("");
   const [savingReport, setSavingReport] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     loadFiles();
@@ -271,11 +272,17 @@ await fetch("/api/cleanup-logs", {
   >
   
   
-    <Header
-      tab={tab}
-      setTab={setTab}
-      openCriteria={() => setShowCriteria(true)}
-    />
+  <Header
+
+  tab={tab}
+
+  setTab={setTab}
+
+  openCriteria={() => setShowCriteria(true)}
+
+  openProfile={() => setShowProfile(true)}
+
+/>
 
     <div
       style={{

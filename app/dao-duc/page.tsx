@@ -22,6 +22,7 @@ export default function DaoDucPage() {
   const [report, setReport] = useState("");
   const [savingReport, setSavingReport] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
  const defaultReport = `
 <p>1. Không vi phạm pháp luật của Nhà nước, nội quy, quy chế của nhà trường; không bị xử lý kỷ luật trong năm học.</p>
 
@@ -284,11 +285,13 @@ await fetch("/api/cleanup-logs", {
   >
   
   
-    <Header
-      tab={tab}
-      setTab={setTab}
-      openCriteria={() => setShowCriteria(true)}
-    />
+   
+<Header
+  tab={tab}
+  setTab={setTab}
+  openCriteria={() => setShowCriteria(true)}
+  openProfile={() => setShowProfile(true)}
+/>
 
     <div
       style={{

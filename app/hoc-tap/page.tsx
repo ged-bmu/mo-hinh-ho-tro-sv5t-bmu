@@ -22,6 +22,7 @@ export default function HocTapPage() {
   const [report, setReport] = useState("");
   const [savingReport, setSavingReport] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
   const defaultReport = `
 <p>1. Điểm trung bình năm học 2025 - 2026: .../4.0.</p>
 
@@ -277,11 +278,17 @@ await fetch("/api/cleanup-logs", {
   >
   
   
-    <Header
-      tab={tab}
-      setTab={setTab}
-      openCriteria={() => setShowCriteria(true)}
-    />
+  <Header
+
+  tab={tab}
+
+  setTab={setTab}
+
+  openCriteria={() => setShowCriteria(true)}
+
+  openProfile={() => setShowProfile(true)}
+
+/>
 
     <div
       style={{

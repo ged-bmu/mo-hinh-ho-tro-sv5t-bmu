@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import Footer from "../../components/Footer";
 import Header from "../../components/Header";
 import CriteriaModal from "../../components/CriteriaModal";
+const [showProfile, setShowProfile] = useState(false);
 
 type Activity = {
   id: string;
@@ -213,11 +214,12 @@ function handleEdit(activity: Activity) {
 }
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header
-            tab={tab}
-            setTab={setTab}
-            openCriteria={() => setShowCriteria(true)}
-          />
+       <Header
+  tab={tab}
+  setTab={setTab}
+  openCriteria={() => setShowCriteria(true)}
+  openProfile={() => setShowProfile(true)}
+/>
       {/* ================= MAIN ================= */}
       <main className="mx-auto max-w-7xl px-6 py-8">
         <div className="mb-4">

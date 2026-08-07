@@ -20,7 +20,7 @@ type Activity = {
   created_at: string;
   status: string;
 };
-
+const [showProfile, setShowProfile] = useState(false);
 const criterionLabel: Record<string, string> = {
   dao_duc: "Đạo đức tốt",
   hoc_tap: "Học tập tốt",
@@ -111,11 +111,12 @@ return (
       flexDirection: "column",
     }}
   >
-    <Header
-      tab={tab}
-      setTab={setTab}
-      openCriteria={() => setShowCriteria(true)}
-    />
+<Header
+  tab={tab}
+  setTab={setTab}
+  openCriteria={() => setShowCriteria(true)}
+  openProfile={() => setShowProfile(true)}
+/>
 
     <div
       style={{
