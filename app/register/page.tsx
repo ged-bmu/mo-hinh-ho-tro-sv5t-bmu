@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "../../lib/supabase";
 
 export default function RegisterPage() {
   const [hoTen, setHoTen] = useState("");
@@ -12,60 +11,55 @@ export default function RegisterPage() {
     useState("");
 
   async function handleRegister() {
-    if (
-      !mssv ||
-      !hoTen ||
-      !lop ||
-      !password ||
-      !confirmPassword
-    ) {
-      alert("Vui lòng nhập đầy đủ thông tin");
-      return;
-    }
+  if (
+    !mssv ||
+    !hoTen ||
+    !lop ||
+    !password ||
+    !confirmPassword
+  ) {
+    alert("Vui lòng nhập đầy đủ thông tin");
+    return;
+  }
 
-    if (password !== confirmPassword) {
-      alert("Mật khẩu xác nhận không khớp");
-      return;
-    }
+  if (password !== confirmPassword) {
+    alert("Mật khẩu xác nhận không khớp");
+    return;
+  }
 
-    const email = `${mssv}@clbsv5tbmu.com`;
+  const email = `${mssv}@gmail.com`;
 
-    const { data, error } =
-      await supabase.auth.signUp({
+  try {
+    const res = await fetch("/api/create-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        hoTen,
+        mssv,
+        lop,
         email,
         password,
-      });
+        role: "student",
+      }),
+    });
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    const result = await res.json();
 
-    if (!data.user) {
-      alert("Không tạo được tài khoản");
-      return;
-    }
-
-    const { error: profileError } =
-      await supabase
-        .from("profiles")
-        .insert({
-          id: data.user.id,
-          mssv,
-          ho_ten: hoTen,
-          lop,
-        });
-
-    if (profileError) {
-      alert(profileError.message);
+    if (!res.ok) {
+      alert(result.error);
       return;
     }
 
     alert("Đăng ký thành công!");
 
     window.location.href = "/introduce";
+  } catch (err) {
+    console.error(err);
+    alert("Có lỗi xảy ra");
   }
-
+}
   return (
     <main
       style={{
@@ -135,16 +129,7 @@ export default function RegisterPage() {
           style={inputStyle}
         />
 
-        <input
-          placeholder="Email"
-          value={`${mssv ? `${mssv}@clbsv5tbmu.com` : ""}`}
-          readOnly
-          style={{
-            ...inputStyle,
-            background: "#f8fafc",
-            color: "#64748b",
-          }}
-        />
+        
 
         <input
           type="password"

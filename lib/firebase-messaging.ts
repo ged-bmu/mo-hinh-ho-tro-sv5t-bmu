@@ -51,27 +51,22 @@ export async function registerFCMToken() {
     console.log("FCM TOKEN:", token);
 
     // Lưu token vào Supabase
-    const { error } = await supabase
-  .from("notification_tokens")
-  .upsert(
-    {
-      user_id: user.id,
-      token,
-      device: navigator.userAgent,
-    },
-    {
-      onConflict: "token",
-    }
+const { error } = await supabase.rpc(
+  "save_notification_token",
+  {
+    p_token: token,
+  }
+);
+
+if (error) {
+  console.error(
+    "Lỗi lưu notification token:",
+    JSON.stringify(error, null, 2)
   );
+}
 
-    if (error) {
-      console.error(
-        "Lỗi lưu notification token:",
-        error
-      );
-      return null;
-    }
-
+    console.log("User hiện tại:", user?.id);
+    console.log("FCM token:", token);
     console.log("Đã lưu FCM token");
 
     return token;
