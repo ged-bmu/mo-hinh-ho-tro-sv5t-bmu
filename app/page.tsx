@@ -262,14 +262,57 @@ if (loading) {
     </div>
   );
 }
-const handleExport = () => {
+const handleExport = async () => {
+  if (exporting || !profile?.id) return;
+
   setExporting(true);
 
-  window.open(`/api/export-student/${profile.id}`, "_blank");
+  try {
+    const response = await fetch(
+      `/api/export-student/${profile.id}`
+    );
 
-  setTimeout(() => {
+    if (!response.ok) {
+      throw new Error("Xuất hồ sơ thất bại");
+    }
+
+    // Chờ toàn bộ file ZIP tải về trình duyệt
+    const blob = await response.blob();
+
+    // Lấy tên file từ Content-Disposition nếu có
+    const contentDisposition =
+      response.headers.get("Content-Disposition");
+
+    let fileName = "HoSo-SV5T.zip";
+
+    const match = contentDisposition?.match(
+      /filename="([^"]+)"/
+    );
+
+    if (match?.[1]) {
+      fileName = match[1];
+    }
+
+    // Tạo link tải
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    // Giải phóng bộ nhớ
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("EXPORT ERROR:", error);
+    alert("Không thể xuất hồ sơ. Vui lòng thử lại.");
+  } finally {
+    // Xuất xong hoặc lỗi đều dừng spinner
     setExporting(false);
-  }, 3000);
+  }
 };
 
 return (
@@ -519,7 +562,31 @@ disabled={exporting}
     transition: "all .25s ease",
   }}
 >
-  {exporting ? "⏳ Đang xuất hồ sơ..." : "🗂️ Xuất hồ sơ"}
+
+{exporting ? (
+  <span
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "8px",
+    }}
+  >
+    <span
+      style={{
+        width: "16px",
+        height: "16px",
+        border: "2px solid rgba(255,255,255,.4)",
+        borderTopColor: "#fff",
+        borderRadius: "50%",
+        animation: "spin .7s linear infinite",
+      }}
+    />
+    Đang xuất hồ sơ
+  </span>
+) : (
+  "🗂️ Xuất hồ sơ"
+)}
 </button>
 
 </div>

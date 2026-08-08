@@ -56,6 +56,7 @@ useEffect(() => {
   const [profile, setProfile] = useState<any>(null);
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [showCriteria, setShowCriteria] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [tab, setTab] = useState("proof");
@@ -192,49 +193,43 @@ await supabase.storage
   // =========================
 
   async function exportPDF() {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+  setExporting(true);
 
-      if (!user) {
-        alert("Bạn chưa đăng nhập.");
-        return;
-      }
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      // API chỉ xuất PDF
-      const res = await fetch(
-        `/api/export-pdf/${user.id}`
-      );
+    if (!user) return;
 
-      if (!res.ok) {
-        const text = await res.text();
+    const res = await fetch(`/api/export-pdf/${user.id}`);
 
-        console.error(text);
-
-        alert("Xuất PDF thất bại.");
-
-        return;
-      }
-
-      const blob = await res.blob();
-
-      const url =
-        window.URL.createObjectURL(blob);
-
-      const a =
-        document.createElement("a");
-
-      a.href = url;
-      a.download = "Bao-cao-SV5T.pdf";
-      a.click();
-
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error(err);
-      alert("Có lỗi xảy ra.");
+    if (!res.ok) {
+      alert("Xuất PDF thất bại.");
+      return;
     }
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+
+    a.download = `${profile?.lop ?? ""} - ${profile?.ho_ten ?? ""} - Báo cáo thành tích Sinh viên 5 tốt cấp trường.pdf`;
+
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+
+    // Xuất xong → dừng spinner
+    setExporting(false);
+
+  } catch (err) {
+    console.error(err);
+    alert("Có lỗi xảy ra.");
+    setExporting(false);
   }
+}
 
   // =========================
   // PRINT
@@ -330,8 +325,14 @@ return (
         fontSize: "14px",
       }}
     >
+       {exporting ? (
+    <Spinner size ={24} />
+  ) : (
+    <>
       <FaFilePdf size={18} />
       Xuất
+      </>
+  )}
     </button>
   </div>
 )}

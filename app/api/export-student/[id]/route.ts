@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import JSZip from "jszip";
-import puppeteer from "puppeteer-core";
+import puppeteer from "puppeteer";
 import chromium from "@sparticuz/chromium";
 
 export async function GET(
@@ -10,6 +10,19 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+     const getContent = (key: string) => {
+  const content = String(
+    reports?.find((r) => r.criteria === key)?.content || "—"
+  );
+
+  return content
+    .split(/\n+/)
+    .map(
+      (line: string) =>
+        `<p class="content-line">${line.trim()}</p>`
+    )
+    .join("");
+};
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -66,149 +79,256 @@ export async function GET(
     // =========================
     // REPORT HTML (A4 LANDSCAPE)
     // =========================
-    const reportHTML = `
+const reportHTML = `
+<!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8"/>
+<meta charset="UTF-8">
 
-  <style>
-    @page {
-      size: A4 landscape;
-      margin: 12mm;
-    }
+<style>
 
-    body {
-      font-family: "Times New Roman", serif;
-      font-size: 13pt;
-      color: #000;
-    }
+@page {
+  size: A4 landscape;
+  margin-top: 30mm;
+  margin-right: 20mm;
+  margin-bottom: 20mm;
+  margin-left: 20mm;
+}
 
-    .title {
-      text-align: center;
-      font-weight: bold;
-      font-size: 20pt;
-      margin-bottom: 6px;
-    }
+* {
+  box-sizing: border-box;
+}
 
-    .subtitle {
-      text-align: center;
-      font-weight: bold;
-      font-size: 13pt;
-      margin-bottom: 4px;
-    }
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      margin-top: 14px;
-    }
+body {
+  font-family: "Times New Roman", serif;
+  font-size: 13pt;
+  color: #000;
 
-    th, td {
-      border: 1px solid #000;
-      padding: 8px;
-      font-size: 12pt;
-      vertical-align: top;
-      word-wrap: break-word;
-    }
+  /* Giãn dòng 1.15 */
+  line-height: 1.15;
+}
 
-    th {
-      background: #f2f2f2;
-      text-align: center;
-    }
+/* Tất cả nội dung dạng đoạn */
+p,
+div,
+td,
+th {
+  line-height: 1.15;
+}
 
-    .info {
-      line-height: 1.6;
-      white-space: pre-line;
-    }
+/* Khoảng cách đoạn: trước 0pt, sau 6pt */
+p {
+  margin-top: 0;
+  margin-bottom: 6pt;
+}
 
-    /* FIX KHỐI THÔNG TIN SINH VIÊN */
-    .student-box {
-      line-height: 1.8;
-    }
+h2,
+h3 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 6pt;
+  line-height: 1.15;
+}
 
-    .student-box div {
-      margin: 2px 0;
-    }
+h2 {
+  font-size: 16pt;
+}
 
-  </style>
+h3 {
+  font-size: 14pt;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin-top: 15px;
+}
+
+th,
+td {
+  border: 1px solid #000;
+  padding: 8px;
+  vertical-align: top;
+
+  font-size: 12pt;
+  line-height: 1.15;
+
+  word-wrap: break-word;
+}
+
+th {
+  background: #f2f2f2;
+  text-align: center;
+}
+
+.info {
+  line-height: 1.15;
+}
+
+.student {
+  width: 22%;
+  line-height: 1.15;
+}
+
+.criteria {
+  width: 13%;
+}
+
+/* Các dòng thông tin sinh viên */
+.student div {
+  margin-top: 0;
+  margin-bottom: 6pt;
+  line-height: 1.15;
+}
+  .content-line {
+  margin-top: 0;
+  margin-bottom: 6pt;
+  line-height: 1.15;
+}
+.info {
+  line-height: 1.15;
+}
+
+.info p {
+  margin-top: 0;
+  margin-bottom: 6pt;
+  line-height: 1.15;
+}
+</style>
+
 </head>
 
 <body>
 
-  <div class="title">
-    BÁO CÁO THÀNH TÍCH
-  </div>
+<h2>BÁO CÁO THÀNH TÍCH</h2>
 
-  <div class="subtitle">
-    ĐỀ NGHỊ CÔNG NHẬN DANH HIỆU SINH VIÊN 5 TỐT CẤP TRƯỜNG
-  </div>
+<h3>
+ĐỀ NGHỊ CÔNG NHẬN DANH HIỆU SINH VIÊN 5 TỐT CẤP TRƯỜNG
+</h3>
 
-  <div class="subtitle">
-    NĂM HỌC 2025 - 2026
-  </div>
+<h3>
+NĂM HỌC 2025 - 2026
+</h3>
 
-  <table>
-  <colgroup>
-    <col style="width: 22%;" />
-    <col style="width: 13%;" />
-    <col style="width: 13%;" />
-    <col style="width: 13%;" />
-    <col style="width: 13%;" />
-    <col style="width: 13%;" />
-    <col style="width: 13%;" />
-  </colgroup>
-    <tr>
-      <th>Thông tin sinh viên</th>
-      <th>Đạo đức tốt</th>
-      <th>Học tập tốt</th>
-      <th>Thể lực tốt</th>
-      <th>Tình nguyện tốt</th>
-      <th>Hội nhập tốt</th>
-      <th>Ưu tiên</th>
-    </tr>
+<table>
 
-    <tr>
+<tr>
 
-      <!-- =========================
-           FIX KHỐI THÔNG TIN SINH VIÊN
-      ========================== -->
-      <td class="student-box">
+<th class="student">
+Thông tin sinh viên
+</th>
 
-        <div><b>Họ và tên:</b> ${profile?.ho_ten || ""}</div>
-        <div><b>MSSV:</b> ${profile?.mssv || ""}</div>
+<th class="criteria">
+Đạo đức tốt
+</th>
 
-        <div><b>Nam/Nữ:</b></div>
-        <div><b>Năm sinh:</b></div>
-        <div><b>Dân tộc:</b></div>
-        <div><b>Sinh viên năm thứ:</b></div>
+<th class="criteria">
+Học tập tốt
+</th>
 
-        <div><b>Lớp:</b> ${profile?.lop || ""}, Trường Đại học Y Dược Buôn Ma Thuột</div>
+<th class="criteria">
+Thể lực tốt
+</th>
 
-        <div><b>Chức vụ Đoàn - Hội:</b></div>
-        <div><b>Đảng viên/Đoàn viên:</b></div>
-        <div><b>Số điện thoại:</b></div>
+<th class="criteria">
+Tình nguyện tốt
+</th>
 
-        <div><b>Email:</b> ${profile?.email || ""}</div>
+<th class="criteria">
+Hội nhập tốt
+</th>
 
-      </td>
+<th class="criteria">
+Thành tích khác
+</th>
 
-      ${[
-        "dao-duc",
-        "hoc-tap",
-        "the-luc",
-        "tinh-nguyen",
-        "hoi-nhap",
-        "uu-tien",
-      ]
-        .map((key) => {
-          const r = reports?.find((x) => x.criteria === key);
-          return `<td class="info">${r?.content || "—"}</td>`;
-        })
-        .join("")}
+</tr>
 
-    </tr>
-  </table>
+<tr>
+
+<td class="student">
+
+<div>
+<b>Họ và tên:</b> ${profile?.ho_ten ?? ""}
+</div>
+
+<div>
+<b>MSSV:</b> ${profile?.mssv ?? ""}
+</div>
+
+<div>
+<b>Nam/Nữ:</b>
+</div>
+
+<div>
+<b>Năm sinh:</b>
+</div>
+
+<div>
+<b>Dân tộc:</b>
+</div>
+
+<div>
+<b>Sinh viên năm thứ:</b>
+</div>
+
+<div>
+<b>Lớp:</b> ${profile?.lop ?? ""},
+Trường Đại học Y Dược Buôn Ma Thuột
+</div>
+
+<div>
+<b>Chức vụ Đoàn - Hội:</b>
+</div>
+
+<div>
+<b>Đảng viên/Đoàn viên:</b>
+</div>
+
+<div>
+<b>Số điện thoại:</b>
+</div>
+
+<div>
+<b>Email:</b> ${profile?.email ?? ""}
+</div>
+
+</td>
+
+<td class="info">
+${getContent("dao-duc")}
+</td>
+
+<td class="info">
+${getContent("hoc-tap")}
+</td>
+
+<td class="info">
+${getContent("the-luc")}
+</td>
+
+<td class="info">
+${getContent("tinh-nguyen")}
+</td>
+
+<td class="info">
+${getContent("hoi-nhap")}
+</td>
+
+<td class="info">
+${getContent("uu-tien")}
+</td>
+
+</tr>
+
+</table>
 
 </body>
 </html>
@@ -217,9 +337,13 @@ export async function GET(
     // =========================
     // HTML -> PDF (PUPEETER)
     // =========================
+const isProduction = process.env.NODE_ENV === "production";
+
 const browser = await puppeteer.launch({
-  args: chromium.args,
-  executablePath: await chromium.executablePath(),
+  args: isProduction ? chromium.args : [],
+  executablePath: isProduction
+    ? await chromium.executablePath()
+    : undefined,
   headless: true,
 });
 const page = await browser.newPage();
