@@ -108,7 +108,7 @@ const proofPaths = [
       href: "/tieuchi",
     },
     {
-      name: "Bảng điểm",
+      name: "GPA mục tiêu",
       icon: "📊",
       href: "/bang-diem",
     },
@@ -339,7 +339,7 @@ return (
                   style={{
                     position: "absolute",
                     left: "100%",
-                    marginLeft: 2,
+                    marginLeft: 0,
                     top: 0,
                     width: 220,
                     background: "#fff",

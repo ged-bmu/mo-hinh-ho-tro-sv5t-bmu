@@ -607,10 +607,10 @@ return (
     WebkitOverflowScrolling: "touch",
   }}
 >
-                <table
+               <table
   style={{
-    minWidth: isMobile ? "900px" : "100%",
     width: "100%",
+    minWidth: isMobile ? "900px" : "100%",
     tableLayout: "fixed",
     borderCollapse: "collapse",
   }}
@@ -658,14 +658,17 @@ return (
                   <tbody>
                     <tr>
                       <td
-                        style={{
-                          border: "1px solid #cbd5e1",
-                          padding: "16px",
-                          verticalAlign: "top",
-                          lineHeight: "1.6",
-                          fontSize: "15px",
-                        }}
-                      >
+  style={{
+    border: "1px solid #cbd5e1",
+    padding: "26px",
+    verticalAlign: "top",
+    lineHeight: "1.6",
+    fontSize: "15px",
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
+    wordBreak: "break-word",
+  }}
+>
                         <div>
                           <b>Họ và tên:</b> {profile?.ho_ten}
                         </div>
@@ -715,31 +718,36 @@ return (
                       </td>
 
                      {criteriaList.map((item) => {
+                      
   const report = reports.find(
     (r) => r.criteria === item.key
   );
 
   return (
-    <td
-      key={item.key}
-      style={{
-        border: "1px solid #cbd5e1",
-        verticalAlign: "top",
-        padding: "10px",
-      }}
-    >
-      <div
-        style={{
-          minHeight: "300px",
-          lineHeight: "1.6",
-          wordBreak: "break-word",
-          overflowWrap: "anywhere",
-        }}
-        dangerouslySetInnerHTML={{
-          __html: report?.content || "",
-        }}
-      />
-    </td>
+<td
+  key={item.key}
+  style={{
+    border: "1px solid #cbd5e1",
+    verticalAlign: "top",
+    padding: "10px",
+    whiteSpace: "normal",
+    overflowWrap: "break-word",
+    wordBreak: "break-word",
+  }}
+>
+  <div
+    style={{
+      minHeight: "300px",
+      lineHeight: "1.6",
+      whiteSpace: "normal",
+      overflowWrap: "anywhere",
+      wordBreak: "break-word",
+    }}
+    dangerouslySetInnerHTML={{
+      __html: report?.content || "",
+    }}
+  />
+</td>
   );
 })}
           </tr>

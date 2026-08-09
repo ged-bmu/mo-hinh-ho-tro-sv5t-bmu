@@ -24,13 +24,10 @@ export default function DaoDucPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showProfile, setShowProfile] = useState(false);
  const defaultReport = `
-<p>1. Không vi phạm pháp luật của Nhà nước, nội quy, quy chế của nhà trường; không bị xử lý kỷ luật trong năm học.</p>
-
-<p>2. Điểm rèn luyện năm học 2025 - 2026: /100.</p>
-
-<p>3. Tham gia đầy đủ các buổi sinh hoạt chính trị, sinh hoạt công dân.</p>
-
-<p>4.&nbsp; </p>
+<p style="margin: 0;">1. Không vi phạm pháp luật của Nhà nước, nội quy, quy chế của nhà trường; không bị xử lý kỷ luật trong năm học.</p>
+<p style="margin: 0;">2. Điểm rèn luyện năm học 2025 - 2026: /100.</p>
+<p style="margin: 0;">3. Tham gia đầy đủ các buổi sinh hoạt chính trị, sinh hoạt công dân.</p>
+<p style="margin: 0;">4.&nbsp;</p>
 `;
 
   useEffect(() => {

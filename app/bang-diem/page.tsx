@@ -22,7 +22,20 @@ export default function BangDiemPage() {
   const [currentSemester, setCurrentSemester] = useState<"hk1" | "hk2" | "summer">("hk1");
   const [showAddSubject, setShowAddSubject] = useState(false);
   const [examInputs, setExamInputs] = useState<any>({});
+  const [isMobile, setIsMobile] = useState(false);
+useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth <= 768);
+  };
 
+  checkMobile();
+
+  window.addEventListener("resize", checkMobile);
+
+  return () => {
+    window.removeEventListener("resize", checkMobile);
+  };
+}, []);
   useEffect(() => {
 
     loadSubjects();
@@ -228,29 +241,32 @@ const gpa4Year =
         <Sidebar />
 
         <main
-          style={{
-            flex: 1,
-            padding: "32px",
-          }}
-        >
+  style={{
+    flex: 1,
+    minWidth: 0,
+    padding: isMobile ? "20px 12px" : "32px",
+    boxSizing: "border-box",
+  }}
+>
           <h1
-            style={{
-              fontSize: 30,
-              fontWeight: 700,
-              marginBottom: 8,
-            }}
-          >
-            📚 Bảng điểm
-          </h1>
+  style={{
+    fontSize: isMobile ? 24 : 30,
+    fontWeight: 700,
+    marginBottom: 8,
+  }}
+>
+  📚 Mục tiêu học tập
+</h1>
 
-          <p
-            style={{
-              color: "#666",
-              marginBottom: 30,
-            }}
-          >
-            Quản lý điểm trung bình từng học kỳ.
-          </p>
+         <p
+  style={{
+    color: "#666",
+    marginBottom: isMobile ? 20 : 30,
+    fontSize: isMobile ? 14 : 16,
+  }}
+>
+  Quản lý điểm trung bình từng học kỳ.
+</p>
 <div
   style={{
     display: "grid",
@@ -348,6 +364,7 @@ const gpa4Year =
 <SemesterCard
   title="Học kỳ I"
   subjects={subjectsHK1}
+  isMobile={isMobile}
 onUpdateSubject={(subject)=>{
   updateSubject(subject);
 }}
@@ -373,6 +390,7 @@ openAddSubject={() => {
 <SemesterCard
   title="Học kỳ II"
   subjects={subjectsHK2}
+  isMobile={isMobile}
 onUpdateSubject={(subject)=>{
   updateSubject(subject);
 }}
@@ -399,6 +417,7 @@ openAddSubject={() => {
 <SemesterCard
   title="Học kỳ hè"
   subjects={subjectsSummer}
+  isMobile={isMobile}
 onUpdateSubject={(subject)=>{
   updateSubject(subject);
 }}
@@ -533,8 +552,9 @@ type SemesterCardProps = {
   onScore: (subject: any) => void;
   subjects: any[];
   onEdit: (subject: any) => void;
-  onUpdateSubject: (subject:any)=>void;
+  onUpdateSubject: (subject: any) => void;
   onDelete: (id: number) => void;
+  isMobile: boolean;
 };
 
 function SemesterCard({
@@ -545,6 +565,7 @@ function SemesterCard({
   onUpdateSubject,
   onDelete,
   onScore,
+  isMobile,
 }: SemesterCardProps) {
 const [examInputs, setExamInputs] = useState<Record<number, string>>({});
 const totalCredits = subjects.reduce(
@@ -602,14 +623,14 @@ const expectedGpa4 =
 
   return (
     <div
-      style={{
-        background: "#fff",
-        borderRadius: 18,
-        padding: 24,
-        marginBottom: 24,
-        boxShadow: "0 6px 20px rgba(0,0,0,.08)",
-      }}
-    >
+  style={{
+    background: "#fff",
+    borderRadius: 18,
+    padding: isMobile ? 14 : 24,
+    marginBottom: 20,
+    boxShadow: "0 6px 20px rgba(0,0,0,.08)",
+  }}
+>
       {/* Header */}
       <div
         style={{
@@ -648,10 +669,14 @@ const expectedGpa4 =
 
       {/* Table */}
       <div
-        style={{
-          overflowX: "auto",
-        }}
-      >
+  style={{
+    width: "100%",
+    maxWidth: "100%",
+    overflowX: "auto",
+    overflowY: "hidden",
+    WebkitOverflowScrolling: "touch",
+  }}
+>
         <table
           style={{
             width: "100%",

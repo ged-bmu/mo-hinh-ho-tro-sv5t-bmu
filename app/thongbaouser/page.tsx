@@ -92,12 +92,15 @@ export default function ThongBaoUser() {
        
            <Sidebar />
 
-      <main
-        style={{
-          flex: 1,
-           padding: isMobile ? 16 : "25px 30px",
-        }}
-      >
+     <main
+  style={{
+    flex: 1,
+    minWidth: 0,
+    width: "100%",
+    padding: isMobile ? 16 : "25px 30px",
+    boxSizing: "border-box",
+  }}
+>
         <h1
           style={{
             fontSize:isMobile ? 22 : 24,
@@ -175,23 +178,26 @@ export default function ThongBaoUser() {
         </div>
 
         <div
-          style={{
-            marginTop: isMobile ? 6 : 0,
-            background: "#fff",
-            borderRadius: 16,
-            overflow: "hidden",
-            WebkitOverflowScrolling:"touch",
-            boxShadow:"0 5px 20px rgba(0,0,0,.06)"
-              
-          }}
-        >
+  style={{
+    marginTop: isMobile ? 6 : 0,
+    width: "100%",
+    maxWidth: "100%",
+    overflowX: "auto",
+    overflowY: "hidden",
+    background: "#fff",
+    borderRadius: 16,
+    WebkitOverflowScrolling: "touch",
+    boxShadow: "0 5px 20px rgba(0,0,0,.06)",
+  }}
+>
           <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              tableLayout: "fixed",
-            }}
-          >
+  style={{
+    width: "100%",
+    minWidth: isMobile ? "700px" : "100%",
+    borderCollapse: "collapse",
+    tableLayout: "fixed",
+  }}
+>
             <thead
               style={{
                 background: "#dcecff",
@@ -233,24 +239,38 @@ export default function ThongBaoUser() {
                         "1px solid #eee",
                     }}
                   >
-                    <td style={td}>
-                      <div
-                        style={{
-                          fontWeight: 600,
-                          marginBottom: isMobile ? 3 : 6,
-                        }}
-                      >
-                        {item.title}
-                      </div>
+                    <td
+  style={{
+    ...td,
+    width: isMobile ? "280px" : "45%",
+    maxWidth: isMobile ? "280px" : "45%",
+    whiteSpace: "normal",
+    overflow: "hidden",
+  }}
+>
+  <div
+    style={{
+      fontWeight: 600,
+      marginBottom: isMobile ? 3 : 6,
+      whiteSpace: "normal",
+      overflowWrap: "anywhere",
+      wordBreak: "break-word",
+    }}
+  >
+    {item.title}
+  </div>
 
-                      <div
-                        style={{
-                          color: "#666",
-                        }}
-                      >
-                        {item.content}
-                      </div>
-                    </td>
+  <div
+    style={{
+      color: "#666",
+      whiteSpace: "normal",
+      overflowWrap: "anywhere",
+      wordBreak: "break-word",
+    }}
+  >
+    {item.content}
+  </div>
+</td>
 
                     <td style={td}>
                       {item.type === "review" &&

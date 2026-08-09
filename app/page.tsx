@@ -814,7 +814,7 @@ disabled={exporting}
     <div style={{ fontSize: 38 }}>📊</div>
 
     <h3 style={{ margin: "15px 0 8px", fontSize: 22 }}>
-      Bảng điểm
+       Mục tiêu học tập
     </h3>
 
     <p style={{ margin: 0, color: "#64748b" }}>
