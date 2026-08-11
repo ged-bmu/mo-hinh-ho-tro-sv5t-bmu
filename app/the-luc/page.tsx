@@ -201,39 +201,68 @@ async function handleUpload(
   }
 }
 
-  async function deleteFile(name: string) {
-      const {
+    async function deleteFile(name: string) {
+  const {
     data: { user },
   } = await supabase.auth.getUser();
 
-console.log("AUTH ID =", user?.id);
+  console.log("AUTH ID =", user?.id);
+
   if (!user) return;
-    await supabase.storage
-      .from("Ho so SV5T")
-      .remove([`${user.id}/the-luc/${name}`]);
-      const { data: profile } = await supabase
-  .from("profiles")
-  .select("ho_ten, lop")
-  .eq("id", user.id)
-  .single();
 
-await supabase
-  .from("activity_logs")
-  .insert({
-    user_id: user.id,
-    ho_ten: profile?.ho_ten,
-    lop: profile?.lop,
+  // 1. Xóa file thật trong Storage
+  const { error: storageError } = await supabase.storage
+    .from("Ho so SV5T")
+    .remove([`${user.id}/the-luc/${name}`]);
 
-    action_type: "delete",
-
-    target_folder: "the-luc",
-    target_file: name,
-  });
-await fetch("/api/cleanup-logs", {
-  method: "POST",
-});
-    loadFiles();
+  if (storageError) {
+    console.error("Lỗi xóa Storage:", storageError);
+    alert("Không thể xóa file: " + storageError.message);
+    return;
   }
+
+  // 2. Xóa bản ghi tương ứng trong uploaded_files
+  const { error: dbError } = await supabase
+    .from("uploaded_files")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("folder", "the-luc")
+    .eq("storage_name", name);
+
+  if (dbError) {
+    console.error("Lỗi xóa uploaded_files:", dbError);
+    alert(
+      "File đã được xóa khỏi Storage nhưng chưa xóa được dữ liệu!"
+    );
+    return;
+  }
+
+  // 3. Lấy thông tin sinh viên để ghi log
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("ho_ten, lop")
+    .eq("id", user.id)
+    .single();
+
+  // 4. Ghi log xóa
+  await supabase
+    .from("activity_logs")
+    .insert({
+      user_id: user.id,
+      ho_ten: profile?.ho_ten,
+      lop: profile?.lop,
+      action_type: "delete",
+      target_folder: "the-luc",
+      target_file: name,
+    });
+
+  await fetch("/api/cleanup-logs", {
+    method: "POST",
+  });
+
+  // 5. Tải lại danh sách file
+  loadFiles();
+}
   async function renameFile(file: any) {
   const ext = file.name.slice(file.name.lastIndexOf("."));
   const currentName = (file.display_name || file.name).replace(/\.[^/.]+$/, "");

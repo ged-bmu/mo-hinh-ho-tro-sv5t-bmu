@@ -16,9 +16,10 @@ export default function StatisticsPage() {
   useEffect(() => {
     loadData();
   }, []);
-  const totalStudents = students.length;
   const [selectedType, setSelectedType] =
   useState("");
+  const [submissionFilter, setSubmissionFilter] =
+  useState("all");
   const loadData = async () => {
     const { data } = await supabase
   .from("profiles")
@@ -27,28 +28,33 @@ export default function StatisticsPage() {
 
     setStudents(data || []);
   };
-const stats = {
-  daoDuc: students.filter(
+const filteredStudents =
+  submissionFilter === "submitted"
+    ? students.filter((sv) => sv.is_submitted === true)
+    : students;
+  const totalStudents = filteredStudents.length;
+  const stats = {
+  daoDuc: filteredStudents.filter(
     (sv) => !sv["dao-duc"]
   ).length,
 
-  hocTap: students.filter(
+  hocTap: filteredStudents.filter(
     (sv) => !sv["hoc-tap"]
   ).length,
 
-  theLuc: students.filter(
+  theLuc: filteredStudents.filter(
     (sv) => !sv["the-luc"]
   ).length,
 
-  tinhNguyen: students.filter(
+  tinhNguyen: filteredStudents.filter(
     (sv) => !sv["tinh-nguyen"]
   ).length,
 
-  hoiNhap: students.filter(
+  hoiNhap: filteredStudents.filter(
     (sv) => !sv["hoi-nhap"]
   ).length,
 
-  full: students.filter((sv) => {
+  full: filteredStudents.filter((sv) => {
     const count = [
       sv["dao-duc"],
       sv["hoc-tap"],
@@ -60,7 +66,7 @@ const stats = {
     return count === 5;
   }).length,
 
-  near: students.filter((sv) => {
+  near: filteredStudents.filter((sv) => {
     const count = [
       sv["dao-duc"],
       sv["hoc-tap"],
@@ -72,7 +78,7 @@ const stats = {
     return count === 4;
   }).length,
 
-  medium: students.filter((sv) => {
+  medium: filteredStudents.filter((sv) => {
     const count = [
       sv["dao-duc"],
       sv["hoc-tap"],
@@ -84,7 +90,7 @@ const stats = {
     return count === 3;
   }).length,
 
-  low: students.filter((sv) => {
+  low: filteredStudents.filter((sv) => {
     const count = [
       sv["dao-duc"],
       sv["hoc-tap"],
@@ -127,51 +133,51 @@ const stats = {
     },
   ];
 
-  const completionStats = {
-    "Đạt 5/5 tiêu chí": students.filter((sv) => {
-      const count =
-        Number(!!sv["dao-duc"]) +
-        Number(!!sv["hoc-tap"]) +
-        Number(!!sv["the-luc"]) +
-        Number(!!sv["tinh-nguyen"]) +
-        Number(!!sv["hoi-nhap"]);
+ const completionStats = {
+  "Đạt 5/5 tiêu chí": filteredStudents.filter((sv) => {
+    const count =
+      Number(!!sv["dao-duc"]) +
+      Number(!!sv["hoc-tap"]) +
+      Number(!!sv["the-luc"]) +
+      Number(!!sv["tinh-nguyen"]) +
+      Number(!!sv["hoi-nhap"]);
 
-      return count === 5;
-    }),
+    return count === 5;
+  }),
 
-    "Đạt 4/5 tiêu chí": students.filter((sv) => {
-      const count =
-        Number(!!sv["dao-duc"]) +
-        Number(!!sv["hoc-tap"]) +
-        Number(!!sv["the-luc"]) +
-        Number(!!sv["tinh-nguyen"]) +
-        Number(!!sv["hoi-nhap"]);
+  "Đạt 4/5 tiêu chí": filteredStudents.filter((sv) => {
+    const count =
+      Number(!!sv["dao-duc"]) +
+      Number(!!sv["hoc-tap"]) +
+      Number(!!sv["the-luc"]) +
+      Number(!!sv["tinh-nguyen"]) +
+      Number(!!sv["hoi-nhap"]);
 
-      return count === 4;
-    }),
+    return count === 4;
+  }),
 
-    "Đạt 3/5 tiêu chí": students.filter((sv) => {
-      const count =
-        Number(!!sv["dao-duc"]) +
-        Number(!!sv["hoc-tap"]) +
-        Number(!!sv["the-luc"]) +
-        Number(!!sv["tinh-nguyen"]) +
-        Number(!!sv["hoi-nhap"]);
+  "Đạt 3/5 tiêu chí": filteredStudents.filter((sv) => {
+    const count =
+      Number(!!sv["dao-duc"]) +
+      Number(!!sv["hoc-tap"]) +
+      Number(!!sv["the-luc"]) +
+      Number(!!sv["tinh-nguyen"]) +
+      Number(!!sv["hoi-nhap"]);
 
-      return count === 3;
-    }),
+    return count === 3;
+  }),
 
-    "Đạt ≤2/5 tiêu chí": students.filter((sv) => {
-      const count =
-        Number(!!sv["dao-duc"]) +
-        Number(!!sv["hoc-tap"]) +
-        Number(!!sv["the-luc"]) +
-        Number(!!sv["tinh-nguyen"]) +
-        Number(!!sv["hoi-nhap"]);
+  "Đạt ≤2/5 tiêu chí": filteredStudents.filter((sv) => {
+    const count =
+      Number(!!sv["dao-duc"]) +
+      Number(!!sv["hoc-tap"]) +
+      Number(!!sv["the-luc"]) +
+      Number(!!sv["tinh-nguyen"]) +
+      Number(!!sv["hoi-nhap"]);
 
-      return count <= 2;
-    }),
-  };
+    return count <= 2;
+  }),
+};
 
  const sortedStudents = [...selectedStudents]
   .filter((sv) =>
@@ -225,14 +231,45 @@ const stats = {
       ← Trang chủ
     </Link>
 
-    <h1
-      style={{
-        fontSize: "26px",
-        marginBottom: "30px",
-      }}
-    >
-      📊 <b>Thống kê hồ sơ</b>
-    </h1>
+<div
+  style={{
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: "30px",
+  }}
+>
+  <h1
+    style={{
+      fontSize: "26px",
+      margin: 0,
+    }}
+  >
+    📊 <b>Thống kê hồ sơ</b>
+  </h1>
+
+  <select
+    value={submissionFilter}
+    onChange={(e) => setSubmissionFilter(e.target.value)}
+    style={{
+      display: "block",
+      width: "220px",
+      height: "40px",
+      padding: "0 12px",
+      border: "1px solid #d1d5db",
+      borderRadius: "8px",
+      backgroundColor: "#fff",
+      color: "#111827",
+      fontSize: "14px",
+    }}
+  >
+    <option value="all">Tất cả</option>
+    <option value="submitted">
+      Đã nộp hồ sơ
+    </option>
+  </select>
+</div>
 <div
   style={{
     display: "flex",
@@ -336,18 +373,17 @@ const stats = {
   <tbody>
     {criteriaStats.map(
       (item) => {
-        const passed =
-          students.filter(
-            (sv) =>
-              sv[item.key]
-          );
+       const passed =
+  filteredStudents.filter(
+    (sv) =>
+      sv[item.key]
+  );
 
-    const failed =
-      students.filter(
-        (sv) =>
-          !sv[item.key]
-      );
-
+const failed =
+  filteredStudents.filter(
+    (sv) =>
+      !sv[item.key]
+  );
     const percent =
       totalStudents === 0
         ? 0
