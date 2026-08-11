@@ -14,12 +14,12 @@ export default function TieuChiPage() {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [tab, setTab] = useState("proof");
-   const [showCriteria, setShowCriteria] = useState(false);
-   const [showProfile, setShowProfile] = useState(false);
+  const [showCriteria, setShowCriteria] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [hoverSubmit, setHoverSubmit] = useState(false);
+  const [submissionOpen, setSubmissionOpen] = useState(true);
 
-
-  useEffect(() => {
-    loadProfile();
+  useEffect(() => {loadProfile();
 
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -46,8 +46,77 @@ export default function TieuChiPage() {
 
     setProfile(data);
     setLoading(false);
+     const { data: setting, error: settingError } = await supabase
+    .from("site_settings")
+    .select("submission_open")
+    .eq("id", 1)
+    .single();
+
+  if (settingError) {
+    console.error(
+      "Lỗi lấy trạng thái nhận hồ sơ:",
+      settingError
+    );
   }
 
+  if (setting) {
+    setSubmissionOpen(setting.submission_open);
+  }
+
+  setLoading(false);
+  }
+async function submitProfile() {
+  if (!profile?.id) return;
+
+  // Kiểm tra trạng thái nhận hồ sơ mới nhất
+  const { data: setting, error: settingError } = await supabase
+    .from("site_settings")
+    .select("submission_open")
+    .eq("id", 1)
+    .single();
+
+  if (settingError) {
+    console.error(settingError);
+    alert("Không thể kiểm tra trạng thái nhận hồ sơ.");
+    return;
+  }
+
+  // Đã đóng
+  if (!setting?.submission_open) {
+    setSubmissionOpen(false);
+
+    alert("Hồ sơ đã hết hạn gửi. Hiện tại hệ thống không còn nhận hồ sơ.");
+
+    return;
+  }
+
+  // Nếu đang ở trạng thái đã nộp → cho phép chỉnh sửa
+  const newSubmittedState = !profile.is_submitted;
+
+  const submittedAt = newSubmittedState
+    ? new Date().toISOString()
+    : null;
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      is_submitted: newSubmittedState,
+      submitted_at: submittedAt,
+    })
+    .eq("id", profile.id);
+
+  if (error) {
+    console.error(error);
+    alert("Không thể cập nhật trạng thái hồ sơ.");
+    return;
+  }
+
+  setProfile((prev: any) => ({
+    ...prev,
+    is_submitted: newSubmittedState,
+    submitted_at: submittedAt,
+  }));
+}
   const folders = [
   {
   name: "Đạo đức tốt",
@@ -175,85 +244,205 @@ backgroundAttachment: "fixed",
 
 <div
   style={{
-    background: "white",
-    borderRadius: "16px",
-    padding: "16px",
-    marginBottom: "30px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+  background: "white",
+  borderRadius: "16px",
+  padding: isMobile ? "12px" : "16px 20px",
+  marginBottom: isMobile ? "20px" : "30px",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+}}
+>
+<div
+  style={{
+    display: "flex",
+    flexDirection: isMobile ? "column" : "row",
+    alignItems: isMobile ? "stretch" : "center",
+    justifyContent: "space-between",
+    gap: isMobile ? "12px" : "20px",
   }}
 >
+  {/* Nội dung tiến độ */}
+  <div
+    style={{
+      flex: 1,
+      minWidth: 0,
+    }}
+  >
+   <h2
+  style={{
+    margin: 0,
+    fontSize: isMobile ? "16px" : "20px",
+    lineHeight: "1.25",
+    fontWeight: 700,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  }}
+>
+  📊 Tiến độ Sinh viên 5 Tốt Cấp Trường
+</h2>
+
+    <p
+      style={{
+        margin: "8px 0 10px",
+        color: "#64748b",
+      }}
+    >
+      Bạn đã hoàn thành <b>{completed}/5</b> tiêu chí.
+    </p>
+
+    <div
+      style={{
+        width: "100%",
+        height: "8px",
+        background: "#e5e7eb",
+        borderRadius: "999px",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          width: `${percent}%`,
+          height: "100%",
+          background: "linear-gradient(90deg, #2563eb, #60a5fa)",
+          transition: "width .4s ease",
+          borderRadius: "999px",
+        }}
+      />
+    </div>
+  </div>
+
+  {/* Hai nút */}
   <div
     style={{
       display: "flex",
-      flexDirection: isMobile ? "column" : "row",
-      alignItems: isMobile ? "stretch" : "center",
-      justifyContent: "space-between",
-      gap: isMobile ? "14px" : "20px",
+      alignItems: "center",
+      justifyContent: "flex-end",
+      gap: "10px",
+      flexShrink: 0,
     }}
   >
-    <div>
-      <h2
-        style={{
-          margin: 0,
-          fontSize: isMobile ? "18px" : "20px",
-          fontWeight: 700,
-        }}
-      >
-        📊 Tiến độ Sinh viên 5 Tốt Cấp Trường
-      </h2>
+    {/* Xem báo cáo */}
+    <a
+      href="/bao-cao"
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-3px) scale(1.03)";
+        e.currentTarget.style.background = "#1d4ed8";
+        e.currentTarget.style.boxShadow =
+          "0 6px 16px rgba(37, 99, 235, 0.25)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0) scale(1)";
+        e.currentTarget.style.background = "#2563eb";
+        e.currentTarget.style.boxShadow = "none";
+      }}
+      style={{
+        background: "#2563eb",
+        color: "#fff",
+        textDecoration: "none",
+        padding: isMobile ? "10px 12px" : "11px 16px",
+        borderRadius: "12px",
+        fontWeight: 600,
+        fontSize: "14px",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: isMobile ? "42px" : "44px",
+        boxSizing: "border-box",
+        transition: "all .25s ease",
+        whiteSpace: "nowrap",
+      }}
+    >
+      Xem báo cáo
+    </a>
 
-<p style={{ marginBottom: "10px", color: "#64748b" }}>
-  Bạn đã hoàn thành <b>{completed}/5</b> tiêu chí.
-</p>
-      <div
-  style={{
-    width: "100%",
-    height: "8px",
-    background: "#e5e7eb",
-    borderRadius: "999px",
-    overflow: "hidden",
-    marginTop: "8px",
+    {/* Gửi báo cáo */}
+<button
+  type="button"
+  onClick={() => {
+    if (!submissionOpen) {
+      alert(
+        "Hồ sơ đã hết hạn gửi. Hiện tại hệ thống không còn nhận hồ sơ."
+      );
+      return;
+    }
+
+    submitProfile();
   }}
->
-  <div
-    style={{
-      width: `${percent}%`,
-      height: "100%",
-      background: "linear-gradient(90deg, #2563eb, #60a5fa)",
-      transition: "width .4s ease",
-      borderRadius: "999px",
-    }}
-  />
-</div>
-    </div>
-          <a
-  href="/bao-cao"
   onMouseEnter={(e) => {
+    if (!submissionOpen) return;
+
+    setHoverSubmit(true);
+
     e.currentTarget.style.transform = "translateY(-3px) scale(1.03)";
-    e.currentTarget.style.background = "#1d4ed8";
+    e.currentTarget.style.background = profile?.is_submitted
+      ? "#15803d"
+      : "#1d4ed8";
+    e.currentTarget.style.boxShadow = profile?.is_submitted
+      ? "0 6px 16px rgba(22, 163, 74, 0.25)"
+      : "0 6px 16px rgba(37, 99, 235, 0.25)";
   }}
   onMouseLeave={(e) => {
+    if (!submissionOpen) return;
+
+    setHoverSubmit(false);
+
     e.currentTarget.style.transform = "translateY(0) scale(1)";
-    e.currentTarget.style.background = "#2563eb";
+    e.currentTarget.style.background = profile?.is_submitted
+      ? "#16a34a"
+      : "#2563eb";
     e.currentTarget.style.boxShadow = "none";
   }}
   style={{
-    background: "#2563eb",
+    background: !submissionOpen
+      ? "#94a3b8"
+      : profile?.is_submitted
+        ? "#16a34a"
+        : "#2563eb",
+
     color: "#fff",
-    textDecoration: "none",
-    padding: "12px 18px",
+
+    padding: isMobile
+      ? "10px 12px"
+      : "11px 16px",
+
+    border: "none",
     borderRadius: "12px",
+
     fontWeight: 600,
+    fontSize: "14px",
+
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    width: isMobile ? "100%" : "auto",
+
+    height: isMobile
+      ? "42px"
+      : "44px",
+
+    boxSizing: "border-box",
+
+    cursor: !submissionOpen
+      ? "not-allowed"
+      : "pointer",
+
     transition: "all .25s ease",
+    whiteSpace: "nowrap",
+
+    opacity: !submissionOpen
+      ? 0.8
+      : 1,
   }}
 >
-  📑 Xem báo cáo
-</a>
+  {!submissionOpen
+    ? "⛔ Đã hết hạn"
+    : profile?.is_submitted
+      ? hoverSubmit
+        ? "✏️ Chỉnh sửa"
+        : "✅ Đã nộp hồ sơ"
+      : "Gửi hồ sơ"}
+</button>
   </div>
+</div>
 </div>
             <div
               style={{
@@ -349,6 +538,59 @@ backgroundAttachment: "fixed",
                 </a>
               ))}
             </div>
+                  <div
+  style={{
+    marginTop: "25px",
+    background:  "white",
+    borderRadius: "16px",
+    padding: "25px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+  }}
+>
+  <h2
+  style={{
+    marginTop: 0,
+    marginBottom: "15px",
+    fontSize: "16px",
+  }}
+>
+  📝 Nhận xét hồ sơ
+
+  {profile?.nhan_xet &&
+    profile.nhan_xet.trim() !== "" &&
+    profile?.ngay_nhan_xet && (
+      <span
+        style={{
+          marginLeft: "10px",
+          fontSize: "14px",
+          fontStyle: "italic",
+          color: "#64748b",
+          fontWeight: "400",
+        }}
+      >
+        (cập nhật{" "}
+        {new Date(
+          profile.ngay_nhan_xet
+        ).toLocaleString("vi-VN")}
+        )
+      </span>
+    )}
+</h2>
+
+  <div
+    style={{
+      background: "#f8fafc",
+      borderRadius: "12px",
+      padding: "20px",
+      minHeight: "150px",
+      whiteSpace: "pre-wrap",
+      lineHeight: "1.8",
+      color: "#000000",
+    }}
+  >
+    <i>{profile?.nhan_xet || "Chưa có nhận xét"}</i>
+  </div>
+</div>
           </div>
         </main>
       </div>

@@ -98,14 +98,14 @@ const proofPaths = [
       href: "/",
     },
     {
-      name: "Báo cáo",
-      icon: "📝",
-      href: "/bao-cao",
-    },
-    {
       name: "Minh chứng",
       icon: "🗂️",
       href: "/tieuchi",
+    },
+    {
+      name: "Báo cáo",
+      icon: "📝",
+      href: "/bao-cao",
     },
     {
       name: "GPA mục tiêu",

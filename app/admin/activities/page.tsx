@@ -253,7 +253,7 @@ function handleEdit(activity: Activity) {
 
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <p className="text-xs font-medium text-gray-500">
-        Chưa diễn ra
+        Đang diễn ra
       </p>
       <p className="mt-1 text-2xl font-bold text-blue-600">
         {
@@ -432,7 +432,7 @@ activities.filter((a) => a.status === "ended").length
     onChange={(e) => setStatus(e.target.value)}
     className="w-full rounded-xl border border-gray-300 px-4 py-3"
   >
-    <option value="upcoming"> Chưa diễn ra</option>
+    <option value="upcoming"> Đang diễn ra</option>
     <option value="ongoing"> Sắp diễn ra</option>
     <option value="ended"> Đã kết thúc</option>
   </select>
@@ -544,7 +544,7 @@ activities.filter((a) => a.status === "ended").length
     }`}
   >
     {activity.status === "upcoming"
-      ? " Chưa diễn ra"
+      ? " Đang diễn ra"
       : activity.status === "ongoing"
       ? " Sắp diễn ra"
       : " Đã kết thúc"}

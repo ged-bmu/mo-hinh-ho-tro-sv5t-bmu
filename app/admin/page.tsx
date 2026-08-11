@@ -15,13 +15,13 @@ import NotificationBell from "../components/NotificationBell";
 export default function AdminPage() {
   const [profile, setProfile] = useState<any>(null);
   const [exporting, setExporting] = useState(false);
-  const [students, setStudents] = useState<any[]>([])
+  const [students, setStudents] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [isOpen, setIsOpen] = useState(true);
+  const [selectedPassed, setSelectedPassed] = useState<string[] | null>(null);
   const totalStudents = students.length;
-  const [showExportMenu, setShowExportMenu] =
-  useState(false);
-  const [filterResult, setFilterResult] =
-  useState("all");
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [filterResult, setFilterResult] = useState("all");
   const menuStyle = {
   display: "block",
   padding: "12px 12px",
@@ -32,13 +32,10 @@ export default function AdminPage() {
   background: "#f8fafc",
   fontWeight: 500,
 };
-  const keyword =
-  search.toLowerCase();
+  const keyword = search.toLowerCase();
   const pathname = usePathname();
-
-const filteredStudents =
-  students.filter((sv) => {
-    const matchSearch =
+  const filteredStudents = students.filter((sv) => {
+  const matchSearch = 
       sv.ho_ten
         ?.toLowerCase()
         .includes(keyword) ||
@@ -54,72 +51,140 @@ const filteredStudents =
       sv["hoi-nhap"];
 
     const matchFilter =
-      filterResult === "all"
-        ? true
-        : filterResult === "passed"
-        ? isPassed
-        : !isPassed;
+  filterResult === "all"
+    ? true
+    : filterResult === "passed"
+    ? isPassed
+    : filterResult === "failed"
+    ? !isPassed
+    : filterResult === "submitted"
+    ? sv.is_submitted === true
+    : true;
 
     return (
       matchSearch &&
       matchFilter
     );
   });
+useEffect(() => {
+  checkAdmin();
 
-  useEffect(() => {
-    checkAdmin();
-  }, []);
+  const channel = supabase
+    .channel("admin-student-profile-status")
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "profiles",
+        filter: "role=eq.student",
+      },
+      (payload) => {
+        const updatedStudent = payload.new as any;
 
-  async function checkAdmin() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+        setStudents((prev) =>
+          prev.map((sv) =>
+            sv.id === updatedStudent.id
+              ? {
+                  ...sv,
+                  ...updatedStudent,
+                }
+              : sv
+          )
+        );
+      }
+    )
+    .subscribe();
 
-    if (!user) {
-      window.location.href = "/introduce";
-      return;
-    }
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
+async function toggleSubmission() {
+  const newStatus = !isOpen;
 
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+  const { error } = await supabase
+    .from("site_settings")
+    .update({
+      submission_open: newStatus,
+    })
+    .eq("id", 1);
 
-    if (!data || data.role !== "admin") {
-      alert("Bạn không có quyền truy cập");
-      window.location.href = "/";
-      return;
-    }
-
-    setProfile(data);
-    const { data: studentsData } = await supabase
-  .from("profiles")
-  .select("*")
-  .eq("role", "student")
-
-if (studentsData) {
- const sorted = [...studentsData].sort((a, b) => {
-  const lopCompare = (a.lop || "").localeCompare(
-    b.lop || "",
-    undefined,
-    { numeric: true }
-  );
-
-  if (lopCompare !== 0) {
-    return lopCompare;
+  if (error) {
+    console.error(error);
+    alert("Không thể thay đổi trạng thái nhận hồ sơ.");
+    return;
   }
 
-  return (a.mssv || "").localeCompare(
-    b.mssv || "",
-    undefined,
-    { numeric: true }
-  );
-});
-
-  setStudents(sorted);
+  setIsOpen(newStatus);
 }
+  async function checkAdmin() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    window.location.href = "/introduce";
+    return;
   }
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  if (!data || data.role !== "admin") {
+    alert("Bạn không có quyền truy cập");
+    window.location.href = "/";
+    return;
+  }
+
+  setProfile(data);
+
+  // Lấy trạng thái nhận hồ sơ
+  const { data: setting, error: settingError } = await supabase
+    .from("site_settings")
+    .select("submission_open")
+    .eq("id", 1)
+    .single();
+
+  if (settingError) {
+    console.error("Lỗi lấy trạng thái nhận hồ sơ:", settingError);
+  }
+
+  if (setting) {
+    setIsOpen(setting.submission_open);
+  }
+
+  // Lấy danh sách sinh viên
+  const { data: studentsData } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("role", "student");
+
+  if (studentsData) {
+    const sorted = [...studentsData].sort((a, b) => {
+      const lopCompare = (a.lop || "").localeCompare(
+        b.lop || "",
+        undefined,
+        { numeric: true }
+      );
+
+      if (lopCompare !== 0) {
+        return lopCompare;
+      }
+
+      return (a.mssv || "").localeCompare(
+        b.mssv || "",
+        undefined,
+        { numeric: true }
+      );
+    });
+
+    setStudents(sorted);
+  }
+}
 async function updateCriteria(
   id: string,
   field: string,
@@ -260,6 +325,7 @@ const exportExcel = async () => {
   <div style={{ flex: 1 }}>
 <AdminSidebar />
 <NotificationBell />
+
   <div
     style={{
       padding: "60px",
@@ -357,37 +423,67 @@ const exportExcel = async () => {
   />
 
   <select
-    value={filterResult}
-    onChange={(e) =>
-      setFilterResult(
-        e.target.value
-      )
-    }
-    style={{
-      padding: "14px",
-      border:
-        "1px solid #dbe2ea",
-      borderRadius:
-        "0 12px 12px 0",
-      background: "white",
-      cursor: "pointer",
-    }}
-  >
-    <option value="all">
-      Tất cả
-    </option>
+  value={filterResult}
+  onChange={(e) => setFilterResult(e.target.value)}
+  style={{
+    padding: "14px",
+    border: "1px solid #dbe2ea",
+    borderRadius: "0 12px 12px 0",
+    background: "white",
+    cursor: "pointer",
+  }}
+>
+  <option value="all">
+    Tất cả
+  </option>
 
-    <option value="passed">
-      Đạt
-    </option>
+  <option value="passed">
+    Đạt
+  </option>
 
-    <option value="failed">
-      Chưa đạt
-    </option>
-  </select>
+  <option value="failed">
+    Chưa đạt
+  </option>
+
+  <option value="submitted">
+    Đã nộp hồ sơ
+  </option>
+</select>
 </div>
-
-
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: "10px",
+    width: "100%",
+    paddingRight: "20px",
+  }}
+>
+<button
+  type="button"
+  onClick={toggleSubmission}
+  style={{
+    padding: "12px 18px",
+    borderRadius: "10px",
+    border: "none",
+    background: "#2563eb",
+    color: "#fff",
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all .2s ease",
+    whiteSpace: "nowrap",
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.background = "#1d4ed8";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.background = "#2563eb";
+  }}
+>
+  Nhận hồ sơ&nbsp;&nbsp;|&nbsp;&nbsp;{isOpen ? "Mở" : "Đóng"}
+</button>
+</div>
  <div style={{ position: "relative" }}>
   <button
     onClick={() =>
@@ -465,6 +561,7 @@ const exportExcel = async () => {
     {exporting
       ? "Đang xuất hồ sơ..."
       : "🗂️ Xuất toàn bộ hồ sơ"}
+
   </span>
 </div>
     </div>
@@ -511,23 +608,11 @@ const exportExcel = async () => {
 </th>
 
 <th style={{ padding: "20px" }}>
-  Đạo đức tốt
+  Các tiêu chí đã đạt
 </th>
 
 <th style={{ padding: "20px" }}>
-  Học tập tốt
-</th>
-
-<th style={{ padding: "20px" }}>
-  Thể lực tốt
-</th>
-
-<th style={{ padding: "20px" }}>
-  Tình nguyện tốt
-</th>
-
-<th style={{ padding: "20px" }}>
-  Hội nhập tốt
+  Trạng thái hồ sơ
 </th>
 
 <th style={{ padding: "20px" }}>
@@ -535,15 +620,28 @@ const exportExcel = async () => {
 </th>
 
 <th style={{ padding: "20px" }}>
-  Hồ sơ
+  Xem hồ sơ
 </th>
       </tr>
     </thead>
 
     <tbody>
-      {filteredStudents.map((sv, index) => (
-        <tr
-          key={sv.id}
+  {filteredStudents.map((sv, index) => {
+    const criteria = [
+      { field: "dao-duc", name: "Đạo đức tốt" },
+      { field: "hoc-tap", name: "Học tập tốt" },
+      { field: "the-luc", name: "Thể lực tốt" },
+      { field: "tinh-nguyen", name: "Tình nguyện tốt" },
+      { field: "hoi-nhap", name: "Hội nhập tốt" },
+    ];
+
+    const notPassed = criteria.filter(
+      (item) => !sv[item.field]
+    );
+
+    return (
+      <tr
+        key={sv.id}
           style={{
             borderTop:
               "1px solid #e2e8f0",
@@ -562,170 +660,78 @@ const exportExcel = async () => {
   {sv.ho_ten}
 </td>
 
-<td style={{ padding: "14px" }}>
+<td style={{ padding: "14px", textAlign: "center", }}>
   {sv.lop}
 </td>
 
-<td style={{ padding: "14px" }}>
+<td style={{ padding: "14px", textAlign: "center", }}>
   {sv.mssv}
 </td>
 
 <td
   style={{
+    padding: "14px",
     textAlign: "center",
   }}
 >
-  {sv["dao-duc"] ? (
-    <span
-      style={{
-        background: "#dcfce7",
-        color: "#166534",
-        padding: "4px 10px",
-        borderRadius: "999px",
-        fontWeight: 600,
-      }}
-    >
-      Đạt
-    </span>
-  ) : (
-    <span
-      style={{
-        background: "#fee2e2",
-        color: "#991b1b",
-        padding: "4px 10px",
-        borderRadius: "999px",
-        fontWeight: 600,
-      }}
-    >
-      Chưa đạt
-    </span>
-  )}
+ <span
+  style={{
+    color: "#111827",
+    cursor: "pointer",
+    fontWeight: 600,
+    transition: "color .2s ease",
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.color = "#2563eb";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.color = "#111827";
+  }}
+  onClick={() => {
+    const passed = criteria
+      .filter((item) => sv[item.field])
+      .map((item) => item.name);
+
+    setSelectedPassed(passed);
+  }}
+>
+  {5 - notPassed.length}/5
+</span>
 </td>
 
 <td
   style={{
+    padding: "14px",
     textAlign: "center",
   }}
 >
-  {sv["hoc-tap"] ? (
+  {sv.is_submitted ? (
     <span
       style={{
+        display: "inline-block",
         background: "#dcfce7",
         color: "#166534",
-        padding: "4px 10px",
+        padding: "6px 12px",
         borderRadius: "999px",
         fontWeight: 600,
+        fontSize: "16px",
       }}
     >
-      Đạt
+      Đã nộp
     </span>
   ) : (
     <span
       style={{
-        background: "#fee2e2",
-        color: "#991b1b",
-        padding: "4px 10px",
+        display: "inline-block",
+        background: "#fef3c7",
+        color: "#92400e",
+        padding: "6px 12px",
         borderRadius: "999px",
         fontWeight: 600,
+        fontSize: "16px",
       }}
     >
-      Chưa đạt
-    </span>
-  )}
-</td>
-
-<td
-  style={{
-    textAlign: "center",
-  }}
->
-  {sv["the-luc"] ? (
-    <span
-      style={{
-        background: "#dcfce7",
-        color: "#166534",
-        padding: "4px 10px",
-        borderRadius: "999px",
-        fontWeight: 600,
-      }}
-    >
-      Đạt
-    </span>
-  ) : (
-    <span
-      style={{
-        background: "#fee2e2",
-        color: "#991b1b",
-        padding: "4px 10px",
-        borderRadius: "999px",
-        fontWeight: 600,
-      }}
-    >
-      Chưa đạt
-    </span>
-  )}
-</td>
-
-<td
-  style={{
-    textAlign: "center",
-  }}
->
-  {sv["tinh-nguyen"] ? (
-    <span
-      style={{
-        background: "#dcfce7",
-        color: "#166534",
-        padding: "4px 10px",
-        borderRadius: "999px",
-        fontWeight: 600,
-      }}
-    >
-      Đạt
-    </span>
-  ) : (
-    <span
-      style={{
-        background: "#fee2e2",
-        color: "#991b1b",
-        padding: "4px 10px",
-        borderRadius: "999px",
-        fontWeight: 600,
-      }}
-    >
-      Chưa đạt
-    </span>
-  )}
-</td>
-
-<td
-  style={{
-    textAlign: "center",
-  }}
->
-  {sv["hoi-nhap"] ? (
-    <span
-      style={{
-        background: "#dcfce7",
-        color: "#166534",
-        padding: "4px 10px",
-        borderRadius: "999px",
-        fontWeight: 600,
-      }}
-    >
-      Đạt
-    </span>
-  ) : (
-    <span
-      style={{
-        background: "#fee2e2",
-        color: "#991b1b",
-        padding: "4px 10px",
-        borderRadius: "999px",
-        fontWeight: 600,
-      }}
-    >
-      Chưa đạt
+      Chưa nộp
     </span>
   )}
 </td>
@@ -810,9 +816,104 @@ const exportExcel = async () => {
   </a>
 </td>
         </tr>
-      ))}
+    );
+})}
     </tbody>
   </table>
+  {selectedPassed && (
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.25)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999,
+    }}
+    onClick={() => setSelectedPassed(null)}
+  >
+    <div
+      style={{
+        background: "#fff",
+        borderRadius: "14px",
+        padding: "20px",
+        width: "320px",
+        maxWidth: "90%",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.18)",
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "15px",
+        }}
+      >
+        <h3
+          style={{
+            margin: 0,
+            fontSize: "17px",
+            fontWeight: 700,
+          }}
+        >
+          Tiêu chí đã đạt
+        </h3>
+
+        <button
+          type="button"
+          onClick={() => setSelectedPassed(null)}
+          style={{
+            border: "none",
+            background: "transparent",
+            fontSize: "24px",
+            cursor: "pointer",
+            color: "#64748b",
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {selectedPassed.length > 0 ? (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+          }}
+        >
+          {selectedPassed.map((name) => (
+            <div
+              key={name}
+              style={{
+                padding: "10px 12px",
+                borderRadius: "8px",
+                background: "#f0fdf4",
+                color: "#166534",
+                fontSize: "14px",
+                fontWeight: 500,
+              }}
+            >
+              ✅ {name}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div
+          style={{
+            color: "#64748b",
+            fontSize: "14px",
+          }}
+        >
+          Chưa đạt tiêu chí nào.
+        </div>
+      )}
+    </div>
+  </div>
+)}
   </div>
 </div>
   </div>

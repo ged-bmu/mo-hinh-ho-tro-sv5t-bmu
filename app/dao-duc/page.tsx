@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { checkSubmissionAccess } from "../../lib/checkSubmissionAccess";
 import Sidebar from "../components/Sidebar";
 import FileItem from "../components/FileItem";
 import CriteriaModal from "../components/CriteriaModal";
@@ -30,9 +31,21 @@ export default function DaoDucPage() {
 <p style="margin: 0;">4.&nbsp;</p>
 `;
 
-  useEffect(() => {
-    loadFiles();
-  }, []);
+useEffect(() => {
+  checkAccess();
+}, []);
+
+async function checkAccess() {
+  const result = await checkSubmissionAccess();
+
+  if (!result.allowed) {
+    alert(result.message);
+    window.location.href = "/tieuchi";
+    return;
+  }
+
+  loadFiles();
+}
 
   async function loadFiles() {
       const {

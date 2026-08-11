@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import StudentChat from "./StudentChat";
 import AdminChat from "./AdminChat";
+import Spinner from "../components/Spinner";
 
 export default function TraoDoiPage() {
   const [loading, setLoading] = useState(true);
@@ -43,13 +44,13 @@ export default function TraoDoiPage() {
     setLoading(false);
   }
 
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        Đang tải...
-      </div>
-    );
-  }
+if (loading) {
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <Spinner />
+    </div>
+  );
+}
 
   if (role === "admin") {
     return <AdminChat />;

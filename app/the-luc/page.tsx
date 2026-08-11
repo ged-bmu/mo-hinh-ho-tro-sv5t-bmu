@@ -10,6 +10,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ReportEditor from "../components/ReportEditor";
 import Spinner from "@/app/components/Spinner";
+import { checkSubmissionAccess } from "../../lib/checkSubmissionAccess";
 
 export default function TheLucPage() {
   const [files, setFiles] = useState<any[]>([]);
@@ -24,9 +25,21 @@ export default function TheLucPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showProfile, setShowProfile] = useState(false);
 
-  useEffect(() => {
-    loadFiles();
-  }, []);
+useEffect(() => {
+  checkAccess();
+}, []);
+
+async function checkAccess() {
+  const result = await checkSubmissionAccess();
+
+  if (!result.allowed) {
+    alert(result.message);
+    window.location.href = "/tieuchi";
+    return;
+  }
+
+  loadFiles();
+}
 
   async function loadFiles() {
       const {

@@ -133,59 +133,7 @@ useEffect(() => {
 
   loadUnread();
 }, []);
-useEffect(() => {
-  let channel: any;
 
-  const init = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) return;
-
-    const loadUnread = async () => {
-      const { data } = await supabase
-        .from("conversations")
-        .select("unread_user")
-        .eq("user_id", user.id)
-        .single();
-
-      setUnreadMessages(data?.unread_user || 0);
-    };
-
-    // load lần đầu
-    loadUnread();
-
-    // realtime
-    channel = supabase
-      .channel("conversation-unread")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "conversations",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-  console.log("ĐÃ NHẬN EVENT", payload);
-  setUnreadMessages(payload.new.unread_user || 0);
-}
-      )
-      .subscribe((status, err) => {
-  console.log("Realtime status:", status);
-  console.log("Realtime error:", err);
-});
-  };
-
-  init();
-
-  return () => {
-    if (channel) {
-      supabase.removeChannel(channel);
-    }
-  };
-}, []);
 async function loadProfile() {
   const {
     data: { user },
@@ -207,35 +155,61 @@ if (data) {
 }
 useEffect(() => {
   let channel: any;
+  let isMounted = true;
 
   const init = async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) return;
+    if (!user || !isMounted) return;
 
+    // Lấy số tin chưa đọc ban đầu
+    const { data, error } = await supabase
+      .from("conversations")
+      .select("unread_user")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!error && isMounted) {
+      setUnreadMessages(data?.unread_user || 0);
+    }
+
+    // Tạo realtime channel DUY NHẤT
     channel = supabase
-      .channel(`profile-${user.id}`)
+      .channel(`conversation-unread-${user.id}`)
       .on(
-  "postgres_changes",
-  {
-    event: "UPDATE",
-    schema: "public",
-    table: "profiles",
-  },
-  (payload) => {
-    console.log("PROFILE UPDATED", payload);
-    loadProfile();
-  }
-)
-      .subscribe();
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "conversations",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log("🔔 Conversation updated:", payload);
+
+          if (isMounted) {
+            setUnreadMessages(
+              Number(payload.new?.unread_user || 0)
+            );
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log("Realtime status:", status);
+      });
   };
 
   init();
 
   return () => {
-    if (channel) supabase.removeChannel(channel);
+    isMounted = false;
+
+    if (channel) {
+      supabase.removeChannel(channel);
+      channel = null;
+    }
   };
 }, []);
 async function loadNextActivity() {
@@ -783,7 +757,7 @@ disabled={exporting}
     <div style={{ fontSize: 38 }}>📋</div>
 
     <h3 style={{ margin: "15px 0 8px", fontSize: 22 }}>
-      Quản lý tiêu chí
+      Quản lý hồ sơ
     </h3>
 
     <p style={{ margin: 0, color: "#8796aa" }}>
@@ -852,59 +826,7 @@ disabled={exporting}
   </a>
   
 </div>
-      <div
-  style={{
-    marginTop: "25px",
-    background:  "white",
-    borderRadius: "16px",
-    padding: "25px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-  }}
->
-  <h2
-  style={{
-    marginTop: 0,
-    marginBottom: "15px",
-    fontSize: "16px",
-  }}
->
-  📝 Nhận xét hồ sơ
 
-  {profile?.nhan_xet &&
-    profile.nhan_xet.trim() !== "" &&
-    profile?.ngay_nhan_xet && (
-      <span
-        style={{
-          marginLeft: "10px",
-          fontSize: "14px",
-          fontStyle: "italic",
-          color: "#64748b",
-          fontWeight: "400",
-        }}
-      >
-        (cập nhật{" "}
-        {new Date(
-          profile.ngay_nhan_xet
-        ).toLocaleString("vi-VN")}
-        )
-      </span>
-    )}
-</h2>
-
-  <div
-    style={{
-      background: "#f8fafc",
-      borderRadius: "12px",
-      padding: "20px",
-      minHeight: "150px",
-      whiteSpace: "pre-wrap",
-      lineHeight: "1.8",
-      color: "#000000",
-    }}
-  >
-    <i>{profile?.nhan_xet || "Chưa có nhận xét"}</i>
-  </div>
-</div>
        </div>
        </main>
 

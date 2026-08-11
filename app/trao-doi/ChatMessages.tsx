@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, ChevronDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 type Message = {
@@ -34,10 +34,11 @@ export default function ChatMessages({
 }: Props) {
   const [openMenu, setOpenMenu] = useState<number | null>(null);
   const [previewFile, setPreviewFile] = useState<Message | null>(null);
-
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const messageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const messageMap = useMemo(() => {
-    return new Map(messages.map((m) => [m.id, m]));
-  }, [messages]);
+  return new Map(messages.map((m) => [m.id, m]));
+}, [messages]);
 
   async function recallMessage(id: number) {
     await supabase
@@ -58,9 +59,89 @@ export default function ChatMessages({
     inputRef.current?.focus();
     setOpenMenu(null);
   }
+function handleCopy(msg: Message) {
+  if (!msg.content) return;
 
+  navigator.clipboard.writeText(msg.content);
+  setOpenMenu(null);
+}
+function scrollToMessage(id: number) {
+  const el = messageRefs.current.get(id);
+
+  if (el) {
+    el.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }
+
+  setOpenMenu(null);
+}
+function scrollToBottom() {
+  bottomRef.current?.scrollIntoView({
+    behavior: "smooth",
+    block: "end",
+  });
+
+  setShowScrollButton(false);
+}
+useEffect(() => {
+  const bottom = bottomRef.current;
+
+  if (!bottom) return;
+
+  let container: HTMLElement | null =
+    bottom.parentElement;
+
+  while (container) {
+    const style = window.getComputedStyle(container);
+
+    const isScrollable =
+      (style.overflowY === "auto" ||
+        style.overflowY === "scroll") &&
+      container.scrollHeight > container.clientHeight;
+
+    if (isScrollable) {
+      break;
+    }
+
+    container = container.parentElement;
+  }
+
+  if (!container) return;
+
+function handleScroll() {
+  const distanceFromBottom =
+    container!.scrollHeight -
+    container!.scrollTop -
+    container!.clientHeight;
+
+   console.log("SCROLL:", {
+    scrollTop: container!.scrollTop,
+    scrollHeight: container!.scrollHeight,
+    clientHeight: container!.clientHeight,
+    distanceFromBottom,
+  });
+
+  setShowScrollButton(distanceFromBottom > 250);
+}
+
+  handleScroll();
+
+  container.addEventListener(
+    "scroll",
+    handleScroll
+  );
+
+  return () => {
+    container.removeEventListener(
+      "scroll",
+      handleScroll
+    );
+  };
+}, [messages, bottomRef]);
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-50 px-3 py-3 md:px-6 md:py-5">
+    <div className="relative flex-1 overflow-y-auto bg-slate-50 px-3 py-3 md:px-6 md:py-5">
       <div className="space-y-5">
 
         {messages.map((msg) => {
@@ -71,57 +152,73 @@ export default function ChatMessages({
             ? messageMap.get(msg.reply_to)
             : undefined;
 
-          return (
-            <div
-              key={msg.id}
-              className={`flex items-end gap-1 ${
-                isMe ? "justify-end" : "justify-start"
-              }`}
-            >
+return (
+  <div
+    key={msg.id}
+    ref={(el) => {
+      if (el) {
+        messageRefs.current.set(msg.id, el);
+      } else {
+        messageRefs.current.delete(msg.id);
+      }
+    }}
+    className={`flex items-end gap-1 ${
+      isMe ? "justify-end" : "justify-start"
+    }`}
+  >
               {isMe && (
-                <MessageMenu
-  open={openMenu === msg.id}
-  onToggle={() =>
-    setOpenMenu(openMenu === msg.id ? null : msg.id)
-  }
-  onClose={() => setOpenMenu(null)}
->
-                  <button
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
-                    onClick={() => handleReply(msg)}
-                  >
-                    ↩ Phản hồi
-                  </button>
+  <MessageMenu
+    open={openMenu === msg.id}
+    onToggle={() =>
+      setOpenMenu(openMenu === msg.id ? null : msg.id)
+    }
+    onClose={() => setOpenMenu(null)}
+  >
+    <button
+      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+      onClick={() => handleReply(msg)}
+    >
+      ↩ Phản hồi
+    </button>
 
-                  <button
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
-                    onClick={() => recallMessage(msg.id)}
-                  >
-                    ↩️ Thu hồi tin nhắn
-                  </button>
-                </MessageMenu>
-              )}
+    <button
+      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+      onClick={() => handleCopy(msg)}
+    >
+      📋 Sao chép
+    </button>
+
+    <button
+      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+      onClick={() => recallMessage(msg.id)}
+    >
+      ↩️ Thu hồi tin nhắn
+    </button>
+  </MessageMenu>
+)}
 
               <div
-                className={`flex max-w-[85%] md:max-w-[75%] flex-col ${
+                className={`flex max-w-[75%] md:max-w-[75%] flex-col ${
                   isMe ? "items-end" : "items-start"
                 }`}
               >
               {/* Reply */}
 {repliedMessage && (
-  <div className="mb-2 border-l-2 pl-2 text-xs opacity-80">
-    <div className="font-semibold">
-      {repliedMessage.sender_role === viewerRole
-        ? "Đã phản hồi tin nhắn của bạn"
-        : "Đã phản hồi"}
+  <button
+    type="button"
+    onClick={() => scrollToMessage(repliedMessage.id)}
+    className="mb-1 w-full max-w-full rounded-lg border-l-4 border-blue-400 bg-gray-100 px-3 py-2 text-left text-xs text-gray-500 transition hover:bg-gray-200"
+  >
+    <div className="mb-1 font-medium text-gray-400">
+      Đang phản hồi
     </div>
 
     <div className="truncate">
       {repliedMessage.is_recalled
         ? "Tin nhắn đã thu hồi"
-        : repliedMessage.content}
+        : repliedMessage.content || "Tin nhắn đính kèm"}
     </div>
-  </div>
+  </button>
 )}
 
 {/* Text message */}
@@ -145,12 +242,21 @@ export default function ChatMessages({
     {msg.file_name?.match(
       /\.(jpg|jpeg|png|gif|webp)$/i
     ) ? (
-      <img
-        src={msg.file_url}
-        alt=""
-        onClick={() => setPreviewFile(msg)}
-        className="max-w-[220px] md:max-w-[250px]cursor-pointer rounded-xl"
-      />
+     <img
+  src={msg.file_url}
+  alt=""
+  onClick={() => setPreviewFile(msg)}
+  style={{
+    width: "160px",
+    height: "160px",
+    maxWidth: "160px",
+    maxHeight: "160px",
+    objectFit: "contain",
+    borderRadius: "12px",
+    cursor: "pointer",
+    display: "block",
+  }}
+/>
     ) : (
       <button
         onClick={() => setPreviewFile(msg)}
@@ -171,23 +277,42 @@ export default function ChatMessages({
                 </span>
               </div>
 
-              {!isMe && (
-                <MessageMenu
-  open={openMenu === msg.id}
-  left
-  onToggle={() =>
-    setOpenMenu(openMenu === msg.id ? null : msg.id)
-  }
-  onClose={() => setOpenMenu(null)}
->
-                  <button
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
-                    onClick={() => handleReply(msg)}
-                  >
-                    ↩ Phản hồi
-                  </button>
-                </MessageMenu>
-              )}
+             {!isMe && (
+  <MessageMenu
+    open={openMenu === msg.id}
+    left
+    onToggle={() =>
+      setOpenMenu(openMenu === msg.id ? null : msg.id)
+    }
+    onClose={() => setOpenMenu(null)}
+  >
+    <button
+      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+      onClick={() => handleReply(msg)}
+    >
+      ↩ Phản hồi
+    </button>
+
+    <button
+      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+      onClick={() => handleCopy(msg)}
+    >
+      📋 Sao chép
+    </button>
+
+    {viewerRole === "admin" && (
+      <button
+        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+        onClick={() => {
+          setOpenMenu(null);
+          // TODO: xử lý chuyển tiếp sau
+        }}
+      >
+        ↗️ Chuyển tiếp
+      </button>
+    )}
+  </MessageMenu>
+)}
             </div>
           );
         })}
@@ -234,13 +359,39 @@ export default function ChatMessages({
           title="PDF Preview"
         />
       )}
-
     </div>
-
   </div>
 )}
 
-        <div ref={bottomRef} />
+{showScrollButton && (
+  <button
+    type="button"
+    onClick={scrollToBottom}
+    style={{
+      position: "fixed",
+      bottom: "100px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      zIndex: 99999,
+      width: "40px",
+      height: "40px",
+      borderRadius: "50%",
+      background: "white",
+      color: "#4b5563",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+      border: "1px solid #e5e7eb",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: "pointer",
+    }}
+    title="Cuộn xuống cuối"
+  >
+    <ChevronDown size={22} strokeWidth={2.5} />
+  </button>
+)}
+
+<div ref={bottomRef} />
       </div>
     </div>
   );

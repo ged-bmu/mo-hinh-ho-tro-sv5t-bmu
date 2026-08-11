@@ -1,10 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { CircleHelp, X } from "lucide-react";
 
 export default function UserGuide() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  if (pathname !== "/" && pathname !== "/introduce") {
+    return null;
+  }
 
   return (
     <>
