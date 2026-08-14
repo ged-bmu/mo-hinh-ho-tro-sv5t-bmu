@@ -24,6 +24,9 @@ export default function AdminChat() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showSidebar, setShowSidebar] = useState(true);
   const [search, setSearch] = useState("");
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const shouldScrollToBottomRef = useRef(true);
 
 console.log("ADMIN SET FILE:", typeof setSelectedFile);
 
@@ -36,10 +39,6 @@ console.log("ADMIN SET FILE:", typeof setSelectedFile);
   const [message, setMessage] = useState("");
   const [replyMessage, setReplyMessage] = useState<Message | null>(null);
   
-
-  const bottomRef =
-    useRef<HTMLDivElement | null>(null);
-
   /* -----------------------
       Load conversations
   ------------------------ */
@@ -69,15 +68,12 @@ console.log("ADMIN SET FILE:", typeof setSelectedFile);
 
 async function loadConversations() {
   // Lấy toàn bộ sinh viên
-  const {
-    data: profiles,
-    error: profileError,
-  } = await supabase
-    .from("profiles")
-    .select("id, ho_ten, lop")
-    .order("ho_ten", {
-      ascending: true,
-    });
+const {
+  data: profiles,
+  error: profileError,
+} = await supabase
+  .from("profiles")
+  .select("id, ho_ten, lop");
 
   if (profileError) {
     console.log("Lỗi lấy sinh viên:", profileError);
@@ -95,13 +91,13 @@ async function loadConversations() {
       ascending: false,
     });
 
-  if (conversationError) {
-    console.log(
-      "Lỗi lấy conversations:",
-      conversationError
-    );
-    return;
-  }
+if (conversationError) {
+  console.log("❌ LỖI TẠO CONVERSATION:", conversationError);
+  alert(
+    `Không tạo được cuộc trò chuyện:\n${conversationError.message}`
+  );
+  return;
+}
 
   setConversations(conversationData || []);
 
@@ -132,7 +128,29 @@ async function loadConversations() {
     };
   });
 
-  setUsers(result);
+const sortedResult = result.sort((a, b) => {
+  // Cả hai đều có lịch sử chat → mới nhất lên trước
+  if (a.last_message_at && b.last_message_at) {
+    return (
+      new Date(b.last_message_at).getTime() -
+      new Date(a.last_message_at).getTime()
+    );
+  }
+
+  // Chỉ A có lịch sử chat → A lên trước
+  if (a.last_message_at) return -1;
+
+  // Chỉ B có lịch sử chat → B lên trước
+  if (b.last_message_at) return 1;
+
+  // Cả hai chưa chat → giữ theo tên
+  return (a.ho_ten || "").localeCompare(
+    b.ho_ten || "",
+    "vi"
+  );
+});
+
+setUsers(sortedResult);
 
   // Khôi phục cuộc trò chuyện đang chọn
   const saved =
@@ -162,7 +180,7 @@ useEffect(() => {
   const conversationId = selected.conversationId;
 
   loadMessages(conversationId);
-  markRead(conversationId);
+markRead(conversationId);
 
   const channel = supabase
     .channel(`admin-chat-${conversationId}`)
@@ -216,7 +234,7 @@ useEffect(() => {
   };
 }, [selected]);
 
- async function loadMessages(conversationId: string) {
+async function loadMessages(conversationId: string) {
   const { data, error } = await supabase
     .from("messages")
     .select("*")
@@ -232,11 +250,17 @@ useEffect(() => {
 
   setMessages(data || []);
 
-  setTimeout(() => {
-    bottomRef.current?.scrollIntoView({
-      behavior: "smooth",
+  // Chỉ tự động xuống cuối khi vừa mở cuộc trò chuyện
+  if (shouldScrollToBottomRef.current) {
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({
+        behavior: "auto",
+        block: "end",
+      });
+
+      shouldScrollToBottomRef.current = false;
     });
-  }, 100);
+  }
 }
 
   /* -----------------------
@@ -292,66 +316,133 @@ async function markRead(conversationId: string) {
       Gửi tin nhắn
   ------------------------ */
 
-  async function sendMessage() {
-    if (!selected) return;
-    if (!message.trim() && !selectedFile) return;
+async function sendMessage() {
+  if (!selected) return;
+  if (!message.trim() && !selectedFile) return;
 
-    const text = message;
-    setMessage("");
-    setReplyMessage(null);
-    setSelectedFile(null);
-    let fileUrl = null;
-let fileName = null;
+  const text = message;
 
-if (selectedFile) {
+  let conversationId = selected.conversationId;
 
-  const safeFileName = selectedFile.name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9.\-_]/g, "_");
+  // ==========================================
+  // 1. CHƯA CÓ CONVERSATION → TẠO MỚI
+  // ==========================================
+  if (!conversationId) {
+    const { data: newConversation, error: conversationError } =
+      await supabase
+        .from("conversations")
+        .insert({
+          user_id: selected.id,
+          last_message: text || "Đã gửi một tệp",
+          last_message_at: new Date().toISOString(),
+          unread_user: 1,
+          unread_admin: 0,
+        })
+        .select()
+        .single();
 
-  const path = `admin/${Date.now()}-${safeFileName}`;
+    if (conversationError) {
+      console.log(
+        "Lỗi tạo conversation:",
+        conversationError
+      );
+      return;
+    }
 
-  const { error: uploadError } = await supabase
-    .storage
-    .from("chat-files")
-    .upload(path, selectedFile);
+    conversationId = newConversation.id;
 
-  if (uploadError) {
-    console.log(uploadError);
-    alert("Upload thất bại");
-    return;
+    setSelected((prev: any) => ({
+      ...prev,
+      conversationId: newConversation.id,
+      hasConversation: true,
+    }));
   }
 
-  const publicUrl = supabase
-    .storage
-    .from("chat-files")
-    .getPublicUrl(path);
+  // ==========================================
+  // 2. SAU ĐÓ MỚI XÓA INPUT
+  // ==========================================
+  setMessage("");
+  setReplyMessage(null);
 
-  fileUrl = publicUrl.data.publicUrl;
-  fileName = selectedFile.name;
-}
-const {
-  data: { user },
-} = await supabase.auth.getUser();
+  // LƯU FILE TRƯỚC KHI setSelectedFile(null)
+  const fileToUpload = selectedFile;
 
-const { error } =
-  await supabase
+  setSelectedFile(null);
+
+  let fileUrl = null;
+  let fileName = null;
+
+  // ==========================================
+  // 3. UPLOAD FILE
+  // ==========================================
+  if (fileToUpload) {
+    const safeFileName = fileToUpload.name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9.\-_]/g, "_");
+
+    const path = `admin/${Date.now()}-${safeFileName}`;
+
+    const { error: uploadError } = await supabase
+      .storage
+      .from("chat-files")
+      .upload(path, fileToUpload);
+
+    if (uploadError) {
+      console.log(uploadError);
+      alert("Upload thất bại");
+      return;
+    }
+
+    const publicUrl = supabase
+      .storage
+      .from("chat-files")
+      .getPublicUrl(path);
+
+    fileUrl = publicUrl.data.publicUrl;
+    fileName = fileToUpload.name;
+  }
+
+  // ==========================================
+  // 4. INSERT MESSAGE
+  // ==========================================
+  const { error } = await supabase
     .from("messages")
     .insert({
-      conversation_id: selected.id,
+      conversation_id: conversationId,
       sender_role: "admin",
       content: text,
       reply_to: replyMessage?.id ?? null,
       file_url: fileUrl,
       file_name: fileName,
     });
-if (!error) {
+
+  if (error) {
+    console.log("Lỗi gửi tin nhắn:", error);
+    return;
+  }
+
+  // ==========================================
+  // 5. CẬP NHẬT CONVERSATION
+  // ==========================================
+  await supabase
+    .from("conversations")
+    .update({
+      last_message: text || "Đã gửi một tệp",
+      last_message_at: new Date().toISOString(),
+    })
+    .eq("id", conversationId);
+
+  // ==========================================
+  // 6. TĂNG UNREAD CHO SINH VIÊN
+  // ==========================================
   await supabase.rpc("increment_unread_user", {
-    conversation_id_input: selected.id,
+    conversation_id_input: conversationId,
   });
 
-  // Gửi thông báo cho sinh viên
+  // ==========================================
+  // 7. GỬI NOTIFICATION
+  // ==========================================
   await fetch("/api/send-notification", {
     method: "POST",
     headers: {
@@ -364,11 +455,6 @@ if (!error) {
     }),
   });
 }
-if (error) {
-  console.log(error);
-  return;
-}
-  }
 
 return (
   <div
@@ -550,11 +636,9 @@ return (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => {
-  // Chưa từng chat -> không mở chat
-  if (!item.hasConversation) {
-    return;
-  }
+onClick={() => {
+  // Cho phép tự động xuống cuối khi vừa mở chat
+  shouldScrollToBottomRef.current = true;
 
   setMessages([]);
   setSelected(item);
@@ -569,7 +653,6 @@ return (
 
   setShowSidebar(false);
 
-  // Xóa badge ngay trên UI
   setUsers((prev) =>
     prev.map((student) =>
       student.id === item.id
@@ -951,11 +1034,13 @@ return (
           {/* =====================================================
               CHAT BODY
           ===================================================== */}
-          <div
+<div
   className="
     relative
+    flex
     min-h-0
     flex-1
+    flex-col
     overflow-hidden
     bg-[#f4f7fb]
   "
@@ -991,20 +1076,21 @@ return (
 
 
             {/* Messages */}
-            <div
+<div
+  ref={messagesContainerRef}
   className="
     relative z-10
     min-h-0
-    h-full
+    flex-1
     overflow-y-auto
-    overscroll-contain
+    overscroll-y-contain
+    touch-pan-y
     px-3 py-5
     sm:px-6
     md:px-8
   "
 >
-
-              <div className="mx-auto w-full max-w-5xl">
+              <div className="mx-auto w-full max-w-[1400px]">
 
                 {/* Welcome separator */}
                 {messages.length === 0 && (
@@ -1041,9 +1127,10 @@ return (
                   </div>
                 )}
 
-                <ChatMessages
+<ChatMessages
   messages={messages}
   bottomRef={bottomRef}
+  messagesContainerRef={messagesContainerRef}
   viewerRole="admin"
   onReply={(msg) => setReplyMessage(msg)}
   inputRef={inputRef}
@@ -1073,7 +1160,7 @@ return (
             "
           >
 
-            <div className="mx-auto w-full max-w-5xl">
+            <div className="mx-auto w-full max-w-[1400px]">
 
               {/* Reply preview */}
               {replyMessage && (

@@ -31,14 +31,23 @@ export default function Header({
 
   return (
     <>
-      <header
-        className="header"
-        style={{
-          background: "#ffffff",
-          padding: "14px 28px",
-          borderBottom: "1px solid #c0c0c0",
-        }}
-      >
+<header
+  className="header"
+  style={{
+    position: "sticky",
+    top: 0,
+    zIndex: 9999,
+
+    background: "rgba(255, 255, 255, 0.96)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+
+    padding: "14px 28px",
+    borderBottom: "1px solid #dbe3ef",
+
+    boxShadow: "0 4px 18px rgba(15, 23, 42, 0.07)",
+  }}
+>
         {isMobile ? (
           <div
             className="header-container-mobile"

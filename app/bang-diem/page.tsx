@@ -1001,13 +1001,13 @@ const examWeight:any = {
 };
 function getLetter(total:number){
 
-  if(total >= 8.5) return "A";
-  if(total >= 7.8) return "B+";
-  if(total >= 7.0) return "B";
-  if(total >= 6.5) return "C+";
-  if(total >= 5.5) return "C";
-  if(total >= 5.0) return "D+";
-  if(total >= 4.0) return "D";
+  if(total >= 8.46) return "A";
+  if(total >= 7.76) return "B+";
+  if(total >= 6.96) return "B";
+  if(total >= 6.46) return "C+";
+  if(total >= 5.46) return "C";
+  if(total >= 4.96) return "D+";
+  if(total >= 3.96) return "D";
 
   return "F";
 }

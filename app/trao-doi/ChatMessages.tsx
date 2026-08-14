@@ -20,6 +20,7 @@ type Message = {
 type Props = {
   messages: Message[];
   bottomRef: React.RefObject<HTMLDivElement | null>;
+  messagesContainerRef: React.RefObject<HTMLDivElement | null>;
   viewerRole: "user" | "admin";
   onReply: (msg: Message) => void;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -28,6 +29,7 @@ type Props = {
 export default function ChatMessages({
   messages,
   bottomRef,
+  messagesContainerRef,
   viewerRole,
   onReply,
   inputRef,
@@ -86,62 +88,35 @@ function scrollToBottom() {
   setShowScrollButton(false);
 }
 useEffect(() => {
-  const bottom = bottomRef.current;
-
-  if (!bottom) return;
-
-  let container: HTMLElement | null =
-    bottom.parentElement;
-
-  while (container) {
-    const style = window.getComputedStyle(container);
-
-    const isScrollable =
-      (style.overflowY === "auto" ||
-        style.overflowY === "scroll") &&
-      container.scrollHeight > container.clientHeight;
-
-    if (isScrollable) {
-      break;
-    }
-
-    container = container.parentElement;
-  }
+  const container = messagesContainerRef.current;
 
   if (!container) return;
 
 function handleScroll() {
-  const distanceFromBottom =
-    container!.scrollHeight -
-    container!.scrollTop -
-    container!.clientHeight;
+  const container = messagesContainerRef.current;
+  if (!container) return;
 
-   console.log("SCROLL:", {
-    scrollTop: container!.scrollTop,
-    scrollHeight: container!.scrollHeight,
-    clientHeight: container!.clientHeight,
-    distanceFromBottom,
-  });
+  const distanceFromBottom =
+    container.scrollHeight -
+    container.scrollTop -
+    container.clientHeight;
 
   setShowScrollButton(distanceFromBottom > 250);
 }
 
   handleScroll();
 
-  container.addEventListener(
-    "scroll",
-    handleScroll
-  );
+  container.addEventListener("scroll", handleScroll);
 
   return () => {
-    container.removeEventListener(
-      "scroll",
-      handleScroll
-    );
+    container.removeEventListener("scroll", handleScroll);
   };
-}, [messages, bottomRef]);
-  return (
-    <div className="relative flex-1 overflow-y-auto bg-slate-50 px-3 py-3 md:px-6 md:py-5">
+}, [messages, messagesContainerRef]);
+return (
+  <div
+    ref={messagesContainerRef}
+    className="relative min-h-0 flex-1 overflow-y-auto bg-slate-50 px-3 py-3 md:px-6 md:py-5"
+  >
       <div className="space-y-5">
 
         {messages.map((msg) => {
@@ -391,7 +366,6 @@ return (
   </button>
 )}
 
-<div ref={bottomRef} />
       </div>
     </div>
   );

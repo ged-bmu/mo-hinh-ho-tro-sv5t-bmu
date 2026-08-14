@@ -36,6 +36,7 @@ export default function StudentChat({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [replyMessage, setReplyMessage] = useState<Message | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
@@ -357,6 +358,7 @@ console.log(data?.[0]);
 <ChatMessages
   messages={messages}
   bottomRef={bottomRef}
+  messagesContainerRef={messagesContainerRef}
   viewerRole="user"
   onReply={setReplyMessage}
   inputRef={inputRef}
