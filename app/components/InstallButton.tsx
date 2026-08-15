@@ -86,49 +86,52 @@ export default function InstallButton() {
 
   return (
     <>
-      <button
-        onClick={() => {
-          if (isIOS) {
-            setShowIOSGuide(true);
-          } else {
-            handleInstall();
-          }
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "#2563eb";
-          e.currentTarget.style.color = "#fff";
-          e.currentTarget.style.transform = "translateY(-2px)";
-          e.currentTarget.style.boxShadow =
-            "0 8px 20px rgba(37,99,235,.25)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "#fff";
-          e.currentTarget.style.color = "#2563eb";
-          e.currentTarget.style.transform = "translateY(0)";
-          e.currentTarget.style.boxShadow = "none";
-        }}
-        style={{
-          background: "#fff",
-          color: "#2563eb",
-          border: "2px solid #2563eb",
-          borderRadius: "12px",
-          padding: "15px 35px",
-          fontWeight: 600,
-          fontSize: "18px",
-          cursor: "pointer",
-          transition: "all .25s ease",
-          minWidth: "260px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "10px",
-        }}
-      >
-        {isIOS ? <Smartphone size={22} /> : <Download size={22} />}
-        {isIOS
-          ? "Thêm vào màn hình chính"
-          : "Cài đặt ứng dụng"}
-      </button>
+<button 
+  onClick={() => { 
+    if (isIOS) { 
+      setShowIOSGuide(true); 
+    } else { 
+      handleInstall(); 
+    } 
+  }} 
+  onMouseEnter={(e) => { 
+    e.currentTarget.style.background = "#2563eb"; 
+    e.currentTarget.style.color = "#fff"; 
+    e.currentTarget.style.transform = "translateY(-2px)"; 
+    e.currentTarget.style.boxShadow = 
+      "0 8px 20px rgba(37,99,235,.25)"; 
+  }} 
+  onMouseLeave={(e) => { 
+    e.currentTarget.style.background = "#fff"; 
+    e.currentTarget.style.color = "#2563eb"; 
+    e.currentTarget.style.transform = "translateY(0)"; 
+    e.currentTarget.style.boxShadow = "none"; 
+  }} 
+  style={{ 
+    background: "#fff", 
+    color: "#2563eb", 
+    border: "2px solid #2563eb", 
+    borderRadius: "10px", 
+    padding: "13px 20px", 
+    fontWeight: 400, 
+    fontSize: "18px", 
+    cursor: "pointer", 
+    transition: "all 0.25s ease", 
+    minWidth: "80px", 
+    height: "52px", 
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "center", 
+    gap: "10px", 
+    boxSizing: "border-box", 
+  }} 
+> 
+  {isIOS ? <Smartphone size={22} /> : <Download size={22} />} 
+
+  {isIOS 
+    ? "Thêm vào màn hình chính" 
+    : ""} 
+</button>
 
       {showIOSGuide && (
         <div

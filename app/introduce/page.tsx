@@ -110,15 +110,18 @@ async function loadCriteria() {
       }}
     />
 
-    <img
-      className="intro-title"
-      src="/Tenhethong.png"
-      alt="Tên hệ thống"
-      style={{
-        height: isMobile ? "36px" : "46px",
-        objectFit: "contain",
-      }}
-    />
+   <img
+  className="intro-title"
+  src="/Tenhethong2.png"
+  alt="Tên hệ thống"
+  style={{
+    height: isMobile ? "50px" : "60px",
+    objectFit: "contain",
+    transform: isMobile
+      ? "translateX(0px)"
+      : "translateX(100px)",
+  }}
+/>
   </div>
 
   {/* Nút menu mobile */}
@@ -258,138 +261,416 @@ async function loadCriteria() {
 )}
 
       {/* Banner + nội dung */}
-      <main
-       className="intro-main"
-        style={{
-  flex: 1,
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  padding: "40px",
-  backgroundImage:
-    "linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url('/banner.png')",
-  backgroundSize: "cover",
-  backgroundPosition: "center",
-  backgroundAttachment: "fixed",
-  backgroundRepeat: "no-repeat",
-}}
-      >
-        <div
-          className="intro-box"
-          style={{
-            background: "rgba(255, 255, 255, 0.72)",
-            borderRadius: "28px",
-            padding: "25px 55px 70px",
-            maxWidth: "1100px",
-            width: "100%",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
-          }}
-        >
-          
-    {tab === "home" && (
-  <>
-  
-{/* HEADER TEXT BLOCK */}
-<div
-  style={{
-    textAlign: "center",
-    marginBottom: isMobile ? "18px" : "10px",
-    padding: isMobile ? "0px" : "0",
-    background: isMobile ? "#ffffff" : "transparent",
-    borderRadius: isMobile ? "16px" : "0",
-    }}
+<main 
+  className="intro-main" 
+  style={{ 
+    flex: isMobile ? "none" : 1, 
+    position: "relative", 
+    minHeight: isMobile ? "auto" : "calc(100vh - 75px)", 
+    height: isMobile ? "auto" : undefined,
+  }} 
 >
-
-  {!isMobile && (
-  <div style={{ textAlign: "center", marginBottom: "10px" }}>
-    <h1
-      style={{
-        fontSize: "20px",
-        fontWeight: 600,
-        color: "#0f172a",
-        marginBottom: "6px",
-      }}
-    >
-      CÂU LẠC BỘ SINH VIÊN 5 TỐT TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT
-    </h1>
-
-    <p
-      style={{
-        fontSize: "24px",
-        fontWeight: 700,
-        color: "#0f65de",
-        marginBottom: "10px",
-      }}
-    >
-      Mô hình hỗ trợ sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt các cấp
-    </p>
-
-  </div>
+  {/* Trang chủ */}
+  {tab === "home" && (
+    <>
+   {tab === "home" && (
+  <>
+  <div 
+  style={{ 
+    width: "100%", 
+    minHeight: isMobile ? "auto" : "calc(100vh - 75px)", 
+    backgroundImage: isMobile 
+      ? "url('/trangchumobile.png'), radial-gradient(circle at 0% 0%, #33d1f4 0%, #e5fdff 100%)"
+      : "url('/trangchu.png')",
+    backgroundSize: "100% auto", 
+    backgroundPosition: "top center", 
+    backgroundRepeat: "no-repeat", 
+    display: isMobile ? "flex" : "block", 
+    flexDirection: isMobile ? "column" : undefined, 
+    alignItems: isMobile ? "center" : undefined, 
+    paddingBottom: isMobile ? "30px" : undefined, 
+    boxSizing: "border-box", 
+  }} 
+>
+  {isMobile && (
+  <img
+    src="/trangchumobile.png"
+    alt=""
+    style={{
+      width: "100%",
+      height: "auto",
+      display: "block",
+      objectFit: "contain",
+      flexShrink: 0,
+    }}
+  />
 )}
-
-{isMobile && (
+       {/* ===== CARD TRẮNG ===== */}
   <div
     style={{
-      textAlign: "center",
-      marginBottom: "18px",
-      }}
+      position: isMobile ? "relative" : "absolute",
+
+      fontFamily: "'Noto Serif', serif",
+      fontSize: isMobile ? "15px" : "18px",
+
+      left: isMobile ? "auto" : "6%",
+      top: isMobile ? "auto" : "35%",
+
+      width: isMobile ? "90%" : "45%",
+      height: isMobile ? "auto" : "155px",
+
+      background: "#fafafa",
+      borderRadius: "20px",
+
+      padding: isMobile
+        ? "15px"
+        : "12px 20px 20px",
+
+      marginTop: isMobile ? "10px" : undefined,
+
+      boxSizing: "border-box",
+
+      boxShadow:
+        "0 8px 25px rgba(0,0,0,0.12)",
+
+      textAlign: "justify",
+
+      lineHeight: isMobile
+        ? 1.5
+        : undefined,
+    }}
   >
-    <h1
-      style={{
-        fontSize: "18px",
-        fontWeight: 600,
-        color: "#0f172a",
-        marginBottom: "6px",
-      }}
-    >
-      CLB SINH VIÊN 5 TỐT BMU
-    </h1>
-
-    <p
-  style={{
-    fontSize: "16px",
-    fontWeight: 700,
-    color: "#0f65de",
-    marginBottom: "0px",
-    lineHeight: 1.4,
-  }}
->
-     Mô hình hỗ trợ sinh viên phấn đấu
-      <br />
-      đạt danh hiệu Sinh viên 5 tốt các cấp
-    </p>
-
+    <b>
+      {" "}Với mục tiêu{" "}
+      <span
+        style={{
+          color: "#2563eb",
+          fontWeight: 600,
+        }}
+      >
+        tăng cường ứng dụng công nghệ và thúc đẩy chuyển đổi số
+      </span>{" "}
+      trong công tác Đoàn – Hội,{" "}
+      <span
+        style={{
+          color: "#2563eb",
+          fontWeight: 600,
+        }}
+      >
+        Hệ thống Hỗ trợ Sinh viên 5 Tốt BMU
+      </span>{" "}
+      là nền tảng trực tuyến do{" "}
+      <span
+        style={{
+          color: "#2563eb",
+          fontWeight: 600,
+        }}
+      >
+        Câu lạc bộ Sinh viên 5 Tốt Trường Đại học Y Dược Buôn Ma Thuột
+      </span>{" "}
+      xây dựng nhằm hỗ trợ sinh viên trong quá trình{" "}
+      <span
+        style={{
+          color: "#2563eb",
+          fontWeight: 600,
+        }}
+      >
+        chuẩn bị hồ sơ xét danh hiệu Sinh viên 5 tốt các cấp
+      </span>
+      .
+    </b>
   </div>
-)}
-</div>
-  <p
-  style={{
-    fontSize:"18px",
-    lineHeight: isMobile ? "1.5" : "2",
-    textAlign: "justify",
-    marginTop: "-10",
-  }}
->
-      Với mục tiêu tăng cường ứng dụng công nghệ và thúc đẩy chuyển đổi số trong công tác Đoàn – Hội, 
-      <b> Hệ thống Hỗ trợ Sinh viên 5 Tốt BMU</b> là nền tảng trực tuyến do
-      <b> Câu lạc bộ Sinh viên 5 Tốt Trường Đại học Y Dược Buôn Ma Thuột</b> xây dựng
-      nhằm hỗ trợ sinh viên trong quá trình chuẩn bị hồ sơ xét danh hiệu Sinh viên 5 tốt các cấp.
-    </p>
-     <p
-      style={{
-        fontSize: "18px",
-        lineHeight: "2",
-        textAlign: "justify",
-        marginTop: "15px",
+
+      {/* ===== 3 CARD BÊN DƯỚI ===== */}
+      <div
+        style={{
+          position: isMobile ? "relative" : "absolute",
+          left: isMobile ? "auto" : "6%",
+          top: isMobile ? "auto" : "63%",
+          width: isMobile ? "90%" : "45%",
+          display: isMobile ? "none" : "grid",
+          gridTemplateColumns: isMobile
+            ? "1fr"
+            : "repeat(3, 1fr)",
+          gap: isMobile ? "12px" : "25px",
+          marginTop: isMobile ? "20px" : undefined,
+        }}
+      >
+
+        {/* CARD 1 */}
+        <div
+          style={{
+            background: "#fafafa",
+            borderRadius: "24px",
+            padding: "12px 15px",
+            height: isMobile ? "130px" : "145px",
+            boxSizing: "border-box",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "55px",
+              height: "55px",
+              borderRadius: "16px",
+              background: "#f3f5b5",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: "5px",
+              flexShrink: 0,
+            }}
+          >
+            <img
+              src="/icon-folder.png"
+              alt=""
+              style={{
+                width: "38px",
+                height: "38px",
+                objectFit: "contain",
               }}
-    >
-      Hệ thống cho phép sinh viên quản lý minh chứng theo từng tiêu chí, 
-      theo dõi tiến độ hoàn thiện hồ sơ, tiếp nhận nhận xét từ Ban Chủ nhiệm Câu lạc bộ và xuất hồ sơ 
-      phục vụ công tác xét chọn. Việc quản lý minh chứng tập trung giúp nâng cao tính khoa học, 
-      giảm thời gian tổng hợp hồ sơ và hạn chế sai sót trong quá trình chuẩn bị.
-    </p>
-      </>
+            />
+          </div>
+          <b
+            style={{
+              fontSize: "13px",
+              fontWeight: 700,
+              lineHeight: 1.2,
+              marginBottom: "6px",
+            }}
+          >
+            Quản lý minh chứng
+          </b>
+          <p
+            style={{
+              margin: 0,
+              fontSize: "12px",
+              lineHeight: 1.35,
+              color: "#222",
+            }}
+          >
+            Lưu trữ và quản lý
+            <br />
+            minh chứng theo từng tiêu chí
+          </p>
+        </div>
+
+        {/* CARD 2 */}
+        <div
+          style={{
+            background: "#fafafa",
+            borderRadius: "24px",
+            padding: "12px 15px",
+            height: isMobile ? "130px" : "145px",
+            boxSizing: "border-box",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "55px",
+              height: "55px",
+              borderRadius: "16px",
+              background: "#f3f5b5",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: "5px",
+              flexShrink: 0,
+            }}
+          >
+            <img
+              src="/icon-progress.png"
+              alt=""
+              style={{
+                width: "38px",
+                height: "38px",
+                objectFit: "contain",
+              }}
+            />
+          </div>
+          <b
+            style={{
+              fontSize: "13px",
+              fontWeight: 700,
+              lineHeight: 1.2,
+              marginBottom: "6px",
+            }}
+          >
+            Theo dõi tiến độ
+          </b>
+          <p
+            style={{
+              margin: 0,
+              fontSize: "12px",
+              lineHeight: 1.35,
+              color: "#222",
+            }}
+          >
+            Cập nhật và theo dõi
+            <br />
+            quá trình hoàn thiện hồ sơ
+          </p>
+        </div>
+
+        {/* CARD 3 */}
+        <div
+          style={{
+            background: "#fafafa",
+            borderRadius: "24px",
+            padding: "12px 15px",
+            height: isMobile ? "130px" : "145px",
+            boxSizing: "border-box",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "55px",
+              height: "55px",
+              borderRadius: "16px",
+              background: "#f3f5b5",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: "5px",
+              flexShrink: 0,
+            }}
+          >
+            <img
+              src="/icon-export.png"
+              alt=""
+              style={{
+                width: "38px",
+                height: "38px",
+                objectFit: "contain",
+              }}
+            />
+          </div>
+          <b
+            style={{
+              fontSize: "13px",
+              fontWeight: 700,
+              lineHeight: 1.2,
+              marginBottom: "6px",
+            }}
+          >
+            Xuất hồ sơ
+          </b>
+          <p
+            style={{
+              margin: 0,
+              fontSize: "12px",
+              lineHeight: 1.35,
+              color: "#222",
+            }}
+          >
+            Xuất hồ sơ
+            <br />
+            phục vụ công tác xét chọn
+          </p>
+        </div>
+      </div>
+      {/* ===== NÚT ĐĂNG NHẬP + CÀI ỨNG DỤNG ===== */}
+      <div
+        style={{
+          position: isMobile ? "relative" : "absolute",
+          right: isMobile ? "auto" : "61%",
+          bottom: isMobile ? "auto" : "3%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: isMobile ? "center" : undefined,
+          gap: "15px",
+          width: isMobile ? "90%" : undefined,
+          marginTop: isMobile ? "20px" : undefined,
+        }}
+      >
+        {/* Khu vực nút */}
+        <div
+          style={{
+            position: isMobile ? "relative" : "absolute",
+            left: isMobile ? "auto" : "18.4%",
+            top: isMobile ? "auto" : "91.5%",
+            width: isMobile ? "100%" : "400px",
+            height: isMobile ? "auto" : "60px",
+            display: isMobile ? "flex" : "block",
+            alignItems: isMobile ? "center" : undefined,
+            justifyContent: isMobile ? "center" : undefined,
+            gap: isMobile ? "10px" : undefined,
+          }}
+        >
+          {/* ===== NÚT ĐĂNG NHẬP ===== */}
+          <Link
+            href="/login"
+            className="cta-btn"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow =
+                "0 8px 20px rgba(37,99,235,.25)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+            style={{
+              position: isMobile ? "relative" : "absolute",
+              left: isMobile ? "auto" : "-59%",
+              top: isMobile ? "auto" : "-90%",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#2563eb",
+              color: "white",
+              padding: "13px 35px",
+              borderRadius: "10px",
+              textDecoration: "none",
+              fontWeight: 400,
+              fontSize: "18px",
+              transition: "all 0.25s ease",
+              minWidth: "140px",
+              textAlign: "center",
+              boxSizing: "border-box",
+              margin: isMobile ? "0" : undefined,
+            }}
+          >
+            <b>Đăng nhập</b>
+          </Link>
+          {/* ===== NÚT CÀI ỨNG DỤNG ===== */}
+          <div
+            style={{
+              position: isMobile ? "relative" : "absolute",
+              left: isMobile ? "auto" : "-17%",
+              top: isMobile ? "auto" : "-90%",
+              display: isMobile ? "flex" : undefined,
+              alignItems: isMobile ? "center" : undefined,
+              justifyContent: isMobile ? "center" : undefined,
+            }}
+          >
+            <InstallButton />
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </>
 )}
+    </>
+  )}
 {tab === "about" && (
   <>
      <h1
@@ -735,53 +1016,9 @@ level===item.key
     </div>
   </div>
 )}
+    </main>
 
-          <div
-  className="cta-wrapper"
-  style={{
-    marginTop: 25,
-    marginBottom: 0,
-    textAlign: "center",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "10px",
-  }}
->
-  {/* Đăng nhập */}
-  <Link
-    href="/login"
-    className="cta-btn"
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = "translateY(-2px)";
-      e.currentTarget.style.boxShadow =
-        "0 8px 20px rgba(37,99,235,.25)";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = "translateY(0)";
-      e.currentTarget.style.boxShadow = "none";
-    }}
-    style={{
-      background: "#2563eb",
-      color: "white",
-      padding: "13px 35px",
-      borderRadius: "10px",
-      textDecoration: "none",
-      fontWeight: 600,
-      fontSize: "18px",
-      transition: "all 0.25s ease",
-      minWidth: "260px",
-    }}
-  >
-    Đăng nhập hệ thống
-  </Link>
-<div style={{ marginTop: "0px" }}>
-    <InstallButton />
-                      </div>
-                    </div>
-              </div>
-            </main>
-        <Footer />
-    </div>
+    <Footer />
+  </div>
   );
 }
