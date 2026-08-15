@@ -280,7 +280,7 @@ async function loadCriteria() {
     width: "100%", 
     minHeight: isMobile ? "auto" : "calc(100vh - 75px)", 
     backgroundImage: isMobile 
-      ? "url('/trangchumobile.png'), radial-gradient(circle at 0% 0%, #33d1f4 0%, #e5fdff 100%)"
+      ? "url('/Trangchumobile.png'), radial-gradient(circle at 0% 0%, #33d1f4 0%, #e5fdff 100%)"
       : "url('/trangchu.png')",
     backgroundSize: "100% auto", 
     backgroundPosition: "top center", 
