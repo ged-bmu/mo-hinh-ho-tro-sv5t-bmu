@@ -110,16 +110,16 @@ async function loadCriteria() {
       }}
     />
 
-<img
+   <img
   className="intro-title"
   src="/Tenhethong2.png"
   alt="Tên hệ thống"
   style={{
     height: isMobile ? "50px" : "60px",
     objectFit: "contain",
-    position: isMobile ? "static" : "relative",
-    left: isMobile ? "0" : "20px",
-    transform: "none",
+    transform: isMobile
+      ? "translateX(0px)"
+      : "translateX(100px)",
   }}
 />
   </div>
@@ -271,46 +271,74 @@ async function loadCriteria() {
   }} 
 >
   {/* Trang chủ */}
+  {tab === "home" && (
+    <>
    {tab === "home" && (
   <>
-<div
-  style={{
-    position: "relative",
-    width: "100%",
-    aspectRatio: "1919 / 1077",
-    backgroundImage: isMobile
-      ? "none"
+  <div 
+  style={{ 
+    width: "100%", 
+    minHeight: isMobile ? "auto" : "calc(100vh - 75px)", 
+    backgroundImage: isMobile 
+      ? "url('/trangchumobile.png'), radial-gradient(circle at 0% 0%, #33d1f4 0%, #e5fdff 100%)"
       : "url('/Trangchu.png')",
-    backgroundSize: "100% 100%",
-    backgroundPosition: "top center",
-    backgroundRepeat: "no-repeat",
-
-    overflow: "hidden",
-  }}
+    backgroundSize: "100% auto", 
+    backgroundPosition: "top center", 
+    backgroundRepeat: "no-repeat", 
+    display: isMobile ? "flex" : "block", 
+    flexDirection: isMobile ? "column" : undefined, 
+    alignItems: isMobile ? "center" : undefined, 
+    paddingBottom: isMobile ? "30px" : undefined, 
+    boxSizing: "border-box", 
+  }} 
 >
+  {isMobile && (
+  <img
+    src="/trangchumobile.png"
+    alt=""
+    style={{
+      width: "100%",
+      height: "auto",
+      display: "block",
+      objectFit: "contain",
+      flexShrink: 0,
+    }}
+  />
+)}
        {/* ===== CARD TRẮNG ===== */}
   <div
-   style={{
-  position: isMobile ? "relative" : "absolute",
-  left: isMobile ? "auto" : "3.3%",
-  top: isMobile ? "auto" : "22.5%",
-  width: isMobile ? "90%" : "52.7%",
-  height: isMobile ? "auto" : "19%",
-  background: "#fafafa",
-  borderRadius: "20px",
-  padding: isMobile
-  ? "15px"
-  : "clamp(12px, 1.2vw, 20px)",
-  marginTop: isMobile ? "10px" : undefined,
-  boxSizing: "border-box",
-  boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
-  fontFamily:'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
-  fontSize: isMobile
-  ? "15px"
-  : "clamp(15px, 1.1vw, 18px)",
-  textAlign: "justify",
-  lineHeight: isMobile ? 1.5 : 1.55,
-}}
+    style={{
+      position: isMobile ? "relative" : "absolute",
+
+      fontFamily: "'Noto Serif', serif",
+      fontSize: isMobile ? "15px" : "18px",
+
+      left: isMobile ? "auto" : "6%",
+      top: isMobile ? "auto" : "35%",
+
+      width: isMobile ? "90%" : "45%",
+      height: isMobile ? "auto" : "155px",
+
+      background: "#fafafa",
+      borderRadius: "20px",
+
+      padding: isMobile
+        ? "15px"
+        : "12px 20px 20px",
+
+      marginTop: isMobile ? "10px" : undefined,
+
+      boxSizing: "border-box",
+
+      boxShadow:
+        "0 8px 25px rgba(0,0,0,0.12)",
+
+      textAlign: "justify",
+
+      lineHeight: isMobile
+        ? 1.5
+        : undefined,
+    }}
   >
     <b>
       {" "}Với mục tiêu{" "}
@@ -354,38 +382,41 @@ async function loadCriteria() {
   </div>
 
       {/* ===== 3 CARD BÊN DƯỚI ===== */}
-<div 
-  style={{ 
-    position: "absolute", 
-    left: "3%", 
-    top: "43%", 
-    width: "53%", 
-    display: "grid", 
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))", 
-    gap: "clamp(10px, 1.3vw, 22px)",
-  }} 
->
+      <div
+        style={{
+          position: isMobile ? "relative" : "absolute",
+          left: isMobile ? "auto" : "6%",
+          top: isMobile ? "auto" : "63%",
+          width: isMobile ? "90%" : "45%",
+          display: isMobile ? "none" : "grid",
+          gridTemplateColumns: isMobile
+            ? "1fr"
+            : "repeat(3, 1fr)",
+          gap: isMobile ? "12px" : "25px",
+          marginTop: isMobile ? "20px" : undefined,
+        }}
+      >
 
         {/* CARD 1 */}
         <div
           style={{
-  background: "#fafafa",
-  borderRadius: "24px",
-  padding: "12px 15px",
-  height: "clamp(120px, 9.5vw, 155px)",
-  boxSizing: "border-box",
-  boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "flex-start",
-  textAlign: "center",
-}}
+            background: "#fafafa",
+            borderRadius: "24px",
+            padding: "12px 15px",
+            height: isMobile ? "130px" : "145px",
+            boxSizing: "border-box",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            textAlign: "center",
+          }}
         >
           <div
             style={{
-              width: "clamp(40px, 3.5vw, 55px)",
-              height: "clamp(40px, 3.5vw, 55px)",
+              width: "55px",
+              height: "55px",
               borderRadius: "16px",
               background: "#f3f5b5",
               display: "flex",
@@ -399,15 +430,15 @@ async function loadCriteria() {
               src="/icon-folder.png"
               alt=""
               style={{
-                width: "clamp(28px, 2.4vw, 38px)",
-height: "clamp(28px, 2.4vw, 38px)",
+                width: "38px",
+                height: "38px",
                 objectFit: "contain",
               }}
             />
           </div>
           <b
             style={{
-              fontSize: "clamp(11px, 0.85vw, 15px)",
+              fontSize: "13px",
               fontWeight: 700,
               lineHeight: 1.2,
               marginBottom: "6px",
@@ -418,7 +449,7 @@ height: "clamp(28px, 2.4vw, 38px)",
           <p
             style={{
               margin: 0,
-              fontSize: "clamp(10px, 0.75vw, 14px)",
+              fontSize: "12px",
               lineHeight: 1.35,
               color: "#222",
             }}
@@ -432,23 +463,23 @@ height: "clamp(28px, 2.4vw, 38px)",
         {/* CARD 2 */}
         <div
           style={{
-  background: "#fafafa",
-  borderRadius: "24px",
-  padding: "12px 15px",
-  height: "clamp(120px, 9.5vw, 155px)",
-  boxSizing: "border-box",
-  boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "flex-start",
-  textAlign: "center",
-}}
+            background: "#fafafa",
+            borderRadius: "24px",
+            padding: "12px 15px",
+            height: isMobile ? "130px" : "145px",
+            boxSizing: "border-box",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            textAlign: "center",
+          }}
         >
           <div
             style={{
-              width: "clamp(40px, 3.5vw, 55px)",
-              height: "clamp(40px, 3.5vw, 55px)",
+              width: "55px",
+              height: "55px",
               borderRadius: "16px",
               background: "#f3f5b5",
               display: "flex",
@@ -462,15 +493,15 @@ height: "clamp(28px, 2.4vw, 38px)",
               src="/icon-progress.png"
               alt=""
               style={{
-                width: "clamp(28px, 2.4vw, 38px)",
-height: "clamp(28px, 2.4vw, 38px)",
+                width: "38px",
+                height: "38px",
                 objectFit: "contain",
               }}
             />
           </div>
           <b
             style={{
-              fontSize: "clamp(11px, 0.85vw, 15px)",
+              fontSize: "13px",
               fontWeight: 700,
               lineHeight: 1.2,
               marginBottom: "6px",
@@ -481,7 +512,7 @@ height: "clamp(28px, 2.4vw, 38px)",
           <p
             style={{
               margin: 0,
-              fontSize: "clamp(10px, 0.75vw, 14px)",
+              fontSize: "12px",
               lineHeight: 1.35,
               color: "#222",
             }}
@@ -495,23 +526,23 @@ height: "clamp(28px, 2.4vw, 38px)",
         {/* CARD 3 */}
         <div
           style={{
-  background: "#fafafa",
-  borderRadius: "24px",
-  padding: "12px 15px",
-  height: "clamp(120px, 9.5vw, 155px)",
-  boxSizing: "border-box",
-  boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "flex-start",
-  textAlign: "center",
-}}
+            background: "#fafafa",
+            borderRadius: "24px",
+            padding: "12px 15px",
+            height: isMobile ? "130px" : "145px",
+            boxSizing: "border-box",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            textAlign: "center",
+          }}
         >
           <div
             style={{
-              width: "clamp(40px, 3.5vw, 55px)",
-              height: "clamp(40px, 3.5vw, 55px)",
+              width: "55px",
+              height: "55px",
               borderRadius: "16px",
               background: "#f3f5b5",
               display: "flex",
@@ -525,15 +556,15 @@ height: "clamp(28px, 2.4vw, 38px)",
               src="/icon-export.png"
               alt=""
               style={{
-                width: "clamp(28px, 2.4vw, 38px)",
-height: "clamp(28px, 2.4vw, 38px)",
+                width: "38px",
+                height: "38px",
                 objectFit: "contain",
               }}
             />
           </div>
           <b
             style={{
-              fontSize: "clamp(11px, 0.85vw, 15px)",
+              fontSize: "13px",
               fontWeight: 700,
               lineHeight: 1.2,
               marginBottom: "6px",
@@ -544,7 +575,7 @@ height: "clamp(28px, 2.4vw, 38px)",
           <p
             style={{
               margin: 0,
-              fontSize: "clamp(10px, 0.75vw, 14px)",
+              fontSize: "12px",
               lineHeight: 1.35,
               color: "#222",
             }}
@@ -555,62 +586,91 @@ height: "clamp(28px, 2.4vw, 38px)",
           </p>
         </div>
       </div>
-{/* ===== NÚT ĐĂNG NHẬP + CÀI ỨNG DỤNG ===== */}
-<div
-  style={{
-    position: isMobile ? "relative" : "absolute",
-    left: isMobile ? "auto" : "6%",
-    top: isMobile ? "auto" : "62%",
-    width: isMobile ? "90%" : "45%",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "clamp(8px, 1vw, 15px)",
-    marginTop: isMobile ? "20px" : undefined,
-  }}
->
-  {/* NÚT ĐĂNG NHẬP */}
-  <Link
-    href="/login"
-    className="cta-btn"
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = "translateY(-2px)";
-      e.currentTarget.style.boxShadow =
-        "0 8px 20px rgba(37,99,235,.25)";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = "translateY(0)";
-      e.currentTarget.style.boxShadow = "none";
-    }}
-    style={{
-      display: "inline-flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "#2563eb",
-      color: "white",
-      padding: "clamp(10px, 1vw, 13px) clamp(25px, 2.5vw, 35px)",
-      borderRadius: "10px",
-      textDecoration: "none",
-      fontWeight: 400,
-      fontSize: "clamp(14px, 1.1vw, 18px)",
-      transition: "all 0.25s ease",
-      minWidth: "clamp(120px, 12vw, 180px)",
-      textAlign: "center",
-      boxSizing: "border-box",
-    }}
-  >
-    <b>Đăng nhập</b>
-  </Link>
-
-  {/* NÚT CÀI ỨNG DỤNG */}
-  <div>
-    <InstallButton />
-  </div>
-</div>
+      {/* ===== NÚT ĐĂNG NHẬP + CÀI ỨNG DỤNG ===== */}
+      <div
+        style={{
+          position: isMobile ? "relative" : "absolute",
+          right: isMobile ? "auto" : "61%",
+          bottom: isMobile ? "auto" : "3%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: isMobile ? "center" : undefined,
+          gap: "15px",
+          width: isMobile ? "90%" : undefined,
+          marginTop: isMobile ? "20px" : undefined,
+        }}
+      >
+        {/* Khu vực nút */}
+        <div
+          style={{
+            position: isMobile ? "relative" : "absolute",
+            left: isMobile ? "auto" : "18.4%",
+            top: isMobile ? "auto" : "91.5%",
+            width: isMobile ? "100%" : "400px",
+            height: isMobile ? "auto" : "60px",
+            display: isMobile ? "flex" : "block",
+            alignItems: isMobile ? "center" : undefined,
+            justifyContent: isMobile ? "center" : undefined,
+            gap: isMobile ? "10px" : undefined,
+          }}
+        >
+          {/* ===== NÚT ĐĂNG NHẬP ===== */}
+          <Link
+            href="/login"
+            className="cta-btn"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow =
+                "0 8px 20px rgba(37,99,235,.25)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+            style={{
+              position: isMobile ? "relative" : "absolute",
+              left: isMobile ? "auto" : "-59%",
+              top: isMobile ? "auto" : "-90%",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#2563eb",
+              color: "white",
+              padding: "13px 35px",
+              borderRadius: "10px",
+              textDecoration: "none",
+              fontWeight: 400,
+              fontSize: "18px",
+              transition: "all 0.25s ease",
+              minWidth: "140px",
+              textAlign: "center",
+              boxSizing: "border-box",
+              margin: isMobile ? "0" : undefined,
+            }}
+          >
+            <b>Đăng nhập</b>
+          </Link>
+          {/* ===== NÚT CÀI ỨNG DỤNG ===== */}
+          <div
+            style={{
+              position: isMobile ? "relative" : "absolute",
+              left: isMobile ? "auto" : "-17%",
+              top: isMobile ? "auto" : "-90%",
+              display: isMobile ? "flex" : undefined,
+              alignItems: isMobile ? "center" : undefined,
+              justifyContent: isMobile ? "center" : undefined,
+            }}
+          >
+            <InstallButton />
+          </div>
+        </div>
+      </div>
 
     </div>
   </>
 )}
+    </>
+  )}
 {tab === "about" && (
   <>
      <h1
@@ -943,8 +1003,7 @@ level===item.key
             <span
               style={{
                 color: "#64748b",
-
-                fontSize: "clamp(11px, 0.85vw, 15px)",
+                fontSize: "13px",
               }}
             >
               {new Date(item.updated_at).toLocaleString(
