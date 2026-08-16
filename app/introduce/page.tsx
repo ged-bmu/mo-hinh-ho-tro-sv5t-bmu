@@ -112,14 +112,12 @@ async function loadCriteria() {
 
    <img
   className="intro-title"
-  src="/Tenhethong2.png"
+  src= {isMobile ? "/Tenhethong2.png" : "Tenhethong1.png"}
   alt="Tên hệ thống"
   style={{
     height: isMobile ? "50px" : "60px",
     objectFit: "contain",
-    transform: isMobile
-      ? "translateX(0px)"
-      : "translateX(100px)",
+    marginLeft: isMobile ?"0" : "5"
   }}
 />
   </div>
