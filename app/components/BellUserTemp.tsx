@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { registerFCMToken } from "@/lib/firebase-messaging";
-
+import { Bell } from "lucide-react";
 export default function BellUserTemp() {
   const [bellRotate, setBellRotate] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -164,15 +164,20 @@ useEffect(() => {
     fontSize: isMobile ? 16 : 22,
   }}
 >
-  <span
-    style={{
-      display: "inline-block",
-      animation: bellRotate ? "bellShake .6s ease-in-out" : "none",
-      transformOrigin: "top center",
-    }}
-  >
-    🔔
-  </span>
+ <span
+  style={{
+    display: "inline-flex",
+    animation: bellRotate ? "bellShake .6s ease-in-out" : "none",
+    transformOrigin: "top center",
+    color: "#6b7280",
+    transform: "translateY(5px)",
+  }}
+>
+  <Bell
+    size={30}
+    strokeWidth={2}
+  />
+</span>
 </button>
 
       {unreadCount > 0 && (

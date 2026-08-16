@@ -511,28 +511,31 @@ backgroundAttachment: "fixed",
 {/* ===================================================== */}
 
 <div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    background: "#7ee7f9",
-    borderRadius: "16px",
-    padding: "14px",
-    border: "1px solid #93c5fd",
-    boxShadow: "0 6px 18px rgba(37, 99, 235, 0.14)",
-  }}
+style={{
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "stretch",
+  background: "#ffffff",
+  borderRadius: "16px",
+  border: "1px solid #e5e7eb",
+  overflow: "hidden",
+  boxShadow: "0 4px 14px rgba(15, 23, 42, 0.08)",
+}}
 >
   {/* Tiêu đề */}
   <div
-    style={{
-      fontWeight: 700,
-      marginBottom: 10,
-      fontSize: 15,
-      color: "#0F172A",
-    }}
-  >
-    🏅 Bạn đã đạt
-  </div>
+  style={{
+    fontWeight: 700,
+    fontSize: 15,
+    color: "#2c449b",
+    background: "linear-gradient(90deg, #63d0ff, #38bdf8)",
+    padding: "12px 14px",
+    width: "100%",
+    borderBottom: "1px solid #000000",
+  }}
+>
+  🏅 Bạn đã đạt
+</div>
 
   {!isMobile ? (
     /* ================= DESKTOP ================= */
@@ -710,28 +713,31 @@ backgroundAttachment: "fixed",
   {/* CỘT 2 — THAO TÁC NHANH */}
   {/* ===================================================== */}
 
-  <div
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      gap: 10,
-     background: "#7ee7f9",
-borderRadius: "16px",
-padding: "14px",
-border: "1px solid #93c5fd",
-boxShadow: "0 6px 18px rgba(37, 99, 235, 0.14)",
-    }}
-  >
-    <div
-      style={{
-        fontWeight: 700,
-        marginBottom: 2,
-        fontSize: 15,
-        color: "#0F172A",
-      }}
-    >
-      ⚡ Thao tác nhanh
-    </div>
+<div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+    background: "#ffffff",
+    borderRadius: "16px",
+    border: "1px solid #e5e7eb",
+    overflow: "hidden",
+    boxShadow: "0 4px 14px rgba(15, 23, 42, 0.08)",
+  }}
+>
+   <div
+  style={{
+    fontWeight: 700,
+    fontSize: 15,
+    color: "#2c449b",
+    background: "linear-gradient(90deg, #63d0ff, #38bdf8)",
+    padding: "12px 14px",
+    width: "100%",
+    borderBottom: "1px solid #000000",
+  }}
+>
+  ⚡ Thao tác nhanh
+</div>
 
     {/* XEM BÁO CÁO */}
     <a
@@ -947,15 +953,15 @@ boxShadow: "0 6px 18px rgba(37, 99, 235, 0.14)",
   {/* ===================================================== */}
 
   <div
-    style={{
-      minWidth: 0,
-      background: "#7ee7f9",
-borderRadius: "16px",
-padding: "14px",
-border: "1px solid #93c5fd",
-boxShadow: "0 6px 18px rgba(37, 99, 235, 0.14)",
-    }}
-  >
+  style={{
+    minWidth: 0,
+    background: "#ffffff",
+    borderRadius: "16px",
+    border: "1px solid #e5e7eb",
+    overflow: "hidden",
+    boxShadow: "0 4px 14px rgba(15, 23, 42, 0.08)",
+  }}
+>
 <div
   onClick={() => {
     if (isMobile) {
@@ -967,9 +973,12 @@ boxShadow: "0 6px 18px rgba(37, 99, 235, 0.14)",
     alignItems: "center",
     gap: 8,
     fontWeight: 700,
-    marginBottom: isMobile && !showActivities ? 0 : 12,
     fontSize: 15,
-    color: "#0F172A",
+    color: "#2c449b",
+    background: "linear-gradient(90deg, #63d0ff, #38bdf8)",
+    padding: "12px 14px",
+    width: "100%",
+    borderBottom: "1px solid #000000",
     cursor: isMobile ? "pointer" : "default",
     userSelect: "none",
   }}

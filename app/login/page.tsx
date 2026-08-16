@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
+
 export default function LoginPage() {
   const [mssv, setMssv] = useState("");
   const [isMobile, setIsMobile] = useState(false);
@@ -22,7 +23,65 @@ useEffect(() => {
   const [password, setPassword] = useState("");
   const [rememberLogin, setRememberLogin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [hoTen, setHoTen] = useState("");
+  const [lop, setLop] = useState("");
+  async function handleRegister() {
+  if (
+    !mssv ||
+    !hoTen ||
+    !lop ||
+    !password ||
+    !confirmPassword
+  ) {
+    alert("Vui lòng nhập đầy đủ thông tin");
+    return;
+  }
 
+  if (password !== confirmPassword) {
+    alert("Mật khẩu xác nhận không khớp");
+    return;
+  }
+
+  const email = `${mssv}@clbsv5tbmu.com`;
+
+  try {
+    const res = await fetch("/api/create-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        hoTen,
+        mssv,
+        lop,
+        email,
+        password,
+        role: "student",
+      }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      alert(result.error);
+      return;
+    }
+
+    alert("Đăng ký thành công!");
+
+    setAuthMode("login");
+    setHoTen("");
+    setLop("");
+    setMssv("");
+    setPassword("");
+    setConfirmPassword("");
+  } catch (err) {
+    console.error(err);
+    alert("Có lỗi xảy ra");
+  }
+}
  async function handleLogin() {
   const email = `${mssv}@clbsv5tbmu.com`;
 
@@ -110,109 +169,162 @@ useEffect(() => {
 <div
   style={{
     display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    textAlign: "center",
-    gap: "14px",
+    width: "calc(100% + 30px)",
+    marginLeft: "0px",
+    marginTop: "0",
+    marginBottom: "20px",
+    borderBottom: "1px solid #e5e7eb",
+    boxSizing: "border-box",
   }}
 >
-  
-  <div
+  <button
+    type="button"
+    onClick={() => setAuthMode("login")}
     style={{
-      fontSize: isMobile ? "13px" : "16px",
-      fontWeight: "700",
-      lineHeight: "1.5",
-      color: "#1e293b",
-      marginTop: "30px",
+      flex: 1,
+      minWidth: 0,
+      border: "none",
+      borderBottom:
+        authMode === "login"
+          ? "2px solid #2563eb"
+          : "2px solid transparent",
+      background: authMode === "login" ? "#fff" : "#f8fafc",
+      color: authMode === "login" ? "#2563eb" : "#64748b",
+      padding: "12px 10px",
+      fontSize: "16px",
+      fontWeight: 700,
+      cursor: "pointer",
+      boxSizing: "border-box",
     }}
   >
-    CÂU LẠC BỘ SINH VIÊN 5 TỐT
-    <br />
-    TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT
-  </div>
-  <div
+    ĐĂNG NHẬP
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setAuthMode("register")}
     style={{
-      marginTop: "8px",
-      fontSize: "20px",
-      fontWeight: "700",
-      color: "#4168bb",
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
+      flex: 1,
+      minWidth: 0,
+      border: "none",
+      borderLeft: "1px solid #e5e7eb",
+      borderBottom:
+        authMode === "register"
+          ? "2px solid #2563eb"
+          : "2px solid transparent",
+      background: authMode === "register" ? "#fff" : "#f8fafc",
+      color: authMode === "register" ? "#2563eb" : "#64748b",
+      padding: "12px 10px",
+      fontSize: "16px",
+      fontWeight: 700,
+      cursor: "pointer",
+      boxSizing: "border-box",
     }}
   >
-    <span>🔐</span>
-    <span>ĐĂNG NHẬP</span>
-  </div>
+    ĐĂNG KÝ
+  </button>
 </div>
         </div>
 <form
   onSubmit={(e) => {
     e.preventDefault();
-    handleLogin();
+
+    if (authMode === "login") {
+      handleLogin();
+    } else {
+      handleRegister();
+    }
   }}
 >
+  {/* ===== HỌ TÊN ===== */}
+  {authMode === "register" && (
+    <>
+      <label
+        style={{
+          display: "block",
+          marginTop: "15px",
+          marginBottom: "3px",
+          marginLeft: "3px",
+          fontSize: "14px",
+          fontWeight: 500,
+          color: "#94a3b8",
+        }}
+      >
+        Họ tên
+      </label>
 
-<label
-  style={{
-    display: "block",
-    marginTop: "15px",
-    marginBottom: "3px",
-    marginLeft: "3px",
-    fontSize: "14px",
-    fontWeight: 500,
-    color: "#94a3b8",
-  }}
->
-  Mã số sinh viên
-</label>
+      <input
+        placeholder="Nhập họ và tên"
+        value={hoTen}
+        onChange={(e) => setHoTen(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "12px 14px",
+          boxSizing: "border-box",
+          border: "1px solid #d9dee7",
+          borderRadius: "10px",
+          outline: "none",
+          fontSize: "15px",
+          color: "#000000",
+          background: "#fff",
+        }}
+      />
 
-<input
-  placeholder="Nhập mã số sinh viên"
-  value={mssv}
-  onChange={(e) => setMssv(e.target.value)}
-  style={{
-    width: "100%",
-    padding: "12px 14px",
-    boxSizing: "border-box",
-    border: "1px solid #d9dee7",
-    borderRadius: "10px",
-    outline: "none",
-    fontSize: "15px",
-    color: "#000000",
-    background: "#fff",
-  }}
-/>
+      <label
+        style={{
+          display: "block",
+          marginTop: "14px",
+          marginBottom: "3px",
+          marginLeft: "3px",
+          fontSize: "14px",
+          fontWeight: 500,
+          color: "#94a3b8",
+        }}
+      >
+        Lớp
+      </label>
 
-<label
-  style={{
-    display: "block",
-    marginTop: "14px",
-    marginBottom: "3px",
-    marginLeft: "3px",
-    fontSize: "14px",
-    fontWeight: 500,
-    color: "#94a3b8",
-  }}
->
-  Mật khẩu
-</label>
+      <input
+        placeholder="Nhập lớp"
+        value={lop}
+        onChange={(e) => setLop(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "12px 14px",
+          boxSizing: "border-box",
+          border: "1px solid #d9dee7",
+          borderRadius: "10px",
+          outline: "none",
+          fontSize: "15px",
+          color: "#000000",
+          background: "#fff",
+        }}
+      />
+    </>
+  )}
 
-<div
-  style={{
-    position: "relative",
-    width: "100%",
-  }}
->
+  {/* ===== MSSV ===== */}
+  <label
+    style={{
+      display: "block",
+      marginTop: "15px",
+      marginBottom: "3px",
+      marginLeft: "3px",
+      fontSize: "14px",
+      fontWeight: 500,
+      color: "#94a3b8",
+    }}
+  >
+    Mã số sinh viên
+  </label>
+
   <input
-    type={showPassword ? "text" : "password"}
-    placeholder="Nhập mật khẩu"
-    value={password}
-    onChange={(e) => setPassword(e.target.value)}
+    placeholder="Nhập mã số sinh viên"
+    value={mssv}
+    onChange={(e) => setMssv(e.target.value)}
     style={{
       width: "100%",
-      padding: "12px 45px 12px 14px",
+      padding: "12px 14px",
       boxSizing: "border-box",
       border: "1px solid #d9dee7",
       borderRadius: "10px",
@@ -223,98 +335,164 @@ useEffect(() => {
     }}
   />
 
-  <button
-    type="button"
-    onClick={() => setShowPassword(!showPassword)}
-    style={{
-      position: "absolute",
-      right: "12px",
-      top: "50%",
-      transform: "translateY(-50%)",
-      border: "none",
-      background: "transparent",
-      padding: "4px",
-      cursor: "pointer",
-      fontSize: "18px",
-      color: "#94a3b8",
-    }}
-    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-  >
-    {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
-  </button>
-</div>
-<div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: "6px",
-    marginLeft: "3px",
-    marginRight: "3px",
-    height: "28px",
-  }}
->
-  {/* LƯU ĐĂNG NHẬP */}
+  {/* ===== MẬT KHẨU ===== */}
   <label
     style={{
-      display: "flex",
-      alignItems: "center",
-      gap: "7px",
+      display: "block",
+      marginTop: "14px",
+      marginBottom: "3px",
+      marginLeft: "3px",
       fontSize: "14px",
-      color: "#7a7c80",
-      cursor: "pointer",
-      lineHeight: 1,
-      margin: 0,
+      fontWeight: 500,
+      color: "#94a3b8",
+    }}
+  >
+    Mật khẩu
+  </label>
+
+  <div
+    style={{
+      position: "relative",
+      width: "100%",
     }}
   >
     <input
-      type="checkbox"
-      checked={rememberLogin}
-      onChange={(e) => setRememberLogin(e.target.checked)}
+      type={showPassword ? "text" : "password"}
+      placeholder="Nhập mật khẩu"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
       style={{
-        width: "18px",
-        height: "18px",
-        margin: 0,
-        cursor: "pointer",
-        accentColor: "#2563eb",
+        width: "100%",
+        padding: "12px 45px 12px 14px",
+        boxSizing: "border-box",
+        border: "1px solid #d9dee7",
+        borderRadius: "10px",
+        outline: "none",
+        fontSize: "15px",
+        color: "#000000",
+        background: "#fff",
       }}
     />
 
-    <span>Lưu đăng nhập</span>
-  </label>
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      style={{
+        position: "absolute",
+        right: "12px",
+        top: "50%",
+        transform: "translateY(-50%)",
+        border: "none",
+        background: "transparent",
+        padding: "4px",
+        cursor: "pointer",
+        fontSize: "18px",
+        color: "#94a3b8",
+      }}
+      aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+    >
+      {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+    </button>
+  </div>
 
-  {/* ĐĂNG KÝ */}
-  <a
-    href="/register"
+  {/* ===== XÁC NHẬN MẬT KHẨU - CHỈ ĐĂNG KÝ ===== */}
+  {authMode === "register" && (
+    <>
+      <label
+        style={{
+          display: "block",
+          marginTop: "14px",
+          marginBottom: "3px",
+          marginLeft: "3px",
+          fontSize: "14px",
+          fontWeight: 500,
+          color: "#94a3b8",
+        }}
+      >
+        Xác nhận mật khẩu
+      </label>
+
+      <input
+        type="password"
+        placeholder="Nhập lại mật khẩu"
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "12px 14px",
+          boxSizing: "border-box",
+          border: "1px solid #d9dee7",
+          borderRadius: "10px",
+          outline: "none",
+          fontSize: "15px",
+          color: "#000000",
+          background: "#fff",
+        }}
+      />
+    </>
+  )}
+
+  {/* ===== LƯU ĐĂNG NHẬP ===== */}
+  {authMode === "login" && (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        marginTop: "6px",
+        marginLeft: "3px",
+        height: "28px",
+      }}
+    >
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "7px",
+          fontSize: "14px",
+          color: "#7a7c80",
+          cursor: "pointer",
+          lineHeight: 1,
+          margin: 0,
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={rememberLogin}
+          onChange={(e) => setRememberLogin(e.target.checked)}
+          style={{
+            width: "18px",
+            height: "18px",
+            margin: 0,
+            cursor: "pointer",
+            accentColor: "#2563eb",
+          }}
+        />
+
+        <span>Lưu đăng nhập</span>
+      </label>
+    </div>
+  )}
+
+  {/* ===== NÚT ===== */}
+  <button
+    type="submit"
     style={{
-      fontSize: "15px",
-      color: "#3485f8",
-      textDecoration: "none",
+      width: "100%",
+      marginTop: "20px",
+      padding: "12px",
+      border: "none",
+      background: "#2563eb",
+      color: "white",
+      borderRadius: "8px",
       cursor: "pointer",
-      lineHeight: 1,
-      marginTop: "3px",
+      fontWeight: 600,
+      fontSize: "15px",
     }}
   >
-    Đăng ký
-  </a>
-</div>
-        <button
-  type="submit"
-  style={{
-    width: "100%",
-    marginTop: "20px",
-    padding: "12px",
-    border: "none",
-    background: "#2563eb",
-    color: "white",
-    borderRadius: "8px",
-    cursor: "pointer",
-  }}
->
-  Đăng nhập
-</button>
+    {authMode === "login" ? "Đăng nhập" : "Đăng ký"}
+  </button>
 </form>
-      </div>
+</div>
     </main>
     <Footer />
   </div>

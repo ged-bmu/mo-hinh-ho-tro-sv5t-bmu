@@ -135,15 +135,26 @@ return (
           padding: "30px",
         }}
       >
-               <div className="mb-8 rounded-2xl bg-gradient-to-r from-sky-500 via-cyan-500 to-blue-600 p-6 text-white shadow-lg">
+            <div
+  className="mb-8 rounded-2xl p-6 text-white shadow-lg"
+  style={{
+    background: "linear-gradient(to right, #33d1f4 0%, #a7f5fc 100%)",
+  }}
+>
   <div className="mb-5">
-    <h2 className="text-2xl font-bold text-white">
-  Hoạt động dành cho Sinh viên
-</h2>
+    <h2
+      className="text-2xl font-bold"
+      style={{ color: "#000000" }}
+    >
+      Hoạt động dành cho Sinh viên
+    </h2>
 
-<p className="mt-1 text-sm text-sky-100">
-  Theo dõi các hoạt động dành cho Sinh viên 5 Tốt.
-</p>
+    <p
+      className="mt-1 text-sm"
+      style={{ color: "#000000" }}
+    >
+      Theo dõi các hoạt động dành cho Sinh viên 5 Tốt.
+    </p>
   </div>
 
 <div className="grid grid-cols-3 gap-4">

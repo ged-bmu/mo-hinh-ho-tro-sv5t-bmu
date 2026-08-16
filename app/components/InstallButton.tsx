@@ -129,7 +129,7 @@ export default function InstallButton() {
   {isIOS ? <Smartphone size={22} /> : <Download size={22} />} 
 
   {isIOS 
-    ? "Thêm vào màn hình chính" 
+    ? "Tải" 
     : ""} 
 </button>
 

@@ -41,9 +41,10 @@ export default function Header({
     background: "rgba(255, 255, 255, 0.96)",
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
-
     padding: "14px 28px",
-    borderBottom: "1px solid #dbe3ef",
+    borderBottom: "7px solid",
+borderImage:
+  "linear-gradient(90deg, #1d4ed8, #60a5fa, #7ee7f9) 1",
 
     boxShadow: "0 4px 18px rgba(15, 23, 42, 0.07)",
   }}
@@ -169,11 +170,11 @@ onMouseLeave={(e) => {
             {/* Hàng dưới */}
             <img
               className="header-title"
-              src="/Tenhethong2.png"
+              src="/Tenhethong1.png"
               alt="Tên hệ thống"
               style={{
                 marginTop: 8,
-                width: 220,
+                width: 300,
                 height: "auto",
               }}
             />
@@ -205,7 +206,7 @@ onMouseLeave={(e) => {
               src="/Tenhethong2.png"
               alt="Tên hệ thống"
               style={{
-                height: 48,
+                height: 60,
                 objectFit: "contain",
               }}
             />

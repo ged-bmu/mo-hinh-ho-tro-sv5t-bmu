@@ -5,6 +5,7 @@ import Link from "next/link";
 import Footer from "../components/Footer";
 import { supabase } from "@/lib/supabase";
 import InstallButton from "../components/InstallButton";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function IntroducePage() {
  const [tab, setTab] = useState("home");
@@ -30,6 +31,16 @@ useEffect(() => {
  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
  const [criteria, setCriteria] = useState<any[]>([]);
  const [header, setHeader] = useState<any>(null);
+ const [mssv, setMssv] = useState("");
+const [password, setPassword] = useState("");
+const [rememberLogin, setRememberLogin] = useState(false);
+const [showPassword, setShowPassword] = useState(false);
+
+const [authMode, setAuthMode] = useState<"login" | "register">("login");
+
+const [confirmPassword, setConfirmPassword] = useState("");
+const [hoTen, setHoTen] = useState("");
+const [lop, setLop] = useState("");
  const [level, setLevel] = useState<
   "school" | "province" | "central"
 >("school");
@@ -65,7 +76,93 @@ async function loadCriteria() {
 
   setCriteria(data || []);
 }
-  
+ async function handleRegister() {
+  if (
+    !mssv ||
+    !hoTen ||
+    !lop ||
+    !password ||
+    !confirmPassword
+  ) {
+    alert("Vui lòng nhập đầy đủ thông tin");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    alert("Mật khẩu xác nhận không khớp");
+    return;
+  }
+
+  const email = `${mssv}@clbsv5tbmu.com`;
+
+  try {
+    const res = await fetch("/api/create-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        hoTen,
+        mssv,
+        lop,
+        email,
+        password,
+        role: "student",
+      }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      alert(result.error);
+      return;
+    }
+
+    alert("Đăng ký thành công!");
+
+    setAuthMode("login");
+    setHoTen("");
+    setLop("");
+    setMssv("");
+    setPassword("");
+    setConfirmPassword("");
+  } catch (err) {
+    console.error(err);
+    alert("Có lỗi xảy ra");
+  }
+}
+
+async function handleLogin() {
+  const email = `${mssv}@clbsv5tbmu.com`;
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    alert("Sai MSSV hoặc mật khẩu");
+    return;
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role === "admin") {
+    window.location.href = "/admin";
+  } else {
+    window.location.href = "/";
+  }
+} 
   return (
     <div
       style={{
@@ -182,9 +279,10 @@ async function loadCriteria() {
         </button>
       ))}
 
-      <Link
-  href="/login"
+      <button
+  type="button"
   className="cta-btn"
+  onClick={() => setTab("login")}
   onMouseEnter={(e) => {
     e.currentTarget.style.borderColor = "#2563eb";
   }}
@@ -192,19 +290,19 @@ async function loadCriteria() {
     e.currentTarget.style.borderColor = "transparent";
   }}
   style={{
-    background: "#f8fafc",
-    color: "black",
-    textDecoration: "none",
+    background: tab === "login" ? "#2563eb" : "#f8fafc",
+    color: tab === "login" ? "white" : "black",
     padding: "9px 18px",
     borderRadius: "10px",
     fontWeight: 600,
     fontSize: "15px",
     border: "2px solid transparent",
     transition: "all 0.2s ease",
+    cursor: "pointer",
   }}
 >
   Đăng nhập
-</Link>
+</button>
     </div>
   )}
 </div>
@@ -243,17 +341,24 @@ async function loadCriteria() {
   Tiêu chí
 </button>
 
-    <Link
-  href="/login"
-  onClick={() => setMobileMenuOpen(false)}
+    <button
+  type="button"
+  onClick={() => {
+    setTab("login");
+    setMobileMenuOpen(false);
+  }}
   style={{
-    background: "#f3f4f6",
-    color: "#111",
-    textAlign: "center"
+    background: tab === "login" ? "#2563eb" : "#f3f4f6",
+    color: tab === "login" ? "white" : "#111",
+    textAlign: "center",
+    border: "none",
+    cursor: "pointer",
+    padding: "10px",
+    borderRadius: "8px",
   }}
 >
   Đăng nhập
-</Link>
+</button>
 
   </div>
 )}
@@ -613,41 +718,43 @@ async function loadCriteria() {
           }}
         >
           {/* ===== NÚT ĐĂNG NHẬP ===== */}
-          <Link
-            href="/login"
-            className="cta-btn"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow =
-                "0 8px 20px rgba(37,99,235,.25)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-            style={{
-              position: isMobile ? "relative" : "absolute",
-              left: isMobile ? "auto" : "-59%",
-              top: isMobile ? "auto" : "-90%",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "#2563eb",
-              color: "white",
-              padding: "13px 35px",
-              borderRadius: "10px",
-              textDecoration: "none",
-              fontWeight: 400,
-              fontSize: "18px",
-              transition: "all 0.25s ease",
-              minWidth: "140px",
-              textAlign: "center",
-              boxSizing: "border-box",
-              margin: isMobile ? "0" : undefined,
-            }}
-          >
-            <b>Đăng nhập</b>
-          </Link>
+         <button
+  type="button"
+  className="cta-btn"
+  onClick={() => setTab("login")}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.transform = "translateY(-2px)";
+    e.currentTarget.style.boxShadow =
+      "0 8px 20px rgba(37,99,235,.25)";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = "translateY(0)";
+    e.currentTarget.style.boxShadow = "none";
+  }}
+  style={{
+    position: isMobile ? "relative" : "absolute",
+    left: isMobile ? "auto" : "-59%",
+    top: isMobile ? "auto" : "-90%",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#2563eb",
+    color: "white",
+    padding: "13px 35px",
+    borderRadius: "10px",
+    fontWeight: 400,
+    fontSize: "18px",
+    transition: "all 0.25s ease",
+    minWidth: "140px",
+    textAlign: "center",
+    boxSizing: "border-box",
+    margin: isMobile ? "0" : undefined,
+    border: "none",
+    cursor: "pointer",
+  }}
+>
+  <b>Đăng nhập</b>
+</button>
           {/* ===== NÚT CÀI ỨNG DỤNG ===== */}
           <div
             style={{
@@ -784,15 +891,37 @@ async function loadCriteria() {
 
       {/* ===== DANH HIỆU SINH VIÊN 5 TỐT ===== */}
       <section style={{ marginBottom: "30px" }}>
-        <h3
-          style={{
-            margin: "0 0 15px",
-            color: "#2563eb",
-            fontSize: isMobile ? "20px" : "24px",
-          }}
-        >
-          🏅 Danh hiệu Sinh viên 5 tốt
-        </h3>
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    width: "100%",
+    margin: "0 0 15px",
+    background: "linear-gradient(90deg, #63d0ff, #38bdf8)",
+    color: "#2c449b",
+    padding: "12px 14px",
+    borderRadius: "16px 16px 0 0",
+    borderBottom: "1px solid #000000",
+    fontSize: isMobile ? 16 : 18,
+    fontWeight: 700,
+    lineHeight: 1,
+  }}
+>
+  <img
+    src="/bonghoa5tot.png"
+    alt="Danh hiệu Sinh viên 5 tốt"
+    style={{
+      width: 27,
+      height: 27,
+      objectFit: "contain",
+      flexShrink: 0,
+    }}
+  />
+
+  <span>Danh hiệu Sinh viên 5 tốt</span>
+</div>
 
         <p
           style={{
@@ -837,15 +966,37 @@ async function loadCriteria() {
 
       {/* ===== MỤC TIÊU ===== */}
       <section style={{ marginBottom: "30px" }}>
-        <h3
-          style={{
-            margin: "0 0 15px",
-            color: "#2563eb",
-            fontSize: isMobile ? "20px" : "24px",
-          }}
-        >
-          🎯 Mục tiêu
-        </h3>
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    width: "100%",
+    margin: "0 0 15px",
+    background: "linear-gradient(90deg, #63d0ff, #38bdf8)",
+    color: "#2c449b",
+    padding: "12px 14px",
+    borderRadius: "16px 16px 0 0",
+    borderBottom: "1px solid #000000",
+    fontSize: isMobile ? 16 : 18,
+    fontWeight: 700,
+    lineHeight: 1,
+  }}
+>
+  <img
+    src="/muctieuintroduce.png"
+    alt="Mục tiêu"
+    style={{
+      width: 27,
+      height: 27,
+      objectFit: "contain",
+      flexShrink: 0,
+    }}
+  />
+
+  <span>Mục tiêu</span>
+</div>
 
         <ul
           style={{
@@ -879,72 +1030,108 @@ async function loadCriteria() {
       />
 
       {/* ===== ĐỐI VỚI SINH VIÊN ===== */}
-      <section style={{ marginBottom: "30px" }}>
-        <h3
-          style={{
-            margin: "0 0 15px",
-            color: "#2563eb",
-            fontSize: isMobile ? "20px" : "24px",
-          }}
-        >
-          👨‍🎓 Đối với sinh viên
-        </h3>
+     <div
+  style={{
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+    gap: isMobile ? 18 : 24,
+    marginBottom: "30px",
+  }}
+>
+  {/* ===== ĐỐI VỚI SINH VIÊN ===== */}
+  <section
+    style={{
+      background: "#ffffff",
+      border: "1px solid #e5e7eb",
+      borderRadius: 16,
+      overflow: "hidden",
+      boxShadow: "0 4px 14px rgba(15, 23, 42, 0.08)",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        background: "linear-gradient(90deg, #63d0ff, #38bdf8)",
+        color: "#2c449b",
+        padding: "7px 14px",
+        borderBottom: "1px solid #000000",
+        fontSize: isMobile ? 16 : 18,
+        fontWeight: 700,
+      }}
+    >
+      <span>👨‍🎓</span>
+      <span>Đối với sinh viên</span>
+    </div>
 
-        <ul
-          style={{
-            fontSize: isMobile ? "15px" : "18px",
-            lineHeight: 1.8,
-            paddingLeft: "25px",
-            margin: 0,
-          }}
-        >
-          <li>Lưu trữ minh chứng trực tuyến, an toàn và lâu dài.</li>
-          <li>Theo dõi tiến độ hoàn thành từng tiêu chí.</li>
-          <li>Xuất hồ sơ nhanh chóng khi đăng ký xét danh hiệu.</li>
-          <li>
-            Nhận góp ý, yêu cầu bổ sung minh chứng từ Ban Chủ nhiệm.
-          </li>
-          <li>Theo dõi trạng thái xét duyệt theo thời gian thực.</li>
-        </ul>
-      </section>
+    <ul
+      style={{
+        fontSize: isMobile ? "15px" : "17px",
+        lineHeight: 1.8,
+        padding: "18px 25px 18px 42px",
+        margin: 0,
+        color: "#334155",
+      }}
+    >
+      <li>Lưu trữ minh chứng trực tuyến, an toàn và lâu dài.</li>
+      <li>Theo dõi tiến độ hoàn thành từng tiêu chí.</li>
+      <li>Xuất hồ sơ nhanh chóng khi đăng ký xét danh hiệu.</li>
+      <li>
+        Nhận góp ý, yêu cầu bổ sung minh chứng từ Ban Chủ nhiệm.
+      </li>
+      <li>Theo dõi trạng thái xét duyệt theo thời gian thực.</li>
+    </ul>
+  </section>
 
-      <div
-        style={{
-          height: "1px",
-          background: "#e5e7eb",
-          margin: "25px 0",
-        }}
-      />
+  {/* ===== ĐỐI VỚI BAN CHỦ NHIỆM ===== */}
+  <section
+    style={{
+      background: "#ffffff",
+      border: "1px solid #e5e7eb",
+      borderRadius: 16,
+      overflow: "hidden",
+      boxShadow: "0 4px 14px rgba(15, 23, 42, 0.08)",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        background: "linear-gradient(90deg, #63d0ff, #38bdf8)",
+        color: "#2c449b",
+        padding: "7px 14px",
+        borderBottom: "1px solid #000000",
+        fontSize: isMobile ? 16 : 18,
+        fontWeight: 700,
+      }}
+    >
+      <span>👨‍💼</span>
+      <span>Đối với Ban Chủ nhiệm</span>
+    </div>
 
-      {/* ===== ĐỐI VỚI BAN CHỦ NHIỆM ===== */}
-      <section>
-        <h3
-          style={{
-            margin: "0 0 15px",
-            color: "#2563eb",
-            fontSize: isMobile ? "20px" : "24px",
-          }}
-        >
-          👨‍💼 Đối với Ban Chủ nhiệm
-        </h3>
-
-        <ul
-          style={{
-            fontSize: isMobile ? "15px" : "18px",
-            lineHeight: 1.8,
-            paddingLeft: "25px",
-            margin: 0,
-          }}
-        >
-          <li>Quản lý hồ sơ sinh viên tập trung.</li>
-          <li>Kiểm tra và đánh giá minh chứng trực tuyến.</li>
-          <li>Gửi nhận xét, yêu cầu chỉnh sửa.</li>
-          <li>
-            Theo dõi lịch sử thao tác và quá trình cập nhật hồ sơ.
-          </li>
-          <li>Thống kê dữ liệu phục vụ báo cáo và tổng kết.</li>
-        </ul>
-      </section>
+    <ul
+      style={{
+        fontSize: isMobile ? "15px" : "17px",
+        lineHeight: 1.8,
+        padding: "18px 25px 18px 42px",
+        margin: 0,
+        color: "#334155",
+      }}
+    >
+      <li>Quản lý hồ sơ sinh viên tập trung.</li>
+      <li>Kiểm tra và đánh giá minh chứng trực tuyến.</li>
+      <li>Gửi nhận xét, yêu cầu chỉnh sửa.</li>
+      <li>
+        Theo dõi lịch sử thao tác và quá trình cập nhật hồ sơ.
+      </li>
+      <li>Thống kê dữ liệu phục vụ báo cáo và tổng kết.</li>
+    </ul>
+  </section>
+</div>
 
     </div>
   </div>
@@ -1180,6 +1367,433 @@ async function loadCriteria() {
         ))}
       </div>
     </div>
+  </div>
+)}
+{tab === "login" && (
+  <div
+    style={{
+      width: "100%",
+      minHeight: isMobile ? "auto" : "calc(100vh - 75px)",
+
+      backgroundImage: isMobile
+        ? "url('/trangchumobile.png'), radial-gradient(circle at 0% 0%, #33d1f4 0%, #e5fdff 100%)"
+        : "url('/Trangchu.png')",
+
+      backgroundSize: "100% auto",
+      backgroundPosition: "top center",
+      backgroundRepeat: "no-repeat",
+
+      display: isMobile ? "flex" : "block",
+      flexDirection: isMobile ? "column" : undefined,
+      alignItems: isMobile ? "center" : undefined,
+
+      paddingBottom: isMobile ? "30px" : undefined,
+
+      boxSizing: "border-box",
+    }}
+  >
+
+    {/* ẢNH NỀN MOBILE */}
+    {isMobile && (
+      <img
+        src="/trangchumobile.png"
+        alt=""
+        style={{
+          width: "100%",
+          height: "auto",
+          display: "block",
+          objectFit: "contain",
+          flexShrink: 0,
+        }}
+      />
+    )}
+
+    {/* CỬA SỔ ĐĂNG NHẬP */}
+<div
+  style={{
+    width: "min(92vw, 500px)",
+    height: isMobile
+      ? "auto"
+      : authMode === "register"
+        ? "400px"
+        : "400px",
+    background: "rgba(255, 255, 255, 0.96)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    padding: "24px",
+    borderRadius: "20px",
+    border: "1px solid rgba(255,255,255,0.9)",
+    boxShadow:
+      "0 15px 40px rgba(0, 100, 180, 0.18), 0 4px 12px rgba(0,0,0,0.08)",
+    boxSizing: "border-box",
+    overflowY: "auto",
+    // Con lăn mảnh hơn trên Firefox
+    scrollbarWidth: "thin",
+    scrollbarColor: "rgba(100, 116, 139, 0.45) transparent",
+
+    transform: isMobile
+      ? "none"
+      : authMode === "register"
+        ? "translate(180px, 230px)"
+        : "translate(180px, 230px)",
+
+    marginTop: isMobile ? "10px" : "0",
+  }}
+>
+      <div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "15px",
+    marginBottom: "12px",
+  }}
+>
+
+  <div
+    style={{
+      display: "flex",
+      width: "calc(100% + 30px)",
+      marginLeft: "0px",
+      marginTop: "0",
+      marginBottom: "20px",
+      borderBottom: "1px solid #e5e7eb",
+      boxSizing: "border-box",
+    }}
+  >
+    <button
+      type="button"
+      onClick={() => setAuthMode("login")}
+      style={{
+        flex: 1,
+        minWidth: 0,
+        border: "none",
+        borderBottom:
+          authMode === "login"
+            ? "2px solid #2563eb"
+            : "2px solid transparent",
+        background:
+          authMode === "login" ? "#fff" : "#f8fafc",
+        color:
+          authMode === "login" ? "#2563eb" : "#64748b",
+        padding: "12px 10px",
+        fontSize: "16px",
+        fontWeight: 700,
+        cursor: "pointer",
+        boxSizing: "border-box",
+      }}
+    >
+      ĐĂNG NHẬP
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setAuthMode("register")}
+      style={{
+        flex: 1,
+        minWidth: 0,
+        border: "none",
+        borderLeft: "1px solid #e5e7eb",
+        borderBottom:
+          authMode === "register"
+            ? "2px solid #2563eb"
+            : "2px solid transparent",
+        background:
+          authMode === "register" ? "#fff" : "#f8fafc",
+        color:
+          authMode === "register" ? "#2563eb" : "#64748b",
+        padding: "12px 10px",
+        fontSize: "16px",
+        fontWeight: 700,
+        cursor: "pointer",
+        boxSizing: "border-box",
+      }}
+    >
+      ĐĂNG KÝ
+    </button>
+  </div>
+</div>
+
+<form
+  onSubmit={(e) => {
+    e.preventDefault();
+
+    if (authMode === "login") {
+      handleLogin();
+    } else {
+      handleRegister();
+    }
+  }}
+>
+  {/* ===== HỌ TÊN + LỚP ===== */}
+  {authMode === "register" && (
+    <>
+      <label
+        style={{
+          display: "block",
+          marginTop: "3px",
+          marginBottom: "3px",
+          marginLeft: "3px",
+          fontSize: "14px",
+          fontWeight: 500,
+          color: "#94a3b8",
+        }}
+      >
+        Họ tên
+      </label>
+
+      <input
+        placeholder="Nhập họ và tên"
+        value={hoTen}
+        onChange={(e) => setHoTen(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "12px 14px",
+          boxSizing: "border-box",
+          border: "1px solid #d9dee7",
+          borderRadius: "10px",
+          outline: "none",
+          fontSize: "15px",
+          color: "#000",
+          background: "#fff",
+        }}
+      />
+
+      <label
+        style={{
+          display: "block",
+          marginTop: "3px",
+          marginBottom: "3px",
+          marginLeft: "3px",
+          fontSize: "14px",
+          fontWeight: 500,
+          color: "#94a3b8",
+        }}
+      >
+        Lớp
+      </label>
+
+      <input
+        placeholder="Nhập lớp"
+        value={lop}
+        onChange={(e) => setLop(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "12px 14px",
+          boxSizing: "border-box",
+          border: "1px solid #d9dee7",
+          borderRadius: "10px",
+          outline: "none",
+          fontSize: "15px",
+          color: "#000",
+          background: "#fff",
+        }}
+      />
+    </>
+  )}
+
+  {/* ===== MSSV ===== */}
+  <label
+    style={{
+      display: "block",
+      marginTop: "3px",
+      marginBottom: "3px",
+      marginLeft: "3px",
+      fontSize: "14px",
+      fontWeight: 500,
+      color: "#94a3b8",
+    }}
+  >
+    Mã số sinh viên
+  </label>
+
+  <input
+    placeholder="Nhập mã số sinh viên"
+    value={mssv}
+    onChange={(e) => setMssv(e.target.value)}
+    style={{
+      width: "100%",
+      padding: "12px 14px",
+      boxSizing: "border-box",
+      border: "1px solid #d9dee7",
+      borderRadius: "10px",
+      outline: "none",
+      fontSize: "15px",
+      color: "#000",
+      background: "#fff",
+    }}
+  />
+
+  {/* ===== MẬT KHẨU ===== */}
+  <label
+    style={{
+      display: "block",
+      marginTop: "14px",
+      marginBottom: "3px",
+      marginLeft: "3px",
+      fontSize: "14px",
+      fontWeight: 500,
+      color: "#94a3b8",
+    }}
+  >
+    Mật khẩu
+  </label>
+
+  <div
+    style={{
+      position: "relative",
+      width: "100%",
+    }}
+  >
+    <input
+      type={showPassword ? "text" : "password"}
+      placeholder="Nhập mật khẩu"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      style={{
+        width: "100%",
+        padding: "12px 45px 12px 14px",
+        boxSizing: "border-box",
+        border: "1px solid #d9dee7",
+        borderRadius: "10px",
+        outline: "none",
+        fontSize: "15px",
+        color: "#000",
+        background: "#fff",
+      }}
+    />
+
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      style={{
+        position: "absolute",
+        right: "12px",
+        top: "50%",
+        transform: "translateY(-50%)",
+        border: "none",
+        background: "transparent",
+        padding: "4px",
+        cursor: "pointer",
+        fontSize: "18px",
+        color: "#94a3b8",
+      }}
+      aria-label={
+        showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
+      }
+    >
+      {showPassword ? (
+        <EyeOff size={19} />
+      ) : (
+        <Eye size={19} />
+      )}
+    </button>
+  </div>
+
+  {/* ===== XÁC NHẬN MẬT KHẨU ===== */}
+  {authMode === "register" && (
+    <>
+      <label
+        style={{
+          display: "block",
+          marginTop: "14px",
+          marginBottom: "3px",
+          marginLeft: "3px",
+          fontSize: "14px",
+          fontWeight: 500,
+          color: "#94a3b8",
+        }}
+      >
+        Xác nhận mật khẩu
+      </label>
+
+      <input
+        type="password"
+        placeholder="Nhập lại mật khẩu"
+        value={confirmPassword}
+        onChange={(e) =>
+          setConfirmPassword(e.target.value)
+        }
+        style={{
+          width: "100%",
+          padding: "12px 14px",
+          boxSizing: "border-box",
+          border: "1px solid #d9dee7",
+          borderRadius: "10px",
+          outline: "none",
+          fontSize: "15px",
+          color: "#000",
+          background: "#fff",
+        }}
+      />
+    </>
+  )}
+
+  {/* ===== LƯU ĐĂNG NHẬP ===== */}
+  {authMode === "login" && (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        marginTop: "6px",
+        marginLeft: "3px",
+        height: "28px",
+      }}
+    >
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "7px",
+          fontSize: "14px",
+          color: "#7a7c80",
+          cursor: "pointer",
+          lineHeight: 1,
+          margin: 0,
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={rememberLogin}
+          onChange={(e) =>
+            setRememberLogin(e.target.checked)
+          }
+          style={{
+            width: "18px",
+            height: "18px",
+            margin: 0,
+            cursor: "pointer",
+            accentColor: "#2563eb",
+          }}
+        />
+
+        <span>Lưu đăng nhập</span>
+      </label>
+    </div>
+  )}
+
+  {/* ===== NÚT ===== */}
+  <button
+    type="submit"
+    style={{
+      width: "100%",
+      marginTop: "20px",
+      padding: "12px",
+      border: "none",
+      background: "#2563eb",
+      color: "white",
+      borderRadius: "8px",
+      cursor: "pointer",
+      fontWeight: 600,
+      fontSize: "15px",
+    }}
+  >
+    {authMode === "login" ? "Đăng nhập" : "Đăng ký"}
+  </button>
+</form>
+
+    </div>
+
   </div>
 )}
     </main>
