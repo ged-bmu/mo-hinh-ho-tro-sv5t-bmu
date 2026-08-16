@@ -100,9 +100,9 @@ useEffect(() => {
 />
 
 <img
-  src="/Tenhethong.png"
+  src="/Tenhethong2.png"
   style={{
-    width: "min(360px, 82vw)",
+    width: "min(450px, 90vw)",
     height: "auto",
   }}
 />

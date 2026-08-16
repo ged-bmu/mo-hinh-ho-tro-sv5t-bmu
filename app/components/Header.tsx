@@ -169,7 +169,7 @@ onMouseLeave={(e) => {
             {/* Hàng dưới */}
             <img
               className="header-title"
-              src="/Tenhethong.png"
+              src="/Tenhethong2.png"
               alt="Tên hệ thống"
               style={{
                 marginTop: 8,
@@ -202,7 +202,7 @@ onMouseLeave={(e) => {
 
             <img
               className="header-title"
-              src="/Tenhethong.png"
+              src="/Tenhethong2.png"
               alt="Tên hệ thống"
               style={{
                 height: 48,

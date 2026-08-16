@@ -515,8 +515,7 @@ backgroundAttachment: "fixed",
     display: "flex",
     flexDirection: "column",
     alignItems: "flex-start",
-    background:
-      "linear-gradient(135deg, #bfdbfe 0%, #dbeafe 50%, #eff6ff 100%)",
+    background: "#7ee7f9",
     borderRadius: "16px",
     padding: "14px",
     border: "1px solid #93c5fd",
@@ -595,10 +594,7 @@ backgroundAttachment: "fixed",
               x2="100%"
               y2="100%"
             >
-              <stop offset="0%" stopColor="#1D4ED8" />
-              <stop offset="35%" stopColor="#2563EB" />
-              <stop offset="70%" stopColor="#38BDF8" />
-              <stop offset="100%" stopColor="#60A5FA" />
+              <stop offset="100%" stopColor="#1D4ED8" />
             </linearGradient>
 
             <filter
@@ -647,7 +643,7 @@ backgroundAttachment: "fixed",
             style={{
               fontSize: 12,
               fontWeight: 700,
-              color: "#64748B",
+              color: "#000000",
               lineHeight: 1,
               marginTop: 5,
             }}
@@ -719,7 +715,7 @@ backgroundAttachment: "fixed",
       display: "flex",
       flexDirection: "column",
       gap: 10,
-     background: "linear-gradient(135deg, #bfdbfe 0%, #dbeafe 50%, #eff6ff 100%)",
+     background: "#7ee7f9",
 borderRadius: "16px",
 padding: "14px",
 border: "1px solid #93c5fd",
@@ -953,7 +949,7 @@ boxShadow: "0 6px 18px rgba(37, 99, 235, 0.14)",
   <div
     style={{
       minWidth: 0,
-      background: "linear-gradient(135deg, #bfdbfe 0%, #dbeafe 50%, #eff6ff 100%)",
+      background: "#7ee7f9",
 borderRadius: "16px",
 padding: "14px",
 border: "1px solid #93c5fd",
