@@ -422,9 +422,9 @@ async function renameFile(file: any) {
   const newName = input.trim() + ext;
 
   try {
-    // ================================
-    // 1. Đổi tên trên Google Drive
-    // ================================
+    // =========================================
+    // 1. ĐỔI TÊN TRÊN GOOGLE DRIVE
+    // =========================================
     if (file.drive_file_id) {
       const response = await fetch("/api/rename-drive", {
         method: "POST",
@@ -445,51 +445,68 @@ async function renameFile(file: any) {
             "Không thể đổi tên file trên Google Drive"
         );
       }
+
+      console.log("✅ Drive renamed:", result);
     }
 
-    // ================================
-    // 2. Đổi tên trong Supabase
-    // ================================
-    const { error: updateError } = await supabase
+    // =========================================
+    // 2. ĐỔI TÊN TRONG SUPABASE
+    // =========================================
+    const {
+      data: updatedFile,
+      error: updateError,
+    } = await supabase
       .from("uploaded_files")
       .update({
         display_name: newName,
       })
       .eq("id", file.id)
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .eq("folder", "dao-duc")
+      .select("id, display_name, storage_name")
+      .single();
+
+    console.log("✅ SUPABASE UPDATE:", updatedFile);
+    console.log("❌ SUPABASE UPDATE ERROR:", updateError);
 
     if (updateError) {
       throw new Error(
-        "Đã đổi tên Google Drive nhưng không thể cập nhật tên hiển thị: " +
+        "Đã đổi tên Google Drive nhưng không thể lưu tên mới vào Supabase: " +
           updateError.message
       );
     }
 
-    // ================================
-    // 3. CẬP NHẬT TRỰC TIẾP STATE
-    // ================================
+    if (!updatedFile) {
+      throw new Error(
+        "Không tìm thấy bản ghi file để cập nhật trong Supabase."
+      );
+    }
+
+    // =========================================
+    // 3. CẬP NHẬT STATE
+    // =========================================
     setFiles((prevFiles) =>
       prevFiles.map((item) =>
         item.id === file.id
           ? {
               ...item,
-              display_name: newName,
+              display_name: updatedFile.display_name,
             }
           : item
       )
     );
 
-    // ================================
-    // 4. Cập nhật displayNames
-    // ================================
+    // =========================================
+    // 4. CẬP NHẬT displayNames
+    // =========================================
     setDisplayNames((prev) => ({
       ...prev,
-      [file.storage_name]: newName,
+      [file.storage_name]: updatedFile.display_name,
     }));
 
-    // ================================
-    // 5. Lấy thông tin sinh viên
-    // ================================
+    // =========================================
+    // 5. LẤY THÔNG TIN SINH VIÊN
+    // =========================================
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -500,9 +517,9 @@ async function renameFile(file: any) {
       .eq("id", user?.id)
       .single();
 
-    // ================================
-    // 6. Ghi log
-    // ================================
+    // =========================================
+    // 6. GHI LOG
+    // =========================================
     await supabase.from("activity_logs").insert({
       user_id: user?.id,
       ho_ten: profile?.ho_ten,
@@ -515,6 +532,8 @@ async function renameFile(file: any) {
     await fetch("/api/cleanup-logs", {
       method: "POST",
     });
+
+    console.log("✅ Đổi tên hoàn tất:", newName);
 
   } catch (error) {
     console.error("Rename error:", error);
