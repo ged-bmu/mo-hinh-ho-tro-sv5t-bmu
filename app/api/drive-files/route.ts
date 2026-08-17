@@ -3,33 +3,44 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const auth = new google.auth.GoogleAuth({
-  credentials: {
-    project_id: process.env.GOOGLE_PROJECT_ID,
-    client_email: process.env.GOOGLE_CLIENT_EMAIL,
-    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-  },
-  scopes: ["https://www.googleapis.com/auth/drive"],
-});
-
-const drive = google.drive({
-  version: "v3",
-  auth,
-});
-
 export async function GET() {
   try {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
     const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI;
 
-    if (!folderId) {
+    if (
+      !clientId ||
+      !clientSecret ||
+      !refreshToken ||
+      !folderId
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error: "Chưa cấu hình GOOGLE_DRIVE_FOLDER_ID",
+          error:
+            "Thiếu GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN hoặc GOOGLE_DRIVE_FOLDER_ID",
         },
         { status: 500 }
       );
     }
+
+    const oauth2Client = new google.auth.OAuth2(
+      clientId,
+      clientSecret,
+      redirectUri
+    );
+
+    oauth2Client.setCredentials({
+      refresh_token: refreshToken,
+    });
+
+    const drive = google.drive({
+      version: "v3",
+      auth: oauth2Client,
+    });
 
     const response = await drive.files.list({
       q: `'${folderId}' in parents and trashed = false`,
@@ -42,16 +53,16 @@ export async function GET() {
       success: true,
       files: response.data.files || [],
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Google Drive list error:", error);
 
     return NextResponse.json(
       {
         success: false,
         error:
-          error instanceof Error
-            ? error.message
-            : "Không thể lấy danh sách Google Drive",
+          error?.response?.data?.error?.message ||
+          error?.message ||
+          "Không thể lấy danh sách Google Drive",
       },
       { status: 500 }
     );
