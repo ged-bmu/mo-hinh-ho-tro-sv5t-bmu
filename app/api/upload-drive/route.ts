@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { google } from "googleapis";
 import { Readable } from "stream";
 
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -21,48 +23,64 @@ export async function POST(request: Request) {
       );
     }
 
-    const projectId = process.env.GOOGLE_PROJECT_ID;
-    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY;
+    // ==============================
+    // GOOGLE OAUTH
+    // ==============================
+
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
     const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI;
 
     if (
-      !projectId ||
-      !clientEmail ||
-      !privateKey ||
+      !clientId ||
+      !clientSecret ||
+      !refreshToken ||
       !folderId
     ) {
       return NextResponse.json(
         {
           success: false,
           error:
-            "Thiếu GOOGLE_PROJECT_ID, GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY hoặc GOOGLE_DRIVE_FOLDER_ID",
+            "Thiếu GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN hoặc GOOGLE_DRIVE_FOLDER_ID",
         },
         { status: 500 }
       );
     }
 
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        project_id: projectId,
-        client_email: clientEmail,
-        private_key: privateKey.replace(/\\n/g, "\n"),
-      },
-      scopes: [
-        "https://www.googleapis.com/auth/drive",
-      ],
+    const oauth2Client = new google.auth.OAuth2(
+      clientId,
+      clientSecret,
+      redirectUri
+    );
+
+    oauth2Client.setCredentials({
+      refresh_token: refreshToken,
     });
+
+    // ==============================
+    // GOOGLE DRIVE
+    // ==============================
 
     const drive = google.drive({
       version: "v3",
-      auth,
+      auth: oauth2Client,
     });
+
+    // ==============================
+    // FILE BUFFER
+    // ==============================
 
     const buffer = Buffer.from(
       await file.arrayBuffer()
     );
 
     const stream = Readable.from(buffer);
+
+    // ==============================
+    // UPLOAD
+    // ==============================
 
     const driveFile = await drive.files.create({
       requestBody: {
@@ -74,7 +92,8 @@ export async function POST(request: Request) {
           file.type || "application/octet-stream",
         body: stream,
       },
-      fields: "id,name,webViewLink,webContentLink",
+      fields:
+        "id,name,mimeType,webViewLink,webContentLink,createdTime",
     });
 
     return NextResponse.json({
