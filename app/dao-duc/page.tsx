@@ -244,6 +244,7 @@ console.log(
     await fetch("/api/cleanup-logs", {
       method: "POST",
     });
+
     // Tải lại danh sách
     loadFiles();
   } catch (error) {
@@ -413,22 +414,18 @@ async function renameFile(file: any) {
     ? currentName.slice(currentName.lastIndexOf("."))
     : "";
 
-  const currentNameWithoutExt =
-    currentName.replace(/\.[^/.]+$/, "");
+  const currentNameWithoutExt = currentName.replace(/\.[^/.]+$/, "");
 
-  const input = prompt(
-    "Nhập tên mới:",
-    currentNameWithoutExt
-  );
+  const input = prompt("Nhập tên mới:", currentNameWithoutExt);
 
   if (!input || !input.trim()) return;
 
   const newName = input.trim() + ext;
 
   try {
-    // =====================================
-    // 1. ĐỔI TÊN TRÊN GOOGLE DRIVE
-    // =====================================
+    // ================================
+    // 1. Đổi tên trên Google Drive
+    // ================================
     if (file.drive_file_id) {
       const response = await fetch("/api/rename-drive", {
         method: "POST",
@@ -451,9 +448,9 @@ async function renameFile(file: any) {
       }
     }
 
-    // =====================================
-    // 2. UPDATE TÊN TRONG SUPABASE
-    // =====================================
+    // ================================
+    // 2. Đổi tên trong Supabase
+    // ================================
     const { error: updateError } = await supabase
       .from("uploaded_files")
       .update({
@@ -464,40 +461,14 @@ async function renameFile(file: any) {
 
     if (updateError) {
       throw new Error(
-        "Đã đổi tên Google Drive nhưng không thể lưu tên mới vào Supabase: " +
+        "Đã đổi tên Google Drive nhưng không thể cập nhật tên hiển thị: " +
           updateError.message
       );
     }
 
-    // =====================================
-    // 3. KIỂM TRA LẠI DB
-    // =====================================
-    const { data: checkFile, error: checkError } =
-      await supabase
-        .from("uploaded_files")
-        .select("id, display_name")
-        .eq("id", file.id)
-        .eq("user_id", userId)
-        .maybeSingle();
-
-    if (checkError) {
-      throw new Error(
-        "Không thể kiểm tra tên file trong Supabase: " +
-          checkError.message
-      );
-    }
-
-    console.log("FILE SAU KHI ĐỔI:", checkFile);
-
-    if (!checkFile) {
-      throw new Error(
-        "Không tìm thấy file trong uploaded_files."
-      );
-    }
-
-    // =====================================
-    // 4. CẬP NHẬT GIAO DIỆN
-    // =====================================
+    // ================================
+    // 3. CẬP NHẬT TRỰC TIẾP STATE
+    // ================================
     setFiles((prevFiles) =>
       prevFiles.map((item) =>
         item.id === file.id
@@ -509,14 +480,17 @@ async function renameFile(file: any) {
       )
     );
 
+    // ================================
+    // 4. Cập nhật displayNames
+    // ================================
     setDisplayNames((prev) => ({
       ...prev,
       [file.storage_name]: newName,
     }));
 
-    // =====================================
-    // 5. GHI LOG
-    // =====================================
+    // ================================
+    // 5. Lấy thông tin sinh viên
+    // ================================
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -527,6 +501,9 @@ async function renameFile(file: any) {
       .eq("id", user?.id)
       .single();
 
+    // ================================
+    // 6. Ghi log
+    // ================================
     await supabase.from("activity_logs").insert({
       user_id: user?.id,
       ho_ten: profile?.ho_ten,
@@ -539,8 +516,6 @@ async function renameFile(file: any) {
     await fetch("/api/cleanup-logs", {
       method: "POST",
     });
-
-    console.log("✅ Đổi tên hoàn tất:", newName);
 
   } catch (error) {
     console.error("Rename error:", error);
