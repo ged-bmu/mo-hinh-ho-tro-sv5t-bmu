@@ -413,9 +413,13 @@ async function renameFile(file: any) {
     ? currentName.slice(currentName.lastIndexOf("."))
     : "";
 
-  const currentNameWithoutExt = currentName.replace(/\.[^/.]+$/, "");
+  const currentNameWithoutExt =
+    currentName.replace(/\.[^/.]+$/, "");
 
-  const input = prompt("Nhập tên mới:", currentNameWithoutExt);
+  const input = prompt(
+    "Nhập tên mới:",
+    currentNameWithoutExt
+  );
 
   if (!input || !input.trim()) return;
 
@@ -441,13 +445,14 @@ async function renameFile(file: any) {
 
       if (!response.ok || !result.success) {
         throw new Error(
-          result.error || "Không thể đổi tên file trên Google Drive"
+          result.error ||
+            "Không thể đổi tên file trên Google Drive"
         );
       }
     }
 
     // =====================================
-    // 2. ĐỔI TÊN TRONG DATABASE
+    // 2. UPDATE TÊN TRONG SUPABASE
     // =====================================
     const { error: updateError } = await supabase
       .from("uploaded_files")
@@ -459,27 +464,34 @@ async function renameFile(file: any) {
 
     if (updateError) {
       throw new Error(
-        "Đổi tên Drive thành công nhưng lưu tên mới thất bại: " +
+        "Đã đổi tên Google Drive nhưng không thể lưu tên mới vào Supabase: " +
           updateError.message
       );
     }
 
     // =====================================
-    // 3. KIỂM TRA LẠI DATABASE
+    // 3. KIỂM TRA LẠI DB
     // =====================================
     const { data: checkFile, error: checkError } =
       await supabase
         .from("uploaded_files")
         .select("id, display_name")
         .eq("id", file.id)
-        .single();
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    console.log("SAU KHI UPDATE:", checkFile);
-    console.log("CHECK ERROR:", checkError);
-
-    if (checkError || checkFile?.display_name !== newName) {
+    if (checkError) {
       throw new Error(
-        "Tên file chưa được lưu đúng trong database."
+        "Không thể kiểm tra tên file trong Supabase: " +
+          checkError.message
+      );
+    }
+
+    console.log("FILE SAU KHI ĐỔI:", checkFile);
+
+    if (!checkFile) {
+      throw new Error(
+        "Không tìm thấy file trong uploaded_files."
       );
     }
 
@@ -527,6 +539,8 @@ async function renameFile(file: any) {
     await fetch("/api/cleanup-logs", {
       method: "POST",
     });
+
+    console.log("✅ Đổi tên hoàn tất:", newName);
 
   } catch (error) {
     console.error("Rename error:", error);
