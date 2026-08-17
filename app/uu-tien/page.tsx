@@ -579,7 +579,7 @@ async function renameFile(file: any) {
               marginBottom: "20px",
             }}
           >
-             💪 Thể lực tốt
+             ⭐ Tiêu chuẩn ưu tiên
           </h1>
 <div
   style={{
