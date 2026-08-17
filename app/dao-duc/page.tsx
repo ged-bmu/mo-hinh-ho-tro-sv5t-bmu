@@ -422,9 +422,9 @@ async function renameFile(file: any) {
   const newName = input.trim() + ext;
 
   try {
-    // =========================================
+    // =====================================
     // 1. ĐỔI TÊN TRÊN GOOGLE DRIVE
-    // =========================================
+    // =====================================
     if (file.drive_file_id) {
       const response = await fetch("/api/rename-drive", {
         method: "POST",
@@ -441,72 +441,70 @@ async function renameFile(file: any) {
 
       if (!response.ok || !result.success) {
         throw new Error(
-          result.error ||
-            "Không thể đổi tên file trên Google Drive"
+          result.error || "Không thể đổi tên file trên Google Drive"
         );
       }
-
-      console.log("✅ Drive renamed:", result);
     }
 
-    // =========================================
-    // 2. ĐỔI TÊN TRONG SUPABASE
-    // =========================================
-    const {
-      data: updatedFile,
-      error: updateError,
-    } = await supabase
+    // =====================================
+    // 2. ĐỔI TÊN TRONG DATABASE
+    // =====================================
+    const { error: updateError } = await supabase
       .from("uploaded_files")
       .update({
         display_name: newName,
       })
       .eq("id", file.id)
-      .eq("user_id", userId)
-      .eq("folder", "dao-duc")
-      .select("id, display_name, storage_name")
-      .single();
-
-    console.log("✅ SUPABASE UPDATE:", updatedFile);
-    console.log("❌ SUPABASE UPDATE ERROR:", updateError);
+      .eq("user_id", userId);
 
     if (updateError) {
       throw new Error(
-        "Đã đổi tên Google Drive nhưng không thể lưu tên mới vào Supabase: " +
+        "Đổi tên Drive thành công nhưng lưu tên mới thất bại: " +
           updateError.message
       );
     }
 
-    if (!updatedFile) {
+    // =====================================
+    // 3. KIỂM TRA LẠI DATABASE
+    // =====================================
+    const { data: checkFile, error: checkError } =
+      await supabase
+        .from("uploaded_files")
+        .select("id, display_name")
+        .eq("id", file.id)
+        .single();
+
+    console.log("SAU KHI UPDATE:", checkFile);
+    console.log("CHECK ERROR:", checkError);
+
+    if (checkError || checkFile?.display_name !== newName) {
       throw new Error(
-        "Không tìm thấy bản ghi file để cập nhật trong Supabase."
+        "Tên file chưa được lưu đúng trong database."
       );
     }
 
-    // =========================================
-    // 3. CẬP NHẬT STATE
-    // =========================================
+    // =====================================
+    // 4. CẬP NHẬT GIAO DIỆN
+    // =====================================
     setFiles((prevFiles) =>
       prevFiles.map((item) =>
         item.id === file.id
           ? {
               ...item,
-              display_name: updatedFile.display_name,
+              display_name: newName,
             }
           : item
       )
     );
 
-    // =========================================
-    // 4. CẬP NHẬT displayNames
-    // =========================================
     setDisplayNames((prev) => ({
       ...prev,
-      [file.storage_name]: updatedFile.display_name,
+      [file.storage_name]: newName,
     }));
 
-    // =========================================
-    // 5. LẤY THÔNG TIN SINH VIÊN
-    // =========================================
+    // =====================================
+    // 5. GHI LOG
+    // =====================================
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -517,9 +515,6 @@ async function renameFile(file: any) {
       .eq("id", user?.id)
       .single();
 
-    // =========================================
-    // 6. GHI LOG
-    // =========================================
     await supabase.from("activity_logs").insert({
       user_id: user?.id,
       ho_ten: profile?.ho_ten,
@@ -532,8 +527,6 @@ async function renameFile(file: any) {
     await fetch("/api/cleanup-logs", {
       method: "POST",
     });
-
-    console.log("✅ Đổi tên hoàn tất:", newName);
 
   } catch (error) {
     console.error("Rename error:", error);
