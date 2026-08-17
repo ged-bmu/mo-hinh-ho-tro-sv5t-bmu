@@ -120,7 +120,6 @@ return (
       <div className="space-y-5">
 
         {messages.map((msg) => {
-          console.log("TIN NHẮN:", msg);
           const isMe = msg.sender_role === viewerRole;
           const isAdminMessage = msg.sender_role === "admin";
           const repliedMessage = msg.reply_to

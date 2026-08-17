@@ -27,9 +27,6 @@ export default function AdminChat() {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollToBottomRef = useRef(true);
-
-console.log("ADMIN SET FILE:", typeof setSelectedFile);
-
   const [selected, setSelected] =
     useState<any>(null);
 
@@ -433,46 +430,61 @@ async function sendMessage() {
     })
     .eq("id", conversationId);
 
-  // ==========================================
-  // 6. TĂNG UNREAD CHO SINH VIÊN
-  // ==========================================
-  await supabase.rpc("increment_unread_user", {
-    conversation_id_input: conversationId,
-  });
+// ==========================================
+// 6. TĂNG UNREAD CHO SINH VIÊN
+// ==========================================
+await supabase.rpc("increment_unread_user", {
+  conversation_id_input: conversationId,
+});
 
-  // ==========================================
-  // 7. GỬI NOTIFICATION
-  // ==========================================
-  try {
-    const notificationResponse = await fetch(
-      "/api/send-notification",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: "💬 Tin nhắn mới từ CLB SV5T",
-          message:
-            text || "Bạn có một tin nhắn mới.",
-          userId: selected.id,
-        }),
-      }
-    );
+// ==========================================
+// 7. LẤY USER ID SINH VIÊN
+// ==========================================
+const { data: conversationData, error: conversationError } = await supabase
+  .from("conversations")
+  .select("user_id")
+  .eq("id", conversationId)
+  .single();
 
-    const notificationResult =
-      await notificationResponse.json();
+if (conversationError) {
+  console.error("❌ Không lấy được user_id:", conversationError);
+} else {
+  const userId = conversationData?.user_id;
 
-    console.log(
-      "📱 KẾT QUẢ GỬI THÔNG BÁO:",
-      notificationResult
-    );
-  } catch (notificationError) {
-    console.error(
-      "❌ Lỗi gọi API notification:",
-      notificationError
-    );
+  console.log("📱 SEND NOTIFICATION USER ID:", userId);
+
+  if (userId) {
+    try {
+      const notificationResponse = await fetch(
+        "/api/send-notification",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId,
+            title: "💬 Tin nhắn mới",
+            message: text || "Bạn có tin nhắn mới.",
+          }),
+        }
+      );
+
+      const notificationResult = await notificationResponse.text();
+
+      console.log(
+        "📱 NOTIFICATION RESPONSE:",
+        notificationResponse.status,
+        notificationResult
+      );
+    } catch (notificationError) {
+      console.error(
+        "❌ Lỗi gửi notification:",
+        notificationError
+      );
+    }
   }
+}
 }
 
 return (

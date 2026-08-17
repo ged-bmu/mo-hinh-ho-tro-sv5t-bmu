@@ -1,78 +1,137 @@
 "use client";
 
-import { getMessaging, getToken, isSupported } from "firebase/messaging";
+import {
+  getMessaging,
+  getToken,
+  isSupported,
+} from "firebase/messaging";
+
 import { firebaseApp } from "./firebase";
 import { supabase } from "./supabase";
 
 export async function registerFCMToken() {
   try {
-    // Trình duyệt có hỗ trợ Firebase Messaging không?
+    // ==========================================
+    // 1. KIỂM TRA FIREBASE MESSAGING
+    // ==========================================
     const supported = await isSupported();
 
     if (!supported) {
-      console.log("Trình duyệt không hỗ trợ Firebase Messaging");
+      console.log(
+        "❌ Trình duyệt không hỗ trợ Firebase Messaging"
+      );
+
       return null;
     }
 
-    // Kiểm tra đăng nhập
+    // ==========================================
+    // 2. KIỂM TRA ĐĂNG NHẬP
+    // ==========================================
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      console.log("Chưa đăng nhập");
+      console.log("❌ Chưa đăng nhập");
+
       return null;
     }
 
-    // Xin quyền thông báo
+    console.log("👤 USER ID:", user.id);
+
+    // ==========================================
+    // 3. KIỂM TRA QUYỀN THÔNG BÁO
+    // ==========================================
     const permission = await Notification.requestPermission();
 
+    console.log(
+      "📱 NOTIFICATION PERMISSION:",
+      permission
+    );
+
     if (permission !== "granted") {
-      console.log("Người dùng không cho phép thông báo");
+      console.log(
+        "❌ Người dùng không cho phép thông báo"
+      );
+
       return null;
     }
 
+    // ==========================================
+    // 4. KHỞI TẠO FIREBASE MESSAGING
+    // ==========================================
     const messaging = getMessaging(firebaseApp);
 
-    // Lấy FCM token
+    // ==========================================
+    // 5. ĐĂNG KÝ FIREBASE SERVICE WORKER
+    // ==========================================
+    const registration =
+      await navigator.serviceWorker.register(
+        "/firebase-messaging-sw.js"
+      );
+
+    console.log(
+      "✅ Firebase Service Worker registered:",
+      registration.scope
+    );
+
+    // Chờ Service Worker sẵn sàng
+    await navigator.serviceWorker.ready;
+
+    // ==========================================
+    // 6. LẤY FCM TOKEN
+    // ==========================================
     const token = await getToken(messaging, {
-      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-      serviceWorkerRegistration:
-        await navigator.serviceWorker.register(
-          "/firebase-messaging-sw.js"
-        ),
+      vapidKey:
+        process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+
+      serviceWorkerRegistration: registration,
     });
 
     if (!token) {
-      console.log("Không lấy được FCM token");
+      console.log(
+        "❌ Không lấy được FCM token"
+      );
+
       return null;
     }
 
-    console.log("FCM TOKEN:", token);
+    console.log(
+      "📱 FCM TOKEN:",
+      token
+    );
 
-    // Lưu token vào Supabase
-const { error } = await supabase.rpc(
-  "save_notification_token",
-  {
-    p_token: token,
-  }
-);
+    // ==========================================
+    // 7. LƯU TOKEN VÀO SUPABASE
+    // ==========================================
+    const { error } = await supabase.rpc(
+      "save_notification_token",
+      {
+        p_token: token,
+      }
+    );
 
-if (error) {
-  console.error(
-    "Lỗi lưu notification token:",
-    JSON.stringify(error, null, 2)
-  );
-}
+    if (error) {
+      console.error(
+        "❌ Lỗi lưu notification token:",
+        JSON.stringify(error, null, 2)
+      );
 
-    console.log("User hiện tại:", user?.id);
-    console.log("FCM token:", token);
-    console.log("Đã lưu FCM token");
+      return null;
+    }
+
+    // ==========================================
+    // 8. HOÀN TẤT
+    // ==========================================
+    console.log(
+      "✅ Đã lưu FCM token cho user:",
+      user.id
+    );
 
     return token;
   } catch (error) {
     console.error(
-      "Lỗi đăng ký FCM:",
+      "❌ Lỗi đăng ký FCM:",
       error
     );
 
