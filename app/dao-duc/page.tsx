@@ -244,9 +244,6 @@ console.log(
     await fetch("/api/cleanup-logs", {
       method: "POST",
     });
-
-    alert("✅ Upload file thành công!");
-
     // Tải lại danh sách
     loadFiles();
   } catch (error) {
@@ -350,6 +347,17 @@ async function deleteFile(storageName: string) {
           dbError.message
       );
     }
+    setFiles((prevFiles) =>
+  prevFiles.filter(
+    (item) => item.id !== fileRecord.id
+  )
+);
+
+setDisplayNames((prev) => {
+  const updated = { ...prev };
+  delete updated[fileRecord.storage_name];
+  return updated;
+});
 
     // ================================
     // 4. Lấy profile để ghi log
