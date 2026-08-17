@@ -328,18 +328,20 @@ async function sendMessage() {
   // 1. CHƯA CÓ CONVERSATION → TẠO MỚI
   // ==========================================
   if (!conversationId) {
-    const { data: newConversation, error: conversationError } =
-      await supabase
-        .from("conversations")
-        .insert({
-          user_id: selected.id,
-          last_message: text || "Đã gửi một tệp",
-          last_message_at: new Date().toISOString(),
-          unread_user: 1,
-          unread_admin: 0,
-        })
-        .select()
-        .single();
+    const {
+      data: newConversation,
+      error: conversationError,
+    } = await supabase
+      .from("conversations")
+      .insert({
+        user_id: selected.id,
+        last_message: text || "Đã gửi một tệp",
+        last_message_at: new Date().toISOString(),
+        unread_user: 1,
+        unread_admin: 0,
+      })
+      .select()
+      .single();
 
     if (conversationError) {
       console.log(
@@ -359,14 +361,12 @@ async function sendMessage() {
   }
 
   // ==========================================
-  // 2. SAU ĐÓ MỚI XÓA INPUT
+  // 2. LƯU FILE / XÓA INPUT
   // ==========================================
   setMessage("");
   setReplyMessage(null);
 
-  // LƯU FILE TRƯỚC KHI setSelectedFile(null)
   const fileToUpload = selectedFile;
-
   setSelectedFile(null);
 
   let fileUrl = null;
@@ -443,17 +443,36 @@ async function sendMessage() {
   // ==========================================
   // 7. GỬI NOTIFICATION
   // ==========================================
-  await fetch("/api/send-notification", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      title: "💬 Tin nhắn mới từ CLB SV5T",
-      message: text || "Bạn có một tin nhắn mới.",
-      userId: selected.id,
-    }),
-  });
+  try {
+    const notificationResponse = await fetch(
+      "/api/send-notification",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: "💬 Tin nhắn mới từ CLB SV5T",
+          message:
+            text || "Bạn có một tin nhắn mới.",
+          userId: selected.id,
+        }),
+      }
+    );
+
+    const notificationResult =
+      await notificationResponse.json();
+
+    console.log(
+      "📱 KẾT QUẢ GỬI THÔNG BÁO:",
+      notificationResult
+    );
+  } catch (notificationError) {
+    console.error(
+      "❌ Lỗi gọi API notification:",
+      notificationError
+    );
+  }
 }
 
 return (
