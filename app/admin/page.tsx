@@ -17,6 +17,9 @@ export default function AdminPage() {
   const [exporting, setExporting] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationTitle, setNotificationTitle] = useState("");
+  const [notificationContent, setNotificationContent] = useState("");
   const [isOpen, setIsOpen] = useState(true);
   const [selectedPassed, setSelectedPassed] = useState<string[] | null>(null);
   const totalStudents = students.length;
@@ -117,6 +120,64 @@ async function toggleSubmission() {
   }
 
   setIsOpen(newStatus);
+}
+async function sendGeneralNotification() {
+  if (!notificationTitle.trim()) {
+    alert("Vui lòng nhập tiêu đề thông báo.");
+    return;
+  }
+
+  if (!notificationContent.trim()) {
+    alert("Vui lòng nhập nội dung thông báo.");
+    return;
+  }
+
+  try {
+    // Lấy tất cả sinh viên
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("role", "student");
+
+    if (profilesError) {
+      console.error(profilesError);
+      alert("Không thể lấy danh sách sinh viên.");
+      return;
+    }
+
+    if (!profiles || profiles.length === 0) {
+      alert("Không có sinh viên nào để gửi thông báo.");
+      return;
+    }
+    const notifications = profiles.map((profile) => ({
+      user_id: profile.id,
+      type: "general",
+      title: notificationTitle.trim(),
+      content: notificationContent.trim(),
+      target_url: "/thongbaouser",
+      is_read: false,
+    }));
+
+    const { error: notificationError } = await supabase
+      .from("notifications")
+      .insert(notifications);
+
+    if (notificationError) {
+      console.error(notificationError);
+      alert(
+        "Không thể gửi thông báo: " + notificationError.message
+      );
+      return;
+    }
+
+    alert(`Đã gửi thông báo cho ${profiles.length} sinh viên.`);
+    setNotificationTitle("");
+    setNotificationContent("");
+    setShowNotificationModal(false);
+  } catch (error) {
+    console.error(error);
+    alert("Đã xảy ra lỗi khi gửi thông báo.");
+  }
 }
   async function checkAdmin() {
   const {
@@ -460,29 +521,53 @@ const exportExcel = async () => {
     paddingRight: "20px",
   }}
 >
-<button
-  type="button"
-  onClick={toggleSubmission}
-  style={{
-    padding: "12px 18px",
-    borderRadius: "10px",
-    border: "none",
-    background: "#2563eb",
-    color: "#fff",
-    fontWeight: 600,
-    cursor: "pointer",
-    transition: "all .2s ease",
-    whiteSpace: "nowrap",
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.background = "#1d4ed8";
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.background = "#2563eb";
-  }}
->
-  Nhận hồ sơ&nbsp;&nbsp;|&nbsp;&nbsp;{isOpen ? "Mở" : "Đóng"}
-</button>
+  <button
+    type="button"
+    onClick={toggleSubmission}
+    style={{
+      padding: "12px 18px",
+      borderRadius: "10px",
+      border: "none",
+      background: "#2563eb",
+      color: "#fff",
+      fontWeight: 600,
+      cursor: "pointer",
+      transition: "all .2s ease",
+      whiteSpace: "nowrap",
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.background = "#1d4ed8";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.background = "#2563eb";
+    }}
+  >
+    Nhận hồ sơ&nbsp;&nbsp;|&nbsp;&nbsp;{isOpen ? "Mở" : "Đóng"}
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setShowNotificationModal(true)}
+    style={{
+      padding: "12px 18px",
+      borderRadius: "10px",
+      border: "1px solid #2563eb",
+      background: "#fff",
+      color: "#2563eb",
+      fontWeight: 600,
+      cursor: "pointer",
+      transition: "all .2s ease",
+      whiteSpace: "nowrap",
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.background = "#eff6ff";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.background = "#fff";
+    }}
+  >
+    Gửi thông báo
+  </button>
 </div>
  <div style={{ position: "relative" }}>
   <button
@@ -911,6 +996,185 @@ const exportExcel = async () => {
           Chưa đạt tiêu chí nào.
         </div>
       )}
+    </div>
+  </div>
+)}
+{showNotificationModal && (
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.35)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 10000,
+      padding: "20px",
+    }}
+    onClick={() => setShowNotificationModal(false)}
+  >
+    <div
+      style={{
+        width: "100%",
+        maxWidth: "520px",
+        background: "#fff",
+        borderRadius: "16px",
+        padding: "24px",
+        boxShadow: "0 15px 40px rgba(0,0,0,0.2)",
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "20px",
+        }}
+      >
+        <h2
+          style={{
+            margin: 0,
+            fontSize: "20px",
+            fontWeight: 700,
+            color: "#111827",
+          }}
+        >
+          📢 Gửi thông báo chung
+        </h2>
+
+        <button
+          type="button"
+          onClick={() => {
+            setShowNotificationModal(false);
+            setNotificationTitle("");
+            setNotificationContent("");
+          }}
+          style={{
+            border: "none",
+            background: "transparent",
+            fontSize: "26px",
+            color: "#64748b",
+            cursor: "pointer",
+            lineHeight: 1,
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Tiêu đề */}
+      <div style={{ marginBottom: "16px" }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "7px",
+            fontSize: "14px",
+            fontWeight: 600,
+            color: "#374151",
+          }}
+        >
+          Tiêu đề
+        </label>
+
+        <input
+          type="text"
+          value={notificationTitle}
+          onChange={(e) =>
+            setNotificationTitle(e.target.value)
+          }
+          placeholder="Nhập tiêu đề thông báo..."
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "12px 14px",
+            border: "1px solid #d1d5db",
+            borderRadius: "10px",
+            fontSize: "14px",
+            outline: "none",
+          }}
+        />
+      </div>
+
+      {/* Nội dung */}
+      <div style={{ marginBottom: "22px" }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "7px",
+            fontSize: "14px",
+            fontWeight: 600,
+            color: "#374151",
+          }}
+        >
+          Nội dung
+        </label>
+
+        <textarea
+          value={notificationContent}
+          onChange={(e) =>
+            setNotificationContent(e.target.value)
+          }
+          placeholder="Nhập nội dung thông báo..."
+          rows={5}
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "12px 14px",
+            border: "1px solid #d1d5db",
+            borderRadius: "10px",
+            fontSize: "14px",
+            outline: "none",
+            resize: "vertical",
+          }}
+        />
+      </div>
+
+      {/* Buttons */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: "10px",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setShowNotificationModal(false);
+            setNotificationTitle("");
+            setNotificationContent("");
+          }}
+          style={{
+            padding: "10px 18px",
+            borderRadius: "10px",
+            border: "1px solid #d1d5db",
+            background: "#fff",
+            color: "#374151",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          Hủy
+        </button>
+
+        <button
+          type="button"
+          onClick={sendGeneralNotification}
+          style={{
+            padding: "10px 20px",
+            borderRadius: "10px",
+            border: "none",
+            background: "#2563eb",
+            color: "#fff",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          Lưu
+        </button>
+      </div>
     </div>
   </div>
 )}

@@ -193,6 +193,52 @@ setIsActive(true);
 
 loadActivities();
   }
+  async function notifyUpcomingActivity(activity: Activity) {
+  try {
+    // Lấy toàn bộ sinh viên
+    const { data: profiles, error: profilesError } = await supabase
+  .from("profiles")
+  .select("id")
+  .eq("role", "student");
+
+    if (profilesError) {
+      console.error(profilesError);
+      alert("Không thể lấy danh sách sinh viên.");
+      return;
+    }
+
+    if (!profiles || profiles.length === 0) {
+      alert("Không có sinh viên nào để gửi thông báo.");
+      return;
+    }
+
+    // Tạo nội dung thông báo
+    const notifications = profiles.map((profile) => ({
+      user_id: profile.id,
+      type: "activity",
+      title: "Hoạt động sắp diễn ra",
+      content: `${activity.title}${activity.event_time ? ` sẽ diễn ra vào ${activity.event_time}.` : "."}`,
+      target_url: `/activities/${activity.id}`,
+      is_read: false,
+    }));
+
+    // Gửi thông báo
+    const { error: notificationError } = await supabase
+      .from("notifications")
+      .insert(notifications);
+
+    if (notificationError) {
+      console.error(notificationError);
+      alert("Không thể gửi thông báo: " + notificationError.message);
+      return;
+    }
+
+    alert(`Đã gửi thông báo cho ${profiles.length} sinh viên.`);
+  } catch (error) {
+    console.error(error);
+    alert("Đã xảy ra lỗi khi gửi thông báo.");
+  }
+}
 
   async function handleDelete(id: string) {
     if (!confirm("Bạn có chắc muốn xóa hoạt động này?")) return;
@@ -623,8 +669,14 @@ activities.filter((a) => a.status === "ended").length
     onClick={() => handleEdit(activity)}
     className="rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
   >
-    ✏️ Chỉnh sửa
+    Chỉnh sửa
   </button>
+  <button
+  onClick={() => notifyUpcomingActivity(activity)}
+  className="rounded-lg border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
+>
+ Thông báo
+</button>
 
   <button
     onClick={() => handleDelete(activity.id)}

@@ -6,11 +6,12 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { LogOut, ChevronLeft } from "lucide-react";
-
+import { requestNotificationPermission } from "@/lib/messaging";
 
 export default function Sidebar() {
   const pathname = usePathname();
-
+  const [notificationEnabled, setNotificationEnabled] = useState(false);
+  const [notificationLoading, setNotificationLoading] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -21,7 +22,7 @@ export default function Sidebar() {
 
   useEffect(() => {
     checkRole();
-
+    checkNotificationStatus();
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
@@ -123,22 +124,127 @@ const proofPaths = [
       href: "/thongbaouser",
     },
 
-    ...(isAdmin === false
-      ? [
-          {
-            name: "Đổi mật khẩu",
-            icon: "🔐",
-            href: "/doi-mat-khau",
-          },
-        ]
-      : []),
+   ...(isAdmin === false
+  ? [
+      {
+        name: "Đổi mật khẩu",
+        icon: "🔐",
+        href: "/doi-mat-khau",
+      },
+    ]
+  : []),
   ];
 
-  async function handleLogout() {
+async function handleLogout() {
     await supabase.auth.signOut();
     window.location.href = "/introduce";
   }
+async function checkNotificationStatus() {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("notification_tokens")
+      .select("id")
+      .eq("user_id", user.id)
+      .limit(1);
+
+    if (error) {
+      console.error(
+        "Lỗi kiểm tra notification:",
+        error
+      );
+      return;
+    }
+
+    setNotificationEnabled(
+      Array.isArray(data) && data.length > 0
+    );
+  } catch (error) {
+    console.error(
+      "Lỗi kiểm tra trạng thái thông báo:",
+      error
+    );
+  }
+}
+async function handleToggleNotification() {
+  try {
+    // =========================
+    // ĐANG BẬT → TẮT
+    // =========================
+    if (notificationEnabled) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert("❌ Bạn chưa đăng nhập.");
+        return;
+      }
+
+      const permission =
+        typeof window !== "undefined"
+          ? Notification.permission
+          : "default";
+
+      // Nếu browser vẫn đang cho phép thì không thể
+      // thu hồi quyền Notification bằng JavaScript.
+      // Ta chỉ xóa token khỏi hệ thống để server không gửi nữa.
+      const { error } = await supabase
+        .from("notification_tokens")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Lỗi xóa notification token:", error);
+        alert("❌ Không thể tắt thông báo.");
+        return;
+      }
+
+      setNotificationEnabled(false);
+
+      alert(
+        permission === "granted"
+          ? "🔕 Đã tắt thông báo trên hệ thống."
+          : "🔕 Đã tắt thông báo."
+      );
+
+      return;
+    }
+
+    // =========================
+    // ĐANG TẮT → BẬT
+    // =========================
+
+    setNotificationLoading(true);
+
+    const token = await requestNotificationPermission();
+
+    if (token) {
+      setNotificationEnabled(true);
+      alert("🔔 Đã bật thông báo!");
+    } else {
+      setNotificationEnabled(false);
+      alert("❌ Không lấy được FCM token.");
+    }
+  } catch (error) {
+    console.error("LỖI BẬT/TẮT THÔNG BÁO:", error);
+
+    alert(
+      `❌ Lỗi: ${
+        error instanceof Error
+          ? error.message
+          : String(error)
+      }`
+    );
+  } finally {
+    setNotificationLoading(false);
+  }
+}
   // =======================
   // MOBILE
   // =======================
@@ -440,7 +546,70 @@ onMouseLeave={(e) => {
         );
       })}
     </div>
+{/* BẬT / TẮT THÔNG BÁO */}
+<button
+  onClick={handleToggleNotification}
+  disabled={notificationLoading}
+  style={{
+    margin: "8px 10px 0",
+    padding: "12px 14px",
+    borderRadius: 12,
+    border: "none",
 
+    background: notificationEnabled
+      ? "#dcfce7"
+      : "#fef3c7",
+
+    color: notificationEnabled
+      ? "#166534"
+      : "#92400e",
+
+    cursor: notificationLoading
+      ? "wait"
+      : "pointer",
+
+    display: "flex",
+    alignItems: "center",
+    justifyContent: collapsed
+      ? "center"
+      : "flex-start",
+
+    gap: 8,
+    fontSize: 15,
+    fontWeight: 600,
+    transition: ".25s",
+    whiteSpace: "nowrap",
+    opacity: notificationLoading ? 0.7 : 1,
+  }}
+  onMouseEnter={(e) => {
+    if (!notificationLoading) {
+      e.currentTarget.style.transform =
+        "translateX(4px)";
+    }
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform =
+      "translateX(0)";
+  }}
+>
+  <span>
+    {notificationLoading
+      ? "⏳"
+      : notificationEnabled
+      ? "🔔"
+      : "🔕"}
+  </span>
+
+  {!collapsed && (
+    <span>
+      {notificationLoading
+        ? "Đang xử lý..."
+        : notificationEnabled
+        ? "Tắt thông báo"
+        : "Bật thông báo"}
+    </span>
+  )}
+</button>
     {/* FOOTER */}
     <div
       style={{

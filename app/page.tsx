@@ -22,6 +22,7 @@ export default function Home() {
   const [nextActivities, setNextActivities] = useState<any[]>([]);
   const [showActivities, setShowActivities] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [generalNotification, setGeneralNotification] = useState<any>(null);
 
 useEffect(() => {
   checkUser();
@@ -139,7 +140,46 @@ useEffect(() => {
 
   loadUnread();
 }, []);
+useEffect(() => {
+  async function loadGeneralNotification() {
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("type", "general")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) {
+      console.error("Lỗi lấy thông báo chung:", error);
+      return;
+    }
+    setGeneralNotification(data);
+  }
+  loadGeneralNotification();
+}, []);
+useEffect(() => {
+  const channel = supabase
+    .channel("general-notification-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "notifications",
+        filter: "type=eq.general",
+      },
+      (payload) => {
+        console.log("📢 Thông báo chung mới:", payload.new);
 
+        setGeneralNotification(payload.new);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
 async function loadProfile() {
   const {
     data: { user },
@@ -1342,17 +1382,19 @@ style={{
         </p>
       </a>
     </div>
-    {/* ===================================================== */}
+{/* ===================================================== */}
 {/* THÔNG TIN CHUNG */}
 {/* ===================================================== */}
 
 <div
   style={{
-    marginTop: 14,
+    marginTop: 16,
+    width: "100%",
+    boxSizing: "border-box",
     background:
       "linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)",
     borderRadius: "14px",
-    padding: "16px 20px",
+    padding: "18px 22px",
     border: "1px solid #FED7AA",
     boxShadow: "0 3px 8px rgba(0,0,0,.05)",
     display: "flex",
@@ -1363,44 +1405,70 @@ style={{
   {/* Icon */}
   <div
     style={{
-      width: 42,
-      height: 42,
+      width: 46,
+      height: 46,
       borderRadius: 12,
       background: "#FFEDD5",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      fontSize: 24,
+      fontSize: 25,
       flexShrink: 0,
     }}
   >
     📢
   </div>
 
-  {/* Tiêu đề */}
-  <div style={{ minWidth: 0 }}>
+  {/* Nội dung */}
+  <div
+    style={{
+      minWidth: 0,
+      flex: 1,
+    }}
+  >
+    {/* Tiêu đề */}
     <div
       style={{
-        fontSize: 15,
+        fontSize: 16,
         fontWeight: 800,
         color: "#9A3412",
       }}
     >
-      Thông tin chung
+      {generalNotification?.title || "Thông tin chung"}
     </div>
 
+    {/* Nội dung thông báo */}
     <div
       style={{
-        fontSize: 13,
+        fontSize: 14,
         color: "#C2410C",
-        marginTop: 3,
+        marginTop: 5,
+        lineHeight: 1.5,
+        wordBreak: "break-word",
       }}
     >
-      Sẽ sớm có thông báo từ Ban chủ nhiệm Câu lạc bộ Sinh viên 5 tốt BMU
+      {generalNotification?.content ||
+        "Sẽ sớm có thông báo từ Ban chủ nhiệm Câu lạc bộ Sinh viên 5 tốt BMU"}
     </div>
+
+    {/* Thời gian */}
+    {generalNotification?.created_at && (
+      <div
+        style={{
+          fontSize: 12,
+          color: "#9A3412",
+          marginTop: 7,
+        }}
+      >
+        Cập nhật:{" "}
+        {new Date(
+          generalNotification.created_at
+        ).toLocaleString("vi-VN")}
+      </div>
+    )}
   </div>
 </div>
-  </div>
+</div>
 </div>
 
        </div>
