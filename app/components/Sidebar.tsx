@@ -261,35 +261,79 @@ async function handleToggleNotification() {
               className="mobile-menu"
               onClick={(e) => e.stopPropagation()}
             >
-              {menus.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileMenu(false)}
-                  className={
-                    pathname === item.href ? "active" : ""
-                  }
-                >
-                  {item.icon} {item.name}
-                </Link>
-              ))}
+             {menus.map((item) => (
+  <Link
+    key={item.href}
+    href={item.href}
+    onClick={() => setMobileMenu(false)}
+    className={pathname === item.href ? "active" : ""}
+  >
+    {item.icon} {item.name}
+  </Link>
+))}
 
-              <button
-                onClick={handleLogout}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  background: "#ef4444",
-                  color: "#fff",
-                }}
-              >
-                <LogOut
-                  size={20}
-                  style={{ transform: "scaleX(-1)" }}
-                />
-                <span>Đăng xuất</span>
-              </button>
+{/* BẬT / TẮT THÔNG BÁO - MOBILE */}
+<button
+  onClick={handleToggleNotification}
+  disabled={notificationLoading}
+  style={{
+    width: "100%",
+    padding: "12px 14px",
+    marginTop: 4,
+    border: "none",
+    borderRadius: 12,
+    background: notificationEnabled
+      ? "#dcfce7"
+      : "#fef3c7",
+    color: notificationEnabled
+      ? "#166534"
+      : "#92400e",
+    cursor: notificationLoading
+      ? "wait"
+      : "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    fontSize: 15,
+    fontWeight: 600,
+    textAlign: "left",
+    opacity: notificationLoading ? 0.7 : 1,
+  }}
+>
+  <span>
+    {notificationLoading
+      ? "⏳"
+      : notificationEnabled
+      ? "🔔"
+      : "🔕"}
+  </span>
+
+  <span>
+    {notificationLoading
+      ? "Đang xử lý..."
+      : notificationEnabled
+      ? "Tắt thông báo"
+      : "Bật thông báo"}
+  </span>
+</button>
+
+{/* ĐĂNG XUẤT */}
+<button
+  onClick={handleLogout}
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    background: "#ef4444",
+    color: "#fff",
+  }}
+>
+  <LogOut
+    size={20}
+    style={{ transform: "scaleX(-1)" }}
+  />
+  <span>Đăng xuất</span>
+</button>
             </div>
           </div>
         )}
