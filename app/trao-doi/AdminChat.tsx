@@ -451,7 +451,7 @@ async function sendMessage() {
     body: JSON.stringify({
       title: "💬 Tin nhắn mới từ CLB SV5T",
       message: text || "Bạn có một tin nhắn mới.",
-      userId: selected.user_id,
+      userId: selected.id,
     }),
   });
 }
