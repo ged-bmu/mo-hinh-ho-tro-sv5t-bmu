@@ -47,8 +47,8 @@ async function checkAccess() {
   loadFiles();
 }
 
-  async function loadFiles() {
-      const {
+async function loadFiles() {
+  const {
     data: { user },
   } = await supabase.auth.getUser();
 
@@ -56,48 +56,48 @@ async function checkAccess() {
 
   setUserId(user.id);
 
-  const { data } = await supabase.storage
-    .from("Ho so SV5T")
-    .list(`${user.id}/dao-duc`);
+  // Lấy file từ uploaded_files
+  const { data: uploadedFiles, error } = await supabase
+    .from("uploaded_files")
+    .select(
+      "id, storage_name, display_name, storage_type, drive_file_id, drive_url"
+    )
+    .eq("user_id", user.id)
+    .eq("folder", "dao-duc")
+    .order("id", { ascending: false });
 
-  if (data) {
-    setFiles(data);
+  if (error) {
+    console.error("LOAD UPLOADED FILES ERROR:", error);
+    return;
   }
 
-  const { data: uploadedFiles } =
-    await supabase
-      .from("uploaded_files")
-      .select(
-        "storage_name, display_name"
-      )
-      .eq("user_id", user.id)
-      .eq("folder", "dao-duc");
-
   if (uploadedFiles) {
-    const map: Record<
-      string,
-      string
-    > = {};
+    setFiles(uploadedFiles);
+
+    const map: Record<string, string> = {};
 
     uploadedFiles.forEach((f) => {
-      map[f.storage_name] =
-        f.display_name;
+      map[f.storage_name] = f.display_name;
     });
 
     setDisplayNames(map);
-    const { data: reportData } = await supabase
-  .from("reports")
-  .select("content")
-  .eq("user_id", user.id)
-  .eq("criteria", "dao-duc")
-  .maybeSingle();
-
-setReport(
-  reportData?.content?.trim()
-    ? reportData.content
-    : defaultReport
-);
   }
+
+  // ================================
+  // Lấy báo cáo
+  // ================================
+  const { data: reportData } = await supabase
+    .from("reports")
+    .select("content")
+    .eq("user_id", user.id)
+    .eq("criteria", "dao-duc")
+    .maybeSingle();
+
+  setReport(
+    reportData?.content?.trim()
+      ? reportData.content
+      : defaultReport
+  );
 }
 async function saveReport() {
   if (!userId) return;
@@ -136,64 +136,131 @@ async function uploadFile(file: File) {
 
   if (!user) return;
 
-const safeName = file.name
-  .normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "")
-  .replace(/[^a-zA-Z0-9._-]/g, "_");
+  try {
+    // ================================
+    // 1. Lấy thông tin sinh viên
+    // ================================
+    const { data: profile, error: profileError } =
+      await supabase
+        .from("profiles")
+        .select("ho_ten, mssv, lop")
+        .eq("id", user.id)
+        .single();
 
-const fileName =
-  `${Date.now()}-${safeName}`;
-
-  const { error } = await supabase.storage
-  .from("Ho so SV5T")
-  .upload(
-    `${user.id}/dao-duc/${fileName}`,
-    file,
-    {
-      upsert: true,
+    if (profileError || !profile) {
+      console.error("Profile error:", profileError);
+      alert("Không lấy được thông tin sinh viên");
+      return;
     }
-  );
 
-if (error) {
-  alert(error.message);
-  return;
+    // ================================
+    // 2. Chuẩn bị dữ liệu gửi Google Drive
+    // ================================
+    const formData = new FormData();
+
+    formData.append("file", file);
+    formData.append("mssv", profile.mssv);
+    formData.append("ho_ten", profile.ho_ten);
+    formData.append("criteria", "dao-duc");
+
+    // ================================
+    // 3. Upload file lên Google Drive
+    // ================================
+    const response = await fetch("/api/upload-drive", {
+      method: "POST",
+      body: formData,
+    });
+
+    const driveResult = await response.json();
+
+    if (!response.ok || !driveResult.success) {
+      throw new Error(
+        driveResult.error ||
+          "Không thể upload lên Google Drive"
+      );
+    }
+
+    console.log(
+      "Google Drive upload:",
+      driveResult
+    );
+
+    // ================================
+    // 4. Tạo tên lưu trong uploaded_files
+    // ================================
+    const safeName = file.name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9._-]/g, "_");
+
+    const fileName = `${Date.now()}-${safeName}`;
+
+    // ================================
+    // 5. Lưu thông tin file vào Supabase
+    // ================================
+const { data: insertedFile, error: insertError } =
+  await supabase
+    .from("uploaded_files")
+    .insert({
+      user_id: user.id,
+      folder: "dao-duc",
+      storage_name: fileName,
+      display_name: file.name,
+      storage_type: "google_drive",
+      drive_file_id: driveResult.file.id,
+      drive_url: driveResult.file.webViewLink,
+    })
+    .select()
+    .single();
+
+console.log("SUPABASE INSERT DATA:", insertedFile);
+console.log("SUPABASE INSERT ERROR:", insertError);
+
+if (insertError) {
+  throw new Error(
+    `Lưu file vào Supabase thất bại: ${insertError.message}`
+  );
 }
 
-const { data, error: insertError } = await supabase
-  .from("uploaded_files")
-  .insert({
-    user_id: user.id,
-    folder: "dao-duc",
-    storage_name: fileName,
-    display_name: file.name,
-  });
+console.log(
+  "✅ Đã lưu file vào Supabase:",
+  insertedFile
+);
 
-console.log("INSERT DATA:", data);
-console.log("INSERT ERROR:", insertError);
+    // ================================
+    // 6. Ghi log upload
+    // ================================
+    await supabase
+      .from("activity_logs")
+      .insert({
+        user_id: user.id,
+        ho_ten: profile.ho_ten,
+        lop: profile.lop,
+        action_type: "upload",
+        target_folder: "dao-duc",
+        target_file: file.name,
+      });
 
-const { data: profile } = await supabase
-  .from("profiles")
-  .select("ho_ten, lop")
-  .eq("id", user.id)
-  .single();
+    await fetch("/api/cleanup-logs", {
+      method: "POST",
+    });
 
-await supabase
-  .from("activity_logs")
-  .insert({
-    user_id: user.id,
-    ho_ten: profile?.ho_ten,
-    lop: profile?.lop,
+    alert("✅ Upload file thành công!");
 
-    action_type: "upload",
+    // Tải lại danh sách
+    loadFiles();
+  } catch (error) {
+    console.error(
+      "Upload error:",
+      error
+    );
 
-    target_folder: "dao-duc",
-    target_file: file.name,
-  });
-  await fetch("/api/cleanup-logs", {
-  method: "POST",
-});
-
-  loadFiles();
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Không thể upload file"
+    );
+  }
 }
 async function handleUpload(
   event: React.ChangeEvent<HTMLInputElement>
@@ -211,107 +278,245 @@ async function handleUpload(
   }
 }
 
- async function deleteFile(name: string) {
+async function deleteFile(storageName: string) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  console.log("AUTH ID =", user?.id);
-
   if (!user) return;
 
-  // 1. Xóa file thật trong Storage
-  const { error: storageError } = await supabase.storage
-    .from("Ho so SV5T")
-    .remove([`${user.id}/dao-duc/${name}`]);
+  try {
+    // ================================
+    // 1. Lấy bản ghi file
+    // ================================
+    const { data: fileRecord, error: findError } =
+      await supabase
+        .from("uploaded_files")
+        .select(
+          "id, storage_name, display_name, drive_file_id"
+        )
+        .eq("user_id", user.id)
+        .eq("folder", "dao-duc")
+        .eq("storage_name", storageName)
+        .single();
 
-  if (storageError) {
-    console.error("Lỗi xóa Storage:", storageError);
-    alert("Không thể xóa file: " + storageError.message);
-    return;
-  }
+    if (findError || !fileRecord) {
+      throw new Error(
+        "Không tìm thấy thông tin file"
+      );
+    }
 
-  // 2. Xóa bản ghi tương ứng trong uploaded_files
-  const { error: dbError } = await supabase
-    .from("uploaded_files")
-    .delete()
-    .eq("user_id", user.id)
-    .eq("folder", "dao-duc")
-    .eq("storage_name", name);
+    // ================================
+    // 2. Xóa file trên Google Drive
+    // ================================
+    if (fileRecord.drive_file_id) {
+      const response = await fetch(
+        "/api/delete-drive",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fileId:
+              fileRecord.drive_file_id,
+          }),
+        }
+      );
 
-  if (dbError) {
-    console.error("Lỗi xóa uploaded_files:", dbError);
-    alert(
-      "File đã được xóa khỏi Storage nhưng chưa xóa được dữ liệu!"
-    );
-    return;
-  }
+      const result = await response.json();
 
-  // 3. Lấy thông tin sinh viên để ghi log
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("ho_ten, lop")
-    .eq("id", user.id)
-    .single();
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error ||
+            "Không thể xóa file trên Google Drive"
+        );
+      }
+    }
 
-  // 4. Ghi log xóa
-  await supabase
-    .from("activity_logs")
-    .insert({
-      user_id: user.id,
-      ho_ten: profile?.ho_ten,
-      lop: profile?.lop,
-      action_type: "delete",
-      target_folder: "dao-duc",
-      target_file: name,
+    // ================================
+    // 3. Xóa bản ghi Supabase
+    // ================================
+    const { error: dbError } =
+      await supabase
+        .from("uploaded_files")
+        .delete()
+        .eq("id", fileRecord.id)
+        .eq("user_id", user.id);
+
+    if (dbError) {
+      throw new Error(
+        "Đã xóa file trên Drive nhưng không thể xóa dữ liệu Supabase: " +
+          dbError.message
+      );
+    }
+
+    // ================================
+    // 4. Lấy profile để ghi log
+    // ================================
+    const { data: profile } =
+      await supabase
+        .from("profiles")
+        .select("ho_ten, lop")
+        .eq("id", user.id)
+        .single();
+
+    // ================================
+    // 5. Ghi log
+    // ================================
+    await supabase
+      .from("activity_logs")
+      .insert({
+        user_id: user.id,
+        ho_ten: profile?.ho_ten,
+        lop: profile?.lop,
+        action_type: "delete",
+        target_folder: "dao-duc",
+        target_file:
+          fileRecord.display_name ||
+          fileRecord.storage_name,
+      });
+
+    await fetch("/api/cleanup-logs", {
+      method: "POST",
     });
 
-  await fetch("/api/cleanup-logs", {
-    method: "POST",
-  });
+    // ================================
+    // 6. Load lại
+    // ================================
 
-  // 5. Tải lại danh sách file
-  loadFiles();
+  } catch (error) {
+    console.error(
+      "Delete error:",
+      error
+    );
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Không thể xóa file"
+    );
+  }
 }
-  async function renameFile(file: any) {
-  const ext = file.name.slice(file.name.lastIndexOf("."));
-  const currentName = (file.display_name || file.name).replace(/\.[^/.]+$/, "");
-  const input = prompt("Nhập tên mới:", currentName);
-      if (!input) return;
+async function renameFile(file: any) {
+  const currentName = file.display_name || file.name;
+
+  const ext = currentName.includes(".")
+    ? currentName.slice(currentName.lastIndexOf("."))
+    : "";
+
+  const currentNameWithoutExt = currentName.replace(/\.[^/.]+$/, "");
+
+  const input = prompt("Nhập tên mới:", currentNameWithoutExt);
+
+  if (!input || !input.trim()) return;
+
   const newName = input.trim() + ext;
 
-  await supabase
-    .from("uploaded_files")
-    .update({
-      display_name: newName,
-    })
-    .eq("storage_name", file.storage_name || file.name)
+  try {
+    // ================================
+    // 1. Đổi tên trên Google Drive
+    // ================================
+    if (file.drive_file_id) {
+      const response = await fetch("/api/rename-drive", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileId: file.drive_file_id,
+          newName,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error ||
+            "Không thể đổi tên file trên Google Drive"
+        );
+      }
+    }
+
+    // ================================
+    // 2. Đổi tên trong Supabase
+    // ================================
+    const { error: updateError } = await supabase
+      .from("uploaded_files")
+      .update({
+        display_name: newName,
+      })
+      .eq("id", file.id)
+      .eq("user_id", userId);
+
+    if (updateError) {
+      throw new Error(
+        "Đã đổi tên Google Drive nhưng không thể cập nhật tên hiển thị: " +
+          updateError.message
+      );
+    }
+
+    // ================================
+    // 3. CẬP NHẬT TRỰC TIẾP STATE
+    // ================================
+    setFiles((prevFiles) =>
+      prevFiles.map((item) =>
+        item.id === file.id
+          ? {
+              ...item,
+              display_name: newName,
+            }
+          : item
+      )
+    );
+
+    // ================================
+    // 4. Cập nhật displayNames
+    // ================================
+    setDisplayNames((prev) => ({
+      ...prev,
+      [file.storage_name]: newName,
+    }));
+
+    // ================================
+    // 5. Lấy thông tin sinh viên
+    // ================================
     const {
-  data: { user },
-} = await supabase.auth.getUser();
+      data: { user },
+    } = await supabase.auth.getUser();
 
-const { data: profile } = await supabase
-  .from("profiles")
-  .select("ho_ten, lop")
-  .eq("id", user?.id)
-  .single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("ho_ten, lop")
+      .eq("id", user?.id)
+      .single();
 
-await supabase
-  .from("activity_logs")
-  .insert({
-    user_id: user?.id,
-    ho_ten: profile?.ho_ten,
-    lop: profile?.lop,
+    // ================================
+    // 6. Ghi log
+    // ================================
+    await supabase.from("activity_logs").insert({
+      user_id: user?.id,
+      ho_ten: profile?.ho_ten,
+      lop: profile?.lop,
+      action_type: "rename",
+      target_folder: "dao-duc",
+      target_file: newName,
+    });
 
-    action_type: "rename",
+    await fetch("/api/cleanup-logs", {
+      method: "POST",
+    });
 
-    target_folder: "dao-duc",
-    target_file: newName,
-  });
-await fetch("/api/cleanup-logs", {
-  method: "POST",
-});
-  loadFiles();
+  } catch (error) {
+    console.error("Rename error:", error);
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Không thể đổi tên file"
+    );
+  }
 }
 
   return (
@@ -577,22 +782,23 @@ await fetch("/api/cleanup-logs", {
           )}
 
 {files.map((file) => {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_URL +
-    `/storage/v1/object/public/Ho%20so%20SV5T/${userId}/dao-duc/${file.name}`;
-
   return (
     <FileItem
-      key={file.name}
+      key={file.id}
       file={{
         ...file,
-        storage_name: file.name,
+        name: file.display_name || file.storage_name,
+        storage_name: file.storage_name,
         display_name:
-          displayNames[file.name] ||
-          file.name,
+          file.display_name ||
+          file.storage_name,
       }}
-      url={url}
-      onDelete={() => deleteFile(file.name)}
+      url={`/api/view-drive?fileId=${encodeURIComponent(
+        file.drive_file_id
+      )}`}
+      onDelete={() =>
+        deleteFile(file.storage_name)
+      }
       onRename={renameFile}
     />
   );

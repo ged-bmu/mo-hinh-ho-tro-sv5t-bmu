@@ -1,50 +1,58 @@
-import { NextRequest, NextResponse } from "next/server";
+import { google } from "googleapis";
+import { NextResponse } from "next/server";
 
-const ROOT_FOLDER_ID = "15ombdT7_XGemlGQA53Vr8Emm_Lp__3v8";
+export const runtime = "nodejs";
 
-export async function GET(request: NextRequest) {
+const auth = new google.auth.GoogleAuth({
+  credentials: {
+    project_id: process.env.GOOGLE_PROJECT_ID,
+    client_email: process.env.GOOGLE_CLIENT_EMAIL,
+    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+  },
+  scopes: ["https://www.googleapis.com/auth/drive"],
+});
+
+const drive = google.drive({
+  version: "v3",
+  auth,
+});
+
+export async function GET() {
   try {
-    const apiKey = process.env.GOOGLE_DRIVE_API_KEY;
+    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
-    if (!apiKey) {
+    if (!folderId) {
       return NextResponse.json(
-        { error: "Chưa có GOOGLE_DRIVE_API_KEY" },
+        {
+          success: false,
+          error: "Chưa cấu hình GOOGLE_DRIVE_FOLDER_ID",
+        },
         { status: 500 }
       );
     }
 
-    // Nếu không truyền folderId thì lấy thư mục gốc
-    const { searchParams } = new URL(request.url);
-    const folderId = searchParams.get("folderId") || ROOT_FOLDER_ID;
+    const response = await drive.files.list({
+      q: `'${folderId}' in parents and trashed = false`,
+      fields:
+        "files(id,name,mimeType,webViewLink,webContentLink,createdTime)",
+      orderBy: "createdTime desc",
+    });
 
-    const url =
-      `https://www.googleapis.com/drive/v3/files` +
-      `?q=${encodeURIComponent(
-        `'${folderId}' in parents and trashed = false`
-      )}` +
-      `&key=${apiKey}` +
-      `&fields=files(id,name,mimeType,webViewLink,thumbnailLink,size)` +
-      `&orderBy=name`;
-
-    const response = await fetch(url);
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return NextResponse.json(
-        {
-          error: data.error?.message || "Không lấy được danh sách Drive",
-        },
-        { status: response.status }
-      );
-    }
-
-    return NextResponse.json(data.files || []);
+    return NextResponse.json({
+      success: true,
+      files: response.data.files || [],
+    });
   } catch (error) {
-    console.error("Drive API error:", error);
+    console.error("Google Drive list error:", error);
 
     return NextResponse.json(
-      { error: "Lỗi khi lấy danh sách hồ sơ mẫu" },
+      {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Không thể lấy danh sách Google Drive",
+      },
       { status: 500 }
     );
   }
