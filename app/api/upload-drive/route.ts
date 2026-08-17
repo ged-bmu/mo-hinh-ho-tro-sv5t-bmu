@@ -21,40 +21,41 @@ export async function POST(request: Request) {
       );
     }
 
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+    const projectId = process.env.GOOGLE_PROJECT_ID;
+    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY;
     const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
     if (
-      !clientId ||
-      !clientSecret ||
-      !refreshToken ||
+      !projectId ||
+      !clientEmail ||
+      !privateKey ||
       !folderId
     ) {
       return NextResponse.json(
         {
           success: false,
           error:
-            "Thiếu GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN hoặc GOOGLE_DRIVE_FOLDER_ID",
+            "Thiếu GOOGLE_PROJECT_ID, GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY hoặc GOOGLE_DRIVE_FOLDER_ID",
         },
         { status: 500 }
       );
     }
 
-    const oauth2Client = new google.auth.OAuth2(
-      clientId,
-      clientSecret,
-      process.env.GOOGLE_REDIRECT_URI
-    );
-
-    oauth2Client.setCredentials({
-      refresh_token: refreshToken,
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        project_id: projectId,
+        client_email: clientEmail,
+        private_key: privateKey.replace(/\\n/g, "\n"),
+      },
+      scopes: [
+        "https://www.googleapis.com/auth/drive",
+      ],
     });
 
     const drive = google.drive({
       version: "v3",
-      auth: oauth2Client,
+      auth,
     });
 
     const buffer = Buffer.from(
