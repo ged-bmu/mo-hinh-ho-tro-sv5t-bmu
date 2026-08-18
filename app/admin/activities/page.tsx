@@ -232,6 +232,34 @@ loadActivities();
       alert("Không thể gửi thông báo: " + notificationError.message);
       return;
     }
+    const response = await fetch("/api/notifications/activity", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    activityId: activity.id,
+    title: "📢 Hoạt động sắp diễn ra",
+    body: `${activity.title}${
+      activity.event_time
+        ? ` sẽ diễn ra vào ${activity.event_time}.`
+        : "."
+    }`,
+    url: `/activities/${activity.id}`,
+  }),
+});
+
+const fcmResult = await response.json();
+
+if (!response.ok) {
+  console.error("FCM ERROR:", fcmResult);
+  alert(
+    "Đã tạo thông báo trong hệ thống nhưng gửi thông báo điện thoại thất bại."
+  );
+  return;
+}
+
+console.log("📱 FCM RESULT:", fcmResult);
 
     alert(`Đã gửi thông báo cho ${profiles.length} sinh viên.`);
   } catch (error) {
