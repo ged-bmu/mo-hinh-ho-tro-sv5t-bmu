@@ -141,32 +141,17 @@ async function handleBellClick() {
   setBellRotate(true);
 
   try {
-    // Đang mở → chỉ đóng
+    console.log("🔔 CLICK BELL");
+
     if (open) {
       setOpen(false);
       return;
     }
 
-    // Đang đóng → mở dropdown
     setOpen(true);
 
-    // Đăng ký FCM CHỈ khi người dùng bấm nút
-    console.log("🔔 BẮT ĐẦU ĐĂNG KÝ FCM");
-
-    const token = await registerFCMToken();
-
-    console.log(
-      "🔔 KẾT QUẢ REGISTER FCM:",
-      token ? "SUCCESS" : "FAILED"
-    );
-
-    // Nếu đăng ký thành công thì đánh dấu đã đọc
-    if (token) {
-      await markAsRead();
-    }
-
   } catch (error) {
-    console.error("❌ LỖI BẬT THÔNG BÁO:", error);
+    console.error("❌ LỖI:", error);
   } finally {
     setTimeout(() => {
       setBellRotate(false);
