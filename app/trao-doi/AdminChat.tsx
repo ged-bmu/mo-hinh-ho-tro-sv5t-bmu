@@ -35,6 +35,7 @@ export default function AdminChat() {
 
   const [message, setMessage] = useState("");
   const [replyMessage, setReplyMessage] = useState<Message | null>(null);
+  const [isSending, setIsSending] = useState(false);
   
   /* -----------------------
       Load conversations
@@ -260,6 +261,42 @@ async function loadMessages(conversationId: string) {
   }
 }
 
+function updateMessage(updated: Message) {
+  setMessages((prev) =>
+    prev.map((message) =>
+      message.id === updated.id ? updated : message
+    )
+  );
+}
+
+async function loadReferencedMessage(id: number) {
+  const conversationId = selected?.conversationId;
+  if (!conversationId) return false;
+
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .eq("id", id)
+    .eq("conversation_id", conversationId)
+    .maybeSingle();
+
+  if (error || !data) {
+    console.error("Could not load referenced message:", error);
+    return false;
+  }
+
+  setMessages((prev) => {
+    const withoutReferencedMessage = prev.filter((message) => message.id !== data.id);
+
+    return [...withoutReferencedMessage, data as Message].sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  });
+
+  return true;
+}
+
   /* -----------------------
       Đánh dấu đã đọc
   ------------------------ */
@@ -314,10 +351,24 @@ async function markRead(conversationId: string) {
   ------------------------ */
 
 async function sendMessage() {
-  if (!selected) return;
+  if (!selected || isSending) return;
   if (!message.trim() && !selectedFile) return;
 
   const text = message;
+
+  const {
+    data: { user: adminUser },
+  } = await supabase.auth.getUser();
+
+  if (!adminUser) return;
+
+  const fileToUpload = selectedFile;
+  const replyTo = replyMessage?.id ?? null;
+
+  setMessage("");
+  setReplyMessage(null);
+  setSelectedFile(null);
+  setIsSending(true);
 
   let conversationId = selected.conversationId;
 
@@ -341,6 +392,7 @@ async function sendMessage() {
       .single();
 
     if (conversationError) {
+      setIsSending(false);
       console.log(
         "Lỗi tạo conversation:",
         conversationError
@@ -360,12 +412,6 @@ async function sendMessage() {
   // ==========================================
   // 2. LƯU FILE / XÓA INPUT
   // ==========================================
-  setMessage("");
-  setReplyMessage(null);
-
-  const fileToUpload = selectedFile;
-  setSelectedFile(null);
-
   let fileUrl = null;
   let fileName = null;
 
@@ -386,6 +432,7 @@ async function sendMessage() {
       .upload(path, fileToUpload);
 
     if (uploadError) {
+      setIsSending(false);
       console.log(uploadError);
       alert("Upload thất bại");
       return;
@@ -410,9 +457,10 @@ async function sendMessage() {
   .from("messages")
   .insert({
     conversation_id: conversationId,
+    sender_id: adminUser.id,
     sender_role: "admin",
     content: text,
-    reply_to: replyMessage?.id ?? null,
+    reply_to: replyTo,
     file_url: fileUrl,
     file_name: fileName,
   })
@@ -420,6 +468,7 @@ async function sendMessage() {
   .single();
 
 if (error) {
+  setIsSending(false);
   console.log("Lỗi gửi tin nhắn:", error);
   return;
 }
@@ -441,6 +490,8 @@ if (error) {
 await supabase.rpc("increment_unread_user", {
   conversation_id_input: conversationId,
 });
+
+setIsSending(false);
 
 // ==========================================
 // 7. LẤY USER ID SINH VIÊN
@@ -731,7 +782,7 @@ onClick={() => {
   );
 }}
                   className={`
-  group relative flex w-full
+  group relative flex min-w-0 w-full
   gap-3 px-4 py-3
   text-left
   transition-all duration-200
@@ -798,7 +849,7 @@ onClick={() => {
                   {/* Info */}
                   <div className="min-w-0 flex-1">
 
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center justify-between gap-2">
 
                       <div
                         className={`
@@ -1199,6 +1250,8 @@ onClick={() => {
   messagesContainerRef={messagesContainerRef}
   viewerRole="admin"
   onReply={(msg) => setReplyMessage(msg)}
+  onMessageUpdated={updateMessage}
+  onLoadReferencedMessage={loadReferencedMessage}
   inputRef={inputRef}
 />
 
@@ -1284,6 +1337,7 @@ onClick={() => {
   setSelectedFile={setSelectedFile}
   replyMessage={replyMessage}
   setReplyMessage={setReplyMessage}
+  isSending={isSending}
   inputRef={inputRef}
 />
 

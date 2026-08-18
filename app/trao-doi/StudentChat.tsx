@@ -15,6 +15,7 @@ type Message = {
   sender_role: "user" | "admin";
   created_at: string;
   is_read: boolean;
+  is_recalled?: boolean;
   reply_to?: number | null;
   file_url?: string | null;
   file_name?: string | null;
@@ -35,6 +36,7 @@ export default function StudentChat({
   const [message, setMessage] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [replyMessage, setReplyMessage] = useState<Message | null>(null);
+  const [isSending, setIsSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -121,6 +123,41 @@ async function loadMessages() {
 
   setMessages((data || []).reverse());
 }
+
+  function updateMessage(updated: Message) {
+    setMessages((prev) =>
+      prev.map((message) =>
+        message.id === updated.id ? updated : message
+      )
+    );
+  }
+
+  async function loadReferencedMessage(id: number) {
+    if (!conversationId) return false;
+
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("id", id)
+      .eq("conversation_id", conversationId)
+      .maybeSingle();
+
+    if (error || !data) {
+      console.error("Could not load referenced message:", error);
+      return false;
+    }
+
+    setMessages((prev) => {
+      const withoutReferencedMessage = prev.filter((message) => message.id !== data.id);
+
+      return [...withoutReferencedMessage, data as Message].sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
+
+    return true;
+  }
     /* -----------------------
       Đánh dấu đã đọc
   ------------------------ */
@@ -213,18 +250,25 @@ async function loadMessages() {
   ------------------------ */
 console.log("FILE ĐANG CHỌN:", selectedFile);
 async function sendMessage() {
-  if (!conversationId) return;
+  if (!conversationId || isSending) return;
   if (!message.trim() && !selectedFile) return;
 console.log("BẮT ĐẦU GỬI");
   console.log("FILE:", selectedFile);
     const text = message;
+    const fileToUpload = selectedFile;
+    const replyTo = replyMessage?.id ?? null;
+
+    setMessage("");
+    setReplyMessage(null);
+    setSelectedFile(null);
+    setIsSending(true);
     let fileUrl = null;
 let fileName = null;
 
 
-if (selectedFile) {
+if (fileToUpload) {
 
-  const safeFileName = selectedFile.name
+  const safeFileName = fileToUpload.name
   .normalize("NFD")
   .replace(/[\u0300-\u036f]/g, "")
   .replace(/[^a-zA-Z0-9.\-_]/g, "_");
@@ -238,7 +282,7 @@ console.log("BẮT ĐẦU UPLOAD");
 const uploadResult = await supabase
   .storage
   .from("chat-files")
-  .upload(path, selectedFile, {
+  .upload(path, fileToUpload, {
     cacheControl: "3600",
     upsert: false,
   });
@@ -250,6 +294,7 @@ console.log(uploadResult);
 const uploadError = uploadResult.error;
 
   if (uploadError) {
+    setIsSending(false);
     console.log(uploadError);
     alert("Upload file thất bại");
     return;
@@ -262,16 +307,12 @@ const publicUrl = supabase
   .getPublicUrl(path);
 
 fileUrl = publicUrl.data.publicUrl;
-fileName = selectedFile.name;
+fileName = fileToUpload.name;
 
 console.log("FILE URL:", fileUrl);
 console.log("FILE NAME:", fileName);
 }
     console.log("replyMessage =", replyMessage);
-
-    setMessage("");
-    setReplyMessage(null);
-    setSelectedFile(null);
 
 const { data, error } = await supabase
   .from("messages")
@@ -280,7 +321,7 @@ const { data, error } = await supabase
   sender_id: user.id,
   sender_role: "user",
   content: text,
-  reply_to: replyMessage?.id ?? null,
+  reply_to: replyTo,
 
   file_url: fileUrl,
   file_name: fileName,
@@ -290,6 +331,7 @@ const { data, error } = await supabase
 console.log("Inserted reply_to:", data?.[0]?.reply_to);
 console.log(data?.[0]);
     if (error) {
+      setIsSending(false);
       console.log(error);
       return;
     }
@@ -310,6 +352,7 @@ console.log(data?.[0]);
           conversationId,
       }
     );
+    setIsSending(false);
   }
     return (
     <>
@@ -361,6 +404,8 @@ console.log(data?.[0]);
   messagesContainerRef={messagesContainerRef}
   viewerRole="user"
   onReply={setReplyMessage}
+  onMessageUpdated={updateMessage}
+  onLoadReferencedMessage={loadReferencedMessage}
   inputRef={inputRef}
 />
 
@@ -372,6 +417,7 @@ console.log(data?.[0]);
   setSelectedFile={setSelectedFile}
   replyMessage={replyMessage}
   setReplyMessage={setReplyMessage}
+  isSending={isSending}
   inputRef={inputRef}
 />
 

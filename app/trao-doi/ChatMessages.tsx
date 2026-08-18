@@ -23,6 +23,8 @@ type Props = {
   messagesContainerRef: React.RefObject<HTMLDivElement | null>;
   viewerRole: "user" | "admin";
   onReply: (msg: Message) => void;
+  onMessageUpdated: (msg: Message) => void;
+  onLoadReferencedMessage: (id: number) => Promise<boolean>;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
 };
 
@@ -32,18 +34,21 @@ export default function ChatMessages({
   messagesContainerRef,
   viewerRole,
   onReply,
+  onMessageUpdated,
+  onLoadReferencedMessage,
   inputRef,
 }: Props) {
   const [openMenu, setOpenMenu] = useState<number | null>(null);
   const [previewFile, setPreviewFile] = useState<Message | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [pendingScrollMessageId, setPendingScrollMessageId] = useState<number | null>(null);
   const messageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const messageMap = useMemo(() => {
   return new Map(messages.map((m) => [m.id, m]));
 }, [messages]);
 
   async function recallMessage(id: number) {
-    await supabase
+    const { data, error } = await supabase
       .from("messages")
       .update({
         is_recalled: true,
@@ -51,7 +56,16 @@ export default function ChatMessages({
         file_url: null,
         file_name: null,
       })
-      .eq("id", id);
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Could not recall message:", error);
+      return;
+    }
+
+    onMessageUpdated(data as Message);
 
     setOpenMenu(null);
   }
@@ -67,7 +81,7 @@ function handleCopy(msg: Message) {
   navigator.clipboard.writeText(msg.content);
   setOpenMenu(null);
 }
-function scrollToMessage(id: number) {
+async function scrollToMessage(id: number) {
   const el = messageRefs.current.get(id);
 
   if (el) {
@@ -75,10 +89,21 @@ function scrollToMessage(id: number) {
       behavior: "smooth",
       block: "center",
     });
+  } else if (await onLoadReferencedMessage(id)) {
+    setPendingScrollMessageId(id);
   }
 
   setOpenMenu(null);
 }
+useEffect(() => {
+  if (pendingScrollMessageId === null) return;
+
+  const el = messageRefs.current.get(pendingScrollMessageId);
+  if (!el) return;
+
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  setPendingScrollMessageId(null);
+}, [messages, pendingScrollMessageId]);
 function scrollToBottom() {
   bottomRef.current?.scrollIntoView({
     behavior: "smooth",
@@ -113,15 +138,14 @@ function handleScroll() {
   };
 }, [messages, messagesContainerRef]);
 return (
-  <div
-    ref={messagesContainerRef}
-    className="relative min-h-0 flex-1 overflow-y-auto bg-slate-50 px-3 py-3 md:px-6 md:py-5"
-  >
+<div 
+  ref={messagesContainerRef}
+  className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 px-3 py-3 md:px-6 md:py-5"
+>
       <div className="space-y-5">
 
         {messages.map((msg) => {
           const isMe = msg.sender_role === viewerRole;
-          const isAdminMessage = msg.sender_role === "admin";
           const repliedMessage = msg.reply_to
             ? messageMap.get(msg.reply_to)
             : undefined;
@@ -177,10 +201,10 @@ return (
                 }`}
               >
               {/* Reply */}
-{repliedMessage && (
+{msg.reply_to && (
   <button
     type="button"
-    onClick={() => scrollToMessage(repliedMessage.id)}
+    onClick={() => scrollToMessage(msg.reply_to!)}
     className="mb-1 w-full max-w-full rounded-lg border-l-4 border-blue-400 bg-gray-100 px-3 py-2 text-left text-xs text-gray-500 transition hover:bg-gray-200"
   >
     <div className="mb-1 font-medium text-gray-400">
@@ -188,15 +212,19 @@ return (
     </div>
 
     <div className="truncate">
-      {repliedMessage.is_recalled
+      {repliedMessage?.is_recalled
         ? "Tin nhắn đã thu hồi"
-        : repliedMessage.content || "Tin nhắn đính kèm"}
+        : repliedMessage?.content || "Tin nhắn đính kèm"}
     </div>
   </button>
 )}
 
 {/* Text message */}
-{msg.content && (
+{msg.is_recalled ? (
+  <div className="max-w-[420px] rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm italic text-slate-500">
+    Tin nhắn đã thu hồi
+  </div>
+) : msg.content && (
   <div
     className={`max-w-[420px] break-words whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
       isMe
@@ -290,6 +318,7 @@ return (
             </div>
           );
         })}
+        <div ref={bottomRef} />
         {previewFile && (
   <div
     className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-5"

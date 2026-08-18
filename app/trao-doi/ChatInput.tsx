@@ -3,6 +3,7 @@
 import {
   Paperclip,
   Image as ImageIcon,
+  LoaderCircle,
   Send,
 } from "lucide-react";
 
@@ -20,7 +21,8 @@ type Message = {
 type Props = {
   message: string;
   setMessage: (value: string) => void;
-  sendMessage: () => void;
+  sendMessage: () => void | Promise<void>;
+  isSending: boolean;
   selectedFile: File | null;
   setSelectedFile: (file: File | null) => void;
 
@@ -31,9 +33,10 @@ type Props = {
 };
 
 export default function ChatInput({
-  message,
+ message,
   setMessage,
  sendMessage,
+isSending,
 replyMessage,
 setReplyMessage,
 inputRef,
@@ -105,7 +108,9 @@ setSelectedFile,
     </div>
 
 <div className="mt-1 w-full overflow-hidden text-sm text-gray-600 whitespace-pre-wrap break-all">
-  {replyMessage.content}
+  {replyMessage.is_recalled
+    ? "Tin nhắn đã thu hồi"
+    : replyMessage.content || "Tin nhắn đính kèm"}
 </div>
   </div>
 )}
@@ -150,6 +155,7 @@ setSelectedFile,
   onClick={() =>
     fileInputRef.current?.click()
   }
+  disabled={isSending}
   className="rounded-full p-1 md:p-2 transition hover:bg-gray-100"
 >
   <Paperclip size={18} />
@@ -159,6 +165,7 @@ setSelectedFile,
   onClick={() =>
     imageInputRef.current?.click()
   }
+  disabled={isSending}
   className="rounded-full p-1 md:p-2 transition hover:bg-gray-100"
 >
   <ImageIcon size={18} />
@@ -211,13 +218,14 @@ onChange={(e)=>{
   onChange={(e) =>
     setMessage(e.target.value)
   }
+  disabled={isSending}
   onKeyDown={(e) => {
     if (
       e.key === "Enter" &&
       !e.shiftKey
     ) {
       e.preventDefault();
-      sendMessage();
+      if (!isSending) sendMessage();
     }
   }}
   className="
@@ -239,21 +247,25 @@ onChange={(e)=>{
         <button
   onClick={()=>{
     console.log("CLICK GỬI");
-    sendMessage();
+    if (!isSending) sendMessage();
   }}
-          disabled={!message.trim() && !selectedFile}
+          disabled={isSending || (!message.trim() && !selectedFile)}
           className={`
             rounded-full
             p-2 md:p-3
             transition
             ${
-  message.trim() || selectedFile
+  !isSending && (message.trim() || selectedFile)
     ? "bg-blue-500 text-white hover:bg-blue-600"
     : "cursor-not-allowed bg-gray-200 text-gray-400"
 }
           `}
         >
-          <Send size={18} />
+          {isSending ? (
+            <LoaderCircle className="animate-spin" size={18} />
+          ) : (
+            <Send size={18} />
+          )}
         </button>
 
       </div>
