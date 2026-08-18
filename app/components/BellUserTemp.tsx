@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { registerFCMToken } from "@/lib/firebase-messaging";
 import { Bell } from "lucide-react";
 
 export default function BellUserTemp() {
@@ -12,7 +11,6 @@ export default function BellUserTemp() {
   const [isMobile, setIsMobile] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
-  const [notificationLoading, setNotificationLoading] = useState(false);
 
   // =====================================================
   // MOBILE
@@ -52,11 +50,16 @@ export default function BellUserTemp() {
         .from("notifications")
         .select("*")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
+        .order("created_at", {
+          ascending: false,
+        })
         .limit(5);
 
       if (error) {
-        console.error("❌ Lỗi load notifications:", error);
+        console.error(
+          "❌ Lỗi load notifications:",
+          error
+        );
         return;
       }
 
@@ -65,15 +68,20 @@ export default function BellUserTemp() {
       setNotifications(list);
 
       setUnreadCount(
-        list.filter((item) => !item.is_read).length
+        list.filter(
+          (item) => !item.is_read
+        ).length
       );
     } catch (error) {
-      console.error("❌ Lỗi load notifications:", error);
+      console.error(
+        "❌ Lỗi load notifications:",
+        error
+      );
     }
   }
 
   // =====================================================
-  // REALTIME NOTIFICATIONS
+  // REALTIME
   // =====================================================
 
   useEffect(() => {
@@ -88,7 +96,9 @@ export default function BellUserTemp() {
       if (!user || cancelled) return;
 
       const newChannel = supabase
-        .channel(`notifications-realtime-${user.id}`)
+        .channel(
+          `notifications-realtime-${user.id}`
+        )
         .on(
           "postgres_changes",
           {
@@ -103,12 +113,13 @@ export default function BellUserTemp() {
               payload.new
             );
 
-            setNotifications((prev) => [
-              payload.new,
-              ...prev,
-            ].slice(0, 5));
+            setNotifications((prev) =>
+              [payload.new, ...prev].slice(0, 5)
+            );
 
-            setUnreadCount((prev) => prev + 1);
+            setUnreadCount(
+              (prev) => prev + 1
+            );
 
             setBellRotate(true);
 
@@ -119,18 +130,22 @@ export default function BellUserTemp() {
         );
 
       if (cancelled) {
-        await supabase.removeChannel(newChannel);
+        await supabase.removeChannel(
+          newChannel
+        );
         return;
       }
 
       channel = newChannel;
 
-      channel.subscribe((status: string) => {
-        console.log(
-          "📡 Notifications realtime:",
-          status
-        );
-      });
+      channel.subscribe(
+        (status: string) => {
+          console.log(
+            "📡 Notifications realtime:",
+            status
+          );
+        }
+      );
     }
 
     subscribeNotifications();
@@ -157,11 +172,21 @@ export default function BellUserTemp() {
 
       if (!user) return;
 
-      await supabase
+      const { error } = await supabase
         .from("notifications")
-        .update({ is_read: true })
+        .update({
+          is_read: true,
+        })
         .eq("user_id", user.id)
         .eq("is_read", false);
+
+      if (error) {
+        console.error(
+          "❌ Lỗi mark notification:",
+          error
+        );
+        return;
+      }
 
       setUnreadCount(0);
 
@@ -180,64 +205,22 @@ export default function BellUserTemp() {
   }
 
   // =====================================================
-  // BẬT / TẮT
+  // OPEN / CLOSE NOTIFICATION
   // =====================================================
 
   async function handleBellClick() {
-    if (notificationLoading) return;
+    const next = !open;
 
     setBellRotate(true);
+    setOpen(next);
 
-    try {
-      // -------------------------------------------------
-      // NẾU DROPDOWN ĐANG MỞ → CHỈ ĐÓNG
-      // -------------------------------------------------
-
-      if (open) {
-        setOpen(false);
-        return;
-      }
-
-      // -------------------------------------------------
-      // MỞ DROPDOWN
-      // -------------------------------------------------
-
-      setOpen(true);
-
-      // -------------------------------------------------
-      // KHÔNG TỰ ĐỘNG ĐĂNG KÝ FCM
-      // Chỉ chạy khi người dùng bấm chuông.
-      // -------------------------------------------------
-
-      setNotificationLoading(true);
-
-      console.log("🔔 BẮT ĐẦU BẬT THÔNG BÁO");
-
-      const token = await registerFCMToken();
-
-      if (token) {
-        console.log(
-          "✅ ĐÃ BẬT THÔNG BÁO"
-        );
-
-        await markAsRead();
-      } else {
-        console.log(
-          "⚠️ Không bật được thông báo"
-        );
-      }
-    } catch (error) {
-      console.error(
-        "❌ LỖI BẬT THÔNG BÁO:",
-        error
-      );
-    } finally {
-      setNotificationLoading(false);
-
-      setTimeout(() => {
-        setBellRotate(false);
-      }, 700);
+    if (next) {
+      await markAsRead();
     }
+
+    setTimeout(() => {
+      setBellRotate(false);
+    }, 700);
   }
 
   // =====================================================
@@ -251,14 +234,18 @@ export default function BellUserTemp() {
       }}
     >
       {/* ================================================= */}
-      {/* BELL */}
+      {/* BELL BUTTON */}
       {/* ================================================= */}
 
       <button
-        onMouseEnter={() => setBellRotate(true)}
-        onMouseLeave={() => setBellRotate(false)}
+        type="button"
+        onMouseEnter={() =>
+          setBellRotate(true)
+        }
+        onMouseLeave={() =>
+          setBellRotate(false)
+        }
         onClick={handleBellClick}
-        disabled={notificationLoading}
         style={{
           width: isMobile ? 36 : 42,
           height: isMobile ? 36 : 42,
@@ -267,16 +254,11 @@ export default function BellUserTemp() {
           background: "#fff",
           boxShadow:
             "0 2px 8px rgba(0,0,0,.12)",
-          cursor: notificationLoading
-            ? "wait"
-            : "pointer",
+          cursor: "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           padding: 0,
-          opacity: notificationLoading
-            ? 0.7
-            : 1,
         }}
       >
         <span
@@ -287,8 +269,7 @@ export default function BellUserTemp() {
             animation: bellRotate
               ? "bellShake .55s ease-in-out"
               : "none",
-            transformOrigin:
-              "top center",
+            transformOrigin: "top center",
           }}
         >
           <Bell
@@ -300,7 +281,7 @@ export default function BellUserTemp() {
       </button>
 
       {/* ================================================= */}
-      {/* BADGE */}
+      {/* UNREAD BADGE */}
       {/* ================================================= */}
 
       {unreadCount > 0 && (
@@ -320,6 +301,7 @@ export default function BellUserTemp() {
             alignItems: "center",
             justifyContent: "center",
             fontWeight: 700,
+            pointerEvents: "none",
           }}
         >
           {unreadCount > 5
@@ -329,7 +311,7 @@ export default function BellUserTemp() {
       )}
 
       {/* ================================================= */}
-      {/* DROPDOWN */}
+      {/* NOTIFICATION DROPDOWN */}
       {/* ================================================= */}
 
       {open && (
@@ -387,6 +369,9 @@ export default function BellUserTemp() {
                       "14px 18px",
                     borderBottom:
                       "1px solid #eee",
+                    background: item.is_read
+                      ? "#fff"
+                      : "#f8faff",
                   }}
                 >
                   {/* TITLE */}
@@ -395,9 +380,11 @@ export default function BellUserTemp() {
                     style={{
                       fontWeight: 600,
                       fontSize: 15,
+                      color: "#222",
                     }}
                   >
-                    {item.type === "general"
+                    {item.type ===
+                    "general"
                       ? "Có thông báo chung mới."
                       : item.title}
                   </div>
@@ -409,9 +396,11 @@ export default function BellUserTemp() {
                       color: "#666",
                       marginTop: 4,
                       fontSize: 14,
+                      lineHeight: 1.5,
                     }}
                   >
-                    {item.type === "general"
+                    {item.type ===
+                    "general"
                       ? "Vui lòng xem chi tiết tại mục Thông tin chung ở Trang chủ."
                       : item.content}
                   </div>
@@ -440,14 +429,6 @@ export default function BellUserTemp() {
 
           <Link
             href="/thongbaouser"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color =
-                "#123bad";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color =
-                "#2563eb";
-            }}
             style={{
               display: "block",
               borderTop:
@@ -459,6 +440,14 @@ export default function BellUserTemp() {
               textAlign: "center",
               transition:
                 "color .2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color =
+                "#123bad";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color =
+                "#2563eb";
             }}
           >
             Xem tất cả thông báo →

@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { LogOut, ChevronLeft } from "lucide-react";
-import requestNotificationPermission from "@/lib/messaging";
+import { registerFCMToken } from "@/lib/firebase-messaging";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -172,67 +172,80 @@ async function checkNotificationStatus() {
   }
 }
 async function handleToggleNotification() {
+  if (notificationLoading) return;
+
+  setNotificationLoading(true);
+
   try {
-    // =========================
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("❌ Bạn chưa đăng nhập.");
+      return;
+    }
+
+    // ==========================================
     // ĐANG BẬT → TẮT
-    // =========================
+    // ==========================================
+
     if (notificationEnabled) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        alert("❌ Bạn chưa đăng nhập.");
-        return;
-      }
-
-      const permission =
-        typeof window !== "undefined"
-          ? Notification.permission
-          : "default";
-
-      // Nếu browser vẫn đang cho phép thì không thể
-      // thu hồi quyền Notification bằng JavaScript.
-      // Ta chỉ xóa token khỏi hệ thống để server không gửi nữa.
       const { error } = await supabase
         .from("notification_tokens")
         .delete()
         .eq("user_id", user.id);
 
       if (error) {
-        console.error("Lỗi xóa notification token:", error);
+        console.error(
+          "❌ Lỗi xóa notification token:",
+          error
+        );
+
         alert("❌ Không thể tắt thông báo.");
         return;
       }
 
       setNotificationEnabled(false);
 
+      alert("🔕 Đã tắt thông báo.");
+
+      return;
+    }
+
+    // ==========================================
+    // ĐANG TẮT → BẬT
+    // ==========================================
+
+    console.log("🔔 Người dùng yêu cầu bật thông báo");
+
+    const token = await registerFCMToken();
+
+    if (!token) {
+      console.log("❌ Không lấy được FCM token");
+
+      setNotificationEnabled(false);
+
       alert(
-        permission === "granted"
-          ? "🔕 Đã tắt thông báo trên hệ thống."
-          : "🔕 Đã tắt thông báo."
+        "❌ Không thể bật thông báo.\n\n" +
+        "Vui lòng kiểm tra quyền thông báo của trình duyệt/điện thoại."
       );
 
       return;
     }
 
-    // =========================
-    // ĐANG TẮT → BẬT
-    // =========================
+    // Token đã được registerFCMToken()
+    // lưu vào notification_tokens
 
-    setNotificationLoading(true);
+    setNotificationEnabled(true);
 
-    const token = await requestNotificationPermission();
+    alert("🔔 Đã bật thông báo!");
 
-    if (token) {
-      setNotificationEnabled(true);
-      alert("🔔 Đã bật thông báo!");
-    } else {
-      setNotificationEnabled(false);
-      alert("❌ Không lấy được FCM token.");
-    }
   } catch (error) {
-    console.error("LỖI BẬT/TẮT THÔNG BÁO:", error);
+    console.error(
+      "❌ LỖI BẬT/TẮT THÔNG BÁO:",
+      error
+    );
 
     alert(
       `❌ Lỗi: ${
@@ -241,6 +254,7 @@ async function handleToggleNotification() {
           : String(error)
       }`
     );
+
   } finally {
     setNotificationLoading(false);
   }
