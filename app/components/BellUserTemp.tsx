@@ -18,8 +18,23 @@ export default function BellUserTemp() {
 }, []);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
-useEffect(() => {
-  registerFCMToken();
+  useEffect(() => {
+  async function initFCM() {
+    try {
+      console.log("🔔 BẮT ĐẦU ĐĂNG KÝ FCM");
+
+      const token = await registerFCMToken();
+
+      console.log(
+        "🔔 KẾT QUẢ REGISTER FCM:",
+        token ? "SUCCESS" : "FAILED"
+      );
+    } catch (error) {
+      console.error("❌ LỖI ĐĂNG KÝ FCM:", error);
+    }
+  }
+
+  initFCM();
 }, []);
   useEffect(() => {
     loadNotifications();
@@ -146,13 +161,20 @@ useEffect(() => {
 <button 
   onMouseEnter={() => setBellRotate(true)}
   onMouseLeave={() => setBellRotate(false)}
-  onClick={async () => { 
-    setOpen(!open); 
+onClick={async () => {
+  setBellRotate(true);
 
-    if (!open) { 
-      await markAsRead(); 
-    } 
-  }} 
+  const next = !open;
+  setOpen(next);
+
+  if (next) {
+    await markAsRead();
+  }
+
+  setTimeout(() => {
+    setBellRotate(false);
+  }, 700);
+}}
   style={{ 
     width: isMobile ? 36 : 42, 
     height: isMobile ? 36 : 42, 
