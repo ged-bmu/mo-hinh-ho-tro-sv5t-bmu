@@ -19,24 +19,6 @@ export default function BellUserTemp() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
   useEffect(() => {
-  async function initFCM() {
-    try {
-      console.log("🔔 BẮT ĐẦU ĐĂNG KÝ FCM");
-
-      const token = await registerFCMToken();
-
-      console.log(
-        "🔔 KẾT QUẢ REGISTER FCM:",
-        token ? "SUCCESS" : "FAILED"
-      );
-    } catch (error) {
-      console.error("❌ LỖI ĐĂNG KÝ FCM:", error);
-    }
-  }
-
-  initFCM();
-}, []);
-  useEffect(() => {
     loadNotifications();
   }, []);
  useEffect(() => {
@@ -155,26 +137,48 @@ export default function BellUserTemp() {
       }))
     );
   }
+async function handleBellClick() {
+  setBellRotate(true);
 
+  try {
+    // Đang mở → chỉ đóng
+    if (open) {
+      setOpen(false);
+      return;
+    }
+
+    // Đang đóng → mở dropdown
+    setOpen(true);
+
+    // Đăng ký FCM CHỈ khi người dùng bấm nút
+    console.log("🔔 BẮT ĐẦU ĐĂNG KÝ FCM");
+
+    const token = await registerFCMToken();
+
+    console.log(
+      "🔔 KẾT QUẢ REGISTER FCM:",
+      token ? "SUCCESS" : "FAILED"
+    );
+
+    // Nếu đăng ký thành công thì đánh dấu đã đọc
+    if (token) {
+      await markAsRead();
+    }
+
+  } catch (error) {
+    console.error("❌ LỖI BẬT THÔNG BÁO:", error);
+  } finally {
+    setTimeout(() => {
+      setBellRotate(false);
+    }, 700);
+  }
+}
   return (
     <div style={{ position: "relative" }}>
 <button 
   onMouseEnter={() => setBellRotate(true)}
   onMouseLeave={() => setBellRotate(false)}
-onClick={async () => {
-  setBellRotate(true);
-
-  const next = !open;
-  setOpen(next);
-
-  if (next) {
-    await markAsRead();
-  }
-
-  setTimeout(() => {
-    setBellRotate(false);
-  }, 700);
-}}
+  onClick={handleBellClick}
   style={{ 
     width: isMobile ? 36 : 42, 
     height: isMobile ? 36 : 42, 
