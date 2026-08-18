@@ -460,52 +460,50 @@ if (conversationError) {
 
   if (userId) {
   try {
-    const notificationResponse = await fetch(
-      "/api/send-notification",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
+const notificationResponse = await fetch(
+  "/api/send-notification",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
 
-          // ==========================================
-          // LOẠI THÔNG BÁO
-          // ==========================================
-          type: "chat_message",
+    body: JSON.stringify({
+      userId,
 
-          // ==========================================
-          // NỘI DUNG
-          // ==========================================
-          title: "💬 Tin nhắn mới",
+      // Loại thông báo
+      type: "chat_message",
 
-          message:
-            text ||
-            (fileName
-              ? `Đã gửi tệp: ${fileName}`
-              : "Bạn có tin nhắn mới."),
+      // Nội dung
+      title: "💬 Tin nhắn mới",
 
-          // ==========================================
-          // CLICK NOTIFICATION
-          // ==========================================
-          url: `/trao-doi?conversation=${conversationId}`,
+      message:
+        text ||
+        (fileName
+          ? `Đã gửi tệp: ${fileName}`
+          : "Bạn có tin nhắn mới."),
 
-          // ==========================================
-          // DỮ LIỆU CHAT
-          // ==========================================
-          conversationId: String(
-            conversationId
-          ),
+      // Khi bấm notification
+      url: `/trao-doi?conversation=${conversationId}`,
 
-          messageId: newMessage?.id
-            ? String(newMessage.id)
-            : "",
+      // Dữ liệu chat
+      conversationId: String(
+        conversationId
+      ),
 
-          senderId: "admin",
-        }),
-      }
-    );
+      messageId: newMessage?.id
+        ? String(newMessage.id)
+        : "",
+
+      senderId: "admin",
+    }),
+  }
+);
+
+console.log(
+  "📱 NOTIFICATION STATUS:",
+  notificationResponse.status
+);
 
     const notificationResult =
       await notificationResponse.text();

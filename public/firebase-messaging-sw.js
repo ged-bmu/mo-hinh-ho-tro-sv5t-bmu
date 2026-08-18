@@ -47,17 +47,60 @@ self.addEventListener("activate", (event) => {
 // ==========================================
 
 messaging.onBackgroundMessage((payload) => {
-  console.log("🔥🔥🔥 TEST SERVICE WORKER 123");
   console.log("📩 FCM FULL PAYLOAD:", payload);
 
-  self.registration.showNotification(
-    "🧪 TEST PWA",
-    {
-      body: "ĐÂY LÀ SERVICE WORKER MỚI",
-      icon: "/icon-192.png",
-      badge: "/icon-192.png",
-    }
-  );
+  const data = payload.data || {};
+
+  const type = data.type || "system";
+
+  const title =
+    data.title || "🔔 SV5T BMU";
+
+  const body =
+    data.body ||
+    data.content ||
+    data.message ||
+    "Bạn có một thông báo mới.";
+
+  const url =
+    data.url || "/";
+
+  console.log("🔔 TYPE:", type);
+  console.log("🔔 TITLE:", title);
+  console.log("🔔 BODY:", body);
+
+  self.registration.showNotification(title, {
+    body,
+
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+
+    tag: data.conversationId
+      ? `chat-${data.conversationId}`
+      : `notification-${type}`,
+
+    renotify: true,
+
+    data: {
+      url,
+      type,
+
+      conversationId:
+        data.conversationId || null,
+
+      messageId:
+        data.messageId || null,
+
+      senderId:
+        data.senderId || null,
+
+      activityId:
+        data.activityId || null,
+
+      notificationId:
+        data.notificationId || null,
+    },
+  });
 });
 
 // ==========================================
