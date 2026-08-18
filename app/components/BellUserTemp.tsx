@@ -5,197 +5,303 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { registerFCMToken } from "@/lib/firebase-messaging";
 import { Bell } from "lucide-react";
+
 export default function BellUserTemp() {
   const [bellRotate, setBellRotate] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [isMobile, setIsMobile] = useState(false);useEffect(() => {
-  const check = () => setIsMobile(window.innerWidth <= 768);
-
-  check();
-  window.addEventListener("resize", check);
-
-  return () => window.removeEventListener("resize", check);
-}, []);
+  const [isMobile, setIsMobile] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+  const [notificationLoading, setNotificationLoading] = useState(false);
+
+  // =====================================================
+  // MOBILE
+  // =====================================================
+
+  useEffect(() => {
+    const check = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    check();
+
+    window.addEventListener("resize", check);
+
+    return () => {
+      window.removeEventListener("resize", check);
+    };
+  }, []);
+
+  // =====================================================
+  // LOAD NOTIFICATIONS
+  // =====================================================
+
   useEffect(() => {
     loadNotifications();
   }, []);
- useEffect(() => {
-  let channel: any = null;
-  let cancelled = false;
-
-  async function subscribeNotifications() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    // Effect đã bị cleanup trong lúc đang await
-    if (!user || cancelled) return;
-
-    // Tạo channel
-    const newChannel = supabase
-      .channel(`notifications-realtime-${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          console.log("🔔 Có thông báo mới:", payload.new);
-
-          setNotifications((prev) =>
-            [payload.new, ...prev].slice(0, 5)
-          );
-
-          setUnreadCount((prev) => prev + 1);
-
-          setBellRotate(true);
-
-          setTimeout(() => {
-            setBellRotate(false);
-          }, 700);
-        }
-      );
-
-    // Nếu effect đã cleanup trong lúc tạo channel
-    if (cancelled) {
-      await supabase.removeChannel(newChannel);
-      return;
-    }
-
-    channel = newChannel;
-
-    // subscribe PHẢI là bước cuối
-    channel.subscribe((status: string) => {
-      console.log("📡 Notifications realtime:", status);
-    });
-  }
-
-  subscribeNotifications();
-
-  return () => {
-    cancelled = true;
-
-    if (channel) {
-      supabase.removeChannel(channel);
-      channel = null;
-    }
-  };
-}, []);
 
   async function loadNotifications() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    if (!user) return;
+      if (!user) return;
 
-    const { data, error } = await supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(5);
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
 
-    if (error) {
-      console.error(error);
-      return;
+      if (error) {
+        console.error("❌ Lỗi load notifications:", error);
+        return;
+      }
+
+      const list = data || [];
+
+      setNotifications(list);
+
+      setUnreadCount(
+        list.filter((item) => !item.is_read).length
+      );
+    } catch (error) {
+      console.error("❌ Lỗi load notifications:", error);
+    }
+  }
+
+  // =====================================================
+  // REALTIME NOTIFICATIONS
+  // =====================================================
+
+  useEffect(() => {
+    let channel: any = null;
+    let cancelled = false;
+
+    async function subscribeNotifications() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user || cancelled) return;
+
+      const newChannel = supabase
+        .channel(`notifications-realtime-${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            console.log(
+              "🔔 Có thông báo mới:",
+              payload.new
+            );
+
+            setNotifications((prev) => [
+              payload.new,
+              ...prev,
+            ].slice(0, 5));
+
+            setUnreadCount((prev) => prev + 1);
+
+            setBellRotate(true);
+
+            setTimeout(() => {
+              setBellRotate(false);
+            }, 700);
+          }
+        );
+
+      if (cancelled) {
+        await supabase.removeChannel(newChannel);
+        return;
+      }
+
+      channel = newChannel;
+
+      channel.subscribe((status: string) => {
+        console.log(
+          "📡 Notifications realtime:",
+          status
+        );
+      });
     }
 
-    const list = data || [];
+    subscribeNotifications();
 
-    setNotifications(list);
+    return () => {
+      cancelled = true;
 
-    setUnreadCount(
-      list.filter((item) => !item.is_read).length
-    );
-  }
+      if (channel) {
+        supabase.removeChannel(channel);
+        channel = null;
+      }
+    };
+  }, []);
+
+  // =====================================================
+  // MARK AS READ
+  // =====================================================
 
   async function markAsRead() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    if (!user) return;
+      if (!user) return;
 
-    await supabase
-      .from("notifications")
-      .update({ is_read: true })
-      .eq("user_id", user.id)
-      .eq("is_read", false);
+      await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("user_id", user.id)
+        .eq("is_read", false);
 
-    setUnreadCount(0);
+      setUnreadCount(0);
 
-    setNotifications((prev) =>
-      prev.map((item) => ({
-        ...item,
-        is_read: true,
-      }))
-    );
-  }
-async function handleBellClick() {
-  setBellRotate(true);
-
-  try {
-    console.log("🔔 CLICK BELL");
-
-    if (open) {
-      setOpen(false);
-      return;
+      setNotifications((prev) =>
+        prev.map((item) => ({
+          ...item,
+          is_read: true,
+        }))
+      );
+    } catch (error) {
+      console.error(
+        "❌ Lỗi mark notification:",
+        error
+      );
     }
-
-    setOpen(true);
-
-  } catch (error) {
-    console.error("❌ LỖI:", error);
-  } finally {
-    setTimeout(() => {
-      setBellRotate(false);
-    }, 700);
   }
-}
+
+  // =====================================================
+  // BẬT / TẮT
+  // =====================================================
+
+  async function handleBellClick() {
+    if (notificationLoading) return;
+
+    setBellRotate(true);
+
+    try {
+      // -------------------------------------------------
+      // NẾU DROPDOWN ĐANG MỞ → CHỈ ĐÓNG
+      // -------------------------------------------------
+
+      if (open) {
+        setOpen(false);
+        return;
+      }
+
+      // -------------------------------------------------
+      // MỞ DROPDOWN
+      // -------------------------------------------------
+
+      setOpen(true);
+
+      // -------------------------------------------------
+      // KHÔNG TỰ ĐỘNG ĐĂNG KÝ FCM
+      // Chỉ chạy khi người dùng bấm chuông.
+      // -------------------------------------------------
+
+      setNotificationLoading(true);
+
+      console.log("🔔 BẮT ĐẦU BẬT THÔNG BÁO");
+
+      const token = await registerFCMToken();
+
+      if (token) {
+        console.log(
+          "✅ ĐÃ BẬT THÔNG BÁO"
+        );
+
+        await markAsRead();
+      } else {
+        console.log(
+          "⚠️ Không bật được thông báo"
+        );
+      }
+    } catch (error) {
+      console.error(
+        "❌ LỖI BẬT THÔNG BÁO:",
+        error
+      );
+    } finally {
+      setNotificationLoading(false);
+
+      setTimeout(() => {
+        setBellRotate(false);
+      }, 700);
+    }
+  }
+
+  // =====================================================
+  // UI
+  // =====================================================
+
   return (
-    <div style={{ position: "relative" }}>
-<button 
-  onMouseEnter={() => setBellRotate(true)}
-  onMouseLeave={() => setBellRotate(false)}
-  onClick={handleBellClick}
-  style={{ 
-    width: isMobile ? 36 : 42, 
-    height: isMobile ? 36 : 42, 
-    borderRadius: isMobile ? 10 : 11, 
-    border: "none", 
-    background: "#fff", 
-    boxShadow: "0 2px 8px rgba(0,0,0,.12)", 
-    cursor: "pointer", 
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 0,
-  }} 
-> 
-  <span 
-    style={{ 
-      display: "inline-flex",
-      alignItems: "center",
-      justifyContent: "center",
-      animation: bellRotate 
-        ? "bellShake .55s ease-in-out" 
-        : "none",
-      transformOrigin: "top center",
-    }} 
-  > 
-    <Bell 
-      size={isMobile ? 19 : 21}
-      strokeWidth={2} 
-      color="#6b7280"
-    /> 
-  </span> 
-</button>
+    <div
+      style={{
+        position: "relative",
+      }}
+    >
+      {/* ================================================= */}
+      {/* BELL */}
+      {/* ================================================= */}
+
+      <button
+        onMouseEnter={() => setBellRotate(true)}
+        onMouseLeave={() => setBellRotate(false)}
+        onClick={handleBellClick}
+        disabled={notificationLoading}
+        style={{
+          width: isMobile ? 36 : 42,
+          height: isMobile ? 36 : 42,
+          borderRadius: isMobile ? 10 : 11,
+          border: "none",
+          background: "#fff",
+          boxShadow:
+            "0 2px 8px rgba(0,0,0,.12)",
+          cursor: notificationLoading
+            ? "wait"
+            : "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 0,
+          opacity: notificationLoading
+            ? 0.7
+            : 1,
+        }}
+      >
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            animation: bellRotate
+              ? "bellShake .55s ease-in-out"
+              : "none",
+            transformOrigin:
+              "top center",
+          }}
+        >
+          <Bell
+            size={isMobile ? 19 : 21}
+            strokeWidth={2}
+            color="#6b7280"
+          />
+        </span>
+      </button>
+
+      {/* ================================================= */}
+      {/* BADGE */}
+      {/* ================================================= */}
 
       {unreadCount > 0 && (
         <div
@@ -216,9 +322,15 @@ async function handleBellClick() {
             fontWeight: 700,
           }}
         >
-          {unreadCount > 5 ? "5+" : unreadCount}
+          {unreadCount > 5
+            ? "5+"
+            : unreadCount}
         </div>
       )}
+
+      {/* ================================================= */}
+      {/* DROPDOWN */}
+      {/* ================================================= */}
 
       {open && (
         <div
@@ -226,13 +338,19 @@ async function handleBellClick() {
             position: "absolute",
             top: 60,
             right: 0,
-            width: 350,
+            width: isMobile
+              ? "min(350px, calc(100vw - 24px))"
+              : 350,
             background: "#fff",
             borderRadius: 14,
-            boxShadow: "0 8px 30px rgba(0,0,0,.18)",
+            boxShadow:
+              "0 8px 30px rgba(0,0,0,.18)",
             overflow: "hidden",
+            zIndex: 9999,
           }}
         >
+          {/* HEADER */}
+
           <div
             style={{
               padding: 18,
@@ -243,88 +361,108 @@ async function handleBellClick() {
             Thông báo
           </div>
 
-<div
-  style={{
-    maxHeight: 320,
-    overflowY: "auto",
-  }}
->
-          {notifications.length === 0 ? (
-            <div
-              style={{
-                padding: 20,
-                color: "#666",
-              }}
-            >
-              Không có thông báo mới.
-            </div>
-          ) : (
-            notifications.map((item) => (
+          {/* LIST */}
+
+          <div
+            style={{
+              maxHeight: 320,
+              overflowY: "auto",
+            }}
+          >
+            {notifications.length === 0 ? (
               <div
-                key={item.id}
                 style={{
-                  padding: "14px 18px",
-                  borderBottom: "1px solid #eee",
+                  padding: 20,
+                  color: "#666",
                 }}
               >
-               <div
-  style={{
-    fontWeight: 600,
-    fontSize: 15,
-  }}
->
-  {item.type === "general"
-    ? "Có thông báo chung mới."
-    : item.title}
-</div>
-
-<div
-  style={{
-    color: "#666",
-    marginTop: 4,
-    fontSize: 14,
-  }}
->
-  {item.type === "general"
-    ? "Vui lòng xem chi tiết tại mục Thông tin chung ở Trang chủ."
-    : item.content}
-</div>
-
+                Không có thông báo mới.
+              </div>
+            ) : (
+              notifications.map((item) => (
                 <div
+                  key={item.id}
                   style={{
-                    marginTop: 6,
-                    fontSize: 12,
-                    color: "#999",
+                    padding:
+                      "14px 18px",
+                    borderBottom:
+                      "1px solid #eee",
                   }}
                 >
-                  {new Date(item.created_at).toLocaleString("vi-VN")
-}
+                  {/* TITLE */}
+
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 15,
+                    }}
+                  >
+                    {item.type === "general"
+                      ? "Có thông báo chung mới."
+                      : item.title}
+                  </div>
+
+                  {/* CONTENT */}
+
+                  <div
+                    style={{
+                      color: "#666",
+                      marginTop: 4,
+                      fontSize: 14,
+                    }}
+                  >
+                    {item.type === "general"
+                      ? "Vui lòng xem chi tiết tại mục Thông tin chung ở Trang chủ."
+                      : item.content}
+                  </div>
+
+                  {/* TIME */}
+
+                  <div
+                    style={{
+                      marginTop: 6,
+                      fontSize: 12,
+                      color: "#999",
+                    }}
+                  >
+                    {new Date(
+                      item.created_at
+                    ).toLocaleString(
+                      "vi-VN"
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
-          )}
-</div>
-<Link
-  href="/thongbaouser"
-  onMouseEnter={(e) => {
-    e.currentTarget.style.color = "#123bad";
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.color = "#2563eb";
-  }}
-  style={{
-    display: "block",
-    borderTop: "1px solid #eee",
-    padding: 16,
-    color: "#2563eb",
-    textDecoration: "none",
-    fontWeight: 600,
-    textAlign: "center",
-    transition: "color .2s ease",
-  }}
->
-  Xem tất cả thông báo →
-</Link>
+              ))
+            )}
+          </div>
+
+          {/* ALL NOTIFICATIONS */}
+
+          <Link
+            href="/thongbaouser"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color =
+                "#123bad";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color =
+                "#2563eb";
+            }}
+            style={{
+              display: "block",
+              borderTop:
+                "1px solid #eee",
+              padding: 16,
+              color: "#2563eb",
+              textDecoration: "none",
+              fontWeight: 600,
+              textAlign: "center",
+              transition:
+                "color .2s ease",
+            }}
+          >
+            Xem tất cả thông báo →
+          </Link>
         </div>
       )}
     </div>
