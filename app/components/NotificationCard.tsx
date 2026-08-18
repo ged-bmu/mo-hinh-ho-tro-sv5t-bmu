@@ -157,7 +157,9 @@ export default function NotificationCard({ isMobile }: { isMobile: boolean }) {
                   marginBottom: 4,
                 }}
               >
-                {item.title}
+                {item.type === "general"
+                   ? "Có thông báo chung mới."
+                   : item.title}
               </div>
 
               {/* NỘI DUNG */}
@@ -168,7 +170,9 @@ export default function NotificationCard({ isMobile }: { isMobile: boolean }) {
                   lineHeight: 1.4,
                 }}
               >
-                {item.content}
+                {item.type === "general"
+                  ? "Vui lòng xem chi tiết tại mục Thông tin chung ở Trang chủ."
+                  : item.content}
               </div>
 
               {/* THỜI GIAN */}

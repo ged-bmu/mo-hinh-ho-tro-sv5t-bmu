@@ -143,41 +143,47 @@ useEffect(() => {
 
   return (
     <div style={{ position: "relative" }}>
-    <button
+<button 
   onMouseEnter={() => setBellRotate(true)}
   onMouseLeave={() => setBellRotate(false)}
-  onClick={async () => {
-    setOpen(!open);
+  onClick={async () => { 
+    setOpen(!open); 
 
-    if (!open) {
-      await markAsRead();
-    }
-  }}
-  style={{
-    width: isMobile ? 32 : 50,
-    height: isMobile ? 32 : 50,
-    borderRadius: 12,
-    border: "none",
-    background: "#fff",
-    boxShadow: "0 3px 10px rgba(0,0,0,.15)",
-    cursor: "pointer",
-    fontSize: isMobile ? 16 : 22,
-  }}
->
- <span
-  style={{
-    display: "inline-flex",
-    animation: bellRotate ? "bellShake .6s ease-in-out" : "none",
-    transformOrigin: "top center",
-    color: "#6b7280",
-    transform: "translateY(5px)",
-  }}
->
-  <Bell
-    size={30}
-    strokeWidth={2}
-  />
-</span>
+    if (!open) { 
+      await markAsRead(); 
+    } 
+  }} 
+  style={{ 
+    width: isMobile ? 36 : 42, 
+    height: isMobile ? 36 : 42, 
+    borderRadius: isMobile ? 10 : 11, 
+    border: "none", 
+    background: "#fff", 
+    boxShadow: "0 2px 8px rgba(0,0,0,.12)", 
+    cursor: "pointer", 
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 0,
+  }} 
+> 
+  <span 
+    style={{ 
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      animation: bellRotate 
+        ? "bellShake .55s ease-in-out" 
+        : "none",
+      transformOrigin: "top center",
+    }} 
+  > 
+    <Bell 
+      size={isMobile ? 19 : 21}
+      strokeWidth={2} 
+      color="#6b7280"
+    /> 
+  </span> 
 </button>
 
       {unreadCount > 0 && (
@@ -250,24 +256,28 @@ useEffect(() => {
                   borderBottom: "1px solid #eee",
                 }}
               >
-                <div
-                  style={{
-                    fontWeight: 600,
-                    fontSize: 15,
-                  }}
-                >
-                  {item.title}
-                </div>
+               <div
+  style={{
+    fontWeight: 600,
+    fontSize: 15,
+  }}
+>
+  {item.type === "general"
+    ? "Có thông báo chung mới."
+    : item.title}
+</div>
 
-                <div
-                  style={{
-                    color: "#666",
-                    marginTop: 4,
-                    fontSize: 14,
-                  }}
-                >
-                  {item.content}
-                </div>
+<div
+  style={{
+    color: "#666",
+    marginTop: 4,
+    fontSize: 14,
+  }}
+>
+  {item.type === "general"
+    ? "Vui lòng xem chi tiết tại mục Thông tin chung ở Trang chủ."
+    : item.content}
+</div>
 
                 <div
                   style={{

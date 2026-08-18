@@ -198,7 +198,7 @@ if (students) {
     type: "criteria_update",
     title: "Tiêu chuẩn vừa được cập nhật",
     content:
-      "Ban chủ nhiệm vừa cập nhật nội dung tiêu chuẩn Sinh viên 5 Tốt. Hãy kiểm tra trong mục Xem tiêu chí.",
+      "Ban chủ nhiệm vừa cập nhật nội dung tiêu chuẩn Sinh viên 5 Tốt. Hãy kiểm tra trong mục Quản lí hồ sơ.",
     target_url: "/introduce",
   }));
 

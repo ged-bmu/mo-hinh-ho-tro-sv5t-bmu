@@ -99,22 +99,22 @@ const proofPaths = [
       href: "/",
     },
     {
-      name: "Minh chứng",
+      name: "Quản lí hồ sơ",
       icon: "🗂️",
       href: "/tieuchi",
     },
     {
-      name: "Báo cáo",
+      name: "Xem Báo cáo",
       icon: "📝",
       href: "/bao-cao",
     },
     {
-      name: "GPA mục tiêu",
+      name: "Mục tiêu học tập",
       icon: "📊",
       href: "/bang-diem",
     },
     {
-      name: "Hoạt động",
+      name: "Hoạt động sắp tới",
       icon: "🎯",
       href: "/hoat-dong",
     },
@@ -478,7 +478,7 @@ return (
                 }}
               >
                 <span>
-                  {collapsed ? "🗂️" : "🗂️ Minh chứng"}
+                  {collapsed ? "🗂️" : "🗂️ Quản lí hồ sơ"}
                 </span>
 
                 {!collapsed && <span>▶</span>}
@@ -644,15 +644,15 @@ onMouseLeave={(e) => {
       : "🔕"}
   </span>
 
-  {!collapsed && (
-    <span>
-      {notificationLoading
-        ? "Đang xử lý..."
-        : notificationEnabled
-        ? "Tắt thông báo"
-        : "Bật thông báo"}
-    </span>
-  )}
+{!collapsed && (
+  <span>
+    {notificationLoading
+      ? "Đang xử lý..."
+      : notificationEnabled
+      ? "Thông báo: Đang bật"
+      : "Thông báo: Đang tắt"}
+  </span>
+)}
 </button>
     {/* FOOTER */}
     <div

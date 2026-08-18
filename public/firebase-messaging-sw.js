@@ -20,24 +20,13 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log("📩 BACKGROUND MESSAGE:", payload);
 
-  const title =
-    payload.notification?.title || "🔔 SV5T BMU";
-
-  const body =
-    payload.notification?.body || "Bạn có thông báo mới.";
-
-  self.registration.showNotification(title, {
-    body,
-    icon: "/icon-192.png",
-    badge: "/icon-192.png",
-
-    // Mỗi notification là một notification riêng
-    tag: `sv5t-${Date.now()}`,
-
-    renotify: true,
-
-    data: {
-      url: "/",
-    },
-  });
+  // Không tự showNotification ở đây.
+  // Payload hiện tại đã có notification:
+  //
+  // notification: {
+  //   title,
+  //   body
+  // }
+  //
+  // Firebase sẽ tự hiển thị notification khi PWA ở background.
 });

@@ -1210,7 +1210,7 @@ style={{
     alignItems: "stretch",
   }}
 >
-  {/* ================= THÔNG BÁO BÊN TRÁI ================= */}
+{/* ================= THÔNG BÁO BÊN TRÁI ================= */}
 {!isMobile && <NotificationCard isMobile={isMobile} />}
 
   {/* ================= CARD CHỨC NĂNG BÊN PHẢI ================= */}
@@ -1426,16 +1426,16 @@ style={{
       flex: 1,
     }}
   >
-    {/* Tiêu đề */}
-    <div
-      style={{
-        fontSize: 16,
-        fontWeight: 800,
-        color: "#9A3412",
-      }}
-    >
-      {generalNotification?.title || "Thông tin chung"}
-    </div>
+{/* Tiêu đề cố định */} 
+<div 
+  style={{ 
+    fontSize: 16, 
+    fontWeight: 800, 
+    color: "#9A3412", 
+  }} 
+> 
+  Thông tin chung
+</div>
 
     {/* Nội dung thông báo */}
     <div

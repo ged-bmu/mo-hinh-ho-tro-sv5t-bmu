@@ -122,10 +122,6 @@ async function toggleSubmission() {
   setIsOpen(newStatus);
 }
 async function sendGeneralNotification() {
-  if (!notificationTitle.trim()) {
-    alert("Vui lòng nhập tiêu đề thông báo.");
-    return;
-  }
 
   if (!notificationContent.trim()) {
     alert("Vui lòng nhập nội dung thông báo.");
@@ -1062,39 +1058,6 @@ const exportExcel = async () => {
         >
           ×
         </button>
-      </div>
-
-      {/* Tiêu đề */}
-      <div style={{ marginBottom: "16px" }}>
-        <label
-          style={{
-            display: "block",
-            marginBottom: "7px",
-            fontSize: "14px",
-            fontWeight: 600,
-            color: "#374151",
-          }}
-        >
-          Tiêu đề
-        </label>
-
-        <input
-          type="text"
-          value={notificationTitle}
-          onChange={(e) =>
-            setNotificationTitle(e.target.value)
-          }
-          placeholder="Nhập tiêu đề thông báo..."
-          style={{
-            width: "100%",
-            boxSizing: "border-box",
-            padding: "12px 14px",
-            border: "1px solid #d1d5db",
-            borderRadius: "10px",
-            fontSize: "14px",
-            outline: "none",
-          }}
-        />
       </div>
 
       {/* Nội dung */}

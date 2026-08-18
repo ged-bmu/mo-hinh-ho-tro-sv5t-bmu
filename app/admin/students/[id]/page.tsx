@@ -594,7 +594,7 @@ if (error) {
     id,
     "review",
     "Bạn vừa có nhận xét mới",
-    "Ban chủ nhiệm vừa nhận xét hồ sơ của bạn.",
+    "Ban chủ nhiệm vừa nhận xét hồ sơ của bạn. Hãy kiểm tra trong mục Quản lí hồ sơ",
     "/"
   );
 
