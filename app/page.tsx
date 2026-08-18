@@ -233,7 +233,6 @@ useEffect(() => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log("🔔 Conversation updated:", payload);
 
           if (isMounted) {
             setUnreadMessages(

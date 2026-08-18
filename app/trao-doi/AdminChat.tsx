@@ -403,21 +403,26 @@ async function sendMessage() {
   // ==========================================
   // 4. INSERT MESSAGE
   // ==========================================
-  const { error } = await supabase
-    .from("messages")
-    .insert({
-      conversation_id: conversationId,
-      sender_role: "admin",
-      content: text,
-      reply_to: replyMessage?.id ?? null,
-      file_url: fileUrl,
-      file_name: fileName,
-    });
+  const {
+  data: newMessage,
+  error,
+} = await supabase
+  .from("messages")
+  .insert({
+    conversation_id: conversationId,
+    sender_role: "admin",
+    content: text,
+    reply_to: replyMessage?.id ?? null,
+    file_url: fileUrl,
+    file_name: fileName,
+  })
+  .select()
+  .single();
 
-  if (error) {
-    console.log("Lỗi gửi tin nhắn:", error);
-    return;
-  }
+if (error) {
+  console.log("Lỗi gửi tin nhắn:", error);
+  return;
+}
 
   // ==========================================
   // 5. CẬP NHẬT CONVERSATION
@@ -454,38 +459,70 @@ if (conversationError) {
   console.log("📱 SEND NOTIFICATION USER ID:", userId);
 
   if (userId) {
-    try {
-      const notificationResponse = await fetch(
-        "/api/send-notification",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId,
-            title: "💬 Tin nhắn mới",
-            message: text || "Bạn có tin nhắn mới.",
-          }),
-        }
-      );
+  try {
+    const notificationResponse = await fetch(
+      "/api/send-notification",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
 
-      const notificationResult = await notificationResponse.text();
+          // ==========================================
+          // LOẠI THÔNG BÁO
+          // ==========================================
+          type: "chat_message",
 
-      console.log(
-        "📱 NOTIFICATION RESPONSE:",
-        notificationResponse.status,
-        notificationResult
-      );
-    } catch (notificationError) {
-      console.error(
-        "❌ Lỗi gửi notification:",
-        notificationError
-      );
-    }
+          // ==========================================
+          // NỘI DUNG
+          // ==========================================
+          title: "💬 Tin nhắn mới",
+
+          message:
+            text ||
+            (fileName
+              ? `Đã gửi tệp: ${fileName}`
+              : "Bạn có tin nhắn mới."),
+
+          // ==========================================
+          // CLICK NOTIFICATION
+          // ==========================================
+          url: `/trao-doi?conversation=${conversationId}`,
+
+          // ==========================================
+          // DỮ LIỆU CHAT
+          // ==========================================
+          conversationId: String(
+            conversationId
+          ),
+
+          messageId: newMessage?.id
+            ? String(newMessage.id)
+            : "",
+
+          senderId: "admin",
+        }),
+      }
+    );
+
+    const notificationResult =
+      await notificationResponse.text();
+
+    console.log(
+      "📱 NOTIFICATION RESPONSE:",
+      notificationResponse.status,
+      notificationResult
+    );
+
+  } catch (notificationError) {
+    console.error(
+      "❌ Lỗi gửi notification:",
+      notificationError
+    );
   }
-}
-}
+}}}
 
 return (
   <div

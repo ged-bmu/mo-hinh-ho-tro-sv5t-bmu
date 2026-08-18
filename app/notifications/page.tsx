@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { requestNotificationPermission } from "@/lib/messaging";
+import requestNotificationPermission from "@/lib/messaging";
 
 export default function NotificationsPage() {
   const [status, setStatus] = useState("Chưa bật thông báo");

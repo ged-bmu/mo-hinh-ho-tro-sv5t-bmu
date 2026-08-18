@@ -14,6 +14,7 @@ export async function registerFCMToken() {
     // ==========================================
     // 1. KIỂM TRA FIREBASE MESSAGING
     // ==========================================
+
     const supported = await isSupported();
 
     if (!supported) {
@@ -25,24 +26,26 @@ export async function registerFCMToken() {
     }
 
     // ==========================================
-    // 2. KIỂM TRA ĐĂNG NHẬP
+    // 2. KIỂM TRA USER
     // ==========================================
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
       console.log("❌ Chưa đăng nhập");
-
       return null;
     }
 
     console.log("👤 USER ID:", user.id);
 
     // ==========================================
-    // 3. KIỂM TRA QUYỀN THÔNG BÁO
+    // 3. QUYỀN THÔNG BÁO
     // ==========================================
-    const permission = await Notification.requestPermission();
+
+    const permission =
+      await Notification.requestPermission();
 
     console.log(
       "📱 NOTIFICATION PERMISSION:",
@@ -58,34 +61,44 @@ export async function registerFCMToken() {
     }
 
     // ==========================================
-    // 4. KHỞI TẠO FIREBASE MESSAGING
+    // 4. FIREBASE MESSAGING
     // ==========================================
-    const messaging = getMessaging(firebaseApp);
+
+    const messaging =
+      getMessaging(firebaseApp);
 
     // ==========================================
-    // 5. ĐĂNG KÝ FIREBASE SERVICE WORKER
+    // 5. ĐĂNG KÝ ĐÍCH DANH SERVICE WORKER
     // ==========================================
+
     const registration =
       await navigator.serviceWorker.register(
         "/firebase-messaging-sw.js"
       );
 
     console.log(
-      "✅ Firebase Service Worker registered:",
+      "✅ Firebase Service Worker:",
       registration.scope
     );
 
-    // Chờ Service Worker sẵn sàng
+    // Chờ SW active
     await navigator.serviceWorker.ready;
+
+    console.log(
+      "🚀 Service Worker active:",
+      registration.active?.scriptURL
+    );
 
     // ==========================================
     // 6. LẤY FCM TOKEN
     // ==========================================
+
     const token = await getToken(messaging, {
       vapidKey:
         process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
 
-      serviceWorkerRegistration: registration,
+      serviceWorkerRegistration:
+        registration,
     });
 
     if (!token) {
@@ -102,19 +115,25 @@ export async function registerFCMToken() {
     );
 
     // ==========================================
-    // 7. LƯU TOKEN VÀO SUPABASE
+    // 7. LƯU TOKEN
     // ==========================================
-    const { error } = await supabase.rpc(
-      "save_notification_token",
-      {
-        p_token: token,
-      }
-    );
+
+    const { error } =
+      await supabase.rpc(
+        "save_notification_token",
+        {
+          p_token: token,
+        }
+      );
 
     if (error) {
       console.error(
         "❌ Lỗi lưu notification token:",
-        JSON.stringify(error, null, 2)
+        JSON.stringify(
+          error,
+          null,
+          2
+        )
       );
 
       return null;
@@ -123,12 +142,14 @@ export async function registerFCMToken() {
     // ==========================================
     // 8. HOÀN TẤT
     // ==========================================
+
     console.log(
       "✅ Đã lưu FCM token cho user:",
       user.id
     );
 
     return token;
+
   } catch (error) {
     console.error(
       "❌ Lỗi đăng ký FCM:",

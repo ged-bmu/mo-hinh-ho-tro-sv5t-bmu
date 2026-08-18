@@ -12,9 +12,10 @@ export async function sendNotification(
     await messaging.send({
       token,
 
-      notification: {
+      data: {
         title,
         body,
+        url: "https://sv5t.bmu.edu.vn",
       },
 
       webpush: {
@@ -25,7 +26,6 @@ export async function sendNotification(
     });
 
     console.log("Đã gửi notification ✅");
-
   } catch (error) {
     console.error(
       "Lỗi gửi notification:",

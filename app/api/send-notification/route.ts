@@ -7,13 +7,46 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const title = body.title || "🔔 SV5T BMU";
-    const message = body.message || "Bạn có một thông báo mới.";
+    // ==========================================
+    // THÔNG TIN THÔNG BÁO
+    // ==========================================
+
+    const type = body.type || "system";
+
+    const title =
+      body.title ||
+      "🔔 SV5T BMU";
+
+    const message =
+      body.message ||
+      "Bạn có một thông báo mới.";
+
+    const url =
+      body.url ||
+      "/";
+
     const userId = body.userId;
 
+    // Dữ liệu bổ sung cho từng loại thông báo
+    const conversationId =
+      body.conversationId || null;
+
+    const messageId =
+      body.messageId || null;
+
+    const senderId =
+      body.senderId || null;
+
+    const activityId =
+      body.activityId || null;
+
+    const notificationId =
+      body.notificationId || null;
+
     // ==========================================
-    // 1. KIỂM TRA USER ID
+    // KIỂM TRA USER ID
     // ==========================================
+
     if (!userId) {
       return NextResponse.json(
         {
@@ -25,10 +58,14 @@ export async function POST(req: Request) {
     }
 
     console.log("📱 API USER ID:", userId);
+    console.log("🔔 NOTIFICATION TYPE:", type);
+    console.log("🔔 NOTIFICATION TITLE:", title);
+    console.log("🔔 NOTIFICATION MESSAGE:", message);
 
     // ==========================================
-    // 2. LẤY FCM TOKEN CỦA USER
+    // LẤY FCM TOKEN
     // ==========================================
+
     const { data, error } = await supabaseAdmin
       .from("notification_tokens")
       .select("token")
@@ -38,7 +75,10 @@ export async function POST(req: Request) {
     console.log("📱 TOKEN ERROR:", error);
 
     if (error) {
-      console.error("❌ Lỗi lấy token:", error);
+      console.error(
+        "❌ Lỗi lấy token:",
+        error
+      );
 
       return NextResponse.json(
         {
@@ -50,85 +90,144 @@ export async function POST(req: Request) {
     }
 
     // ==========================================
-    // 3. LỌC TOKEN
+    // LỌC TOKEN
     // ==========================================
+
     const tokens =
       data
         ?.map((item) => item.token)
         .filter(Boolean) || [];
 
-    console.log("📱 TOKEN COUNT:", tokens.length);
+    console.log(
+      "📱 TOKEN COUNT:",
+      tokens.length
+    );
 
     // ==========================================
-    // 4. KHÔNG CÓ TOKEN
+    // KHÔNG CÓ TOKEN
     // ==========================================
+
     if (tokens.length === 0) {
       return NextResponse.json({
         success: true,
-        message: "Không có thiết bị nào đăng ký nhận thông báo.",
+        message:
+          "Không có thiết bị nào đăng ký nhận thông báo.",
         count: 0,
       });
     }
 
     // ==========================================
-    // 5. GỬI FCM
+    // DATA GỬI XUỐNG FCM
     // ==========================================
-    const response = await getMessaging(app).sendEachForMulticast({
-      tokens,
 
-      notification: {
-        title,
-        body: message,
-      },
+    const notificationData = {
+      type: String(type),
 
-      webpush: {
-        notification: {
-          title,
-          body: message,
-          icon: "/icon-192.png",
-        },
+      title: String(title),
 
-        fcmOptions: {
-          link: "/",
-        },
-      },
-    });
+      body: String(message),
 
-    console.log("📱 FCM SUCCESS:", response.successCount);
-    console.log("📱 FCM FAILURE:", response.failureCount);
+      url: String(url),
+
+      conversationId:
+        conversationId
+          ? String(conversationId)
+          : "",
+
+      messageId:
+        messageId
+          ? String(messageId)
+          : "",
+
+      senderId:
+        senderId
+          ? String(senderId)
+          : "",
+
+      activityId:
+        activityId
+          ? String(activityId)
+          : "",
+
+      notificationId:
+        notificationId
+          ? String(notificationId)
+          : "",
+    };
+
+    console.log(
+      "📤 FCM DATA:",
+      notificationData
+    );
 
     // ==========================================
-    // 6. TÌM TOKEN KHÔNG CÒN HỢP LỆ
+    // GỬI FCM
     // ==========================================
+
+    const response =
+      await getMessaging(app).sendEachForMulticast({
+        tokens,
+
+        // CHỈ GỬI DATA
+        data: notificationData,
+      });
+
+    console.log(
+      "📱 FCM SUCCESS:",
+      response.successCount
+    );
+
+    console.log(
+      "📱 FCM FAILURE:",
+      response.failureCount
+    );
+
+    // ==========================================
+    // TÌM TOKEN KHÔNG CÒN HỢP LỆ
+    // ==========================================
+
     const invalidTokens: string[] = [];
 
-    response.responses.forEach((result, index) => {
-      if (!result.success) {
-        const errorCode = result.error?.code;
+    response.responses.forEach(
+      (result, index) => {
+        if (!result.success) {
+          const errorCode =
+            result.error?.code;
 
-        console.error(
-          `❌ Lỗi gửi token ${tokens[index]}:`,
-          result.error
-        );
+          console.error(
+            `❌ Lỗi gửi token ${tokens[index]}:`,
+            result.error
+          );
 
-        if (
-          errorCode ===
-            "messaging/registration-token-not-registered" ||
-          errorCode === "messaging/invalid-registration-token"
-        ) {
-          invalidTokens.push(tokens[index]);
+          if (
+            errorCode ===
+              "messaging/registration-token-not-registered" ||
+            errorCode ===
+              "messaging/invalid-registration-token"
+          ) {
+            invalidTokens.push(
+              tokens[index]
+            );
+          }
         }
       }
-    });
+    );
 
     // ==========================================
-    // 7. XÓA TOKEN KHÔNG CÒN HỢP LỆ
+    // XÓA TOKEN KHÔNG HỢP LỆ
     // ==========================================
-    if (invalidTokens.length > 0) {
-      const { error: deleteError } = await supabaseAdmin
-        .from("notification_tokens")
-        .delete()
-        .in("token", invalidTokens);
+
+    if (
+      invalidTokens.length > 0
+    ) {
+      const { error: deleteError } =
+        await supabaseAdmin
+          .from("notification_tokens")
+          .delete()
+          .in(
+            "token",
+            invalidTokens
+          );
 
       if (deleteError) {
         console.error(
@@ -144,23 +243,41 @@ export async function POST(req: Request) {
     }
 
     // ==========================================
-    // 8. TRẢ KẾT QUẢ
+    // KẾT QUẢ
     // ==========================================
+
     return NextResponse.json({
       success: true,
-      message: "Đã gửi thông báo",
-      total: tokens.length,
-      successCount: response.successCount,
-      failureCount: response.failureCount,
-      removedTokens: invalidTokens.length,
+
+      message:
+        "Đã gửi thông báo",
+
+      type,
+
+      total:
+        tokens.length,
+
+      successCount:
+        response.successCount,
+
+      failureCount:
+        response.failureCount,
+
+      removedTokens:
+        invalidTokens.length,
     });
+
   } catch (error) {
-    console.error("❌ Lỗi gửi thông báo:", error);
+    console.error(
+      "❌ Lỗi gửi thông báo:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        error: "Không thể gửi thông báo",
+        error:
+          "Không thể gửi thông báo",
       },
       { status: 500 }
     );

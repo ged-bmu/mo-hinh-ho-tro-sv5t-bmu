@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { LogOut, ChevronLeft } from "lucide-react";
-import { requestNotificationPermission } from "@/lib/messaging";
+import requestNotificationPermission from "@/lib/messaging";
 
 export default function Sidebar() {
   const pathname = usePathname();
