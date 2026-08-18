@@ -75,9 +75,9 @@ messaging.onBackgroundMessage((payload) => {
     icon: "/icon-192.png",
     badge: "/icon-192.png",
 
-    tag: data.conversationId
-      ? `chat-${data.conversationId}`
-      : `notification-${type}`,
+    tag: data.messageId
+      ? `message-${data.messageId}`
+      : `notification-${type}-${Date.now()}`,
 
     renotify: true,
 
