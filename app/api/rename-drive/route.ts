@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
+import { requireAdminOrSelf } from "@/lib/auth-admin";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(request: Request) {
   try {
@@ -14,6 +16,33 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    if (typeof newName !== "string" || newName.trim().length > 255) {
+      return NextResponse.json(
+        { success: false, error: "Tên file không hợp lệ" },
+        { status: 400 }
+      );
+    }
+
+    const { data: fileRecord, error: fileError } = await supabaseAdmin
+      .from("uploaded_files")
+      .select("user_id")
+      .eq("drive_file_id", fileId)
+      .single();
+
+    if (fileError || !fileRecord) {
+      return NextResponse.json(
+        { success: false, error: "Không tìm thấy file" },
+        { status: 404 }
+      );
+    }
+
+    const { error: authError } = await requireAdminOrSelf(
+      request,
+      fileRecord.user_id
+    );
+
+    if (authError) return authError;
 
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -47,7 +76,7 @@ export async function POST(request: Request) {
     const result = await drive.files.update({
       fileId,
       requestBody: {
-        name: newName,
+        name: newName.trim(),
       },
       fields: "id,name,webViewLink,webContentLink",
     });

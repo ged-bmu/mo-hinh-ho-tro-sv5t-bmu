@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase";
+import { authFetch } from "@/lib/auth-fetch";
 
 export default function UserManagement() {
   const [users, setUsers] = useState<any[]>([]);
@@ -322,6 +323,18 @@ export default function UserManagement() {
 
   if (!password) return;
 
+  if (
+    password.length < 8 ||
+    !/[a-z]/.test(password) ||
+    !/[A-Z]/.test(password) ||
+    !/[0-9]/.test(password)
+  ) {
+    alert(
+      "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường và chữ số"
+    );
+    return;
+  }
+
   const confirmPassword = prompt(
     "Nhập lại mật khẩu:"
   );
@@ -335,7 +348,7 @@ export default function UserManagement() {
     return;
   }
 
-const res = await fetch(
+const res = await authFetch(
   "/api/reset-password",
   {
     method: "POST",
@@ -384,7 +397,7 @@ onClick={async () => {
 
   if (!ok) return;
 
-  const res = await fetch(
+  const res = await authFetch(
     "/api/delete-user",
     {
       method: "POST",

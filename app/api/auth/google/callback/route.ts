@@ -1,16 +1,32 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
 
+const GOOGLE_OAUTH_STATE_COOKIE = "google_oauth_state";
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get("code");
+    const state = searchParams.get("state");
+    const expectedState = request.headers
+      .get("cookie")
+      ?.split(";")
+      .map((cookie) => cookie.trim())
+      .find((cookie) => cookie.startsWith(`${GOOGLE_OAUTH_STATE_COOKIE}=`))
+      ?.slice(GOOGLE_OAUTH_STATE_COOKIE.length + 1);
 
     if (!code) {
       return NextResponse.json(
         {
           error: "Không nhận được authorization code từ Google",
         },
+        { status: 400 }
+      );
+    }
+
+    if (!state || !expectedState || state !== expectedState) {
+      return NextResponse.json(
+        { error: "Google OAuth state không hợp lệ hoặc đã hết hạn" },
         { status: 400 }
       );
     }
@@ -42,13 +58,14 @@ export async function GET(request: Request) {
 
     const { tokens } = await oauth2Client.getToken(code);
 
-console.log("GOOGLE_REFRESH_TOKEN =", tokens.refresh_token);
+    const response = NextResponse.json({
+      success: true,
+      message: "Google Drive đã kết nối thành công!",
+      hasRefreshToken: !!tokens.refresh_token,
+    });
+    response.cookies.delete(GOOGLE_OAUTH_STATE_COOKIE);
 
-return NextResponse.json({
-  success: true,
-  message: "Google Drive đã kết nối thành công!",
-  hasRefreshToken: !!tokens.refresh_token,
-});
+    return response;
 
   } catch (error) {
     console.error(

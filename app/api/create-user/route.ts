@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth-admin";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,6 +17,12 @@ export async function POST(req: Request) {
       password,
       role,
     } = await req.json();
+
+    if (role !== "student") {
+      const { error: authError } = await requireAdmin(req);
+
+      if (authError) return authError;
+    }
 
     const { data, error } =
       await supabaseAdmin.auth.admin.createUser({

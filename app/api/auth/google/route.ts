@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
+import { randomBytes } from "crypto";
+import { requireAdmin } from "@/lib/auth-admin";
 
-export async function GET() {
+const GOOGLE_OAUTH_STATE_COOKIE = "google_oauth_state";
+
+export async function GET(request: Request) {
   try {
+    const { error: authError } = await requireAdmin(request);
+
+    if (authError) return authError;
+
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const redirectUri = process.env.GOOGLE_REDIRECT_URI;
@@ -23,15 +31,28 @@ export async function GET() {
       redirectUri
     );
 
+    const state = randomBytes(32).toString("hex");
     const url = oauth2Client.generateAuthUrl({
       access_type: "offline",
       prompt: "consent",
+      state,
       scope: [
-      "https://www.googleapis.com/auth/drive",
-       ],
+        "https://www.googleapis.com/auth/drive",
+      ],
     });
 
-    return NextResponse.redirect(url);
+    const response = NextResponse.redirect(url);
+    response.cookies.set({
+      name: GOOGLE_OAUTH_STATE_COOKIE,
+      value: state,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 600,
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Google OAuth error:", error);
 

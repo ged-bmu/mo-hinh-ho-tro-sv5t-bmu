@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import puppeteer from "puppeteer";
 import puppeteerCore from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
+import { escapeHtml } from "@/lib/escapeHtml";
+import { requireAdminOrSelf } from "@/lib/auth-admin";
 
 export const runtime = "nodejs";
 export async function GET(
@@ -11,6 +13,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    const { error: authError } = await requireAdminOrSelf(request, id);
+
+    if (authError) return authError;
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,7 +35,7 @@ export async function GET(
       .eq("user_id", id);
 
    const getContent = (key: string) => {
-  const content = String(
+  const content = escapeHtml(
     reports?.find((r) => r.criteria === key)?.content || "—"
   );
 
@@ -219,11 +225,11 @@ Thành tích khác
 <td class="student">
 
 <div>
-<b>Họ và tên:</b> ${profile?.ho_ten ?? ""}
+<b>Họ và tên:</b> ${escapeHtml(profile?.ho_ten)}
 </div>
 
 <div>
-<b>MSSV:</b> ${profile?.mssv ?? ""}
+<b>MSSV:</b> ${escapeHtml(profile?.mssv)}
 </div>
 
 <div>
@@ -243,7 +249,7 @@ Thành tích khác
 </div>
 
 <div>
-<b>Lớp:</b> ${profile?.lop ?? ""},
+<b>Lớp:</b> ${escapeHtml(profile?.lop)},
 Trường Đại học Y Dược Buôn Ma Thuột
 </div>
 
@@ -260,7 +266,7 @@ Trường Đại học Y Dược Buôn Ma Thuột
 </div>
 
 <div>
-<b>Email:</b> ${profile?.email ?? ""}
+<b>Email:</b> ${escapeHtml(profile?.email)}
 </div>
 
 </td>

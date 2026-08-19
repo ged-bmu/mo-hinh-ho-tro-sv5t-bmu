@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { authFetch as fetch } from "../lib/auth-fetch";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
 import Image from "next/image";
@@ -727,7 +728,7 @@ style={{
     background: "#ffffff",
     borderRadius: "16px",
     border: "1px solid #e5e7eb",
-    overflow: "hidden",
+    overflow: "visible",
     boxShadow: "0 4px 14px rgba(15, 23, 42, 0.08)",
   }}
 >
@@ -740,6 +741,8 @@ style={{
     padding: "12px 14px",
     width: "100%",
     borderBottom: "1px solid #000000",
+    borderTopLeftRadius: "16px",
+    borderTopRightRadius: "16px",
   }}
 >
   ⚡ Thao tác nhanh
@@ -945,6 +948,7 @@ style={{
             alignItems: "center",
             justifyContent: "center",
             border: "2px solid #fff",
+            zIndex: 2,
           }}
         >
           {unreadMessages > 9 ? "9+" : unreadMessages}

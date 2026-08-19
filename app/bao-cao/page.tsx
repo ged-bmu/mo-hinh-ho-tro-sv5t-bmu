@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { authFetch as fetch } from "@/lib/auth-fetch";
 import Sidebar from "../components/Sidebar";
 import CriteriaModal from "../components/CriteriaModal";
 import Header from "../components/Header";

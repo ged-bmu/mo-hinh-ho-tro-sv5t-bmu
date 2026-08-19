@@ -2,9 +2,14 @@ import { NextResponse } from "next/server";
 import { app } from "@/lib/firebase-admin";
 import { getMessaging } from "firebase-admin/messaging";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { requireAdmin } from "@/lib/auth-admin";
 
 export async function POST(req: Request) {
   try {
+    const { error: authError } = await requireAdmin(req);
+
+    if (authError) return authError;
+
     const body = await req.json();
 
     // ==========================================

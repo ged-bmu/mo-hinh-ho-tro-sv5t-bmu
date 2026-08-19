@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { authFetch as fetch } from "../../lib/auth-fetch";
 import Sidebar from "../components/Sidebar";
 import FileItem from "../components/FileItem";
 import CriteriaModal from "../components/CriteriaModal";
@@ -268,10 +269,6 @@ export default function HoiNhapPage() {
           target_file: file.name,
         });
 
-      await fetch("/api/cleanup-logs", {
-        method: "POST",
-      });
-
       // Không alert thành công nữa
 
     } catch (error) {
@@ -446,13 +443,6 @@ export default function HoiNhapPage() {
             fileRecord.storage_name,
         });
 
-      await fetch(
-        "/api/cleanup-logs",
-        {
-          method: "POST",
-        }
-      );
-
     } catch (error) {
       console.error(
         "Delete error:",
@@ -612,13 +602,6 @@ export default function HoiNhapPage() {
           target_file: newName,
         });
 
-      await fetch(
-        "/api/cleanup-logs",
-        {
-          method: "POST",
-        }
-      );
-
     } catch (error) {
       console.error(
         "Rename error:",
@@ -674,8 +657,27 @@ export default function HoiNhapPage() {
               margin: "0 auto",
             }}
           >
+            <button
+              type="button"
+              onClick={() => (window.location.href = "/tieuchi")}
+              style={{
+                display: "inline-block",
+                marginRight: "12px",
+                marginBottom: "20px",
+                padding: "8px 12px",
+                border: "1px solid #d1d5db",
+                borderRadius: "8px",
+                background: "#e5e7eb",
+                color: "#111827",
+                cursor: "pointer",
+              }}
+            >
+              ← Quay lại
+            </button>
+
             <h1
               style={{
+                display: "inline-block",
                 fontSize: "32px",
                 marginBottom: "20px",
               }}

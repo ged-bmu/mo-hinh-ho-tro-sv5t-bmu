@@ -11,6 +11,7 @@ import Spinner from "../components/Spinner";
 import Header from "../components/Header";
 import AdminSidebar from "../components/AdminSidebar";
 import NotificationBell from "../components/NotificationBell";
+import { authFetch } from "@/lib/auth-fetch";
 
 export default function AdminPage() {
   const [profile, setProfile] = useState<any>(null);
@@ -614,19 +615,34 @@ const exportExcel = async () => {
       </div>
 
 <div
-  onClick={() => {
+  onClick={async () => {
+    if (exporting) return;
+
     setExporting(true);
 
-    window.open(
-      `/api/export-all-student?filter=${filterResult}&search=${encodeURIComponent(search)}`,
-      "_blank"
-    );
+    try {
+      const response = await authFetch(
+        `/api/export-all-student?filter=${filterResult}&search=${encodeURIComponent(search)}`
+      );
 
-    setShowExportMenu(false);
+      if (!response.ok) {
+        throw new Error("Không thể xuất toàn bộ hồ sơ");
+      }
 
-    setTimeout(() => {
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "Ho-So-SV5T.zip";
+      link.click();
+      URL.revokeObjectURL(url);
+      setShowExportMenu(false);
+    } catch (error) {
+      console.error("Export all error:", error);
+      alert("Không thể xuất toàn bộ hồ sơ");
+    } finally {
       setExporting(false);
-    }, 2000);
+    }
   }}
   style={{
     padding: "12px",

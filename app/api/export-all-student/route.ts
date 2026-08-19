@@ -1,10 +1,17 @@
 import { createClient } from "@supabase/supabase-js";
 import JSZip from "jszip";
+import { requireAdmin } from "@/lib/auth-admin";
+
+export const runtime = "nodejs";
 
 export async function GET(
   request: Request
 ) {
   try {
+    const { error: authError } = await requireAdmin(request);
+
+    if (authError) return authError;
+
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -33,64 +40,64 @@ export async function GET(
       "uu-tien": "Thành tích khác",
     };
 
-   let query = supabase
-  .from("profiles")
-  .select(`
-      id,
-      ho_ten,
-      lop,
-      mssv,
-      "dao-duc",
-      "hoc-tap",
-      "the-luc",
-      "tinh-nguyen",
-      "hoi-nhap"
-  `)
-  .neq("role", "admin");
+    const pageSize = 100;
+    let offset = 0;
+    let exportedStudentCount = 0;
 
-if (search) {
-  query = query.or(
-    `ho_ten.ilike.%${search}%,mssv.ilike.%${search}%,lop.ilike.%${search}%`
-  );
-}
+    while (true) {
+      let query = supabase
+        .from("profiles")
+        .select(`
+          id,
+          ho_ten,
+          lop,
+          mssv,
+          "dao-duc",
+          "hoc-tap",
+          "the-luc",
+          "tinh-nguyen",
+          "hoi-nhap"
+        `)
+        .neq("role", "admin")
+        .range(offset, offset + pageSize - 1);
 
-const { data: students, error } =
-  await query;
-    if (error) throw error;
-
-    let filteredStudents =
-      students || [];
-      
-
-    // Lọc đạt
-    if (filter === "passed") {
-      filteredStudents =
-        filteredStudents.filter(
-          (sv: any) =>
-            sv["dao-duc"] &&
-            sv["hoc-tap"] &&
-            sv["the-luc"] &&
-            sv["tinh-nguyen"] &&
-            sv["hoi-nhap"]
+      if (search) {
+        const safeSearch = search.replace(/[.,()]/g, " ").trim();
+        query = query.or(
+          `ho_ten.ilike.%${safeSearch}%,mssv.ilike.%${safeSearch}%,lop.ilike.%${safeSearch}%`
         );
-    }
+      }
 
-    // Lọc chưa đạt
-    if (filter === "failed") {
-      filteredStudents =
-        filteredStudents.filter(
-          (sv: any) =>
+      const { data: students, error } = await query;
+      if (error) throw error;
+
+      let filteredStudents = students || [];
+
+      if (filter === "passed") {
+        filteredStudents = filteredStudents.filter(
+          (student) =>
+            student["dao-duc"] &&
+            student["hoc-tap"] &&
+            student["the-luc"] &&
+            student["tinh-nguyen"] &&
+            student["hoi-nhap"]
+        );
+      }
+
+      if (filter === "failed") {
+        filteredStudents = filteredStudents.filter(
+          (student) =>
             !(
-              sv["dao-duc"] &&
-              sv["hoc-tap"] &&
-              sv["the-luc"] &&
-              sv["tinh-nguyen"] &&
-              sv["hoi-nhap"]
+              student["dao-duc"] &&
+              student["hoc-tap"] &&
+              student["the-luc"] &&
+              student["tinh-nguyen"] &&
+              student["hoi-nhap"]
             )
         );
-    }
+      }
 
-    for (const student of filteredStudents) {
+      for (const student of filteredStudents) {
 
   const classFolder =
     zip.folder(student.lop);
@@ -114,14 +121,13 @@ const { data: students, error } =
         );
       });
 
-      const { data: files } =
+      const { data: files, error: filesError } =
         await supabase
           .from("uploaded_files")
-          .select("*")
-          .eq(
-            "user_id",
-            student.id
-          );
+          .select("folder, storage_name, display_name")
+          .eq("user_id", student.id);
+
+      if (filesError) throw filesError;
 
       for (const file of files || []) {
         const path =
@@ -138,11 +144,7 @@ const { data: students, error } =
           downloadError ||
           !fileBlob
         ) {
-          console.log(
-            "DOWNLOAD ERROR:",
-            path
-          );
-          continue;
+          throw downloadError || new Error(`Không tìm thấy file: ${path}`);
         }
 
         const buffer =
@@ -171,6 +173,12 @@ const { data: students, error } =
             );
         }
       }
+
+      exportedStudentCount += 1;
+    }
+
+      if (!students || students.length < pageSize) break;
+      offset += pageSize;
     }
 
     const zipFile =
@@ -184,6 +192,7 @@ const { data: students, error } =
           "application/zip",
         "Content-Disposition":
           'attachment; filename="Ho-So-SV5T.zip"',
+        "X-Exported-Students": String(exportedStudentCount),
       },
     });
   } catch (err) {

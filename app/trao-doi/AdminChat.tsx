@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { authFetch as fetch } from "@/lib/auth-fetch";
 
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";

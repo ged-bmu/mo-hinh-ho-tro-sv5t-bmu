@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { authFetch as fetch } from "../../lib/auth-fetch";
 import { checkSubmissionAccess } from "../../lib/checkSubmissionAccess";
 import Sidebar from "../components/Sidebar";
 import FileItem from "../components/FileItem";
@@ -251,10 +252,6 @@ export default function HocTapPage() {
           target_file: file.name,
         });
 
-      await fetch("/api/cleanup-logs", {
-        method: "POST",
-      });
-
       // ================================
       // 7. CẬP NHẬT GIAO DIỆN NGAY
       // ================================
@@ -423,9 +420,6 @@ export default function HocTapPage() {
             fileRecord.storage_name,
         });
 
-      await fetch("/api/cleanup-logs", {
-        method: "POST",
-      });
     } catch (error) {
       console.error("Delete error:", error);
 
@@ -563,9 +557,6 @@ export default function HocTapPage() {
           target_file: newName,
         });
 
-      await fetch("/api/cleanup-logs", {
-        method: "POST",
-      });
     } catch (error) {
       console.error("Rename error:", error);
 
@@ -614,8 +605,27 @@ export default function HocTapPage() {
               margin: "0 auto",
             }}
           >
+            <button
+              type="button"
+              onClick={() => (window.location.href = "/tieuchi")}
+              style={{
+                display: "inline-block",
+                marginRight: "12px",
+                marginBottom: "20px",
+                padding: "8px 12px",
+                border: "1px solid #d1d5db",
+                borderRadius: "8px",
+                background: "#e5e7eb",
+                color: "#111827",
+                cursor: "pointer",
+              }}
+            >
+              ← Quay lại
+            </button>
+
             <h1
               style={{
+                display: "inline-block",
                 fontSize: "32px",
                 marginBottom: "20px",
               }}

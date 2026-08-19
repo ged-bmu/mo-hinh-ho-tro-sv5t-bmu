@@ -1,10 +1,15 @@
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth-admin";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { error: authError } = await requireAdmin(request);
+
+    if (authError) return authError;
+
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;

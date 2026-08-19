@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetch } from "@/lib/auth-fetch";
 
 type DriveItem = {
   id: string;
@@ -36,7 +37,7 @@ export default function DriveProfileModal({
       setLoading(true);
       setSelectedFile(null);
 
-      const res = await fetch(
+      const res = await authFetch(
   `/api/drive-files?folderId=${encodeURIComponent(folderId)}`
 );
 

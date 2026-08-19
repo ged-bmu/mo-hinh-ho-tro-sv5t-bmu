@@ -19,6 +19,10 @@ export default function Sidebar() {
 
   // submenu minh chứng
   const [showProofMenu, setShowProofMenu] = useState(false);
+  const [proofMenuPosition, setProofMenuPosition] = useState({
+    top: 0,
+    left: 0,
+  });
 
   useEffect(() => {
     checkRole();
@@ -423,14 +427,16 @@ return (
     style={{
       width: collapsed ? "80px" : "280px",
       transition: "0.3s",
-      height: "100vh",
+      height: "calc(100dvh - 90px)",
+      maxHeight: "calc(100dvh - 90px)",
       position: "sticky",
       top: 0,
       background: "#fff",
       borderRight: "1px solid #e5e7eb",
       display: "flex",
       flexDirection: "column",
-      zIndex: 1000,
+      overflow: "visible",
+      zIndex: 9998,
     }}
   >
     {/* HEADER */}
@@ -457,7 +463,9 @@ return (
     <div
       style={{
         flex: 1,
-        overflowY: "visible",
+        minHeight: 0,
+        overflowY: "auto",
+        overflowX: "hidden",
         display: "flex",
         flexDirection: "column",
         gap: 8,
@@ -469,12 +477,19 @@ return (
         const proofActive = proofPaths.includes(pathname);
 
         // ===== MENU MINH CHỨNG =====
-        if (item.name === "Minh chứng") {
+        if (item.name === "Quản lí hồ sơ") {
           return (
             <div
               key={item.href}
               style={{ position: "relative" }}
-              onMouseEnter={() => setShowProofMenu(true)}
+              onMouseEnter={(event) => {
+                const rect = event.currentTarget.getBoundingClientRect();
+                setProofMenuPosition({
+                  top: rect.top,
+                  left: rect.right,
+                });
+                setShowProofMenu(true);
+              }}
               onMouseLeave={() => setShowProofMenu(false)}
             >
               <Link
@@ -501,10 +516,9 @@ return (
               {showProofMenu && (
                 <div
                   style={{
-                    position: "absolute",
-                    left: "100%",
-                    marginLeft: 0,
-                    top: 0,
+                    position: "fixed",
+                    left: proofMenuPosition.left,
+                    top: proofMenuPosition.top,
                     width: 220,
                     background: "#fff",
                     borderRadius: 14,
@@ -610,6 +624,7 @@ onMouseLeave={(e) => {
   disabled={notificationLoading}
   style={{
     margin: "8px 10px 0",
+    flexShrink: 0,
     padding: "12px 14px",
     borderRadius: 12,
     border: "none",
@@ -673,6 +688,7 @@ onMouseLeave={(e) => {
       style={{
         marginTop: "auto",
         padding: 12,
+        flexShrink: 0,
       }}
     >
       <button
@@ -712,10 +728,12 @@ onMouseLeave={(e) => {
     width: 34,
     height: 34,
     borderRadius: "50%",
-    border: "none",
-    background: "#858585",
+    border: "2px solid #fff",
+    background: "#374151",
     color: "#fff",
     cursor: "pointer",
+    zIndex: 10001,
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)",
 
     display: "flex",
     justifyContent: "center",

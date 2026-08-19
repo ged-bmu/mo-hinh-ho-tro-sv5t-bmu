@@ -167,3 +167,86 @@ const { error } = await supabase.rpc(
     return null;
   }
 }
+export async function deleteFCMToken() {
+  try {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    if (!("Notification" in window)) {
+      return false;
+    }
+
+    if (!("serviceWorker" in navigator)) {
+      return false;
+    }
+
+    const supported = await isSupported();
+
+    if (!supported) {
+      return false;
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return false;
+    }
+
+    const messaging = getMessaging(firebaseApp);
+
+    const registration =
+      await navigator.serviceWorker.getRegistration(
+        "/firebase-messaging-sw.js"
+      );
+
+    if (!registration) {
+      return false;
+    }
+
+    const vapidKey =
+      process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+
+    if (!vapidKey) {
+      return false;
+    }
+
+    const token = await getToken(messaging, {
+      vapidKey,
+      serviceWorkerRegistration: registration,
+    });
+
+    if (!token) {
+      return false;
+    }
+
+    const { error } = await supabase.rpc(
+      "delete_notification_token",
+      {
+        p_token: token,
+      }
+    );
+
+    if (error) {
+      console.error(
+        "❌ Xóa FCM token thất bại:",
+        error
+      );
+
+      return false;
+    }
+
+    console.log("✅ ĐÃ XÓA FCM TOKEN");
+
+    return true;
+  } catch (error) {
+    console.error(
+      "❌ deleteFCMToken ERROR:",
+      error
+    );
+
+    return false;
+  }
+}

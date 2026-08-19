@@ -1,4 +1,6 @@
 import { google } from "googleapis";
+import { requireAdminOrSelf } from "@/lib/auth-admin";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(
   request: Request
@@ -16,6 +18,23 @@ export async function GET(
         { status: 400 }
       );
     }
+
+    const { data: fileRecord, error: fileError } = await supabaseAdmin
+      .from("uploaded_files")
+      .select("user_id")
+      .eq("drive_file_id", fileId)
+      .single();
+
+    if (fileError || !fileRecord) {
+      return new Response("Không tìm thấy file", { status: 404 });
+    }
+
+    const { error: authError } = await requireAdminOrSelf(
+      request,
+      fileRecord.user_id
+    );
+
+    if (authError) return authError;
 
     const clientId =
       process.env.GOOGLE_CLIENT_ID;

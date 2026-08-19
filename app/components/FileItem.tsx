@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Spinner from "./Spinner";
+import { authFetch } from "@/lib/auth-fetch";
 
 export default function FileItem({
   file,
@@ -16,6 +17,7 @@ export default function FileItem({
   onRename: (file: any) => void;
 }) {
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [zoom, setZoom] = useState(0.6); 
   const [isMobile, setIsMobile] = useState(false);
@@ -41,6 +43,38 @@ useEffect(() => {
       document.body.style.overflow = "auto";
     };
   }, [previewOpen]);
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+    let cancelled = false;
+
+    if (previewOpen) {
+      authFetch(url)
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error("Không thể tải file");
+          }
+
+          const blob = await response.blob();
+          objectUrl = window.URL.createObjectURL(blob);
+
+          if (!cancelled) {
+            setPreviewUrl(objectUrl);
+          }
+        })
+        .catch((error) => {
+          console.error("Preview file error:", error);
+          if (!cancelled) setPreviewUrl(null);
+        });
+    } else {
+      setPreviewUrl(null);
+    }
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) window.URL.revokeObjectURL(objectUrl);
+    };
+  }, [previewOpen, url]);
 
   return (
     <div
@@ -203,7 +237,7 @@ useEffect(() => {
             {/* DOWNLOAD */}
           <button
   onClick={async () => {
-    const res = await fetch(url);
+    const res = await authFetch(url);
     const blob = await res.blob();
 
     const blobUrl = window.URL.createObjectURL(blob);
@@ -332,7 +366,7 @@ useEffect(() => {
   }}
 >
   <iframe
-    src={`${url}#toolbar=0`}
+    src={previewUrl ? `${previewUrl}#toolbar=0` : undefined}
     style={{
       width: `${100 / zoom}%`,
       height: `${100 / zoom}%`,

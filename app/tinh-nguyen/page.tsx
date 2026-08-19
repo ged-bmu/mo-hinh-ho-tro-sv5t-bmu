@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { authFetch as fetch } from "../../lib/auth-fetch";
 import Sidebar from "../components/Sidebar";
 import FileItem from "../components/FileItem";
 import CriteriaModal from "../components/CriteriaModal";
@@ -118,6 +119,11 @@ setSavingReport(false);
 setLastSaved(new Date());
 }
 async function uploadFile(file: File) {
+  if (file.size <= 0 || file.size > 25 * 1024 * 1024) {
+    alert("File phải lớn hơn 0 và không vượt quá 25 MB");
+    return;
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -159,7 +165,18 @@ async function uploadFile(file: File) {
       body: formData,
     });
 
-    const driveResult = await response.json();
+    const responseText = await response.text();
+    let driveResult: any;
+
+    try {
+      driveResult = JSON.parse(responseText);
+    } catch {
+      throw new Error(
+        responseText.includes("Request Entity")
+          ? "File vượt quá giới hạn upload của máy chủ"
+          : "Máy chủ trả về phản hồi không hợp lệ"
+      );
+    }
 
     if (!response.ok || !driveResult.success) {
       throw new Error(
@@ -232,10 +249,6 @@ async function uploadFile(file: File) {
         target_folder: "tinh-nguyen",
         target_file: file.name,
       });
-
-    await fetch("/api/cleanup-logs", {
-      method: "POST",
-    });
 
     // Không alert thành công
     loadFiles();
@@ -383,9 +396,6 @@ async function deleteFile(storageName: string) {
           fileRecord.storage_name,
       });
 
-    await fetch("/api/cleanup-logs", {
-      method: "POST",
-    });
   } catch (error) {
     console.error(
       "Delete error:",
@@ -516,9 +526,6 @@ async function renameFile(file: any) {
         target_file: newName,
       });
 
-    await fetch("/api/cleanup-logs", {
-      method: "POST",
-    });
   } catch (error) {
     console.error(
       "Rename error:",
@@ -573,13 +580,32 @@ async function renameFile(file: any) {
         }}
       >
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+          <button
+            type="button"
+            onClick={() => (window.location.href = "/tieuchi")}
+            style={{
+              display: "inline-block",
+              marginRight: "12px",
+              marginBottom: "20px",
+              padding: "8px 12px",
+              border: "1px solid #d1d5db",
+              borderRadius: "8px",
+              background: "#e5e7eb",
+              color: "#111827",
+              cursor: "pointer",
+            }}
+          >
+            ← Quay lại
+          </button>
+
           <h1
             style={{
+              display: "inline-block",
               fontSize: "32px",
               marginBottom: "20px",
             }}
           >
-             🤝 Tình nguyệt tốt
+             🤝 Tình nguyện tốt
           </h1>
 <div
   style={{

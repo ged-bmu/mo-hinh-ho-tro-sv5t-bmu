@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { authFetch } from "@/lib/auth-fetch";
 
 export default function CreateUserPage() {
   const [hoTen, setHoTen] = useState("");
@@ -13,7 +14,7 @@ export default function CreateUserPage() {
 const [lop, setLop] = useState("");
   async function createUser() {
     try {
-      const res = await fetch("/api/create-user", {
+      const res = await authFetch("/api/create-user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

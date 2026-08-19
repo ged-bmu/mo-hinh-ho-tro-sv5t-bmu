@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { registerFCMToken } from "@/lib/firebase-messaging";
+import { registerFCMToken, deleteFCMToken, } from "@/lib/firebase-messaging";
 import { Bell, BellOff, Loader2 } from "lucide-react";
 
 export default function NotificationToggle() {
@@ -16,9 +16,30 @@ export default function NotificationToggle() {
     // ==========================================
 
     if (enabled) {
+  try {
+    setLoading(true);
+
+    console.log("🔕 BẮT ĐẦU TẮT THÔNG BÁO");
+
+    const success = await deleteFCMToken();
+
+    if (success) {
+      console.log("✅ TẮT THÔNG BÁO THÀNH CÔNG");
       setEnabled(false);
-      return;
+    } else {
+      console.log("❌ KHÔNG TẮT ĐƯỢC THÔNG BÁO");
     }
+  } catch (error) {
+    console.error(
+      "❌ LỖI TẮT THÔNG BÁO:",
+      error
+    );
+  } finally {
+    setLoading(false);
+  }
+
+  return;
+}
 
     // ==========================================
     // ĐANG TẮT → BẬT

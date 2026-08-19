@@ -2,9 +2,14 @@ import { NextResponse } from "next/server";
 import { getMessaging } from "firebase-admin/messaging";
 import { app } from "@/lib/firebase-admin";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { requireAdmin } from "@/lib/auth-admin";
 
 export async function POST(req: Request) {
   try {
+    const { error: authError } = await requireAdmin(req);
+
+    if (authError) return authError;
+
     const { activityId, title, body, url } = await req.json();
 
     if (!activityId || !title || !body) {
@@ -65,28 +70,61 @@ export async function POST(req: Request) {
       });
     }
 
-    // 3. Gửi FCM
+    // 3. Gửi FCM theo batch, mỗi batch tối đa 500 token
     const messaging = getMessaging(app);
+    const batchSize = 500;
+    const invalidTokens: string[] = [];
+    let successCount = 0;
+    let failureCount = 0;
 
-    const response = await messaging.sendEachForMulticast({
-      tokens: fcmTokens,
+    for (let offset = 0; offset < fcmTokens.length; offset += batchSize) {
+      const tokenBatch = fcmTokens.slice(offset, offset + batchSize);
+      const response = await messaging.sendEachForMulticast({
+        tokens: tokenBatch,
+        data: {
+          type: "activity",
+          title: String(title),
+          body: String(body),
+          url: String(url || `/activities/${activityId}`),
+          activityId: String(activityId),
+          notificationId: "",
+        },
+      });
 
-      data: {
-        type: "activity",
-        title,
-        body,
-        url: url || `/activities/${activityId}`,
-        activityId: String(activityId),
-        notificationId: "",
-      },
-    });
+      successCount += response.successCount;
+      failureCount += response.failureCount;
+
+      response.responses.forEach((result, index) => {
+        const errorCode = result.error?.code;
+
+        if (
+          !result.success &&
+          (errorCode === "messaging/registration-token-not-registered" ||
+            errorCode === "messaging/invalid-registration-token")
+        ) {
+          invalidTokens.push(tokenBatch[index]);
+        }
+      });
+    }
+
+    if (invalidTokens.length > 0) {
+      const { error: deleteError } = await supabaseAdmin
+        .from("notification_tokens")
+        .delete()
+        .in("token", invalidTokens);
+
+      if (deleteError) {
+        console.error("❌ Không thể xóa FCM token hết hạn:", deleteError);
+      }
+    }
 
     return NextResponse.json({
       success: true,
       students: userIds.length,
       tokens: fcmTokens.length,
-      sent: response.successCount,
-      failed: response.failureCount,
+      sent: successCount,
+      failed: failureCount,
+      removedTokens: invalidTokens.length,
     });
   } catch (error: any) {
     console.error("❌ ACTIVITY FCM ERROR:", error);

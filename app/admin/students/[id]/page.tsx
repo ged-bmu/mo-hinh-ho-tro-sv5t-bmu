@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
+import { authFetch as fetch } from "@/lib/auth-fetch";
 import { sendNotification } from "@/lib/notification";
 import { createPortal } from "react-dom";
 import { FaFilePdf } from "react-icons/fa";
@@ -329,19 +330,23 @@ async function exportReportPDF() {
     });
   }
 async function exportStudentFolder() {
-  const link =
-    document.createElement("a");
+  const response = await fetch(`/api/export-student/${id}`);
 
-  link.href =
-    `/api/export-student/${id}`;
+  if (!response.ok) {
+    alert("Xuất hồ sơ thất bại");
+    return;
+  }
 
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
   link.download = "";
-
   document.body.appendChild(link);
-
   link.click();
-
   link.remove();
+  window.URL.revokeObjectURL(url);
 }
 
 if (!profile) {

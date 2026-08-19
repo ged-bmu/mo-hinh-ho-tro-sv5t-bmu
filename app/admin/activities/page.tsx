@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import Footer from "../../components/Footer";
 import Header from "../../components/Header";
 import CriteriaModal from "../../components/CriteriaModal";
+import { authFetch } from "@/lib/auth-fetch";
 
 type Activity = {
   id: string;
@@ -232,7 +233,7 @@ loadActivities();
       alert("Không thể gửi thông báo: " + notificationError.message);
       return;
     }
-    const response = await fetch("/api/notifications/activity", {
+    const response = await authFetch("/api/notifications/activity", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
