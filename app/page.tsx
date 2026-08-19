@@ -30,7 +30,31 @@ useEffect(() => {
   loadProfile();
   loadNextActivity();
 }, []);
+useEffect(() => {
+  if (!profile?.id) return;
 
+  const channel = supabase
+    .channel(`profile-${profile.id}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "profiles",
+        filter: `id=eq.${profile.id}`,
+      },
+      (payload) => {
+       
+        setProfile(payload.new);
+      }
+    )
+    .subscribe((status) => {
+    });
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [profile?.id]);
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -169,6 +193,47 @@ if (data) {
   setProfile(data);
 }
 }
+useEffect(() => {
+  let channel: any;
+  let isMounted = true;
+
+  const init = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user || !isMounted) return;
+
+    channel = supabase
+      .channel(`profile-realtime-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (isMounted) {
+            setProfile(payload.new);
+          }
+        }
+      )
+      .subscribe();
+  };
+
+  init();
+
+  return () => {
+    isMounted = false;
+
+    if (channel) {
+      supabase.removeChannel(channel);
+      channel = null;
+    }
+  };
+}, []);
 useEffect(() => {
   let channel: any;
   let isMounted = true;
@@ -589,7 +654,10 @@ style={{
             strokeWidth="10"
             strokeLinecap="round"
             strokeDasharray={circleCircumference}
-            strokeDashoffset={circleProgress}
+            strokeDashoffset={
+  circleCircumference -
+  (achievedCriteria / 5) * circleCircumference
+}
             filter="url(#glow)"
             style={{
               transition: "stroke-dashoffset 0.6s ease",
