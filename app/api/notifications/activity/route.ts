@@ -81,12 +81,6 @@ export async function POST(req: Request) {
       },
     });
 
-    console.log("📱 ACTIVITY FCM:", {
-      total: fcmTokens.length,
-      success: response.successCount,
-      failed: response.failureCount,
-    });
-
     return NextResponse.json({
       success: true,
       students: userIds.length,

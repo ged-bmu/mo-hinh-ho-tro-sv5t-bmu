@@ -34,11 +34,8 @@ useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-
     checkMobile();
-
     window.addEventListener("resize", checkMobile);
-
     return () => {
       window.removeEventListener("resize", checkMobile);
     };
@@ -64,7 +61,6 @@ useEffect(() => {
       window.location.href = "/admin";
       return;
     }
-
   setLoading(false);
 }
 function formatEventTime(value: string | null) {
@@ -112,34 +108,12 @@ const folders = [
   field: "hoi-nhap",
 },
 {
-  name: "Tiêu chuẩn ưu tiên",
+  name: "Thành tích khác",
   icon: "⭐",
   link: "/uu-tien",
   field: "uu-tien",
 },
 ];
-useEffect(() => {
-  const loadUnread = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from("conversations")
-      .select("unread_user")
-      .eq("user_id", user.id)
-      .single();
-
-    console.log("UNREAD:", data);
-    console.log("ERROR:", error);
-
-    setUnreadMessages(data?.unread_user || 0);
-  };
-
-  loadUnread();
-}, []);
 useEffect(() => {
   async function loadGeneralNotification() {
     const { data, error } = await supabase
@@ -150,7 +124,6 @@ useEffect(() => {
       .limit(1)
       .maybeSingle();
     if (error) {
-      console.error("Lỗi lấy thông báo chung:", error);
       return;
     }
     setGeneralNotification(data);
@@ -169,8 +142,6 @@ useEffect(() => {
         filter: "type=eq.general",
       },
       (payload) => {
-        console.log("📢 Thông báo chung mới:", payload.new);
-
         setGeneralNotification(payload.new);
       }
     )
@@ -184,7 +155,6 @@ async function loadProfile() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  console.log("USER:", user);
 
   if (!user) return;
 
@@ -195,7 +165,6 @@ async function loadProfile() {
     .single();
 
 if (data) {
-  console.table(data);
   setProfile(data);
 }
 }
@@ -242,7 +211,6 @@ useEffect(() => {
         }
       )
       .subscribe((status) => {
-        console.log("Realtime status:", status);
       });
   };
 
@@ -326,7 +294,6 @@ const handleExport = async () => {
     // Giải phóng bộ nhớ
     window.URL.revokeObjectURL(url);
   } catch (error) {
-    console.error("EXPORT ERROR:", error);
     alert("Không thể xuất hồ sơ. Vui lòng thử lại.");
   } finally {
     // Xuất xong hoặc lỗi đều dừng spinner

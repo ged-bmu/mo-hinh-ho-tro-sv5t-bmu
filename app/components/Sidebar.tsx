@@ -78,7 +78,7 @@ export default function Sidebar() {
       href: "/hoi-nhap",
     },
     {
-      name: "Tiêu chuẩn ưu tiên",
+      name: "Thành tích khác",
       icon: "⭐",
       href: "/uu-tien",
     },

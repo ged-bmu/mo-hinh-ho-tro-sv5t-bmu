@@ -60,8 +60,6 @@ export async function registerFCMToken() {
       permission = await Notification.requestPermission();
     }
 
-    console.log("📱 Notification permission:", permission);
-
     if (permission !== "granted") {
       console.log("❌ Không được cấp quyền thông báo");
       return null;
@@ -134,13 +132,18 @@ export async function registerFCMToken() {
     // ==========================================
     // 8. LƯU SUPABASE
     // ==========================================
+    const deviceName =
+  (navigator as any).userAgentData?.model ||
+  navigator.platform ||
+  "Unknown Device";
 
-    const { error } = await supabase.rpc(
-      "save_notification_token",
-      {
-        p_token: token,
-      }
-    );
+const { error } = await supabase.rpc(
+  "save_notification_token",
+  {
+    p_token: token,
+    p_device_name: deviceName,
+  }
+);
 
     if (error) {
       console.error(

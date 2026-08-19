@@ -57,10 +57,6 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("📱 API USER ID:", userId);
-    console.log("🔔 NOTIFICATION TYPE:", type);
-    console.log("🔔 NOTIFICATION TITLE:", title);
-    console.log("🔔 NOTIFICATION MESSAGE:", message);
 
     // ==========================================
     // LẤY FCM TOKEN
@@ -70,9 +66,6 @@ export async function POST(req: Request) {
       .from("notification_tokens")
       .select("token")
       .eq("user_id", userId);
-
-    console.log("📱 TOKEN DATA:", data);
-    console.log("📱 TOKEN ERROR:", error);
 
     if (error) {
       console.error(
@@ -97,11 +90,6 @@ export async function POST(req: Request) {
       data
         ?.map((item) => item.token)
         .filter(Boolean) || [];
-
-    console.log(
-      "📱 TOKEN COUNT:",
-      tokens.length
-    );
 
     // ==========================================
     // KHÔNG CÓ TOKEN
@@ -171,16 +159,6 @@ export async function POST(req: Request) {
         // CHỈ GỬI DATA
         data: notificationData,
       });
-
-    console.log(
-      "📱 FCM SUCCESS:",
-      response.successCount
-    );
-
-    console.log(
-      "📱 FCM FAILURE:",
-      response.failureCount
-    );
 
     // ==========================================
     // TÌM TOKEN KHÔNG CÒN HỢP LỆ

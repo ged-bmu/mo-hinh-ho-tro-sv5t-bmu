@@ -507,8 +507,6 @@ if (conversationError) {
 } else {
   const userId = conversationData?.user_id;
 
-  console.log("📱 SEND NOTIFICATION USER ID:", userId);
-
   if (userId) {
   try {
 const notificationResponse = await fetch(
@@ -551,19 +549,8 @@ const notificationResponse = await fetch(
   }
 );
 
-console.log(
-  "📱 NOTIFICATION STATUS:",
-  notificationResponse.status
-);
-
     const notificationResult =
       await notificationResponse.text();
-
-    console.log(
-      "📱 NOTIFICATION RESPONSE:",
-      notificationResponse.status,
-      notificationResult
-    );
 
   } catch (notificationError) {
     console.error(

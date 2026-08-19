@@ -259,8 +259,6 @@ if (!response.ok) {
   return;
 }
 
-console.log("📱 FCM RESULT:", fcmResult);
-
     alert(`Đã gửi thông báo cho ${profiles.length} sinh viên.`);
   } catch (error) {
     console.error(error);

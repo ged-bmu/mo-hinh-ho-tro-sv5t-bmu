@@ -30,7 +30,7 @@ export async function GET(
       "the-luc": "Thể lực tốt",
       "tinh-nguyen": "Tình nguyện tốt",
       "hoi-nhap": "Hội nhập tốt",
-      "uu-tien": "Tiêu chuẩn ưu tiên",
+      "uu-tien": "Thành tích khác",
     };
 
    let query = supabase
@@ -107,7 +107,7 @@ const { data: students, error } =
         "Thể lực tốt",
         "Tình nguyện tốt",
         "Hội nhập tốt",
-        "Tiêu chuẩn ưu tiên",
+        "Thành tích khác",
       ].forEach((folderName) => {
         studentFolder?.folder(
           folderName

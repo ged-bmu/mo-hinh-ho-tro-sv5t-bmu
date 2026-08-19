@@ -154,7 +154,7 @@ async function submitProfile() {
   color: "#D9F3F8", // Xanh ngọc pastel
 },
 {
-  name: "Tiêu chuẩn ưu tiên",
+  name: "Thành tích khác",
   icon: "⭐",
   link: "/uu-tien",
   field: "uu-tien",
@@ -501,7 +501,7 @@ backgroundAttachment: "fixed",
                         {folder.name}
                       </h2>
 
-                      {folder.name !== "Tiêu chuẩn ưu tiên" && (
+                      {folder.name !== "Thành tích khác" && (
                         <div
                           style={{
                             marginTop: "4px",

@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabase";
 import { GraduationCap, House } from "lucide-react";
 import Header from "../components/Header";
 import CriteriaModal from "../components/CriteriaModal";
-
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 

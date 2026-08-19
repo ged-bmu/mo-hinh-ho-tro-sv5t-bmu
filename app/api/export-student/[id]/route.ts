@@ -55,7 +55,7 @@ export async function GET(
       "the-luc": "Thể lực tốt",
       "tinh-nguyen": "Tình nguyện tốt",
       "hoi-nhap": "Hội nhập tốt",
-      "uu-tien": "Tiêu chuẩn ưu tiên",
+      "uu-tien": "Thành tích khác",
     };
 
     Object.values(folderNames).forEach((name) => {
