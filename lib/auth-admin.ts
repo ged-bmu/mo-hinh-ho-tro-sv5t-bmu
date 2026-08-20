@@ -69,27 +69,22 @@ export async function requireAdmin(request: Request) {
       ),
     };
   }
-
   return {
     user: result.user,
     error: null,
   };
 }
-
 export async function requireAdminOrSelf(
   request: Request,
   resourceUserId: string
 ) {
   const result = await requireUser(request);
-
   if (result.error || !result.user) {
     return result;
   }
-
   if (result.user.id === resourceUserId) {
     return result;
   }
-
   const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("role")
@@ -105,6 +100,5 @@ export async function requireAdminOrSelf(
       ),
     };
   }
-
   return result;
 }

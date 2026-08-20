@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import DriveProfileModal from "../components/DriveProfileModal";
 
 type HeaderProps = {
   tab: string;
@@ -18,7 +17,6 @@ export default function Header({
 }: HeaderProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -133,34 +131,6 @@ onMouseLeave={(e) => {
                       }}
                     >
                       📑 Xem tiêu chuẩn
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setShowMenu(false);
-                        setShowProfile(true);
-                      }}
-                      onMouseEnter={(e) => {
-  e.currentTarget.style.background = "#eff6ff";
-  e.currentTarget.style.color = "#2563eb";
-}}
-onMouseLeave={(e) => {
-  e.currentTarget.style.background = "#fff";
-  e.currentTarget.style.color = "#111";
-}}
-                      style={{
-                        width: "100%",
-                        padding: "13px 15px",
-                        border: "none",
-                        borderTop: "1px solid #eee",
-                        background: "#fff",
-                        textAlign: "left",
-                        cursor: "pointer",
-                        fontSize: 14,
-                        fontWeight: 600,
-                      }}
-                    >
-                      📂 Hồ sơ mẫu
                     </button>
                   </div>
                 )}
@@ -293,35 +263,6 @@ onMouseLeave={(e) => {
 >
   📑 Xem tiêu chuẩn
 </button>
-
-                    <button
-  onClick={() => {
-    setShowMenu(false);
-    setShowProfile(true);
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.background = "#eff6ff";
-    e.currentTarget.style.color = "#2563eb";
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.background = "#fff";
-    e.currentTarget.style.color = "#111";
-  }}
-  style={{
-    width: "100%",
-    padding: "14px 16px",
-    border: "none",
-    borderTop: "1px solid #eee",
-    background: "#fff",
-    textAlign: "left",
-    cursor: "pointer",
-    fontSize: 14,
-    fontWeight: 600,
-    transition: "all 0.2s ease",
-  }}
->
-  📂 Hồ sơ mẫu
-</button>
                   </div>
                 )}
               </div>
@@ -329,12 +270,6 @@ onMouseLeave={(e) => {
           </div>
         )}
       </header>
-
-      {/* MODAL HỒ SƠ MẪU */}
-      <DriveProfileModal
-        open={showProfile}
-        onClose={() => setShowProfile(false)}
-      />
     </>
   );
 }

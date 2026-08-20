@@ -18,6 +18,10 @@ export default function FileItem({
 }) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewText, setPreviewText] = useState<string | null>(null);
+  const [previewMimeType, setPreviewMimeType] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [zoom, setZoom] = useState(0.6); 
   const [isMobile, setIsMobile] = useState(false);
@@ -49,6 +53,12 @@ useEffect(() => {
     let cancelled = false;
 
     if (previewOpen) {
+      setPreviewLoading(true);
+      setPreviewError(null);
+      setPreviewUrl(null);
+      setPreviewText(null);
+      setPreviewMimeType(null);
+
       authFetch(url)
         .then(async (response) => {
           if (!response.ok) {
@@ -56,18 +66,43 @@ useEffect(() => {
           }
 
           const blob = await response.blob();
-          objectUrl = window.URL.createObjectURL(blob);
+          const mimeType = blob.type || file.mime_type || "application/octet-stream";
+
+          if (mimeType.startsWith("text/")) {
+            const text = await blob.text();
+
+            if (!cancelled) {
+              setPreviewText(text);
+              setPreviewMimeType(mimeType);
+            }
+          } else if (mimeType === "application/pdf" || mimeType.startsWith("image/")) {
+            objectUrl = window.URL.createObjectURL(blob);
+
+            if (!cancelled) {
+              setPreviewUrl(objectUrl);
+              setPreviewMimeType(mimeType);
+            }
+          } else if (!cancelled) {
+            setPreviewMimeType(mimeType);
+          }
 
           if (!cancelled) {
-            setPreviewUrl(objectUrl);
+            setPreviewLoading(false);
           }
         })
         .catch((error) => {
           console.error("Preview file error:", error);
-          if (!cancelled) setPreviewUrl(null);
+          if (!cancelled) {
+            setPreviewError("Không thể tải nội dung file.");
+            setPreviewLoading(false);
+          }
         });
     } else {
       setPreviewUrl(null);
+      setPreviewText(null);
+      setPreviewMimeType(null);
+      setPreviewLoading(false);
+      setPreviewError(null);
     }
 
     return () => {
@@ -365,16 +400,67 @@ useEffect(() => {
     alignItems: "flex-start",
   }}
 >
-  <iframe
-    src={previewUrl ? `${previewUrl}#toolbar=0` : undefined}
-    style={{
-      width: `${100 / zoom}%`,
-      height: `${100 / zoom}%`,
-      transform: `scale(${zoom})`,
-      transformOrigin: "top center",
-      border: "none",
-    }}
-  />
+  {previewLoading ? (
+    <div style={{ padding: "40px", color: "#666" }}>Đang tải file...</div>
+  ) : previewError ? (
+    <div style={{ padding: "40px", color: "#b91c1c" }}>{previewError}</div>
+  ) : previewText !== null ? (
+    <pre
+      style={{
+        width: "100%",
+        padding: "24px",
+        margin: 0,
+        whiteSpace: "pre-wrap",
+        overflowWrap: "anywhere",
+        textAlign: "left",
+      }}
+    >
+      {previewText}
+    </pre>
+  ) : previewMimeType?.startsWith("image/") && previewUrl ? (
+    <img
+      src={previewUrl}
+      alt={file.display_name || file.name}
+      style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+    />
+  ) : previewMimeType === "application/pdf" && previewUrl ? (
+    <iframe
+      src={`${previewUrl}#toolbar=0`}
+      title={file.display_name || file.name}
+      style={{ width: "100%", height: "100%", border: "none" }}
+    />
+  ) : (
+    <div style={{ padding: "40px", textAlign: "center", color: "#4b5563" }}>
+      <p>Định dạng này không hỗ trợ xem trực tiếp trong trình duyệt.</p>
+      <button
+        onClick={async () => {
+          const response = await authFetch(url);
+          if (!response.ok) {
+            setPreviewError("Không thể tải file xuống.");
+            return;
+          }
+
+          const blob = await response.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = blobUrl;
+          link.download = file.display_name || file.name;
+          link.click();
+          window.URL.revokeObjectURL(blobUrl);
+        }}
+        style={{
+          background: "#2563eb",
+          color: "white",
+          border: "none",
+          padding: "8px 14px",
+          borderRadius: "8px",
+          cursor: "pointer",
+        }}
+      >
+        Tải file xuống
+      </button>
+    </div>
+  )}
 </div>
       </div>
     </div>,

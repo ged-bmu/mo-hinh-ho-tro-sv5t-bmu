@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
 import { randomBytes } from "crypto";
-import { requireAdmin } from "@/lib/auth-admin";
 
 const GOOGLE_OAUTH_STATE_COOKIE = "google_oauth_state";
 
 export async function GET(request: Request) {
   try {
-    const { error: authError } = await requireAdmin(request);
-
-    if (authError) return authError;
-
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const redirectUri = process.env.GOOGLE_REDIRECT_URI;
@@ -46,7 +41,7 @@ export async function GET(request: Request) {
       name: GOOGLE_OAUTH_STATE_COOKIE,
       value: state,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false,
       sameSite: "lax",
       maxAge: 600,
       path: "/",

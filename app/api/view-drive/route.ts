@@ -2,6 +2,8 @@ import { google } from "googleapis";
 import { requireAdminOrSelf } from "@/lib/auth-admin";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
+export const runtime = "nodejs";
+
 export async function GET(
   request: Request
 ) {

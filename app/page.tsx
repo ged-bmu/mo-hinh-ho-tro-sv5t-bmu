@@ -615,8 +615,10 @@ style={{
       style={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "flex-start",
+        justifyContent: "center",
         width: "100%",
+        flex: 1,
+        minHeight: 150,
       }}
     >
       <div
@@ -664,7 +666,7 @@ style={{
             }}
           />
 
-          <defs>
+          
             <linearGradient
               id="progressGradient"
               x1="0%"
@@ -675,24 +677,15 @@ style={{
               <stop offset="100%" stopColor="#1D4ED8" />
             </linearGradient>
 
-            <filter
-              id="glow"
-              x="-50%"
-              y="-50%"
-              width="200%"
-              height="200%"
-            >
+            
               <feGaussianBlur
                 stdDeviation="2.5"
                 result="blur"
               />
-
               <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
-            </filter>
-          </defs>
         </svg>
 
         {/* Nội dung giữa vòng */}
@@ -823,7 +816,7 @@ style={{
         display: "flex",
         alignItems: "center",
         gap: 12,
-        padding: "12px 14px",
+        padding: "6px 10px",
         background: "#F0F9FF",
         border: "1px solid #BAE6FD",
         color: "#0369A1",
@@ -920,7 +913,7 @@ style={{
         display: "flex",
         alignItems: "center",
         gap: 12,
-        padding: "12px 14px",
+        padding: "6px 10px",
         background: "#FFF7ED",
         border: "1px solid #FED7AA",
         borderRadius: 14,
@@ -1023,6 +1016,90 @@ style={{
         </span>
       )}
     </a>
+  {/* HƯỚNG DẪN */}
+<a
+  href="/huong-dan"
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "6px 10px",
+    background: "#F5F3FF",
+    border: "1px solid #DDD6FE",
+    borderRadius: 14,
+    textDecoration: "none",
+    color: "#0F172A",
+    transition: "all .2s ease",
+    boxShadow: "0 2px 6px rgba(0,0,0,.04)",
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.transform = "translateY(-2px)";
+    e.currentTarget.style.boxShadow =
+      "0 6px 14px rgba(124,58,237,.12)";
+    e.currentTarget.style.borderColor = "#C4B5FD";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = "translateY(0)";
+    e.currentTarget.style.boxShadow =
+      "0 2px 6px rgba(0,0,0,.04)";
+    e.currentTarget.style.borderColor = "#DDD6FE";
+  }}
+>
+  {/* ICON */}
+  <div
+    style={{
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      background: "#EDE9FE",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 20,
+      flexShrink: 0,
+    }}
+  >
+    📖
+  </div>
+
+  {/* TEXT */}
+  <div
+    style={{
+      minWidth: 0,
+      flex: 1,
+    }}
+  >
+    <div
+      style={{
+        fontSize: 14,
+        fontWeight: 800,
+        color: "#0F172A",
+      }}
+    >
+      Hướng dẫn
+    </div>
+
+    <div
+      style={{
+        fontSize: 11,
+        color: "#64748B",
+        marginTop: 2,
+      }}
+    >
+      Hướng dẫn gửi minh chứng và báo cáo hồ sơ
+    </div>
+  </div>
+
+  <span
+    style={{
+      fontSize: 18,
+      color: "#7C3AED",
+      fontWeight: 700,
+    }}
+  >
+    →
+  </span>
+</a>
   </div>
 
 

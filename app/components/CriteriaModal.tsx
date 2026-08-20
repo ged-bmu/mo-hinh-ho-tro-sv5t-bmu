@@ -120,7 +120,7 @@ export default function CriteriaModal({
         position: "fixed",
         inset: 0,
         background: "rgba(0,0,0,.45)",
-        zIndex: 9999,
+        zIndex: 99999,
         display: "flex",
         justifyContent: "center",
         alignItems: "center",

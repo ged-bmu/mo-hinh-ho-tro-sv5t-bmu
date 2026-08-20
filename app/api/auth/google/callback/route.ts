@@ -23,7 +23,7 @@ export async function GET(request: Request) {
         { status: 400 }
       );
     }
-
+    console.log("STATE:", state, expectedState);
     if (!state || !expectedState || state !== expectedState) {
       return NextResponse.json(
         { error: "Google OAuth state không hợp lệ hoặc đã hết hạn" },
@@ -57,6 +57,7 @@ export async function GET(request: Request) {
       );
 
     const { tokens } = await oauth2Client.getToken(code);
+    console.log("TEMPLATE REFRESH TOKEN:", tokens.refresh_token);
 
     const response = NextResponse.json({
       success: true,

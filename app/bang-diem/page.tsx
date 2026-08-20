@@ -718,7 +718,6 @@ const expectedGpa4 =
             {subjects.map((s, index) => (
               <tr key={s.id}>
                 <td style={tdStyle}>{index + 1}</td>
-
                 <td style={tdStyle}>{s.name}</td>
 
                 <td style={tdStyle}>{s.credits}</td>
@@ -1115,7 +1114,7 @@ const [type, setType] = useState<SubjectType>(
 alignItems: "flex-start",
 padding: "20px 0",
 overflowY: "auto",
-        zIndex: 999,
+        zIndex: 9999,
       }}
     >
       <div
@@ -1397,12 +1396,9 @@ function ScoreModal({
           borderRadius:18
         }}
       >
-
         <h2>
           📝 Nhập điểm {subject.name}
         </h2>
-
-
         {scoreParts[subject.type].map((item)=>(
           <div
             key={item.name}
@@ -1410,67 +1406,48 @@ function ScoreModal({
               marginBottom:15
             }}
           >
-
             <label>
               <b>
                 {item.name} ({item.weight}%)
               </b>
             </label>
-
-
             <input
               type="number"
               min="0"
               max="10"
               value={scores[item.name] || ""}
               onChange={(e)=>{
-
                 setScores({
                   ...scores,
                   [item.name]: Number(e.target.value)
                 })
-
               }}
               style={inputStyle}
             />
-
           </div>
         ))}
-
-
 
         <button
           style={buttonStyle}
           onClick={()=>{
-
             let process = 0;
-
-
             scoreParts[subject.type].forEach((item)=>{
-
               process += 
               (scores[item.name] || 0)
               *
               item.weight
               /
               100;
-
             });
-
-
             onSave({
               ...subject,
               scores,
               process:Number(process.toFixed(2))
             });
-
-
           }}
         >
           Lưu điểm
         </button>
-
-
         <button
           onClick={onClose}
           style={{
@@ -1482,11 +1459,7 @@ function ScoreModal({
         >
           Hủy
         </button>
-
-
       </div>
-
     </div>
   );
-
 }

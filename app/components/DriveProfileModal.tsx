@@ -24,6 +24,7 @@ export default function DriveProfileModal({
 }: Props) {
   const [items, setItems] = useState<DriveItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<DriveItem | null>(null);
 
   useEffect(() => {
@@ -32,25 +33,45 @@ export default function DriveProfileModal({
     loadFolder(ROOT_FOLDER_ID);
   }, [open]);
 
-  async function loadFolder(folderId: string) {
+  async function loadFolder(folderId?: string) {
     try {
       setLoading(true);
+      setError(null);
       setSelectedFile(null);
 
-      const res = await authFetch(
-  `/api/drive-files?folderId=${encodeURIComponent(folderId)}`
-);
+      const query = folderId
+        ? `?folderId=${encodeURIComponent(folderId)}`
+        : "";
+      const res = await authFetch(`/api/drive-files${query}`);
 
       if (!res.ok) {
-        throw new Error("Không thể tải Google Drive");
+        let message = "Không thể tải Google Drive";
+
+        try {
+          const responseData = await res.json();
+          message = responseData.error || message;
+        } catch {
+          // Keep the default message when the server response is not JSON.
+        }
+
+        throw new Error(message);
       }
 
       const data = await res.json();
 
-      setItems(data);
+      if (!data.success || !Array.isArray(data.files)) {
+        throw new Error(data.error || "Không thể tải Google Drive");
+      }
+
+      setItems(data.files);
     } catch (error) {
       console.error("Lỗi tải Google Drive:", error);
       setItems([]);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Không thể tải Google Drive"
+      );
     } finally {
       setLoading(false);
     }
@@ -223,6 +244,16 @@ export default function DriveProfileModal({
                   }}
                 >
                   Đang tải hồ sơ...
+                </div>
+              ) : error ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: 40,
+                    color: "#b91c1c",
+                  }}
+                >
+                  {error}
                 </div>
               ) : items.length === 0 ? (
                 <div
