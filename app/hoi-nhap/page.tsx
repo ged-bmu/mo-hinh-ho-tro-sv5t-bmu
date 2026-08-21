@@ -845,13 +845,7 @@ export default function HoiNhapPage() {
                     >
                       <Spinner size={32} />
 
-                      <div
-                        style={{
-                          fontWeight: 600,
-                        }}
-                      >
-                        Đang tải file...
-                      </div>
+                      <Spinner size={20} />
                     </div>
                   ) : (
                     <>
@@ -919,33 +913,39 @@ export default function HoiNhapPage() {
               </div>
             )}
 
-            {files.map((file) => (
-              <FileItem
-                key={file.id}
-                file={{
-                  ...file,
-                  name:
-                    file.display_name ||
-                    file.storage_name,
-                  storage_name:
-                    file.storage_name,
-                  display_name:
-                    file.display_name ||
-                    file.storage_name,
-                }}
-                url={`/api/view-drive?fileId=${encodeURIComponent(
-                  file.drive_file_id
-                )}`}
-                onDelete={() =>
-                  deleteFile(
-                    file.storage_name
-                  )
-                }
-                onRename={
-                  renameFile
-                }
-              />
-            ))}
+{files.map((file) => {
+  const fileUrl =
+    file.storage_type === "google_drive"
+      ? `/api/view-drive?fileId=${encodeURIComponent(
+          file.drive_file_id
+        )}`
+      : supabase.storage
+          .from("Ho so SV5T")
+          .getPublicUrl(
+            `${userId}/hoi-nhap/${file.storage_name}`
+          ).data.publicUrl;
+
+  return (
+    <FileItem
+      key={file.id}
+      file={{
+        ...file,
+        name:
+          file.display_name ||
+          file.storage_name,
+        storage_name: file.storage_name,
+        display_name:
+          file.display_name ||
+          file.storage_name,
+      }}
+      url={fileUrl}
+      onDelete={() =>
+        deleteFile(file.storage_name)
+      }
+      onRename={renameFile}
+    />
+  );
+})}
           </div>
         </main>
       </div>

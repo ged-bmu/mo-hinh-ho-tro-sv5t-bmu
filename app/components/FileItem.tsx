@@ -181,7 +181,7 @@ useEffect(() => {
               width:isMobile ? "calc(50% - 4px)" : "auto",
             }}
           >
-            ✍️ Đổi tên
+            ✎ Đổi tên
           </button>
         </div>
       </div>
@@ -349,7 +349,7 @@ useEffect(() => {
                 fontSize: "13px",
               }}
             >
-              ✍️ Đổi tên
+              ✎ Đổi tên
             </button>
                 {/* DELETE */}
     <button
@@ -401,7 +401,16 @@ useEffect(() => {
   }}
 >
   {previewLoading ? (
-    <div style={{ padding: "40px", color: "#666" }}>Đang tải file...</div>
+    <div
+  style={{
+    padding: "40px",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  }}
+>
+  <Spinner size={34} />
+</div>
   ) : previewError ? (
     <div style={{ padding: "40px", color: "#b91c1c" }}>{previewError}</div>
   ) : previewText !== null ? (

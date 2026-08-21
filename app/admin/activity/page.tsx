@@ -297,11 +297,11 @@ export default function ActivityPage() {
 
                       {log.action_type ===
                         "rename" &&
-                        "✏️ Đổi tên"}
+                        "✎ Đổi tên"}
 
                       {log.action_type ===
                         "delete" &&
-                        "🗑️ Xóa"}
+                        "🗑 Xóa"}
                     </td>
 
                     <td

@@ -733,13 +733,7 @@ async function renameFile(file: any) {
   >
     <Spinner size={32} />
 
-    <div
-      style={{
-        fontWeight: 600,
-      }}
-    >
-      Đang tải file...
-    </div>
+    <Spinner size={20} />
   </div>
 ) : (
   <>
@@ -799,20 +793,31 @@ async function renameFile(file: any) {
           )}
 
 {files.map((file) => {
+  const fileUrl =
+    file.storage_type === "google_drive"
+      ? `/api/view-drive?fileId=${encodeURIComponent(
+          file.drive_file_id
+        )}`
+      : supabase.storage
+          .from("Ho so SV5T")
+          .getPublicUrl(
+            `${userId}/dao-duc/${file.storage_name}`
+          ).data.publicUrl;
+
   return (
     <FileItem
       key={file.id}
       file={{
         ...file,
-        name: file.display_name || file.storage_name,
+        name:
+          file.display_name ||
+          file.storage_name,
         storage_name: file.storage_name,
         display_name:
           file.display_name ||
           file.storage_name,
       }}
-      url={`/api/view-drive?fileId=${encodeURIComponent(
-        file.drive_file_id
-      )}`}
+      url={fileUrl}
       onDelete={() =>
         deleteFile(file.storage_name)
       }
