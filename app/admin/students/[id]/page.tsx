@@ -190,6 +190,18 @@ const { error } = await supabase
       },
     ];
 
+    const { data: uploadedFiles } = await supabase
+      .from("uploaded_files")
+      .select("storage_name, display_name");
+
+    const displayNameMap: Record<string, string> = {};
+
+    (uploadedFiles || []).forEach((file) => {
+      displayNameMap[file.storage_name] = file.display_name;
+    });
+
+    setDisplayNames(displayNameMap);
+
     for (const folder of folders) {
       const { data } = await supabase.storage
         .from("Ho so SV5T")
@@ -197,36 +209,13 @@ const { error } = await supabase
 
       folder.setter(
         (data || []).sort((a, b) =>
-          a.name.localeCompare(
-            b.name,
-            undefined,
-            {
-              numeric: true,
-              sensitivity: "base",
-            }
+          (displayNameMap[a.name] || a.name.replace(/^\d+-/, "")).localeCompare(
+            displayNameMap[b.name] || b.name.replace(/^\d+-/, ""),
+            "vi",
+            { numeric: true, sensitivity: "base" }
           )
         )
       );
-      const { data: uploadedFiles } =
-  await supabase
-    .from("uploaded_files")
-    .select(
-      "storage_name, display_name"
-    );
-
-if (uploadedFiles) {
-  const map: Record<
-    string,
-    string
-  > = {};
-
-  uploadedFiles.forEach((f) => {
-    map[f.storage_name] =
-      f.display_name;
-  });
-
-  setDisplayNames(map);
-}
     }
   }
 

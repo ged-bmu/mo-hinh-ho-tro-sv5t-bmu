@@ -33,6 +33,16 @@ export default function HoiNhapPage() {
 <p style="margin: 0;">3. &nbsp;</p>
 `;
 
+  function sortFilesByName(fileList: any[]) {
+    return [...fileList].sort((firstFile, secondFile) =>
+      (firstFile.display_name || firstFile.storage_name || "").localeCompare(
+        secondFile.display_name || secondFile.storage_name || "",
+        "vi",
+        { sensitivity: "base", numeric: true }
+      )
+    );
+  }
+
   useEffect(() => {
     checkAccess();
   }, []);
@@ -79,7 +89,7 @@ export default function HoiNhapPage() {
     }
 
     if (uploadedFiles) {
-      setFiles(uploadedFiles);
+      setFiles(sortFilesByName(uploadedFiles));
 
       const map: Record<string, string> = {};
 
@@ -555,14 +565,16 @@ export default function HoiNhapPage() {
       // 3. Cập nhật UI ngay
       // ================================
       setFiles((prevFiles) =>
-        prevFiles.map((item) =>
-          item.id === file.id
-            ? {
-                ...item,
-                display_name:
-                  newName,
-              }
-            : item
+        sortFilesByName(
+          prevFiles.map((item) =>
+            item.id === file.id
+              ? {
+                  ...item,
+                  display_name:
+                    newName,
+                }
+              : item
+          )
         )
       );
 

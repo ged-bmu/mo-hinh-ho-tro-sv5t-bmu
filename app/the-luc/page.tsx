@@ -26,6 +26,16 @@ export default function TheLucPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showProfile, setShowProfile] = useState(false);
 
+function sortFilesByName(fileList: any[]) {
+  return [...fileList].sort((firstFile, secondFile) =>
+    (firstFile.display_name || firstFile.storage_name || "").localeCompare(
+      secondFile.display_name || secondFile.storage_name || "",
+      "vi",
+      { sensitivity: "base", numeric: true }
+    )
+  );
+}
+
 useEffect(() => {
   checkAccess();
 }, []);
@@ -67,7 +77,7 @@ async function loadFiles() {
   }
 
   if (uploadedFiles) {
-    setFiles(uploadedFiles);
+    setFiles(sortFilesByName(uploadedFiles));
 
     const map: Record<string, string> = {};
 
@@ -483,13 +493,15 @@ async function renameFile(file: any) {
     // 3. Cập nhật UI
     // ================================
     setFiles((prevFiles) =>
-      prevFiles.map((item) =>
-        item.id === file.id
-          ? {
-              ...item,
-              display_name: newName,
-            }
-          : item
+      sortFilesByName(
+        prevFiles.map((item) =>
+          item.id === file.id
+            ? {
+                ...item,
+                display_name: newName,
+              }
+            : item
+        )
       )
     );
 
