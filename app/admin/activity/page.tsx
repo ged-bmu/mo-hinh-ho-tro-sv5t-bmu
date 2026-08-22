@@ -6,6 +6,7 @@ import Link from "next/link";
 import Spinner from "../../components/Spinner";
 import AdminSidebar from "../../components/AdminSidebar";
 import NotificationBell from "../../components/NotificationBell";
+import Image from "next/image";
 
 export default function ActivityPage() {
   const [logs, setLogs] = useState<any[]>([]);
@@ -297,11 +298,11 @@ export default function ActivityPage() {
 
                       {log.action_type ===
                         "rename" &&
-                        "✎ Đổi tên"}
+                        <><Image src="/iconchinhsua.png" width={20} height={20} alt="Đổi tên" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Đổi tên</>}
 
                       {log.action_type ===
                         "delete" &&
-                        "🗑 Xóa"}
+                        <><Image src="/iconthungrac.png" width={20} height={20} alt="Xóa" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Xóa</>}
                     </td>
 
                     <td

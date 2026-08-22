@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../../../lib/supabase";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 
 export default function EditUser() {
   const params = useParams();
@@ -72,7 +73,7 @@ export default function EditUser() {
           marginTop: "20px",
         }}
       >
-        ✏️ Chỉnh sửa tài khoản
+        <Image src="/iconchinhsua.png" width={28} height={28} alt="Chỉnh sửa tài khoản" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} />Chỉnh sửa tài khoản
       </h1>
 
       <div

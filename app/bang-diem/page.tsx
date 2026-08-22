@@ -6,6 +6,7 @@ import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
 import CriteriaModal from "../components/CriteriaModal";
 import { supabase } from "@/lib/supabase";
+import Image from "next/image";
 
 export default function BangDiemPage() {
 
@@ -255,7 +256,13 @@ const gpa4Year =
     marginBottom: 8,
   }}
 >
-  📚 Mục tiêu học tập
+  <Image
+    src="/iconhoctap.png"
+    width={30}
+    height={30}
+    alt="Mục tiêu học tập"
+    style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}
+  /> Mục tiêu học tập
 </h1>
 
          <p
@@ -461,7 +468,7 @@ openAddSubject={() => {
                   background: "#ef4444",
                 }}
               >
-                🗑 Xóa học kỳ hè
+                <><Image src="/iconthungrac.png" width={20} height={20} alt="Xóa học kỳ hè" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Xóa học kỳ hè</>
               </button>
             )}
           </div>
@@ -866,7 +873,7 @@ s.total || "-"
     cursor: "pointer",
   }}
 >
-  ✏️
+  <Image src="/iconchinhsua.png" width={20} height={20} alt="Chỉnh sửa" style={{ display: "inline-block", verticalAlign: "middle" }} />
 </button>
 
                  <button
@@ -884,7 +891,7 @@ s.total || "-"
     cursor: "pointer",
   }}
 >
-  🗑
+  <Image src="/iconthungrac.png" width={20} height={20} alt="Xóa" style={{ display: "inline-block", verticalAlign: "middle" }} />
 </button>
                 </td>
               </tr>

@@ -11,6 +11,7 @@ import Spinner from "../components/Spinner";
 import { FaFilePdf } from "react-icons/fa";
 import AvatarEditor from "react-avatar-editor";
 import { useRef } from "react";
+import Image from "next/image";
 
 export default function BaoCaoPage() {
   const [isMobile, setIsMobile] = useState(false);
@@ -521,7 +522,7 @@ return (
   userSelect: "none",
 }}
         >
-          🗑 Xóa ảnh
+          <><Image src="/iconthungrac.png" width={20} height={20} alt="Xóa ảnh" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Xóa ảnh</>
         </div>
       </>
     )}

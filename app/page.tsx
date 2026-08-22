@@ -104,37 +104,37 @@ const criterionLabel: Record<string, string> = {
 const folders = [
 {
   name: "Đạo đức tốt",
-  icon: "❤️",
+  icon: "/icondaoduc.png",
   link: "/dao-duc",
   field: "dao-duc",
 },
 {
   name: "Học tập tốt",
-  icon: "📚",
+  icon: "/iconhoctap.png",
   link: "/hoc-tap",
   field: "hoc-tap",
 },
 {
   name: "Thể lực tốt",
-  icon: "💪",
+  icon: "/icontheluc.png",
   link: "/the-luc",
   field: "the-luc",
 },
 {
   name: "Tình nguyện tốt",
-  icon: "🤝",
+  icon: "/icontinhnguyen.png",
   link: "/tinh-nguyen",
   field: "tinh-nguyen",
 },
 {
   name: "Hội nhập tốt",
-  icon: "🌏",
+  icon: "/iconhoinhap.png",
   link: "/hoi-nhap",
   field: "hoi-nhap",
 },
 {
   name: "Thành tích khác",
-  icon: "⭐",
+  icon: "/iconuutien.png",
   link: "/uu-tien",
   field: "uu-tien",
 },
@@ -420,18 +420,13 @@ return (
 
     <main
       style={{
-    flex: 1,
-    backgroundImage:
-  "linear-gradient(rgba(245,247,251,.88), rgba(245,247,251,.88)), url('/gioithieu.avif')",
-backgroundSize: "cover",
-backgroundPosition: "center",
-backgroundRepeat: "no-repeat",
-backgroundAttachment: "fixed",
-    padding: isMobile ? "16px" : "30px",
-    paddingBottom: isMobile ? "90px" : "30px",
-    overflowX: "hidden",
-  }}
-    >
+  flex: 1,
+  background: "#d6f5ff",
+  padding: isMobile ? "16px" : "30px",
+  paddingBottom: isMobile ? "90px" : "30px",
+  overflowX: "hidden",
+}}
+>
 <div
   style={{
     width: "100%",

@@ -6,6 +6,7 @@ import Footer from "../../components/Footer";
 import Header from "../../components/Header";
 import CriteriaModal from "../../components/CriteriaModal";
 import { authFetch } from "@/lib/auth-fetch";
+import Image from "next/image";
 
 type Activity = {
   id: string;
@@ -709,7 +710,7 @@ activities.filter((a) => a.status === "ended").length
     onClick={() => handleDelete(activity.id)}
     className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700"
   >
-    🗑 Xóa
+    <><Image src="/iconthungrac.png" width={20} height={20} alt="Xóa" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Xóa</>
   </button>
 </div>
                           </div>

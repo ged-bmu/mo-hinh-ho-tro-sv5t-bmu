@@ -11,6 +11,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ReportEditor from "../components/ReportEditor";
 import Spinner from "@/app/components/Spinner";
+import Image from "next/image";
 import { checkSubmissionAccess } from "../../lib/checkSubmissionAccess";
 
 export default function UuTienPage() {
@@ -614,7 +615,7 @@ async function renameFile(file: any) {
               marginBottom: "20px",
             }}
           >
-             ⭐ Thành tích khác
+             <Image src="/iconuutien.png" width={32} height={32} alt="Thành tích khác" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} /> Thành tích khác
           </h1>
 <div
   style={{

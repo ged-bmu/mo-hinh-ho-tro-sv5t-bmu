@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 import { authFetch } from "@/lib/auth-fetch";
+import Image from "next/image";
 
 export default function UserManagement() {
   const [users, setUsers] = useState<any[]>([]);
@@ -438,7 +439,7 @@ onClick={async () => {
       fontWeight: "600",
     }}
   >
-    🗑 Xóa
+    <><Image src="/iconthungrac.png" width={20} height={20} alt="Xóa" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Xóa</>
   </button>
   <div
   style={{
@@ -461,7 +462,7 @@ onClick={async () => {
       fontWeight: "600",
     }}
   >
-    ✏️ Chỉnh sửa
+    <><Image src="/iconchinhsua.png" width={20} height={20} alt="Chỉnh sửa" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Chỉnh sửa</>
   </button>
 </div>
 </td>

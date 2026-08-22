@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { authFetch as fetch } from "../../lib/auth-fetch";
 import { checkSubmissionAccess } from "../../lib/checkSubmissionAccess";
+import Image from "next/image";
 import Sidebar from "../components/Sidebar";
 import FileItem from "../components/FileItem";
 import CriteriaModal from "../components/CriteriaModal";
@@ -590,7 +591,7 @@ async function renameFile(file: any) {
               marginBottom: "20px",
             }}
           >
-             ❤️ Đạo đức tốt
+             <Image src="/icondaoduc.png" width={32} height={32} alt="Đạo đức tốt" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} /> Đạo đức tốt
           </h1>
 <div
   style={{

@@ -11,6 +11,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ReportEditor from "../components/ReportEditor";
 import Spinner from "@/app/components/Spinner";
+import Image from "next/image";
 import { checkSubmissionAccess } from "../../lib/checkSubmissionAccess";
 
 export default function TinhNguyenPage() {
@@ -617,7 +618,7 @@ async function renameFile(file: any) {
               marginBottom: "20px",
             }}
           >
-             🤝 Tình nguyện tốt
+             <Image src="/icontinhnguyen.png" width={32} height={32} alt="Tình nguyện tốt" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} /> Tình nguyện tốt
           </h1>
 <div
   style={{

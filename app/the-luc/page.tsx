@@ -11,6 +11,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ReportEditor from "../components/ReportEditor";
 import Spinner from "@/app/components/Spinner";
+import Image from "next/image";
 import { checkSubmissionAccess } from "../../lib/checkSubmissionAccess";
 
 export default function TheLucPage() {
@@ -617,7 +618,7 @@ async function renameFile(file: any) {
               marginBottom: "20px",
             }}
           >
-             💪 Thể lực tốt
+             <Image src="/icontheluc.png" width={32} height={32} alt="Thể lực tốt" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} /> Thể lực tốt
           </h1>
 <div
   style={{

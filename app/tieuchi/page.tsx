@@ -8,6 +8,7 @@ import Header from "../components/Header";
 import BellUserTemp from "../components/BellUserTemp";
 import Spinner from "../components/Spinner";
 import CriteriaModal from "../components/CriteriaModal";
+import Image from "next/image";
 
 export default function TieuChiPage() {
   const [profile, setProfile] = useState<any>(null);
@@ -120,45 +121,45 @@ async function submitProfile() {
   const folders = [
   {
   name: "Đạo đức tốt",
-  icon: "❤️",
+  icon: "/icondaoduc.png",
   link: "/dao-duc",
   field: "dao-duc",
-  color: "#FFD6E7", // Hồng pastel
+  color: "#FFE3C1", 
 },
 {
   name: "Học tập tốt",
-  icon: "📚",
+  icon: "/iconhoctap.png",
   link: "/hoc-tap",
   field: "hoc-tap",
-  color: "#ffeaca", // Xanh dương pastel
+  color: "#ffdff2",
 },
 {
   name: "Thể lực tốt",
-  icon: "💪",
+  icon: "/icontheluc.png",
   link: "/the-luc",
   field: "the-luc",
-  color: "#D8F7E3", // Xanh lá pastel
+  color: "#e8ffd2",
 },
 {
   name: "Tình nguyện tốt",
-  icon: "🤝",
+  icon: "/icontinhnguyen.png",
   link: "/tinh-nguyen",
   field: "tinh-nguyen",
-  color: "#FFF2CC", // Vàng kem pastel
+  color: "#FFF0EF",
 },
 {
   name: "Hội nhập tốt",
-  icon: "🌏",
+  icon: "/iconhoinhap.png",
   link: "/hoi-nhap",
   field: "hoi-nhap",
-  color: "#D9F3F8", // Xanh ngọc pastel
+  color: "#F1EAFF", // Xanh ngọc pastel
 },
 {
   name: "Thành tích khác",
-  icon: "⭐",
+  icon: "/iconuutien.png",
   link: "/uu-tien",
   field: "uu-tien",
-  color: "#E9D8FD", // Tím pastel
+  color: "#FFFCE0", // Tím pastel
 },
   ];
 
@@ -221,19 +222,13 @@ const percent = (completed / 5) * 100;
 
         <main
   style={{
-    flex: 1,
-    backgroundImage:
-  "linear-gradient(rgba(245,247,251,.88), rgba(245, 247, 251, 0.61)), url('/gioithieu.avif')",
-backgroundSize: "cover",
-backgroundPosition: "center",
-backgroundRepeat: "no-repeat",
-backgroundAttachment: "fixed",
-    padding: isMobile ? "16px" : "30px",
-    paddingBottom: isMobile ? "90px" : "30px",
-    overflowX: "hidden",
-  }}
->
-    
+  flex: 1,
+  background: "#d6f5ff",
+  padding: isMobile ? "16px" : "30px",
+  paddingBottom: isMobile ? "90px" : "30px",
+  overflowX: "hidden",
+}}
+>    
           <div
             style={{
               width: "100%",
@@ -278,7 +273,7 @@ backgroundAttachment: "fixed",
     textOverflow: "ellipsis",
   }}
 >
-  📊 Tiến độ Sinh viên 5 Tốt Cấp Trường
+  Tiến độ Sinh viên 5 Tốt Cấp Trường
 </h2>
 
     <p
@@ -437,7 +432,7 @@ backgroundAttachment: "fixed",
     ? "⛔ Đã hết hạn"
     : profile?.is_submitted
       ? hoverSubmit
-        ? "✏️ Chỉnh sửa"
+        ? <><Image src="/iconchinhsua.png" width={20} height={20} alt="Chỉnh sửa" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Chỉnh sửa</>
         : "✅ Đã nộp hồ sơ"
       : "Gửi hồ sơ"}
 </button>
@@ -474,58 +469,94 @@ backgroundAttachment: "fixed",
   boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
 }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "28px",
-                      }}
-                    >
-                      {folder.icon}
-                    </span>
+                <div
+  style={{
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "8px",
+    marginBottom: "14px",
+  }}
+>
+  {/* Icon */}
+  <div
+    style={{
+      width: "38px",
+      height: "38px",
+      borderRadius: "50%",
+      background: "#ffffff",
+      border: "2px solid #1667b1",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+      boxSizing: "border-box",
+    }}
+  >
+    <Image
+      src={folder.icon}
+      width={27}
+      height={27}
+      alt={folder.name}
+      style={{
+        objectFit: "contain",
+      }}
+    />
+  </div>
 
-                    <div>
-                      <h2
-                        style={{
-                          margin: 0,
-                          fontSize: "18px",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {folder.name}
-                      </h2>
+  {/* Tên tiêu chí + trạng thái */}
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-start",
+      gap: "5px",
+    }}
+  >
+    {/* Tên tiêu chí */}
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        minHeight: "38px",
+        padding: "0 13px",
+        borderRadius: "999px",
+        background: "#ffffff",
+        border: "2px solid #1667b1",
+        color: "#1667b1",
+        fontSize: isMobile ? "14px" : "16px",
+        fontWeight: 800,
+        whiteSpace: "nowrap",
+        boxSizing: "border-box",
+      }}
+    >
+      {folder.name.toUpperCase()}
+    </div>
 
-                      {folder.name !== "Thành tích khác" && (
-                        <div
-                          style={{
-                            marginTop: "4px",
-                            display: "inline-block",
-                            padding: "2px 8px",
-                            borderRadius: "999px",
-                            background: profile?.[folder.field]
-                              ? "#dcfce7"
-                              : "#f3f4f6",
-                            color: profile?.[folder.field]
-                              ? "#166534"
-                              : "#f36060",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {profile?.[folder.field]
-                            ? "✅ Đạt"
-                            : "❌ Chưa đạt"}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
+    {/* Trạng thái Đạt / Chưa đạt */}
+    {folder.name !== "Thành tích khác" && (
+      <div
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          padding: "6px 12px",
+          borderRadius: "999px",
+          background: profile?.[folder.field]
+            ? "#dcfce7"
+            : "#f3f4f6",
+          color: profile?.[folder.field]
+            ? "#166534"
+            : "#f36060",
+          fontWeight: 600,
+          lineHeight: "1",
+          fontSize: isMobile ? "14px" : "14px",
+          marginTop: "6px",
+        }}
+      >
+        {profile?.[folder.field] ? "Đạt" : "Chưa đạt"}
+      </div>
+    )}
+  </div>
+</div>
                   <p
                     style={{
                       color: "#666",

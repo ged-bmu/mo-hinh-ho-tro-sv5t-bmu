@@ -58,32 +58,32 @@ export default function Sidebar() {
   const proofMenus = [
     {
       name: "Đạo đức tốt",
-      icon: "❤️",
+      icon: "/icondaoduc.png",
       href: "/dao-duc",
     },
     {
       name: "Học tập tốt",
-      icon: "📚",
+      icon: "/iconhoctap.png",
       href: "/hoc-tap",
     },
     {
       name: "Thể lực tốt",
-      icon: "💪",
+      icon: "/icontheluc.png",
       href: "/the-luc",
     },
     {
       name: "Tình nguyện tốt",
-      icon: "🤝",
+      icon: "/icontinhnguyen.png",
       href: "/tinh-nguyen",
     },
     {
       name: "Hội nhập tốt",
-      icon: "🌏",
+      icon: "/iconhoinhap.png",
       href: "/hoi-nhap",
     },
     {
       name: "Thành tích khác",
-      icon: "⭐",
+      icon: "/iconuutien.png",
       href: "/uu-tien",
     },
   ];
@@ -138,6 +138,19 @@ const proofPaths = [
     ]
   : []),
   ];
+
+  const renderMenuIcon = (icon: string, alt: string) =>
+    icon.endsWith(".png") ? (
+      <Image
+        src={icon}
+        width={22}
+        height={22}
+        alt={alt}
+        style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}
+      />
+    ) : (
+      icon
+    );
 
 async function handleLogout() {
     await supabase.auth.signOut();
@@ -286,7 +299,7 @@ async function handleToggleNotification() {
     onClick={() => setMobileMenu(false)}
     className={pathname === item.href ? "active" : ""}
   >
-    {item.icon} {item.name}
+    {renderMenuIcon(item.icon, item.name)} {item.name}
   </Link>
 ))}
 
@@ -565,7 +578,7 @@ onMouseLeave={(e) => {
   }
 }}
     >
-      {sub.icon} {sub.name}
+      {renderMenuIcon(sub.icon, sub.name)} {sub.name}
     </Link>
   );
 })}
@@ -611,9 +624,8 @@ onMouseLeave={(e) => {
               whiteSpace: "nowrap",
             }}
           >
-            {collapsed
-              ? item.icon
-              : `${item.icon} ${item.name}`}
+            {renderMenuIcon(item.icon, item.name)}
+            {!collapsed && ` ${item.name}`}
           </Link>
         );
       })}

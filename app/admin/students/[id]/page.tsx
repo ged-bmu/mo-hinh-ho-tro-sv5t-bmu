@@ -10,6 +10,7 @@ import { FaFilePdf } from "react-icons/fa";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import Spinner from "../../../components/Spinner";
+import Image from "next/image";
 
 export default function StudentsDetailPage() {
   const [reports, setReports] = useState<any[]>([]);
@@ -36,12 +37,12 @@ export default function StudentsDetailPage() {
   const [reportOpen, setReportOpen] = useState(false);
   const [zoom, setZoom] = useState(0.6);
   const criteriaList = [
-  { key: "dao-duc", title: "❤️ Đạo đức tốt" },
-  { key: "hoc-tap", title: "📚 Học tập tốt" },
-  { key: "the-luc", title: "💪 Thể lực tốt" },
-  { key: "tinh-nguyen", title: "🤝 Tình nguyện tốt" },
-  { key: "hoi-nhap", title: "🌍 Hội nhập tốt" },
-   { key: "uu-tien", title: "⭐ Thành tích khác" },
+  { key: "dao-duc", title: "Đạo đức tốt", icon: "/icondaoduc.png" },
+  { key: "hoc-tap", title: "Học tập tốt" },
+  { key: "the-luc", title: "Thể lực tốt", icon: "/icontheluc.png" },
+  { key: "tinh-nguyen", title: "Tình nguyện tốt", icon: "/icontinhnguyen.png" },
+  { key: "hoi-nhap", title: "Hội nhập tốt", icon: "/iconhoinhap.png" },
+   { key: "uu-tien", title: "Thành tích khác", icon: "/iconuutien.png" },
 ];
   const [displayNames, setDisplayNames] = useState<
   Record<string, string>
@@ -678,7 +679,7 @@ if (error) {
       alignItems: "center",
     }}
   >
-    <span>❤️ Đạo đức tốt</span>
+    <span><Image src="/icondaoduc.png" width={24} height={24} alt="Đạo đức tốt" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} />Đạo đức tốt</span>
 
     <input
   type="checkbox"
@@ -710,7 +711,15 @@ if (error) {
       alignItems: "center",
     }}
   >
-    <span>📚 Học tập tốt</span>
+    <span>
+      <Image
+        src="/iconhoctap.png"
+        width={24}
+        height={24}
+        alt="Học tập tốt"
+        style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}
+      /> Học tập tốt
+    </span>
 
     <input
       type="checkbox"
@@ -743,7 +752,7 @@ if (error) {
       alignItems: "center",
     }}
   >
-    <span>💪 Thể lực tốt</span>
+    <span><Image src="/icontheluc.png" width={24} height={24} alt="Thể lực tốt" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} />Thể lực tốt</span>
 
     <input
       type="checkbox"
@@ -776,7 +785,7 @@ if (error) {
       alignItems: "center",
     }}
   >
-    <span>🤝 Tình nguyện tốt</span>
+    <span><Image src="/icontinhnguyen.png" width={24} height={24} alt="Tình nguyện tốt" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} />Tình nguyện tốt</span>
 
     <input
       type="checkbox"
@@ -808,7 +817,7 @@ if (error) {
       alignItems: "center",
     }}
   >
-    <span>🌍 Hội nhập tốt</span>
+    <span><Image src="/iconhoinhap.png" width={24} height={24} alt="Hội nhập tốt" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} />Hội nhập tốt</span>
 
     <input
       type="checkbox"
@@ -832,7 +841,7 @@ if (error) {
                   padding: "15px",
                 }}
               >
-                ⭐ Ưu tiên
+                <Image src="/iconuutien.png" width={24} height={24} alt="Thành tích khác" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} />Thành tích khác
               </th>
             </tr>
           </thead>

@@ -56,7 +56,7 @@ export default function Footer() {
             </p>
 
             <p style={{ margin: "4px 0" }}>
-              ✉ hoisinhvien@bmu.edu.vn
+              ☎️ 0328848639
             </p>
           </div>
         </div>

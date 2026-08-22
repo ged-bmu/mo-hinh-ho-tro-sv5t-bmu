@@ -11,6 +11,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ReportEditor from "../components/ReportEditor";
 import Spinner from "@/app/components/Spinner";
+import Image from "next/image";
 
 export default function HocTapPage() {
   const [files, setFiles] = useState<any[]>([]);
@@ -642,7 +643,13 @@ export default function HocTapPage() {
                 marginBottom: "20px",
               }}
             >
-              📚 Học tập tốt
+              <Image
+                src="/iconhoctap.png"
+                width={32}
+                height={32}
+                alt="Học tập tốt"
+                style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}
+              /> Học tập tốt
             </h1>
 
             {/* ================================

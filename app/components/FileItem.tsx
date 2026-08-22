@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Spinner from "./Spinner";
 import { authFetch } from "@/lib/auth-fetch";
+import Image from "next/image";
 
 export default function FileItem({
   file,
@@ -181,7 +182,7 @@ useEffect(() => {
               width:isMobile ? "calc(50% - 4px)" : "auto",
             }}
           >
-            ✎ Đổi tên
+            <Image src="/iconchinhsua.png" width={20} height={20} alt="Đổi tên" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Đổi tên
           </button>
         </div>
       </div>
@@ -212,7 +213,7 @@ useEffect(() => {
     marginTop:isMobile ? "8px" : 0,
   }}
 >
-  {deleting ? <Spinner size={18} /> : "🗑 Xóa"}
+  {deleting ? <Spinner size={18} /> : <><Image src="/iconthungrac.png" width={20} height={20} alt="Xóa" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Xóa</>}
 </button>
 
       {/* MODAL PREVIEW (PORTAL) */}
@@ -349,7 +350,7 @@ useEffect(() => {
                 fontSize: "13px",
               }}
             >
-              ✎ Đổi tên
+              <Image src="/iconchinhsua.png" width={20} height={20} alt="Đổi tên" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Đổi tên
             </button>
                 {/* DELETE */}
     <button
@@ -370,7 +371,7 @@ useEffect(() => {
         fontSize: "13px",
       }}
     >
-      🗑 Xóa
+      <Image src="/iconthungrac.png" width={20} height={20} alt="Xóa" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Xóa
     </button>
 
             {/* CLOSE */}
