@@ -23,6 +23,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://mo-hinh-ho-tro-sv5t-bmu.vercel.app"),
   title: "Hệ thống hỗ trợ Sinh viên 5 Tốt BMU",
+   icons: {
+    icon: "/favication.png",
+  },
   description:
     "Website hỗ trợ sinh viên của Câu lạc bộ Sinh viên 5 Tốt Trường Đại học Y Dược Buôn Ma Thuột đăng ký, quản lý và theo dõi quá trình phấn đấu đạt danh hiệu Sinh viên 5 Tốt các cấp.",
 
