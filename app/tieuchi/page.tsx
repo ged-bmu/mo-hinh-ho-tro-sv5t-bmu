@@ -433,7 +433,7 @@ const percent = (completed / 5) * 100;
     : profile?.is_submitted
       ? hoverSubmit
         ? <><Image src="/iconchinhsua.png" width={20} height={20} alt="Chỉnh sửa" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Chỉnh sửa</>
-        : "✅ Đã nộp hồ sơ"
+        : "Đã nộp hồ sơ"
       : "Gửi hồ sơ"}
 </button>
   </div>
@@ -477,25 +477,23 @@ const percent = (completed / 5) * 100;
     marginBottom: "14px",
   }}
 >
-  {/* Icon */}
-  <div
-    style={{
-      width: "38px",
-      height: "38px",
-      borderRadius: "50%",
-      background: "#ffffff",
-      border: "2px solid #1667b1",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      flexShrink: 0,
-      boxSizing: "border-box",
-    }}
-  >
+{/* Icon */}
+<div
+  style={{
+    width: "38px",
+    height: "38px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  }}
+>
+  {/* icon ở đây */}
+
     <Image
       src={folder.icon}
-      width={27}
-      height={27}
+      width={32}
+      height={32}
       alt={folder.name}
       style={{
         objectFit: "contain",

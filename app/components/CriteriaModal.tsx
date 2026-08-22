@@ -173,16 +173,31 @@ export default function CriteriaModal({
           >
             <div style={{ flex: 1 }}>
               <h1
-                style={{
-                  margin: 0,
-                  fontSize: isMobile ? 19 : 28,
-                  lineHeight: 1.4,
-                  color: "#2563eb",
-                }}
-              >
-                📑 Tiêu chuẩn Sinh viên 5 tốt  {levelLabel}
-     
-              </h1>
+  style={{
+    margin: 0,
+    fontSize: isMobile ? 19 : 28,
+    lineHeight: 1.4,
+    color: "#2563eb",
+    display: "flex",
+    alignItems: "center",
+    gap: 7,
+    flexWrap: "wrap",
+  }}
+>
+  <img
+    src="/bonghoa5tot.png"
+    alt=""
+    style={{
+      width: 35,
+      height: 35,
+      objectFit: "contain",
+      flexShrink: 0,
+    }}
+  />
+  <span>
+    Tiêu chuẩn Sinh viên 5 tốt {levelLabel}
+  </span>
+</h1>
 
               {/* =========================
                   THÔNG TIN TIÊU CHUẨN

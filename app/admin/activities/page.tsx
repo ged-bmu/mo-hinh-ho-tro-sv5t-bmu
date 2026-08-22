@@ -666,7 +666,10 @@ activities.filter((a) => a.status === "ended").length
   }}
   className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
 >
-  👁 Xem
+  <span className="inline-flex items-center gap-1 whitespace-nowrap">
+    <Image src="/iconxem2.png" width={20} height={20} alt="Xem" />
+    Xem
+  </span>
 </button>                </div>
 
                             <div>

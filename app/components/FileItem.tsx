@@ -165,9 +165,10 @@ useEffect(() => {
               borderRadius: "8px",
               cursor: "pointer",
               width:isMobile ? "calc(50% - 4px)" : "auto",
+              whiteSpace: "nowrap",
             }}
           >
-            👁 Xem
+            <Image src="/iconxem2.png" width={20} height={20} alt="Xem" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Xem
           </button>
 
           <button

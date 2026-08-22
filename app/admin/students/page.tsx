@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase";
+import Image from "next/image";
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([]);
@@ -63,9 +64,14 @@ export default function StudentsPage() {
               padding: "10px 15px",
               borderRadius: "8px",
               textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              whiteSpace: "nowrap",
             }}
           >
-            👁 Xem hồ sơ
+            <Image src="/iconxem2.png" width={20} height={20} alt="Xem hồ sơ" />
+            Xem hồ sơ
           </a>
         </div>
       ))}

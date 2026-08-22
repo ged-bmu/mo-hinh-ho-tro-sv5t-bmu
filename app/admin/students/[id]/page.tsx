@@ -514,9 +514,14 @@ return (
       color: "#2563eb",
       cursor: "pointer",
       fontWeight: "600",
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "4px",
+      whiteSpace: "nowrap",
     }}
   >
-    👁 Xem
+    <Image src="/iconxem2.png" width={20} height={20} alt="Xem" />
+    Xem
   </button>
 </div>
 </div>

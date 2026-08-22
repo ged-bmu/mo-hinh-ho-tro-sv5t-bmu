@@ -54,7 +54,7 @@ messaging.onBackgroundMessage((payload) => {
   const type = data.type || "system";
 
   const title =
-    data.title || "🔔 SV5T BMU";
+    data.title || "🔔 Bạn có thông báo mới";
 
   const body =
     data.body ||

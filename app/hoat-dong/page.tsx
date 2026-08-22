@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 import Sidebar from "../components/Sidebar";
 import CriteriaModal from "../components/CriteriaModal";
 import Spinner from "../components/Spinner";
+import Image from "next/image";
 
 type Activity = {
   id: string;
@@ -442,7 +443,10 @@ return (
       }}
       className="mt-2 rounded-lg border border-sky-300 bg-white px-3 py-2 text-sm font-medium text-sky-700 transition hover:bg-sky-50"
     >
-      👁 Xem
+      <span className="inline-flex items-center gap-1 whitespace-nowrap">
+        <Image src="/iconxem2.png" width={20} height={20} alt="Xem" />
+        Xem
+      </span>
     </button>
   ) : (
     <span className="text-gray-500">

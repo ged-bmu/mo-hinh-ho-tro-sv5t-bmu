@@ -857,8 +857,6 @@ export default function HoiNhapPage() {
                       }}
                     >
                       <Spinner size={32} />
-
-                      <Spinner size={20} />
                     </div>
                   ) : (
                     <>

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
 
     const title =
       body.title ||
-      "🔔 SV5T BMU";
+      "🔔 Bạn có thông báo mới";
 
     const message =
       body.message ||

@@ -123,14 +123,16 @@ async function toggleSubmission() {
   setIsOpen(newStatus);
 }
 async function sendGeneralNotification() {
-
   if (!notificationContent.trim()) {
     alert("Vui lòng nhập nội dung thông báo.");
     return;
   }
 
   try {
-    // Lấy tất cả sinh viên
+    // ==========================================
+    // LẤY TẤT CẢ SINH VIÊN
+    // ==========================================
+
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
       .select("id")
@@ -146,11 +148,22 @@ async function sendGeneralNotification() {
       alert("Không có sinh viên nào để gửi thông báo.");
       return;
     }
+
+    // ==========================================
+    // TẠO THÔNG BÁO TRONG SUPABASE
+    // ==========================================
+
+    const title =
+      notificationTitle.trim() || "🔔 SV5T BMU";
+
+    const content =
+      notificationContent.trim();
+
     const notifications = profiles.map((profile) => ({
       user_id: profile.id,
       type: "general",
-      title: notificationTitle.trim(),
-      content: notificationContent.trim(),
+      title,
+      content,
       target_url: "/thongbaouser",
       is_read: false,
     }));
@@ -161,19 +174,90 @@ async function sendGeneralNotification() {
 
     if (notificationError) {
       console.error(notificationError);
+
       alert(
-        "Không thể gửi thông báo: " + notificationError.message
+        "Không thể lưu thông báo: " +
+          notificationError.message
       );
+
       return;
     }
 
-    alert(`Đã gửi thông báo cho ${profiles.length} sinh viên.`);
+    // ==========================================
+    // GỬI PUSH NOTIFICATION VỀ ĐIỆN THOẠI
+    // ==========================================
+
+    let successCount = 0;
+    let failureCount = 0;
+
+    await Promise.all(
+      profiles.map(async (profile) => {
+        try {
+          const response = await authFetch(
+            "/api/send-notification",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                type: "general",
+                title,
+                message: content,
+                url: "/thongbaouser",
+                userId: profile.id,
+              }),
+            }
+          );
+
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            successCount++;
+          } else {
+            failureCount++;
+
+            console.error(
+              "Không gửi được push cho user:",
+              profile.id,
+              result
+            );
+          }
+        } catch (error) {
+          failureCount++;
+
+          console.error(
+            "Lỗi gửi push cho user:",
+            profile.id,
+            error
+          );
+        }
+      })
+    );
+
+    // ==========================================
+    // HOÀN TẤT
+    // ==========================================
+
+    alert(
+      `Đã gửi thông báo cho ${profiles.length} sinh viên.\n\n` +
+      `📱 Thiết bị nhận được: ${successCount}\n` +
+      `⚠️ Không gửi được/không có thiết bị: ${failureCount}`
+    );
+
     setNotificationTitle("");
     setNotificationContent("");
     setShowNotificationModal(false);
+
   } catch (error) {
-    console.error(error);
-    alert("Đã xảy ra lỗi khi gửi thông báo.");
+    console.error(
+      "Lỗi gửi thông báo chung:",
+      error
+    );
+
+    alert(
+      "Đã xảy ra lỗi khi gửi thông báo."
+    );
   }
 }
   async function checkAdmin() {
@@ -907,9 +991,12 @@ const exportExcel = async () => {
       padding: "8px 14px",
       borderRadius: "8px",
       textDecoration: "none",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
     }}
   >
-    👁
+    <Image src="/iconxem2.png" width={20} height={20} alt="Xem" />
   </a>
 </td>
         </tr>

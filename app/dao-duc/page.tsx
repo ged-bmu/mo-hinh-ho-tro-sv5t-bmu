@@ -745,8 +745,6 @@ async function renameFile(file: any) {
     }}
   >
     <Spinner size={32} />
-
-    <Spinner size={20} />
   </div>
 ) : (
   <>

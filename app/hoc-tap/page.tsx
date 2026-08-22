@@ -839,8 +839,6 @@ export default function HocTapPage() {
                       }}
                     >
                       <Spinner size={32} />
-
-                      <Spinner size={20} />
                     </div>
                   ) : (
                     <>

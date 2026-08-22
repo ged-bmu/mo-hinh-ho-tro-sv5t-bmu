@@ -489,9 +489,11 @@ return (
   cursor: "pointer",
   fontSize: 15,
   userSelect: "none",
+  whiteSpace: "nowrap",
 }}
         >
-          👁 Xem ảnh
+          <Image src="/iconxem2.png" width={20} height={20} alt="Xem ảnh" />
+          Xem ảnh
         </div>
 
         <div

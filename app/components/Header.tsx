@@ -181,92 +181,53 @@ onMouseLeave={(e) => {
               }}
             />
 
-            <div
-              className="header-right"
-              style={{
-                display: "flex",
-                gap: 15,
-              }}
-            >
-              <div style={{ position: "relative" }}>
-                <button
-                
-                  onClick={() => setShowMenu((prev) => !prev)}
-                  style={{
-                    width: 46,
-                    height: 46,
-                    border: "none",
-                    borderRadius: 12,
-                    cursor: "pointer",
-                    fontSize: 23,
-                    background: "transparent",
-                    color: "#333",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "all .25s ease",
-                    boxShadow:
-                      "0 4px 12px rgba(97, 97, 97, 0.2)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform =
-                      "translateY(-3px) scale(1.03)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform =
-                      "translateY(0) scale(1)";
-                  }}
-                  aria-label="Mở menu"
-                >
-                  ☰
-                </button>
-
-                {showMenu && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "54px",
-                      right: 0,
-                      width: 210,
-                      background: "#fff",
-                      borderRadius: 12,
-                      boxShadow: "0 10px 30px rgba(0,0,0,0.18)",
-                      border: "1px solid #e5e7eb",
-                      overflow: "hidden",
-                      zIndex: 9999,
-                    }}
-                  >
-                   <button
-  onClick={() => {
-    setShowMenu(false);
-    openCriteria();
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.background = "#eff6ff";
-    e.currentTarget.style.color = "#2563eb";
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.background = "#fff";
-    e.currentTarget.style.color = "#111";
-  }}
+<div
+  className="header-right"
   style={{
-    width: "100%",
-    padding: "14px 16px",
-    border: "none",
-    background: "#fff",
-    textAlign: "left",
-    cursor: "pointer",
-    fontSize: 14,
-    fontWeight: 600,
-    transition: "all 0.2s ease",
+    display: "flex",
+    alignItems: "center",
+    gap: 15,
   }}
 >
-  📑 Xem tiêu chuẩn
-</button>
-                  </div>
-                )}
-              </div>
-            </div>
+  <button
+    onClick={openCriteria}
+    onMouseEnter={(e) => {
+  e.currentTarget.style.background = "#1d4ed8";
+  e.currentTarget.style.transform = "translateY(-2px)";
+}}
+
+onMouseLeave={(e) => {
+  e.currentTarget.style.background = "#2563eb";
+  e.currentTarget.style.transform = "translateY(0)";
+}}
+style={{
+  padding: "8px 12px",
+  border: "none",
+  borderRadius: 8,
+  cursor: "pointer",
+  fontSize: 13,
+  fontWeight: 600,
+  background: "#2563eb",
+  color: "#fff",
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
+  transition: "all 0.2s ease",
+  boxShadow: "0 2px 7px rgba(37, 99, 235, 0.2)",
+}}
+  >
+    <img
+  src="/bonghoa5tot.png"
+  alt=""
+  style={{
+    width: 25,
+    height: 25,
+    objectFit: "contain",
+  }}
+/>
+Xem tiêu chuẩn
+  </button>
+</div>
           </div>
         )}
       </header>
