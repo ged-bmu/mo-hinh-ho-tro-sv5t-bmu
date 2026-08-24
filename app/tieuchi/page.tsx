@@ -310,7 +310,7 @@ const percent = (completed / 5) * 100;
   <div
     style={{
       display: "flex",
-      alignItems: "center",
+      alignItems: "flex-start",
       justifyContent: "flex-end",
       gap: "10px",
       flexShrink: 0,
@@ -351,91 +351,133 @@ const percent = (completed / 5) * 100;
     </a>
 
     {/* Gửi báo cáo */}
-<button
-  type="button"
-  onClick={() => {
-    if (!submissionOpen) {
-      alert(
-        "Hồ sơ đã hết hạn gửi. Hiện tại hệ thống không còn nhận hồ sơ."
-      );
-      return;
-    }
-
-    submitProfile();
-  }}
-  onMouseEnter={(e) => {
-    if (!submissionOpen) return;
-
-    setHoverSubmit(true);
-
-    e.currentTarget.style.transform = "translateY(-3px) scale(1.03)";
-    e.currentTarget.style.background = profile?.is_submitted
-      ? "#15803d"
-      : "#1d4ed8";
-    e.currentTarget.style.boxShadow = profile?.is_submitted
-      ? "0 6px 16px rgba(22, 163, 74, 0.25)"
-      : "0 6px 16px rgba(37, 99, 235, 0.25)";
-  }}
-  onMouseLeave={(e) => {
-    if (!submissionOpen) return;
-
-    setHoverSubmit(false);
-
-    e.currentTarget.style.transform = "translateY(0) scale(1)";
-    e.currentTarget.style.background = profile?.is_submitted
-      ? "#16a34a"
-      : "#2563eb";
-    e.currentTarget.style.boxShadow = "none";
-  }}
+{/* Gửi báo cáo */}
+<div
   style={{
-    background: !submissionOpen
-      ? "#94a3b8"
-      : profile?.is_submitted
-        ? "#16a34a"
-        : "#2563eb",
-
-    color: "#fff",
-
-    padding: isMobile
-      ? "10px 12px"
-      : "11px 16px",
-
-    border: "none",
-    borderRadius: "12px",
-
-    fontWeight: 600,
-    fontSize: "14px",
-
     display: "flex",
-    justifyContent: "center",
+    flexDirection: "column",
     alignItems: "center",
-
-    height: isMobile
-      ? "42px"
-      : "44px",
-
-    boxSizing: "border-box",
-
-    cursor: !submissionOpen
-      ? "not-allowed"
-      : "pointer",
-
-    transition: "all .25s ease",
-    whiteSpace: "nowrap",
-
-    opacity: !submissionOpen
-      ? 0.8
-      : 1,
+    gap: "5px",
   }}
 >
-  {!submissionOpen
-    ? "⛔ Đã hết hạn"
-    : profile?.is_submitted
-      ? hoverSubmit
-        ? <><Image src="/iconchinhsua.png" width={20} height={20} alt="Chỉnh sửa" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }} />Chỉnh sửa</>
-        : "Đã nộp hồ sơ"
-      : "Gửi hồ sơ"}
-</button>
+  <button
+    type="button"
+    onClick={() => {
+      if (!submissionOpen) {
+        alert(
+          "Hồ sơ đã hết hạn gửi. Hiện tại hệ thống không còn nhận hồ sơ."
+        );
+        return;
+      }
+
+      submitProfile();
+    }}
+    onMouseEnter={(e) => {
+      if (!submissionOpen) return;
+
+      setHoverSubmit(true);
+
+      e.currentTarget.style.transform = "translateY(-3px) scale(1.03)";
+      e.currentTarget.style.background = profile?.is_submitted
+        ? "#15803d"
+        : "#1d4ed8";
+      e.currentTarget.style.boxShadow = profile?.is_submitted
+        ? "0 6px 16px rgba(22, 163, 74, 0.25)"
+        : "0 6px 16px rgba(37, 99, 235, 0.25)";
+    }}
+    onMouseLeave={(e) => {
+      if (!submissionOpen) return;
+
+      setHoverSubmit(false);
+
+      e.currentTarget.style.transform = "translateY(0) scale(1)";
+      e.currentTarget.style.background = profile?.is_submitted
+        ? "#16a34a"
+        : "#2563eb";
+      e.currentTarget.style.boxShadow = "none";
+    }}
+    style={{
+      background: !submissionOpen
+        ? "#94a3b8"
+        : profile?.is_submitted
+          ? "#16a34a"
+          : "#2563eb",
+
+      color: "#fff",
+
+      padding: isMobile
+        ? "10px 12px"
+        : "11px 16px",
+
+      border: "none",
+      borderRadius: "12px",
+
+      fontWeight: 600,
+      fontSize: "14px",
+
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+
+      height: isMobile
+        ? "42px"
+        : "44px",
+
+      boxSizing: "border-box",
+
+      cursor: !submissionOpen
+        ? "not-allowed"
+        : "pointer",
+
+      transition: "all .25s ease",
+      whiteSpace: "nowrap",
+
+      opacity: !submissionOpen
+        ? 0.8
+        : 1,
+    }}
+  >
+    {!submissionOpen
+      ? "⛔ Đã hết hạn"
+      : profile?.is_submitted
+        ? hoverSubmit
+          ? (
+            <>
+              <Image
+                src="/iconchinhsua.png"
+                width={20}
+                height={20}
+                alt="Chỉnh sửa"
+                style={{
+                  display: "inline-block",
+                  verticalAlign: "middle",
+                  marginRight: 4,
+                }}
+              />
+              Chỉnh sửa
+            </>
+          )
+          : "Đã nộp hồ sơ"
+        : "Gửi hồ sơ"}
+  </button>
+
+  {/* Dòng chữ bên dưới */}
+  {profile?.is_submitted && (
+    <span
+      style={{
+        fontSize: isMobile ? "10px" : "11px",
+        color: "#dc2626",
+        fontWeight: 500,
+        lineHeight: "14px",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {submissionOpen
+        ? "Nhấn để chỉnh sửa hồ sơ"
+        : "Đã hết hạn nộp hồ sơ"}
+    </span>
+  )}
+</div>
   </div>
 </div>
 </div>
