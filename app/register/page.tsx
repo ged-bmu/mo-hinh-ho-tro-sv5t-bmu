@@ -27,7 +27,7 @@ export default function RegisterPage() {
     return;
   }
 
-  const email = `${mssv}@gmail.com`;
+  const email = `${mssv}@clbsv5tbmu.com`;
 
   try {
     const res = await fetch("/api/create-user", {
