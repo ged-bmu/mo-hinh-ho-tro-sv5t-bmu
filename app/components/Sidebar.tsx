@@ -343,8 +343,8 @@ async function handleToggleNotification() {
     {notificationLoading
       ? "Đang xử lý..."
       : notificationEnabled
-      ? "Tắt thông báo"
-      : "Bật thông báo"}
+      ? "Thông báo: Đang bật"
+      : "Thông báo: Đang tắt"}
   </span>
 </button>
 
