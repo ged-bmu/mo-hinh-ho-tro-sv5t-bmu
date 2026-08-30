@@ -150,7 +150,20 @@ async function uploadFile(file: File) {
 
   try {
     // ================================
-    // 1. Lấy thông tin sinh viên
+    // 1. KIỂM TRA FILE Ở FRONTEND
+    // ================================
+    const MAX_FILE_SIZE = 25 * 1024 * 1024;
+
+    if (file.size <= 0) {
+      throw new Error("File không hợp lệ");
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error("File không được vượt quá 25 MB");
+    }
+
+    // ================================
+    // 2. LẤY THÔNG TIN SINH VIÊN
     // ================================
     const { data: profile, error: profileError } =
       await supabase
@@ -161,44 +174,78 @@ async function uploadFile(file: File) {
 
     if (profileError || !profile) {
       console.error("Profile error:", profileError);
-      alert("Không lấy được thông tin sinh viên");
-      return;
+      throw new Error("Không lấy được thông tin sinh viên");
     }
 
     // ================================
-    // 2. Chuẩn bị dữ liệu gửi Google Drive
+    // 3. KHỞI TẠO GOOGLE DRIVE UPLOAD
     // ================================
-    const formData = new FormData();
-
-    formData.append("file", file);
-    formData.append("mssv", profile.mssv);
-    formData.append("ho_ten", profile.ho_ten);
-    formData.append("criteria", "dao-duc");
-
-    // ================================
-    // 3. Upload file lên Google Drive
-    // ================================
-    const response = await fetch("/api/upload-drive", {
+    const initResponse = await fetch("/api/upload-drive/init", {
       method: "POST",
-      body: formData,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type || "application/octet-stream",
+        mssv: profile.mssv,
+        ho_ten: profile.ho_ten,
+        criteria: "dao-duc",
+      }),
     });
 
-    const driveResult = await response.json();
+    const initResult = await initResponse.json();
 
-    if (!response.ok || !driveResult.success) {
+    if (!initResponse.ok || !initResult.success) {
       throw new Error(
-        driveResult.error ||
-          "Không thể upload lên Google Drive"
+        initResult.error ||
+          "Không thể khởi tạo upload Google Drive"
       );
     }
 
+    const uploadUrl = initResult.uploadUrl;
+
+    if (!uploadUrl) {
+      throw new Error("Không nhận được upload URL");
+    }
+
+    // ================================
+    // 4. UPLOAD FILE TRỰC TIẾP GOOGLE DRIVE
+    // ================================
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type":
+          file.type || "application/octet-stream",
+        "Content-Length": String(file.size),
+      },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+
+      console.error(
+        "Google Drive upload error:",
+        uploadResponse.status,
+        errorText
+      );
+
+      throw new Error(
+        "Upload file lên Google Drive thất bại"
+      );
+    }
+
+    const driveFile = await uploadResponse.json();
+
     console.log(
-      "Google Drive upload:",
-      driveResult
+      "Google Drive upload thành công:",
+      driveFile
     );
 
     // ================================
-    // 4. Tạo tên lưu trong uploaded_files
+    // 5. TẠO TÊN LƯU TRONG SUPABASE
     // ================================
     const safeName = file.name
       .normalize("NFD")
@@ -208,32 +255,38 @@ async function uploadFile(file: File) {
     const fileName = `${Date.now()}-${safeName}`;
 
     // ================================
-    // 5. Lưu thông tin file vào Supabase
+    // 6. LƯU THÔNG TIN FILE VÀO SUPABASE
     // ================================
-const { data: insertedFile, error: insertError } =
-  await supabase
-    .from("uploaded_files")
-    .insert({
-      user_id: user.id,
-      folder: "dao-duc",
-      storage_name: fileName,
-      display_name: file.name,
-      storage_type: "google_drive",
-      drive_file_id: driveResult.file.id,
-      drive_url: driveResult.file.webViewLink,
-    })
-    .select()
-    .single();
+    const { data: insertedFile, error: insertError } =
+      await supabase
+        .from("uploaded_files")
+        .insert({
+          user_id: user.id,
+          folder: "dao-duc",
+          storage_name: fileName,
+          display_name: file.name,
+          storage_type: "google_drive",
+          drive_file_id: driveFile.id,
+          drive_url:
+            driveFile.webViewLink ||
+            `https://drive.google.com/file/d/${driveFile.id}/view`,
+        })
+        .select()
+        .single();
 
+    if (insertError) {
+      throw new Error(
+        `Lưu file vào Supabase thất bại: ${insertError.message}`
+      );
+    }
 
-if (insertError) {
-  throw new Error(
-    `Lưu file vào Supabase thất bại: ${insertError.message}`
-  );
-}
+    console.log(
+      "Đã lưu uploaded_files:",
+      insertedFile
+    );
 
     // ================================
-    // 6. Ghi log upload
+    // 7. GHI LOG UPLOAD
     // ================================
     await supabase
       .from("activity_logs")
@@ -246,13 +299,13 @@ if (insertError) {
         target_file: file.name,
       });
 
-    // Tải lại danh sách
-    loadFiles();
+    // ================================
+    // 8. TẢI LẠI DANH SÁCH
+    // ================================
+    await loadFiles();
+
   } catch (error) {
-    console.error(
-      "Upload error:",
-      error
-    );
+    console.error("Upload error:", error);
 
     alert(
       error instanceof Error
