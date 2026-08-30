@@ -153,148 +153,242 @@ export default function HoiNhapPage() {
   // =====================================================
   // UPLOAD GOOGLE DRIVE
   // =====================================================
-  async function uploadFile(file: File) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+async function uploadFile(file: File) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) return;
+  if (!user) return;
 
-    try {
-      // ================================
-      // 1. Lấy thông tin sinh viên
-      // ================================
-      const {
-        data: profile,
-        error: profileError,
-      } = await supabase
+  try {
+    // ================================
+    // 1. GIỚI HẠN FILE
+    // ================================
+    const MAX_FILE_SIZE = 25 * 1024 * 1024;
+
+    if (file.size <= 0) {
+      throw new Error("File không hợp lệ");
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error("File không được vượt quá 25 MB");
+    }
+
+    // ================================
+    // 2. LẤY THÔNG TIN SINH VIÊN
+    // ================================
+    const { data: profile, error: profileError } =
+      await supabase
         .from("profiles")
         .select("ho_ten, mssv, lop")
         .eq("id", user.id)
         .single();
 
-      if (profileError || !profile) {
-        console.error("Profile error:", profileError);
-        alert("Không lấy được thông tin sinh viên");
-        return;
-      }
+    if (profileError || !profile) {
+      console.error("Profile error:", profileError);
+      throw new Error("Không lấy được thông tin sinh viên");
+    }
 
-      // ================================
-      // 2. Chuẩn bị FormData
-      // ================================
-      const formData = new FormData();
-
-      formData.append("file", file);
-      formData.append("mssv", profile.mssv);
-      formData.append("ho_ten", profile.ho_ten);
-      formData.append("criteria", "hoi-nhap");
-
-      // ================================
-      // 3. Upload Google Drive
-      // ================================
-      const response = await fetch("/api/upload-drive", {
+    // ================================
+    // 3. KHỞI TẠO GOOGLE DRIVE SESSION
+    // ================================
+    const initResponse = await fetch(
+      "/api/upload-drive/init",
+      {
         method: "POST",
-        body: formData,
-      });
-
-      const driveResult = await response.json();
-
-      if (!response.ok || !driveResult.success) {
-        throw new Error(
-          driveResult.error ||
-            "Không thể upload lên Google Drive"
-        );
-      }
-
-      console.log(
-        "Google Drive upload:",
-        driveResult
-      );
-
-      // ================================
-      // 4. Tạo storage_name
-      // ================================
-      const safeName = file.name
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-zA-Z0-9._-]/g, "_");
-
-      const fileName =
-        `${Date.now()}-${safeName}`;
-
-      // ================================
-      // 5. Lưu DB
-      // ================================
-      const {
-        data: insertedFile,
-        error: insertError,
-      } = await supabase
-        .from("uploaded_files")
-        .insert({
-          user_id: user.id,
-          folder: "hoi-nhap",
-          storage_name: fileName,
-          display_name: file.name,
-          storage_type: "google_drive",
-          drive_file_id: driveResult.file.id,
-          drive_url: driveResult.file.webViewLink,
-        })
-        .select()
-        .single();
-
-      if (insertError) {
-        throw new Error(
-          `Lưu file vào Supabase thất bại: ${insertError.message}`
-        );
-      }
-
-      console.log(
-        "Đã lưu file:",
-        insertedFile
-      );
-
-      // ================================
-      // 6. Cập nhật giao diện ngay
-      // ================================
-      setFiles((prev) => [
-        insertedFile,
-        ...prev,
-      ]);
-
-      setDisplayNames((prev) => ({
-        ...prev,
-        [fileName]: file.name,
-      }));
-
-      // ================================
-      // 7. Ghi log
-      // ================================
-      await supabase
-        .from("activity_logs")
-        .insert({
-          user_id: user.id,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType:
+            file.type || "application/octet-stream",
+          mssv: profile.mssv,
           ho_ten: profile.ho_ten,
-          lop: profile.lop,
-          action_type: "upload",
-          target_folder: "hoi-nhap",
-          target_file: file.name,
-        });
+          criteria: "hoi-nhap",
+        }),
+      }
+    );
 
-      // Không alert thành công nữa
+    const initResult = await initResponse.json();
 
-    } catch (error) {
-      console.error(
-        "Upload error:",
-        error
-      );
-
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Không thể upload file"
+    if (!initResponse.ok || !initResult.success) {
+      throw new Error(
+        initResult.error ||
+          "Không thể khởi tạo upload Google Drive"
       );
     }
+
+    const uploadUrl = initResult.uploadUrl;
+
+    if (!uploadUrl) {
+      throw new Error(
+        "Không nhận được upload URL từ Google Drive"
+      );
+    }
+
+    // ================================
+    // 4. CHIA FILE THÀNH CHUNK
+    // ================================
+    const CHUNK_SIZE = 3 * 1024 * 1024; // 3 MB
+
+    let start = 0;
+    let driveFile: any = null;
+
+    while (start < file.size) {
+      const end = Math.min(
+        start + CHUNK_SIZE,
+        file.size
+      );
+
+      const chunk = file.slice(start, end);
+
+      const contentRange =
+        `bytes ${start}-${end - 1}/${file.size}`;
+
+      console.log(
+        `Upload chunk: ${start}-${end - 1}/${file.size}`
+      );
+
+      // ================================
+      // 5. GỬI CHUNK QUA VERCEL API
+      // ================================
+      const chunkResponse = await fetch(
+        "/api/upload-drive/chunk",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              file.type || "application/octet-stream",
+
+            "Content-Length": String(
+              chunk.size
+            ),
+
+            "Content-Range": contentRange,
+
+            "X-Upload-Url": uploadUrl,
+          },
+          body: chunk,
+        }
+      );
+
+      const chunkResult =
+        await chunkResponse.json();
+
+      if (
+        !chunkResponse.ok ||
+        !chunkResult.success
+      ) {
+        throw new Error(
+          chunkResult.error ||
+            `Upload chunk thất bại (${chunkResponse.status})`
+        );
+      }
+
+      // ================================
+      // 6. KIỂM TRA HOÀN THÀNH
+      // ================================
+      if (chunkResult.completed) {
+        driveFile = chunkResult.file;
+        break;
+      }
+
+      // Chunk tiếp theo
+      start = end;
+    }
+
+    if (!driveFile?.id) {
+      throw new Error(
+        "Google Drive không trả về thông tin file sau khi upload"
+      );
+    }
+
+    console.log(
+      "Google Drive upload thành công:",
+      driveFile
+    );
+
+    // ================================
+    // 7. TẠO TÊN LƯU TRONG SUPABASE
+    // ================================
+    const safeName = file.name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(
+        /[^a-zA-Z0-9._-]/g,
+        "_"
+      );
+
+    const fileName =
+      `${Date.now()}-${safeName}`;
+
+    // ================================
+    // 8. LƯU FILE VÀO SUPABASE
+    // ================================
+    const {
+      data: insertedFile,
+      error: insertError,
+    } = await supabase
+      .from("uploaded_files")
+      .insert({
+        user_id: user.id,
+        folder: "hoi-nhap",
+        storage_name: fileName,
+        display_name: file.name,
+        storage_type: "google_drive",
+        drive_file_id: driveFile.id,
+        drive_url:
+          driveFile.webViewLink ||
+          `https://drive.google.com/file/d/${driveFile.id}/view`,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      throw new Error(
+        `Lưu file vào Supabase thất bại: ${insertError.message}`
+      );
+    }
+
+    console.log(
+      "Đã lưu uploaded_files:",
+      insertedFile
+    );
+
+    // ================================
+    // 9. GHI LOG
+    // ================================
+    await supabase
+      .from("activity_logs")
+      .insert({
+        user_id: user.id,
+        ho_ten: profile.ho_ten,
+        lop: profile.lop,
+        action_type: "upload",
+        target_folder: "hoi-nhap",
+        target_file: file.name,
+      });
+
+    // ================================
+    // 10. LOAD LẠI DANH SÁCH
+    // ================================
+    await loadFiles();
+
+  } catch (error) {
+    console.error(
+      "Upload error:",
+      error
+    );
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Không thể upload file"
+    );
   }
+}
 
   // =====================================================
   // INPUT UPLOAD
