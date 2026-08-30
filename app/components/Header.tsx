@@ -191,29 +191,28 @@ onMouseLeave={(e) => {
 >
   <button
     onClick={openCriteria}
-    onMouseEnter={(e) => {
-  e.currentTarget.style.background = "#1d4ed8";
-  e.currentTarget.style.transform = "translateY(-2px)";
-}}
-
-onMouseLeave={(e) => {
+   onMouseEnter={(e) => {
   e.currentTarget.style.background = "#2563eb";
-  e.currentTarget.style.transform = "translateY(0)";
+  e.currentTarget.style.color = "#fff";
+}}
+onMouseLeave={(e) => {
+  e.currentTarget.style.background = "#fff";
+  e.currentTarget.style.color = "#2563eb";
 }}
 style={{
-  padding: "8px 12px",
-  border: "none",
-  borderRadius: 8,
-  cursor: "pointer",
-  fontSize: 13,
-  fontWeight: 600,
-  background: "#2563eb",
-  color: "#fff",
-  display: "flex",
-  alignItems: "center",
-  gap: 6,
-  transition: "all 0.2s ease",
-  boxShadow: "0 2px 7px rgba(37, 99, 235, 0.2)",
+padding: "8px 12px",
+border: "1px solid #2563eb",
+borderRadius: 8,
+cursor: "pointer",
+fontSize: 13,
+fontWeight: 600,
+background: "#fff",
+color: "#2563eb",
+display: "flex",
+alignItems: "center",
+gap: 6,
+transition: "all 0.2s ease",
+boxShadow: "0 2px 7px rgba(37, 99, 235, 0.08)",
 }}
   >
     <img
