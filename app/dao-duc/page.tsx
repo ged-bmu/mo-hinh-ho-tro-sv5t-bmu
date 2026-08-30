@@ -225,19 +225,12 @@ const { data: insertedFile, error: insertError } =
     .select()
     .single();
 
-console.log("SUPABASE INSERT DATA:", insertedFile);
-console.log("SUPABASE INSERT ERROR:", insertError);
 
 if (insertError) {
   throw new Error(
     `Lưu file vào Supabase thất bại: ${insertError.message}`
   );
 }
-
-console.log(
-  "✅ Đã lưu file vào Supabase:",
-  insertedFile
-);
 
     // ================================
     // 6. Ghi log upload

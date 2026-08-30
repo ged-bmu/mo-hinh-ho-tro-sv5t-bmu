@@ -104,9 +104,6 @@ async function savePeriod() {
       .select()
       .single();
 
-    console.log("✅ UPDATE PERIOD DATA:", data);
-    console.log("❌ UPDATE PERIOD ERROR:", error);
-
     if (error) throw error;
 
     // Lấy lại dữ liệu thật từ Supabase
