@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
-import { authFetch as fetch } from "@/lib/auth-fetch";
+import { authFetch } from "@/lib/auth-fetch";
 import { sendNotification } from "@/lib/notification";
 import { createPortal } from "react-dom";
 import { FaFilePdf } from "react-icons/fa";
@@ -36,6 +36,7 @@ export default function StudentsDetailPage() {
   const [previewUrl, setPreviewUrl] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
   const [zoom, setZoom] = useState(0.6);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState("");
   const criteriaList = [
   { key: "dao-duc", title: "Đạo đức tốt", icon: "/icondaoduc.png" },
   { key: "hoc-tap", title: "Học tập tốt" },
@@ -48,20 +49,52 @@ export default function StudentsDetailPage() {
   Record<string, string>
 >({});
 useEffect(() => {
-  if (!previewOpen) return;
+  if (!previewOpen || !previewUrl) {
+    setPreviewBlobUrl("");
+    return;
+  }
 
-  function handleKeyDown(e: KeyboardEvent) {
-    if (e.key === "Escape") {
-      setPreviewOpen(false);
+  let objectUrl = "";
+  let cancelled = false;
+
+  async function loadPreview() {
+    try {
+      setPreviewBlobUrl("");
+      const res = await authFetch(previewUrl);
+      if (!res.ok) {
+        throw new Error(`Không thể tải file: ${res.status}`);
+      }
+
+      const blob = await res.blob();
+
+      if (!blob.size) {
+        throw new Error("File tải về rỗng");
+      }
+
+      objectUrl = URL.createObjectURL(blob);
+
+      if (!cancelled) {
+        setPreviewBlobUrl(objectUrl);
+      }
+    } catch (error) {
+
+      if (!cancelled) {
+        setPreviewBlobUrl("");
+      }
     }
   }
 
-  window.addEventListener("keydown", handleKeyDown);
+  loadPreview();
 
   return () => {
-    window.removeEventListener("keydown", handleKeyDown);
+    cancelled = true;
+
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+    }
   };
-}, [previewOpen]);
+}, [previewOpen, previewUrl]);
+
   useEffect(() => {
     if (!id) return;
 
@@ -84,6 +117,7 @@ useEffect(() => {
     window.removeEventListener("keydown", handleKeyDown);
   };
 }, [reportOpen]);
+
 async function loadReports() {
   console.log("ĐANG LOAD REPORT VỚI ID:", id);
 
@@ -188,7 +222,7 @@ async function loadFiles() {
         b.display_name ||
         b.storage_name ||
         b.file_name ||
-        a.name ||
+        b.name ||
         "";
 
       return nameA.localeCompare(nameB, "vi", {
@@ -283,10 +317,15 @@ function renderFiles(files: any[], folder: string) {
     let url = "";
 
     // Google Drive
-    if (file.storage_type === "google_drive") {
-      url = file.drive_url || "";
-    }
+if (file.storage_type === "google_drive") {
+  const fileId =
+    file.drive_file_id ||
+    getDriveFileId(file.drive_url || "");
 
+  if (fileId) {
+    url = `/api/view-drive?fileId=${fileId}`;
+  }
+}
     // Supabase Storage
     else {
       url =
@@ -314,6 +353,7 @@ function renderFiles(files: any[], folder: string) {
         }}
       >
         <div
+        
           onClick={() => {
             if (!url) {
               alert("Không tìm thấy đường dẫn file");
@@ -323,6 +363,8 @@ function renderFiles(files: any[], folder: string) {
             setPreviewFile(file);
             setPreviewUrl(url);
             setPreviewFolder(folder);
+               console.log("📂 FILE ĐƯỢC CHỌN:", file);
+               console.log("🔗 PREVIEW URL:", url);
             setPreviewOpen(true);
             setZoom(0.6);
           }}
@@ -378,47 +420,119 @@ if (!profile) {
   );
 }
 async function renameFile(folder: string, file: any) {
-  const newName = prompt(
-    "Nhập tên mới:",
-    displayNames[file.name] || file.name.replace(/^\d+-/, "")
-  );
+  const currentName =
+    file.display_name ||
+    file.storage_name ||
+    file.file_name ||
+    file.name ||
+    "File minh chứng";
 
-  if (!newName) return;
+  const newName = prompt("Nhập tên mới:", currentName);
+
+  if (!newName || newName.trim() === "") return;
 
   const { error } = await supabase
     .from("uploaded_files")
     .update({
-      display_name: newName,
+      display_name: newName.trim(),
     })
-    .eq("storage_name", file.name);
+    .eq("id", file.id);
 
   if (error) {
+    console.error("Lỗi đổi tên file:", error);
     alert(error.message);
     return;
   }
 
- window.location.reload();
+  await loadFiles();
 }
-async function deleteFile(folder: string, fileName: string) {
-  const ok = window.confirm("Bạn có chắc muốn xóa file này không?");
 
+async function deleteFile(folder: string, file: any) {
+  const ok = window.confirm("Bạn có chắc muốn xóa file này không?");
   if (!ok) return;
 
-  const { error } = await supabase.storage
-    .from("Ho so SV5T")
-    .remove([`${id}/${folder}/${fileName}`]);
+  try {
+    // =========================
+    // GOOGLE DRIVE
+    // =========================
+    if (file.storage_type === "google_drive") {
+      const fileId =
+        file.drive_file_id ||
+        getDriveFileId(file.drive_url || "");
 
-  if (error) {
-    alert(error.message);
-    return;
+      if (!fileId) {
+        alert("Không tìm thấy ID file Google Drive");
+        return;
+      }
+
+      const res = await authFetch("/api/delete-drive", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileId,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(
+          data?.error || "Không thể xóa file trên Google Drive"
+        );
+      }
+
+      // Xóa record trong Supabase
+      const { error } = await supabase
+        .from("uploaded_files")
+        .delete()
+        .eq("id", file.id);
+
+      if (error) {
+        throw error;
+      }
+
+      await loadFiles();
+      setPreviewOpen(false);
+      return;
+    }
+
+    // =========================
+    // SUPABASE STORAGE CŨ
+    // =========================
+    const storageName =
+      file.storage_name ||
+      file.file_name ||
+      file.name;
+
+    if (!storageName) {
+      alert("Không tìm thấy tên file");
+      return;
+    }
+
+    const { error: storageError } = await supabase.storage
+      .from("Ho so SV5T")
+      .remove([`${id}/${folder}/${storageName}`]);
+
+    if (storageError) {
+      throw storageError;
+    }
+
+    const { error: dbError } = await supabase
+      .from("uploaded_files")
+      .delete()
+      .eq("id", file.id);
+
+    if (dbError) {
+      throw dbError;
+    }
+
+    await loadFiles();
+    setPreviewOpen(false);
+  } catch (error: any) {
+    console.error("Lỗi xóa file:", error);
+    alert(error?.message || "Không thể xóa file");
   }
-
-  await supabase
-    .from("uploaded_files")
-    .delete()
-    .eq("storage_name", fileName);
-
-  window.location.reload();
 }
 async function exportReportPDF() {
   try {
@@ -1423,8 +1537,8 @@ if (error) {
   </div>
 </div>
 
-        {/* BODY */}
-        <div
+{/* BODY */}
+<div
   style={{
     flex: 1,
     overflow: "auto",
@@ -1435,43 +1549,39 @@ if (error) {
     padding: "20px",
   }}
 >
-  {(
-  previewFile?.display_name ||
-  previewFile?.storage_name ||
-  previewFile?.file_name ||
-  previewFile?.name ||
-  ""
-)
-  .toLowerCase()
-  .match(/\.(jpg|jpeg|png|webp)$/) ? (
+{previewBlobUrl ? (
+  (
+    previewFile?.display_name ||
+    previewFile?.storage_name ||
+    previewFile?.file_name ||
+    previewFile?.name ||
+    ""
+  )
+    .toLowerCase()
+    .match(/\.(jpg|jpeg|png|webp)$/) ? (
     <img
-  src={
-    previewFile?.storage_type === "google_drive"
-      ? getDriveImageUrl(previewUrl)
-      : previewUrl
-  }
-  style={{
-    width: `${zoom * 100}%`,
-    height: "auto",
-    maxWidth: "none",
-    objectFit: "contain",
-  }}
-  alt="Xem minh chứng"
-/>
+      src={previewBlobUrl}
+      style={{
+        width: `${zoom * 100}%`,
+        height: "auto",
+        maxWidth: "none",
+        objectFit: "contain",
+      }}
+      alt="Xem minh chứng"
+    />
   ) : (
-<iframe
-  src={
-    previewFile?.storage_type === "google_drive"
-      ? getDrivePreviewUrl(previewUrl)
-      : `${previewUrl}#toolbar=0&navpanes=0&scrollbar=0`
-  }
-  style={{
-    width: `${zoom * 100}%`,
-    height: "100%",
-    border: "none",
-  }}
-/>
-  )}
+    <iframe
+      src={previewBlobUrl}
+      style={{
+        width: `${zoom * 100}%`,
+        height: "100%",
+        border: "none",
+      }}
+    />
+  )
+) : (
+  <Spinner />
+)}
 </div>
       </div>
     </div>,

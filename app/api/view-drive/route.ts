@@ -4,66 +4,76 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 
-export async function GET(
-  request: Request
-) {
+export async function GET(request: Request) {
   try {
-    const { searchParams } =
-      new URL(request.url);
+    const { searchParams } = new URL(request.url);
+    const fileId = searchParams.get("fileId");
 
-    const fileId =
-      searchParams.get("fileId");
+    console.log("🔍 VIEW DRIVE FILE:", fileId);
 
     if (!fileId) {
-      return new Response(
-        "Thiếu fileId",
-        { status: 400 }
-      );
+      return new Response("Thiếu fileId", { status: 400 });
     }
 
-    const { data: fileRecord, error: fileError } = await supabaseAdmin
-      .from("uploaded_files")
-      .select("user_id")
-      .eq("drive_file_id", fileId)
-      .single();
+    // ==========================================
+    // KIỂM TRA FILE TRONG SUPABASE
+    // ==========================================
+
+    const { data: fileRecord, error: fileError } =
+      await supabaseAdmin
+        .from("uploaded_files")
+        .select("user_id, drive_file_id, drive_url, display_name")
+        .eq("drive_file_id", fileId)
+        .single();
 
     if (fileError || !fileRecord) {
-      return new Response("Không tìm thấy file", { status: 404 });
+      console.error("❌ Không tìm thấy file:", fileError);
+
+      return new Response("Không tìm thấy file", {
+        status: 404,
+      });
     }
+
+    // ==========================================
+    // KIỂM TRA QUYỀN
+    // ==========================================
 
     const { error: authError } = await requireAdminOrSelf(
       request,
       fileRecord.user_id
     );
 
-    if (authError) return authError;
+    if (authError) {
+      console.error("❌ Auth error:", authError);
+      return authError;
+    }
 
-    const clientId =
-      process.env.GOOGLE_CLIENT_ID;
+    // ==========================================
+    // GOOGLE CONFIG
+    // ==========================================
 
-    const clientSecret =
-      process.env.GOOGLE_CLIENT_SECRET;
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
 
-    const refreshToken =
-      process.env.GOOGLE_REFRESH_TOKEN;
+    if (!clientId || !clientSecret || !refreshToken) {
+      console.error("❌ Thiếu Google OAuth config");
 
-    if (
-      !clientId ||
-      !clientSecret ||
-      !refreshToken
-    ) {
       return new Response(
         "Thiếu cấu hình Google Drive",
         { status: 500 }
       );
     }
 
-    const oauth2Client =
-      new google.auth.OAuth2(
-        clientId,
-        clientSecret,
-        process.env.GOOGLE_REDIRECT_URI
-      );
+    // ==========================================
+    // GOOGLE AUTH
+    // ==========================================
+
+    const oauth2Client = new google.auth.OAuth2(
+      clientId,
+      clientSecret,
+      process.env.GOOGLE_REDIRECT_URI
+    );
 
     oauth2Client.setCredentials({
       refresh_token: refreshToken,
@@ -74,63 +84,96 @@ export async function GET(
       auth: oauth2Client,
     });
 
-    // Lấy metadata
-    const metadata =
-      await drive.files.get({
-        fileId,
-        fields:
-          "id,name,mimeType,size",
-      });
+    // ==========================================
+    // LẤY METADATA
+    // ==========================================
 
-    // Lấy nội dung file
-    const response =
-      await drive.files.get(
-        {
-          fileId,
-          alt: "media",
-        },
-        {
-          responseType: "arraybuffer",
-        }
-      );
+    console.log("📋 Đang lấy metadata...");
 
-    const data = response.data as
-      | ArrayBuffer
-      | Buffer;
-
-    const buffer = Buffer.isBuffer(data)
-  ? data
-  : Buffer.from(data);
-
-const body = new Uint8Array(buffer);
-
-return new Response(body, {
-      status: 200,
-      headers: {
-        "Content-Type":
-          metadata.data.mimeType ||
-          "application/octet-stream",
-
-        "Content-Disposition": `inline; filename="${encodeURIComponent(
-          metadata.data.name || "file"
-        )}"`,
-
-        "Content-Length":
-          buffer.length.toString(),
-
-        "Cache-Control":
-          "private, max-age=3600",
-      },
+    const metadata = await drive.files.get({
+      fileId,
+      fields: "id,name,mimeType,size",
     });
-  } catch (error) {
-    console.error(
-      "View Google Drive error:",
-      error
+
+    console.log("✅ Metadata:", {
+      name: metadata.data.name,
+      mimeType: metadata.data.mimeType,
+      size: metadata.data.size,
+    });
+
+    // ==========================================
+    // LẤY FILE
+    // ==========================================
+
+    console.log("⬇️ Đang tải file từ Google Drive...");
+
+    const response = await drive.files.get(
+      {
+        fileId,
+        alt: "media",
+      },
+      {
+        responseType: "arraybuffer",
+      }
     );
 
-    return new Response(
-      "Không thể xem file",
-      { status: 500 }
+    console.log("✅ Google Drive đã trả file");
+
+    const data = response.data;
+
+    if (!data) {
+      throw new Error("Google Drive không trả về dữ liệu file");
+    }
+
+    const buffer = Buffer.isBuffer(data)
+      ? data
+      : Buffer.from(data as ArrayBuffer);
+
+    console.log("📦 File size:", buffer.length);
+
+    if (!buffer.length) {
+      throw new Error("File tải về có dung lượng 0 byte");
+    }
+
+    // ==========================================
+    // TRẢ FILE VỀ BROWSER
+    // ==========================================
+
+    const mimeType =
+      metadata.data.mimeType ||
+      "application/octet-stream";
+
+    const fileName =
+      metadata.data.name ||
+      fileRecord.display_name ||
+      "file";
+
+    return new Response(new Uint8Array(buffer), {
+      status: 200,
+
+      headers: {
+        "Content-Type": mimeType,
+
+        "Content-Disposition": `inline; filename="${encodeURIComponent(
+          fileName
+        )}"`,
+
+        "Content-Length": buffer.length.toString(),
+
+        "Cache-Control": "private, max-age=3600",
+      },
+    });
+  } catch (error: any) {
+    console.error("❌ View Google Drive error:", error);
+
+    return Response.json(
+      {
+        error: "Không thể xem file",
+        detail: error?.message || String(error),
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
