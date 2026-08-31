@@ -1571,7 +1571,7 @@ if (error) {
     />
   ) : (
     <iframe
-      src={previewBlobUrl}
+      src={`${previewBlobUrl}#toolbar=0&navpanes=0&scrollbar=0`}
       style={{
         width: `${zoom * 100}%`,
         height: "100%",
