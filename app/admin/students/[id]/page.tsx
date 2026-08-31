@@ -159,166 +159,189 @@ const { error } = await supabase
     "/"
   );
 }
-  async function loadFiles() {
-    const folders = [
-      {
-  path: "bao-cao",
-  setter: setBaoCaoFiles,
-      },
-      {
-        path: "dao-duc",
-        setter: setDaoDucFiles,
-      },
-      {
-        path: "hoc-tap",
-        setter: setHocTapFiles,
-      },
-      {
-        path: "the-luc",
-        setter: setTheLucFiles,
-      },
-      {
-        path: "tinh-nguyen",
-        setter: setTinhNguyenFiles,
-      },
-      {
-        path: "hoi-nhap",
-        setter: setHoiNhapFiles,
-      },
-      {
-        path: "uu-tien",
-        setter: setUuTienFiles,
-      },
-    ];
+async function loadFiles() {
+  const { data, error } = await supabase
+    .from("uploaded_files")
+    .select("*")
+    .eq("user_id", id);
 
-    const { data: uploadedFiles } = await supabase
-      .from("uploaded_files")
-      .select("storage_name, display_name");
-
-    const displayNameMap: Record<string, string> = {};
-
-    (uploadedFiles || []).forEach((file) => {
-      displayNameMap[file.storage_name] = file.display_name;
-    });
-
-    setDisplayNames(displayNameMap);
-
-    for (const folder of folders) {
-      const { data } = await supabase.storage
-        .from("Ho so SV5T")
-        .list(`${id}/${folder.path}`);
-
-      folder.setter(
-        (data || []).sort((a, b) =>
-          (displayNameMap[a.name] || a.name.replace(/^\d+-/, "")).localeCompare(
-            displayNameMap[b.name] || b.name.replace(/^\d+-/, ""),
-            "vi",
-            { numeric: true, sensitivity: "base" }
-          )
-        )
-      );
-    }
+  if (error) {
+    console.error("Lỗi load uploaded_files:", error);
+    return;
   }
 
-  function renderFiles(
-    files: any[],
-    folder: string
-  ) { 
-    if (files.length === 0) {
-      return (
-        <div
-          style={{
-            color: "#94a3b8",
-            fontStyle: "italic",
-          }}
-        >
-          Chưa có minh chứng
-        </div>
-      );
-    }
+  console.log("FILE CỦA SINH VIÊN:", data);
 
-    return files.map((file) => {
-      const url =
-        process.env
-          .NEXT_PUBLIC_SUPABASE_URL +
-        `/storage/v1/object/public/Ho%20so%20SV5T/${id}/${folder}/${file.name}`;
-async function exportReportPDF() {
-  if (!reportRef) return;
+  const files = data || [];
 
-  const canvas = await html2canvas(reportRef, {
-    scale: 2,
-    useCORS: true,
-  });
+  // Sắp xếp A → Z theo tên hiển thị
+  const sortFiles = (files: any[]) => {
+    return [...files].sort((a, b) => {
+      const nameA =
+        a.display_name ||
+        a.storage_name ||
+        a.file_name ||
+        a.name ||
+        "";
 
-  const imgData = canvas.toDataURL("image/png");
+      const nameB =
+        b.display_name ||
+        b.storage_name ||
+        b.file_name ||
+        a.name ||
+        "";
 
-  const pdf = new jsPDF({
-    orientation: "landscape",
-    unit: "mm",
-    format: "a4",
-  });
+      return nameA.localeCompare(nameB, "vi", {
+        numeric: true,
+        sensitivity: "base",
+      });
+    });
+  };
 
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight =
-    (canvas.height * pdfWidth) / canvas.width;
-
-  pdf.addImage(
-    imgData,
-    "PNG",
-    0,
-    0,
-    pdfWidth,
-    pdfHeight
+  setBaoCaoFiles(
+    sortFiles(files.filter((file) => file.folder === "bao-cao"))
   );
 
-  pdf.save(
-    `Bao-cao-SV5T-${profile?.ho_ten}.pdf`
+  setDaoDucFiles(
+    sortFiles(files.filter((file) => file.folder === "dao-duc"))
+  );
+
+  setHocTapFiles(
+    sortFiles(files.filter((file) => file.folder === "hoc-tap"))
+  );
+
+  setTheLucFiles(
+    sortFiles(files.filter((file) => file.folder === "the-luc"))
+  );
+
+  setTinhNguyenFiles(
+    sortFiles(files.filter((file) => file.folder === "tinh-nguyen"))
+  );
+
+  setHoiNhapFiles(
+    sortFiles(files.filter((file) => file.folder === "hoi-nhap"))
+  );
+
+  setUuTienFiles(
+    sortFiles(files.filter((file) => file.folder === "uu-tien"))
   );
 }
-      return (
-  <div
-    key={file.name}
-    onClick={() => setOpenMenu(null)}
-    style={{
-      background: "#f8fafc",
-            border: "1px solid #e2e8f0",
-            borderRadius: "10px",
-            padding: "10px",
-            marginBottom: "10px",
+
+function getDriveFileId(url: string) {
+  if (!url) return "";
+
+  const match = url.match(/\/file\/d\/([^/]+)/);
+
+  if (match) {
+    return match[1];
+  }
+
+  const idMatch = url.match(/[?&]id=([^&]+)/);
+
+  if (idMatch) {
+    return idMatch[1];
+  }
+
+  return "";
+}
+
+function getDrivePreviewUrl(url: string) {
+  const fileId = getDriveFileId(url);
+
+  if (fileId) {
+    return `https://drive.google.com/file/d/${fileId}/preview`;
+  }
+
+  return url;
+}
+
+function getDriveImageUrl(url: string) {
+  const fileId = getDriveFileId(url);
+
+  if (fileId) {
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`;
+  }
+
+  return url;
+}
+
+function renderFiles(files: any[], folder: string) {
+  if (files.length === 0) {
+    return (
+      <div
+        style={{
+          color: "#94a3b8",
+          fontStyle: "italic",
+        }}
+      >
+        Chưa có minh chứng
+      </div>
+    );
+  }
+
+  return files.map((file) => {
+    let url = "";
+
+    // Google Drive
+    if (file.storage_type === "google_drive") {
+      url = file.drive_url || "";
+    }
+
+    // Supabase Storage
+    else {
+      url =
+        process.env.NEXT_PUBLIC_SUPABASE_URL +
+        `/storage/v1/object/public/Ho%20so%20SV5T/${id}/${folder}/${file.storage_name}`;
+    }
+
+    const fileName =
+      file.display_name ||
+      file.storage_name ||
+      file.file_name ||
+      file.name ||
+      "File minh chứng";
+
+    return (
+      <div
+        key={file.id}
+        onClick={() => setOpenMenu(null)}
+        style={{
+          background: "#f8fafc",
+          border: "1px solid #e2e8f0",
+          borderRadius: "10px",
+          padding: "10px",
+          marginBottom: "10px",
+        }}
+      >
+        <div
+          onClick={() => {
+            if (!url) {
+              alert("Không tìm thấy đường dẫn file");
+              return;
+            }
+
+            setPreviewFile(file);
+            setPreviewUrl(url);
+            setPreviewFolder(folder);
+            setPreviewOpen(true);
+            setZoom(0.6);
+          }}
+          style={{
+            fontSize: "14px",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: "230px",
+            cursor: "pointer",
+            color: "#000000",
           }}
         >
-<div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  }}
->
-  <div
-  onClick={() => {
-  setPreviewFile(file);
-  setPreviewUrl(url);
-  setPreviewFolder(folder);
-  setPreviewOpen(true);
-}}
-  style={{
-    fontSize: "14px",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    maxWidth: "230px",
-    cursor: "pointer",
-    color: "#000000",
-  }}
->
- {displayNames[file.name] || file.name.replace(/^\d+-/, "")}
-</div>
-</div>
-
-</div>
-      );
-    });
-  }
+          {fileName}
+        </div>
+      </div>
+    );
+  });
+}
 async function exportStudentFolder() {
   const response = await fetch(`/api/export-student/${id}`);
 
@@ -1290,9 +1313,14 @@ if (error) {
   }}
 >
   <strong>
-    {previewFile &&
-      (displayNames[previewFile.name] ||
-        previewFile.name.replace(/^\d+-/, ""))}
+{previewFile &&
+  (
+    previewFile.display_name ||
+    previewFile.storage_name ||
+    previewFile.file_name ||
+    previewFile.name ||
+    "File minh chứng"
+  )}
   </strong>
 
   <div
@@ -1313,8 +1341,11 @@ if (error) {
         const a = document.createElement("a");
         a.href = blobUrl;
         a.download =
-          displayNames[previewFile.name] ||
-          previewFile.name;
+  previewFile.display_name ||
+  previewFile.storage_name ||
+  previewFile.file_name ||
+  previewFile.name ||
+  "file-minh-chung";
 
         a.click();
 
@@ -1404,24 +1435,42 @@ if (error) {
     padding: "20px",
   }}
 >
-  {previewFile?.name.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/) ? (
+  {(
+  previewFile?.display_name ||
+  previewFile?.storage_name ||
+  previewFile?.file_name ||
+  previewFile?.name ||
+  ""
+)
+  .toLowerCase()
+  .match(/\.(jpg|jpeg|png|webp)$/) ? (
     <img
-      src={previewUrl}
-      style={{
-        width: `${zoom * 100}%`,
-        height: "auto",
-        maxWidth: "none",
-      }}
-    />
+  src={
+    previewFile?.storage_type === "google_drive"
+      ? getDriveImageUrl(previewUrl)
+      : previewUrl
+  }
+  style={{
+    width: `${zoom * 100}%`,
+    height: "auto",
+    maxWidth: "none",
+    objectFit: "contain",
+  }}
+  alt="Xem minh chứng"
+/>
   ) : (
-    <iframe
-      src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-      style={{
-        width: `${zoom * 100}%`,
-        height: "100%",
-        border: "none",
-      }}
-    />
+<iframe
+  src={
+    previewFile?.storage_type === "google_drive"
+      ? getDrivePreviewUrl(previewUrl)
+      : `${previewUrl}#toolbar=0&navpanes=0&scrollbar=0`
+  }
+  style={{
+    width: `${zoom * 100}%`,
+    height: "100%",
+    border: "none",
+  }}
+/>
   )}
 </div>
       </div>
