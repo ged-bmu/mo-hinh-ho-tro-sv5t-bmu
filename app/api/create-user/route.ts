@@ -40,6 +40,8 @@ export async function POST(req: Request) {
 
     const userId = data.user.id;
 
+    const profileRole = role === "student" ? "student" : role;
+
     const { error: profileError } =
       await supabaseAdmin
         .from("profiles")
@@ -48,7 +50,9 @@ export async function POST(req: Request) {
           ho_ten: hoTen,
           lop: lop,
           mssv: mssv,
-          role: role,
+          email: email,
+          role: profileRole,
+          roles: profileRole === "student" ? ["student"] : [profileRole],
         });
 
     if (profileError) {

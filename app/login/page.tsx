@@ -102,19 +102,24 @@ useEffect(() => {
 
   if (!user) return;
 
-const { data: profile } = await supabase
-  .from("profiles")
-  .select("role, roles")
-  .eq("id", user.id)
-  .single();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, roles")
+    .eq("id", user.id)
+    .maybeSingle();
 
-if (profile?.roles?.includes("chu_tich_hsv")) {
-  window.location.href = "/chutichhsv";
-} else if (profile?.roles?.includes("bch_hsv")) {
-  window.location.href = "/bch";
-} else if (profile?.roles?.includes("admin")) {
-  window.location.href = "/admin";
-}
+  const roleList = Array.isArray(profile?.roles) ? profile.roles : [];
+  const role = profile?.role || roleList[0] || "student";
+
+  if (roleList.includes("chu_tich_hsv") || role === "chu_tich_hsv") {
+    window.location.href = "/chutichhsv";
+  } else if (roleList.includes("bch_hsv") || role === "bch_hsv") {
+    window.location.href = "/bch";
+  } else if (roleList.includes("admin") || role === "admin") {
+    window.location.href = "/admin";
+  } else {
+    window.location.href = "/";
+  }
 }
  return (
   <div

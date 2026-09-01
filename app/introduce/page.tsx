@@ -151,28 +151,28 @@ async function handleLogin() {
 
   if (!user) return;
 
-const { data: profile } = await supabase
-  .from("profiles")
-  .select("role, roles")
-  .eq("id", user.id)
-  .single();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, roles")
+    .eq("id", user.id)
+    .maybeSingle();
 
-if (profile?.roles?.includes("chu_tich_hsv")) {
-  window.location.href = "/chutichhsv";
-  return;
-} else if (profile?.roles?.includes("bch_hsv")) {
-  window.location.href = "/bch";
-  return;
-} else if (
-  profile?.roles?.includes("admin") ||
-  profile?.role === "admin"
-) {
-  window.location.href = "/admin";
-  return;
-} else if (profile?.roles?.includes("student")) {
-  window.location.href = "/";
-  return;
-}
+  const roleList = Array.isArray(profile?.roles) ? profile.roles : [];
+  const role = profile?.role || roleList[0] || "student";
+
+  if (roleList.includes("chu_tich_hsv") || role === "chu_tich_hsv") {
+    window.location.href = "/chutichhsv";
+    return;
+  } else if (roleList.includes("bch_hsv") || role === "bch_hsv") {
+    window.location.href = "/bch";
+    return;
+  } else if (roleList.includes("admin") || role === "admin") {
+    window.location.href = "/admin";
+    return;
+  } else {
+    window.location.href = "/";
+    return;
+  }
 } 
   return (
     <div
