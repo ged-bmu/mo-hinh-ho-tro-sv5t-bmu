@@ -105,26 +105,28 @@ async function saveReport() {
   setSavingReport(true);
 
   const { error } = await supabase
-  .from("reports")
-  .upsert(
-    {
-      user_id: userId,
-      criteria: "uu-tien",
-      content: report,
-      updated_at: new Date().toISOString(),
-    },
-  );
+    .from("reports")
+    .upsert(
+      {
+        user_id: userId,
+        criteria: "uu-tien",
+        content: report,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "user_id,criteria",
+      }
+    );
+
+  if (error) {
+    console.error("SAVE REPORT ERROR:", error);
+    alert("Không thể lưu báo cáo: " + error.message);
+    setSavingReport(false);
+    return;
+  }
 
   setSavingReport(false);
-
-if (error) {
-  console.error(error);
-  setSavingReport(false);
-  return;
-}
-
-setSavingReport(false);
-setLastSaved(new Date());
+  setLastSaved(new Date());
 }
 async function uploadFile(file: File) {
   const {
