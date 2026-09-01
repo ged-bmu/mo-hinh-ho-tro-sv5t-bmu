@@ -31,31 +31,6 @@ useEffect(() => {
   loadNextActivity();
 }, []);
 useEffect(() => {
-  if (!profile?.id) return;
-
-  const channel = supabase
-    .channel(`profile-${profile.id}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "profiles",
-        filter: `id=eq.${profile.id}`,
-      },
-      (payload) => {
-       
-        setProfile(payload.new);
-      }
-    )
-    .subscribe((status) => {
-    });
-
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}, [profile?.id]);
-  useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
@@ -66,26 +41,37 @@ useEffect(() => {
     };
   }, []);
 
-  async function checkUser() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+async function checkUser() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) {
-      window.location.href = "/introduce";
-      return;
-    }
+  if (!user) {
+    window.location.href = "/introduce";
+    return;
+  }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, roles")
+    .eq("id", user.id)
+    .single();
 
-    if (profile?.role === "admin") {
-      window.location.href = "/admin";
-      return;
-    }
+  if (profile?.roles?.includes("chu_tich_hsv")) {
+    window.location.href = "/chutichhsv";
+    return;
+  }
+
+  if (profile?.roles?.includes("bch_hsv")) {
+    window.location.href = "/bch";
+    return;
+  }
+
+  if (profile?.roles?.includes("admin")) {
+    window.location.href = "/admin";
+    return;
+  }
+
   setLoading(false);
 }
 function formatEventTime(value: string | null) {

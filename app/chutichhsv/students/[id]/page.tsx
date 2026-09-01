@@ -596,7 +596,7 @@ return (
       }}
     >
       <a
-        href="/admin"
+        href="/chutichhsv/xetduyet"
         style={{
           display: "inline-block",
           marginBottom: "25px",
@@ -672,112 +672,8 @@ return (
           <div>
             <b>Email:</b> {profile.email}
           </div>
-
-        <button
-    onClick={exportStudentFolder}
-    style={{
-      background: "#068804",
-      color: "white",
-      border: "none",
-      padding: "8px 12px",
-      marginTop: "40px",
-      borderRadius: "8px",
-      cursor: "pointer",
-      fontWeight: "600",
-    }}
-  >
-     🗂️ Xuất hồ sơ
-     
-  </button>
         </div>
-
-        {/* Cột 3 */}
         <div>
-<div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "10px",
-  }}
->
-  <h3
-    style={{
-      margin: 0,
-      fontSize: "16px",
-      fontWeight: "600",
-    }}
-  >
-    📝 Nhận xét của hồ sơ
-  </h3>
-
-  <button
-    onClick={async () => {
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      nhan_xet: nhanXet,
-      ngay_nhan_xet: new Date().toISOString(),
-    })
-    .eq("id", id);
-
-if (error) {
-  console.log("LỖI UPDATE:", error);
-  alert(error.message);
-  return;
-}
-
-  await sendNotification(
-    id,
-    "review",
-    "Bạn vừa có nhận xét mới",
-    "Ban chủ nhiệm vừa nhận xét hồ sơ của bạn. Hãy kiểm tra trong mục Quản lí hồ sơ",
-    "/"
-  );
-
-  alert("Đã lưu nhận xét");
-}}
-    style={{
-      padding: "8px 12px",
-      border: "none",
-      borderRadius: "10px",
-      background: "#5b92ff",
-      color: "white",
-      cursor: "pointer",
-      fontWeight: "600",
-    }}
-  >
-    💾 Lưu nhận xét
-  </button>
-</div>
-
-
-         <div
-  style={{
-    background: "#f1f5f9",
-    borderRadius: "16px",
-    padding: "20px",
-    height: "140px",
-    overflowY: "auto",
-    lineHeight: "1.6",
-    color: "#334155",
-    fontSize: "16px",
-  }}
->
-            <textarea
-  value={nhanXet}
-  onChange={(e) => setNhanXet(e.target.value)}
-  style={{
-    width: "100%",
-    height: "100%",
-    border: "none",
-    outline: "none",
-    resize: "none",
-    background: "transparent",
-    fontSize: "16px",
-  }}
-/>
-          </div>
         </div>
       </div>
     </div>
@@ -1163,31 +1059,28 @@ if (error) {
         </div>
 
         {/* BODY */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "30px",
+            display: "flex",
+            justifyContent: "center",
+            background: "#f1f5f9",
+          }}
+        >
 <div
+ ref={setReportRef}
   style={{
-    flex: 1,
-    overflow: "auto",
-    padding: "30px",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    background: "#f1f5f9",
-  }}
->
-<div
-  ref={setReportRef}
-  style={{
-    width: "297mm",
-    minHeight: "420mm",
-    height: "auto",
-    background: "#fff",
-    padding: "30px",
-    borderRadius: "8px",
-    boxSizing: "border-box",
-    boxShadow: "0 10px 30px rgba(0,0,0,.15)",
-    fontFamily: "Times New Roman, serif",
-    fontSize: "13pt",
-    overflow: "visible",
+    width:"297mm",
+    minHeight:"420mm",
+    background:"#fff",
+    padding:"30px",
+    borderRadius:"8px",
+    boxSizing:"border-box",
+    boxShadow:"0 10px 30px rgba(0,0,0,.15)",
+    fontFamily:"Times New Roman, serif",
+    fontSize:"13pt",
   }}
 >
   {/* Tiêu đề */}
@@ -1600,7 +1493,7 @@ if (error) {
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
-      zIndex: 1000000,
+      zIndex: 99999,
     }}
   >
     <img

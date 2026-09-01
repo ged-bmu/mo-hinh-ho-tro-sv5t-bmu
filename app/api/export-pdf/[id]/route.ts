@@ -323,18 +323,36 @@ if (isVercel) {
   });
 }
     const page = await browser.newPage();
+    const TIMEOUT_MS = 30000;
 
-    await page.setContent(reportHTML, {
-  waitUntil: "load",
-});
+    // Set content with timeout
+    await Promise.race([
+      page.setContent(reportHTML, {
+        waitUntil: "load",
+      }),
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Page content timeout (>30s)")),
+          TIMEOUT_MS
+        )
+      ),
+    ]);
 
-const pdf = await page.pdf({
-  format: "A4",
-  landscape: true,
-  printBackground: true,
-  preferCSSPageSize: true,
-});
-await browser.close();
+    // Generate PDF with timeout
+    const pdf: any = await Promise.race([
+      page.pdf({
+        format: "A4",
+        landscape: true,
+        printBackground: true,
+        preferCSSPageSize: true,
+      }),
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error("PDF generation timeout (>30s)")),
+          TIMEOUT_MS
+        )
+      ),
+    ]);
 
 const buffer = Buffer.from(pdf);
 

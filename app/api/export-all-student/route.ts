@@ -1,6 +1,67 @@
 import { createClient } from "@supabase/supabase-js";
 import JSZip from "jszip";
+import { google } from "googleapis";
 import { requireAdmin } from "@/lib/auth-admin";
+
+async function downloadFileBuffer(
+  supabase: any,
+  file: any,
+  userId: string
+): Promise<Buffer | null> {
+  if (file?.storage_type === "google_drive") {
+    const driveUrl = typeof file?.drive_url === "string" ? file.drive_url : "";
+    const fileId =
+      file?.drive_file_id ||
+      driveUrl.match(/\/file\/d\/([^/]+)/)?.[1] ||
+      driveUrl.match(/[?&]id=([^&]+)/)?.[1];
+
+    if (!fileId) {
+      return null;
+    }
+
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+
+    if (!clientId || !clientSecret || !refreshToken) {
+      throw new Error("Thiếu cấu hình Google Drive để xuất file");
+    }
+
+    const oauth2Client = new google.auth.OAuth2(
+      clientId,
+      clientSecret,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+
+    const drive = google.drive({ version: "v3", auth: oauth2Client });
+    const response = await drive.files.get(
+      { fileId, alt: "media" },
+      { responseType: "arraybuffer" }
+    );
+
+    const raw = response.data as ArrayBuffer | Buffer | string | undefined;
+    if (!raw) return null;
+
+    return Buffer.isBuffer(raw) ? raw : Buffer.from(raw as ArrayBuffer);
+  }
+
+  if (!file?.storage_name) {
+    return null;
+  }
+
+  const storagePath = `${userId}/${file.folder}/${file.storage_name}`;
+  const { data: fileBlob, error: downloadError } = await supabase.storage
+    .from("Ho so SV5T")
+    .download(storagePath);
+
+  if (downloadError || !fileBlob) {
+    return null;
+  }
+
+  return Buffer.from(await fileBlob.arrayBuffer());
+}
 
 export const runtime = "nodejs";
 
@@ -124,53 +185,43 @@ export async function GET(
       const { data: files, error: filesError } =
         await supabase
           .from("uploaded_files")
-          .select("folder, storage_name, display_name")
+          .select(
+            "id, folder, storage_name, display_name, file_name, storage_type, drive_file_id, drive_url"
+          )
           .eq("user_id", student.id);
 
       if (filesError) throw filesError;
 
       for (const file of files || []) {
-        const path =
-          `${student.id}/${file.folder}/${file.storage_name}`;
+        try {
+          const buffer = await downloadFileBuffer(supabase, file, student.id);
 
-        const {
-          data: fileBlob,
-          error: downloadError,
-        } = await supabase.storage
-          .from("Ho so SV5T")
-          .download(path);
+          if (!buffer) {
+            continue;
+          }
 
-        if (
-          downloadError ||
-          !fileBlob
-        ) {
-          throw downloadError || new Error(`Không tìm thấy file: ${path}`);
-        }
+          const folderName =
+            folderNames[file.folder] || file.folder;
 
-        const buffer =
-          await fileBlob.arrayBuffer();
+          const safeDisplayName = (file.display_name || file.storage_name || file.file_name || "file")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[\\/:*?"<>|]/g, "_");
 
-        const folderName =
-          folderNames[
-            file.folder
-          ] || file.folder;
-
-        // Báo cáo để ngoài
-        if (
-          file.folder ===
-          "bao-cao"
-        ) {
-          studentFolder?.file(
-            "Báo cáo SV5T cấp Trường.pdf",
-            buffer
-          );
-        } else {
-          studentFolder
-            ?.folder(folderName)
-            ?.file(
-              file.display_name,
-              buffer
-            );
+          if (file.folder === "bao-cao") {
+            studentFolder?.file("Báo cáo SV5T cấp Trường.pdf", buffer);
+          } else {
+            studentFolder
+              ?.folder(folderName)
+              ?.file(safeDisplayName, buffer);
+          }
+        } catch (error) {
+          console.error("EXPORT ALL FILE FAILED:", {
+            studentId: student.id,
+            fileId: file?.id,
+            folder: file?.folder,
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
       }
 

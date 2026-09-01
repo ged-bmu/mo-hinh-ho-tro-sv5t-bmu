@@ -3,8 +3,73 @@ import { createClient } from "@supabase/supabase-js";
 import JSZip from "jszip";
 import puppeteer from "puppeteer";
 import chromium from "@sparticuz/chromium";
+import { google } from "googleapis";
 import { escapeHtml } from "@/lib/escapeHtml";
 import { requireAdminOrSelf } from "@/lib/auth-admin";
+
+async function downloadFileBuffer(
+  supabase: any,
+  file: any,
+  userId: string
+): Promise<Buffer | null> {
+  const safeFileName = (file?.display_name || file?.storage_name || file?.file_name || "file")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\\/:*?"<>|]/g, "_");
+
+  if (file?.storage_type === "google_drive") {
+    const fileId = file?.drive_file_id || file?.drive_url?.match(/\/file\/d\/([^/]+)/)?.[1];
+
+    if (!fileId) {
+      console.warn("Google Drive export skipped: missing fileId", { file, userId, safeFileName });
+      return null;
+    }
+
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+
+    if (!clientId || !clientSecret || !refreshToken) {
+      throw new Error("Thiếu cấu hình Google Drive để xuất file");
+    }
+
+    const oauth2Client = new google.auth.OAuth2(
+      clientId,
+      clientSecret,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+
+    const drive = google.drive({ version: "v3", auth: oauth2Client });
+    const response = await drive.files.get(
+      { fileId, alt: "media" },
+      { responseType: "arraybuffer" }
+    );
+
+    const raw = response.data as ArrayBuffer | Buffer | string | undefined;
+    if (!raw) return null;
+
+    return Buffer.isBuffer(raw) ? raw : Buffer.from(raw as ArrayBuffer);
+  }
+
+  if (!file?.storage_name) {
+    return null;
+  }
+
+  const storagePath = `${userId}/${file.folder}/${file.storage_name}`;
+  const { data: fileBlob, error: downloadError } = await supabase.storage
+    .from("Ho so SV5T")
+    .download(storagePath);
+
+  if (downloadError || !fileBlob) {
+    console.warn("Storage export skipped:", { storagePath, error: downloadError?.message });
+    return null;
+  }
+
+  const buffer = Buffer.from(await fileBlob.arrayBuffer());
+  return buffer;
+}
 
 export async function GET(
   request: Request,
@@ -388,29 +453,36 @@ const pdfBuffer = await page.pdf({
     // PROCESS FILES
     // =========================
     for (const file of files || []) {
-      const path = `${id}/${file.folder}/${file.storage_name}`;
+      try {
+        const buffer = await downloadFileBuffer(supabase, file, id);
 
-      const { data: fileBlob, error: downloadError } =
-        await supabase.storage
-          .from("Ho so SV5T")
-          .download(path);
+        if (!buffer) {
+          console.log("SKIP EXPORT FILE:", {
+            id: file?.id,
+            storageType: file?.storage_type,
+            folder: file?.folder,
+            storageName: file?.storage_name,
+            driveFileId: file?.drive_file_id,
+          });
+          continue;
+        }
 
-      if (downloadError || !fileBlob) {
-        console.log("DOWNLOAD FAILED:", path);
-        continue;
+        const folderName = folderNames[file.folder] || file.folder;
+        const safeDisplayName = (file.display_name || file.storage_name || file.file_name || "file")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[\\/:*?"<>|]/g, "_");
+
+        zip
+          .folder(folderName)
+          ?.file(safeDisplayName, buffer);
+      } catch (error: any) {
+        console.error("EXPORT FILE FAILED:", {
+          fileId: file?.id,
+          folder: file?.folder,
+          error: error?.message || String(error),
+        });
       }
-
-      const buffer = await fileBlob.arrayBuffer();
-
-      const folderName =
-        folderNames[file.folder] || file.folder;
-
-      zip
-        .folder(folderName)
-        ?.file(
-          file.display_name || file.storage_name,
-          buffer
-        );
     }
 
     // =========================

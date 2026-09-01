@@ -387,12 +387,14 @@ async function deleteFile(storageName: string) {
 
   if (!user) return;
 
+  let fileRecord: any = null;
+
   try {
     // ================================
     // 1. Lấy bản ghi file
     // ================================
     const {
-      data: fileRecord,
+      data,
       error: findError,
     } = await supabase
       .from("uploaded_files")
@@ -404,41 +406,16 @@ async function deleteFile(storageName: string) {
       .eq("storage_name", storageName)
       .single();
 
-    if (findError || !fileRecord) {
+    if (findError || !data) {
       throw new Error(
         "Không tìm thấy thông tin file"
       );
     }
 
-    // ================================
-    // 2. Xóa Google Drive
-    // ================================
-    if (fileRecord.drive_file_id) {
-      const response = await fetch(
-        "/api/delete-drive",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fileId: fileRecord.drive_file_id,
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.error ||
-            "Không thể xóa file trên Google Drive"
-        );
-      }
-    }
+    fileRecord = data;
 
     // ================================
-    // 3. Xóa Supabase record
+    // 2. Xóa DB TRƯỚC (source of truth)
     // ================================
     const { error: dbError } =
       await supabase
@@ -449,13 +426,13 @@ async function deleteFile(storageName: string) {
 
     if (dbError) {
       throw new Error(
-        "Đã xóa file trên Drive nhưng không thể xóa dữ liệu Supabase: " +
+        "Không thể xóa dữ liệu file: " +
           dbError.message
       );
     }
 
     // ================================
-    // 4. Cập nhật UI ngay
+    // 3. Cập nhật UI ngay
     // ================================
     setFiles((prevFiles) =>
       prevFiles.filter(
@@ -468,6 +445,40 @@ async function deleteFile(storageName: string) {
       delete updated[fileRecord.storage_name];
       return updated;
     });
+
+    // ================================
+    // 4. Xóa Drive (nếu có)
+    // ================================
+    if (fileRecord.drive_file_id) {
+      try {
+        const response = await fetch(
+          "/api/delete-drive",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              fileId: fileRecord.drive_file_id,
+            }),
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          console.warn(
+            "Xóa Drive fail nhưng DB đã xóa:",
+            result.error
+          );
+        }
+      } catch (driveError) {
+        console.warn(
+          "Xóa Drive exception nhưng DB đã xóa:",
+          driveError
+        );
+      }
+    }
 
     // ================================
     // 5. Lấy profile

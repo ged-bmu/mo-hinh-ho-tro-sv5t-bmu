@@ -67,12 +67,18 @@ const {
 
 const { data } = await supabase
   .from("profiles")
-  .select("role")
+  .select("role, roles")
   .eq("id", user?.id)
   .single();
 
-if (data?.role === "admin") {
+const roles = data?.roles || [];
+
+if (roles.includes("chu_tich_hsv")) {
+  window.location.href = "/chutichhsv";
+} else if (roles.includes("admin")) {
   window.location.href = "/admin";
+} else if (roles.includes("bch_hsv")) {
+  window.location.href = "/bch";
 } else {
   window.location.href = "/";
 }

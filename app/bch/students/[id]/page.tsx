@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 import { authFetch } from "@/lib/auth-fetch";
@@ -11,14 +10,17 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import Spinner from "../../../components/Spinner";
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 
 export default function StudentsDetailPage() {
   const [reports, setReports] = useState<any[]>([]);
+  const ghiChuTimer = useRef<NodeJS.Timeout | null>(null);
   const [reportRef, setReportRef] = useState<HTMLDivElement | null>(null);
   const params = useParams();
   const id = params.id as string;
   const [profile, setProfile] = useState<any>(null);
   const [nhanXet, setNhanXet] = useState("");
+  const [ghiChu, setGhiChu] = useState("");
   const [daoDucFiles, setDaoDucFiles] = useState<any[]>([]);
   const [hocTapFiles, setHocTapFiles] = useState<any[]>([]);
   const [theLucFiles, setTheLucFiles] = useState<any[]>([]);
@@ -26,7 +28,7 @@ export default function StudentsDetailPage() {
   const [hoiNhapFiles, setHoiNhapFiles] = useState<any[]>([]);
   const [uuTienFiles, setUuTienFiles] = useState<any[]>([]);
   const [baoCaoFiles, setBaoCaoFiles] = useState<any[]>([]);
-  const [trangThai, setTrangThai] = useState("");
+  const [trangThai, setTrangThai] = useState("chua_danh_gia");
   const [previewAvatar, setPreviewAvatar] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState({top: 0,left: 0,});
@@ -119,37 +121,76 @@ useEffect(() => {
 }, [reportOpen]);
 
 async function loadReports() {
-  console.log("ĐANG LOAD REPORT VỚI ID:", id);
-
   const { data, error } = await supabase
     .from("reports")
     .select("*")
     .eq("user_id", id);
-
-  console.log("DATA REPORT:", data);
-  console.log("ERROR REPORT:", error);
-
   if (error) {
     return;
   }
 
   setReports(data || []);
 }
-  async function loadStudent() {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", id)
-      .single();
+async function updateGhiChu() {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-    if (error) {
-      console.log(error);
-      return;
-    }
-
-    setProfile(data);
-    setNhanXet(data.nhan_xet || "");
+  if (userError || !user) {
+    alert("Không xác định được người duyệt BCH.");
+    return;
   }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      ghi_chu: ghiChu,
+      nguoi_duyet_id: user.id,
+    })
+    .eq("id", id);
+
+  if (error) {
+    console.error("LỖI LƯU GHI CHÚ:", error);
+    alert("Lưu ghi chú thất bại: " + error.message);
+    return;
+  }
+
+  setProfile((prev: any) => ({
+    ...prev,
+    ghi_chu: ghiChu,
+    nguoi_duyet_id: user.id,
+  }));
+
+  alert("Đã lưu ghi chú");
+}
+async function loadStudent() {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    return;
+  }
+
+  const trangThaiValue =
+    data.trang_thai === "da_dat" ||
+    data.trang_thai === "khong_dat" ||
+    data.trang_thai === "can_xem_xet"
+      ? data.trang_thai
+      : "chua_danh_gia";
+
+  setProfile({
+    ...data,
+    trang_thai: trangThaiValue,
+  });
+
+  setNhanXet(data.nhan_xet || "");
+  setTrangThai(trangThaiValue);
+  setGhiChu(data.ghi_chu || "");
+}
 async function updateCriteria(
   field: string,
   value: boolean
@@ -200,15 +241,9 @@ async function loadFiles() {
     .eq("user_id", id);
 
   if (error) {
-    console.error("Lỗi load uploaded_files:", error);
     return;
   }
-
-  console.log("FILE CỦA SINH VIÊN:", data);
-
   const files = data || [];
-
-  // Sắp xếp A → Z theo tên hiển thị
   const sortFiles = (files: any[]) => {
     return [...files].sort((a, b) => {
       const nameA =
@@ -260,7 +295,40 @@ async function loadFiles() {
     sortFiles(files.filter((file) => file.folder === "uu-tien"))
   );
 }
+async function updateTrangThai(value: string) {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
+  if (userError || !user) {
+    alert("Không xác định được người duyệt BCH.");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({
+      trang_thai: value,
+      nguoi_duyet_id: user.id,
+    })
+    .eq("id", id)
+    .select("trang_thai, nguoi_duyet_id")
+    .single();
+
+  if (error) {
+    alert("Cập nhật trạng thái thất bại: " + error.message);
+    return;
+  }
+
+  setTrangThai(value);
+
+  setProfile((prev: any) => ({
+    ...prev,
+    trang_thai: value,
+    nguoi_duyet_id: data?.nguoi_duyet_id ?? prev?.nguoi_duyet_id,
+  }));
+}
 function getDriveFileId(url: string) {
   if (!url) return "";
 
@@ -363,8 +431,6 @@ if (file.storage_type === "google_drive") {
             setPreviewFile(file);
             setPreviewUrl(url);
             setPreviewFolder(folder);
-               console.log("📂 FILE ĐƯỢC CHỌN:", file);
-               console.log("🔗 PREVIEW URL:", url);
             setPreviewOpen(true);
             setZoom(0.6);
           }}
@@ -383,25 +449,6 @@ if (file.storage_type === "google_drive") {
       </div>
     );
   });
-}
-async function exportStudentFolder() {
-  const response = await fetch(`/api/export-student/${id}`);
-
-  if (!response.ok) {
-    alert("Xuất hồ sơ thất bại");
-    return;
-  }
-
-  const blob = await response.blob();
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = "";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
 }
 
 if (!profile) {
@@ -439,7 +486,6 @@ async function renameFile(folder: string, file: any) {
     .eq("id", file.id);
 
   if (error) {
-    console.error("Lỗi đổi tên file:", error);
     alert(error.message);
     return;
   }
@@ -530,45 +576,10 @@ async function deleteFile(folder: string, file: any) {
     await loadFiles();
     setPreviewOpen(false);
   } catch (error: any) {
-    console.error("Lỗi xóa file:", error);
     alert(error?.message || "Không thể xóa file");
   }
 }
-async function exportReportPDF() {
-  try {
-    const res = await fetch(
-      `/api/export-pdf/${id}`
-    );
 
-    if (!res.ok) {
-      alert("Xuất PDF thất bại");
-      return;
-    }
-
-    const blob = await res.blob();
-
-    const url =
-      window.URL.createObjectURL(blob);
-
-    const a =
-      document.createElement("a");
-
-    a.href = url;
-    a.download = "Báo cáo Sinh viên 5 tốt cấp Trường.pdf";
-
-    document.body.appendChild(a);
-
-    a.click();
-
-    a.remove();
-
-    window.URL.revokeObjectURL(url);
-
-  } catch (err) {
-    console.error(err);
-    alert("Có lỗi khi xuất PDF");
-  }
-}
 return (
   <div
     style={{
@@ -596,7 +607,7 @@ return (
       }}
     >
       <a
-        href="/admin"
+        href="/bch"
         style={{
           display: "inline-block",
           marginBottom: "25px",
@@ -661,38 +672,124 @@ return (
     Xem
   </button>
 </div>
+
 </div>
 
         {/* Cột 2 */}
-        <div>
-          <div style={{ marginBottom: "20px" }}>
-            <b>MSSV:</b> {profile.mssv}
-          </div>
+<div>
+<div style={{ marginTop: "20px" }}>
+  <b>Trạng thái hồ sơ:</b>
 
-          <div>
-            <b>Email:</b> {profile.email}
-          </div>
+<select
+  value={trangThai || "chua_danh_gia"}
+  onChange={(e) => updateTrangThai(e.target.value)}
+  style={{
+    display: "block",
+    marginTop: "8px",
+    padding: "10px 14px",
+    borderRadius: "10px",
+    border: "1px solid #cbd5e1",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
 
-        <button
-    onClick={exportStudentFolder}
-    style={{
-      background: "#068804",
-      color: "white",
-      border: "none",
-      padding: "8px 12px",
-      marginTop: "40px",
-      borderRadius: "8px",
-      cursor: "pointer",
-      fontWeight: "600",
-    }}
-  >
-     🗂️ Xuất hồ sơ
-     
-  </button>
-        </div>
+    background:
+      trangThai === "khong_dat"
+        ? "#fee2e2"
+        : trangThai === "da_dat"
+        ? "#dcfce7"
+        : trangThai === "can_xem_xet"
+        ? "#dbeafe"
+        : "#f1f5f9",
 
-        {/* Cột 3 */}
-        <div>
+    color:
+      trangThai === "khong_dat"
+        ? "#b91c1c"
+        : trangThai === "da_dat"
+        ? "#15803d"
+        : trangThai === "can_xem_xet"
+        ? "#1d4ed8"
+        : "#64748b",
+  }}
+>
+  <option value="chua_danh_gia">
+    Chưa đánh giá
+  </option>
+
+  <option value="can_xem_xet">
+    Cần xem xét
+  </option>
+
+  <option value="da_dat">
+    Hồ sơ đã đạt
+  </option>
+
+  <option value="khong_dat">
+    Hồ sơ không đạt
+  </option>
+</select>
+</div>
+<div>
+  {/* Ghi chú */}
+  <div style={{ marginTop: "20px" }}>
+    <b>Ghi chú:</b>
+
+<textarea
+  value={ghiChu}
+  onChange={(e) => {
+    const value = e.target.value;
+    setGhiChu(value);
+
+    if (ghiChuTimer.current) {
+      clearTimeout(ghiChuTimer.current);
+    }
+
+    ghiChuTimer.current = setTimeout(async () => {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) return;
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          ghi_chu: value,
+          nguoi_duyet_id: user.id,
+        })
+        .eq("id", id);
+
+      if (!error) {
+        setProfile((prev: any) => ({
+          ...prev,
+          ghi_chu: value,
+          nguoi_duyet_id: user.id,
+        }));
+      }
+    }, 800);
+  }}
+  placeholder="Nhập ghi chú..."
+  style={{
+    display: "block",
+    marginTop: "8px",
+    width: "100%",
+    minHeight: "80px",
+    padding: "10px 12px",
+    borderRadius: "10px",
+    border: "1px solid #cbd5e1",
+    fontSize: "14px",
+    resize: "vertical",
+    outline: "none",
+    boxSizing: "border-box",
+  }}
+/>
+  </div>
+</div>
+</div>
+
+{/* Cột 3 */}
+<div>
 <div
   style={{
     display: "flex",
@@ -722,7 +819,6 @@ return (
     .eq("id", id);
 
 if (error) {
-  console.log("LỖI UPDATE:", error);
   alert(error.message);
   return;
 }
@@ -1115,34 +1211,6 @@ if (error) {
             borderBottom: "1px solid #e5e7eb",
           }}
         >
-          <div
-  style={{
-    display:"flex",
-    alignItems:"center",
-    gap:"10px",
-  }}
->
- 
-  <button
-  onClick={exportReportPDF}
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    background: "#dc2626",
-    color: "#fff",
-    border: "none",
-    padding: "10px 16px",
-    borderRadius: "10px",
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: "14px",
-  }}
->
-  <FaFilePdf size={18} />
-  Xuất
-</button>
-</div>
 
 
           <button

@@ -1,0 +1,1417 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "../../../lib/supabase";
+import Spinner from "../../components/Spinner";
+import Header from "../../components/Header";
+import CriteriaModal from "../../components/CriteriaModal";
+import Footer from "../../components/Footer";
+import SidebarChutichhsv from "../sidebarchutichhsv/page";
+
+export default function ChuTichXetDuyetPage() {
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+  const [students, setStudents] = useState<any[]>([]);
+  const [selectedStudent, setSelectedStudent] =
+    useState<any>(null);
+  const [showProfile, setShowProfile] = useState(false);
+  const [submittedCount, setSubmittedCount] =
+    useState(0);
+  const [totalStudents, setTotalStudents] =
+    useState(0);
+  const [approvedCount, setApprovedCount] =
+    useState(0);
+  const [tab, setTab] = useState("");
+  const [showCriteria, setShowCriteria] =
+    useState(false);
+  const [approvers, setApprovers] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    checkAccount();
+  }, []);
+
+  async function checkAccount() {
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) {
+        console.error(
+          "Lỗi lấy tài khoản:",
+          userError
+        );
+        window.location.href = "/introduce";
+        return;
+      }
+
+      if (!user) {
+        window.location.href = "/introduce";
+        return;
+      }
+
+      const {
+        data: profileData,
+        error: profileError,
+      } = await supabase
+        .from("profiles")
+        .select("ho_ten, email, roles")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) {
+        console.error(
+          "Lỗi kiểm tra quyền:",
+          profileError
+        );
+        window.location.href = "/";
+        return;
+      }
+
+      if (
+        !profileData?.roles?.includes(
+          "chu_tich_hsv"
+        )
+      ) {
+        window.location.href = "/";
+        return;
+      }
+
+      setProfile(profileData);
+
+      // TỔNG SINH VIÊN
+
+      const {
+        count: totalCount,
+        error: totalError,
+      } = await supabase
+        .from("profiles")
+        .select("id", {
+          count: "exact",
+          head: true,
+        })
+        .eq("role", "student");
+
+      if (totalError) {
+        console.error(
+          "Lỗi đếm tổng sinh viên:",
+          totalError
+        );
+      } else {
+        setTotalStudents(totalCount || 0);
+      }
+
+      // HỒ SƠ ĐÃ NỘP
+
+      const {
+        data: submittedStudents,
+        count: submittedCountData,
+        error: submittedError,
+      } = await supabase
+        .from("profiles")
+        .select("*", {
+          count: "exact",
+        })
+        .eq("role", "student")
+        .eq("is_submitted", true)
+        .order("lop", {
+          ascending: true,
+        })
+        .order("mssv", {
+          ascending: true,
+        });
+
+      if (submittedError) {
+        console.error(
+          "Lỗi lấy hồ sơ đã nộp:",
+          submittedError
+        );
+      } else {
+        const studentList = submittedStudents || [];
+        setSubmittedCount(
+          submittedCountData || 0
+        );
+        setStudents(studentList);
+
+        const approverIds = [
+          ...new Set(
+            studentList
+              .map((sv) => sv.nguoi_duyet_id)
+              .filter(Boolean)
+          ),
+        ];
+
+        if (approverIds.length > 0) {
+          const {
+            data: approversData,
+            error: approversError,
+          } = await supabase
+            .from("profiles")
+            .select("id, ho_ten")
+            .in("id", approverIds);
+
+          if (approversError) {
+            console.error(
+              "Lỗi lấy tên người duyệt:",
+              approversError
+            );
+          } else {
+            const map: Record<string, string> = {};
+            (approversData || []).forEach((item) => {
+              map[item.id] = item.ho_ten;
+            });
+            setApprovers(map);
+          }
+        } else {
+          setApprovers({});
+        }
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error(
+        "Lỗi kiểm tra tài khoản:",
+        error
+      );
+      setLoading(false);
+    }
+  }
+
+  const pendingCount =
+    submittedCount - approvedCount > 0
+      ? submittedCount - approvedCount
+      : 0;
+
+  const submissionPercent =
+    totalStudents > 0
+      ? Math.round(
+          (submittedCount / totalStudents) * 100
+        )
+      : 0;
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f8fafc",
+      }}
+    >
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+
+      <Header
+        tab={tab}
+        setTab={setTab}
+        openCriteria={() =>
+          setShowCriteria(true)
+        }
+        openProfile={() =>
+          setShowProfile(true)
+        }
+      />
+
+      {/* =====================================================
+          SIDEBAR + CONTENT
+      ===================================================== */}
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "stretch",
+          width: "100%",
+          minHeight:
+            "calc(100vh - 90px)",
+        }}
+      >
+        {/* SIDEBAR */}
+
+        <SidebarChutichhsv />
+
+        {/* CONTENT */}
+
+        <main
+          style={{
+            flex: 1,
+            minWidth: 0,
+            minHeight:
+              "calc(100vh - 90px)",
+          }}
+        >
+          {loading ? (
+            <div
+              style={{
+                minHeight:
+                  "calc(100vh - 90px)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "#f8fafc",
+              }}
+            >
+              <Spinner size={32} />
+            </div>
+          ) : (
+            <div
+              style={{
+                padding: "30px",
+              }}
+            >
+              <div
+                style={{
+                  maxWidth: "1200px",
+                  margin: "0 auto",
+                }}
+              >
+                {/* =================================================
+                    HEADER TRANG
+                ================================================= */}
+
+                <div
+                  style={{
+                    marginBottom: "25px",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.location.href =
+                        "/chutichhsv";
+                    }}
+                    style={{
+                      display:
+                        "inline-flex",
+                      alignItems:
+                        "center",
+                      gap: "8px",
+
+                      border:
+                        "1px solid #e2e8f0",
+
+                      background:
+                        "#ffffff",
+
+                      padding:
+                        "9px 15px",
+
+                      color:
+                        "#334155",
+
+                      fontSize: "14px",
+                      fontWeight: 600,
+
+                      cursor: "pointer",
+
+                      marginBottom:
+                        "18px",
+
+                      borderRadius:
+                        "10px",
+
+                      boxShadow:
+                        "0 2px 6px rgba(15,23,42,0.06)",
+
+                      transition:
+                        "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background =
+                        "#f8fafc";
+
+                      e.currentTarget.style.borderColor =
+                        "#cbd5e1";
+
+                      e.currentTarget.style.transform =
+                        "translateY(-1px)";
+
+                      e.currentTarget.style.boxShadow =
+                        "0 4px 10px rgba(15,23,42,0.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background =
+                        "#ffffff";
+
+                      e.currentTarget.style.borderColor =
+                        "#e2e8f0";
+
+                      e.currentTarget.style.transform =
+                        "translateY(0)";
+
+                      e.currentTarget.style.boxShadow =
+                        "0 2px 6px rgba(15,23,42,0.06)";
+                    }}
+                    onMouseDown={(e) => {
+                      e.currentTarget.style.transform =
+                        "scale(0.97)";
+                    }}
+                    onMouseUp={(e) => {
+                      e.currentTarget.style.transform =
+                        "translateY(-1px)";
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "17px",
+                        lineHeight: 1,
+                      }}
+                    >
+                      ←
+                    </span>
+
+                    <span>
+                      Trang chủ
+                    </span>
+                  </button>
+
+                  <div
+                    style={{
+                      background: "#fff",
+                      border:
+                        "1px solid #e2e8f0",
+                      borderRadius: "18px",
+                      padding: "26px",
+                      boxShadow:
+                        "0 2px 8px rgba(15,23,42,0.04)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: "#64748b",
+                        marginBottom: "7px",
+                      }}
+                    >
+                      Chủ tịch Hội Sinh viên
+                      Trường
+                    </div>
+
+                    <h1
+                      style={{
+                        margin: 0,
+                        fontSize: "27px",
+                        fontWeight: 700,
+                        color: "#0f172a",
+                      }}
+                    >
+                      Xét duyệt hồ sơ Sinh
+                      viên 5 tốt cấp trường,
+                      năm học 2025 - 2026
+                    </h1>
+
+                    <p
+                      style={{
+                        margin:
+                          "8px 0 0",
+                        color:
+                          "#64748b",
+                        fontSize:
+                          "15px",
+                      }}
+                    >
+                      Xin chào{" "}
+                      <strong
+                        style={{
+                          color:
+                            "#2563eb",
+                        }}
+                      >
+                        {profile?.ho_ten}
+                      </strong>
+                    </p>
+                  </div>
+                </div>
+
+                {/* =================================================
+                    THỐNG KÊ
+                ================================================= */}
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fit, minmax(210px, 1fr))",
+                    gap: "16px",
+                    marginBottom: "25px",
+                  }}
+                >
+                  {/* ĐÃ NỘP */}
+
+                  <div
+                    style={{
+                      background: "#fff",
+                      border:
+                        "1px solid #e2e8f0",
+                      borderRadius: "16px",
+                      padding: "21px",
+                      boxShadow:
+                        "0 2px 8px rgba(15,23,42,0.04)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        color:
+                          "#64748b",
+                        fontSize:
+                          "14px",
+                        marginBottom:
+                          "9px",
+                      }}
+                    >
+                      Hồ sơ đã nộp
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize:
+                          "30px",
+                        fontWeight: 700,
+                        color:
+                          "#0f172a",
+                      }}
+                    >
+                      {submittedCount}
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize:
+                          "13px",
+                        color:
+                          "#64748b",
+                        marginTop:
+                          "4px",
+                      }}
+                    >
+                      {submissionPercent}%
+                      tổng sinh viên
+                    </div>
+                  </div>
+
+                  {/* ĐÃ XÉT */}
+
+                  <div
+                    style={{
+                      background: "#fff",
+                      border:
+                        "1px solid #e2e8f0",
+                      borderRadius: "16px",
+                      padding: "21px",
+                      boxShadow:
+                        "0 2px 8px rgba(15,23,42,0.04)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        color:
+                          "#64748b",
+                        fontSize:
+                          "14px",
+                        marginBottom:
+                          "9px",
+                      }}
+                    >
+                      Đã xét duyệt
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize:
+                          "30px",
+                        fontWeight: 700,
+                        color:
+                          "#16a34a",
+                      }}
+                    >
+                      {approvedCount}
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize:
+                          "13px",
+                        color:
+                          "#64748b",
+                        marginTop:
+                          "4px",
+                      }}
+                    >
+                      Trong số hồ sơ đã
+                      nộp
+                    </div>
+                  </div>
+
+                  {/* CHƯA XÉT */}
+
+                  <div
+                    style={{
+                      background: "#fff",
+                      border:
+                        "1px solid #e2e8f0",
+                      borderRadius: "16px",
+                      padding: "21px",
+                      boxShadow:
+                        "0 2px 8px rgba(15,23,42,0.04)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        color:
+                          "#64748b",
+                        fontSize:
+                          "14px",
+                        marginBottom:
+                          "9px",
+                      }}
+                    >
+                      Chưa xét
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize:
+                          "30px",
+                        fontWeight: 700,
+                        color:
+                          "#d97706",
+                      }}
+                    >
+                      {pendingCount}
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize:
+                          "13px",
+                        color:
+                          "#64748b",
+                        marginTop:
+                          "4px",
+                      }}
+                    >
+                      Cần tiếp tục xử lý
+                    </div>
+                  </div>
+
+                  {/* TỔNG */}
+
+                  <div
+                    style={{
+                      background: "#fff",
+                      border:
+                        "1px solid #e2e8f0",
+                      borderRadius: "16px",
+                      padding: "21px",
+                      boxShadow:
+                        "0 2px 8px rgba(15,23,42,0.04)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        color:
+                          "#64748b",
+                        fontSize:
+                          "14px",
+                        marginBottom:
+                          "9px",
+                      }}
+                    >
+                      Tổng sinh viên
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize:
+                          "30px",
+                        fontWeight: 700,
+                        color:
+                          "#2563eb",
+                      }}
+                    >
+                      {totalStudents}
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize:
+                          "13px",
+                        color:
+                          "#64748b",
+                        marginTop:
+                          "4px",
+                      }}
+                    >
+                      Sinh viên trong hệ
+                      thống
+                    </div>
+                  </div>
+                </div>
+
+                {/* =================================================
+                    TIẾN ĐỘ
+                ================================================= */}
+
+                <div
+                  style={{
+                    background: "#fff",
+                    border:
+                      "1px solid #e2e8f0",
+                    borderRadius: "14px",
+                    padding:
+                      "16px 20px",
+                    marginBottom: "20px",
+                    boxShadow:
+                      "0 2px 8px rgba(15,23,42,0.04)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent:
+                        "space-between",
+                      alignItems:
+                        "center",
+                      marginBottom:
+                        "10px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize:
+                          "14px",
+                        fontWeight: 600,
+                        color:
+                          "#0f172a",
+                      }}
+                    >
+                      Tiến độ nộp hồ sơ
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize:
+                          "13px",
+                        color:
+                          "#64748b",
+                      }}
+                    >
+                      <strong
+                        style={{
+                          color:
+                            "#2563eb",
+                        }}
+                      >
+                        {submittedCount}
+                      </strong>{" "}
+                      / {totalStudents}{" "}
+                      sinh viên
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      height: "8px",
+                      background:
+                        "#e2e8f0",
+                      borderRadius:
+                        "999px",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${submissionPercent}%`,
+                        height: "100%",
+                        background:
+                          "#2563eb",
+                        borderRadius:
+                          "999px",
+                        transition:
+                          "width 0.3s ease",
+                      }}
+                    />
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent:
+                        "space-between",
+                      marginTop: "7px",
+                      fontSize:
+                        "12px",
+                      color:
+                        "#64748b",
+                    }}
+                  >
+                    <span>
+                      Đã gửi hồ sơ
+                    </span>
+
+                    <strong
+                      style={{
+                        color:
+                          "#2563eb",
+                      }}
+                    >
+                      {submissionPercent}%
+                    </strong>
+                  </div>
+                </div>
+
+                {/* =================================================
+                    DANH SÁCH
+                ================================================= */}
+
+                <div
+                  style={{
+                    background: "#fff",
+                    border:
+                      "1px solid #e2e8f0",
+                    borderRadius: "16px",
+                    overflow: "hidden",
+                    marginBottom: "20px",
+                    boxShadow:
+                      "0 2px 8px rgba(15,23,42,0.04)",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding:
+                        "22px 25px",
+                      borderBottom:
+                        "1px solid #e2e8f0",
+                    }}
+                  >
+                    <h2
+                      style={{
+                        margin: 0,
+                        fontSize:
+                          "18px",
+                        fontWeight: 700,
+                        color:
+                          "#0f172a",
+                      }}
+                    >
+                      Danh sách hồ sơ
+                      đã nộp
+                    </h2>
+
+                    <div
+                      style={{
+                        marginTop:
+                          "5px",
+                        fontSize:
+                          "13px",
+                        color:
+                          "#64748b",
+                      }}
+                    >
+                      Có{" "}
+                      <strong
+                        style={{
+                          color:
+                            "#2563eb",
+                        }}
+                      >
+                        {students.length}
+                      </strong>{" "}
+                      hồ sơ đang chờ
+                      xử lý
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      overflowX:
+                        "auto",
+                    }}
+                  >
+                    <table
+                      style={{
+                        width:
+                          "100%",
+                        borderCollapse:
+                          "collapse",
+                        minWidth:
+                          "950px",
+                      }}
+                    >
+                      <thead>
+                        <tr
+                          style={{
+                            background:
+                              "#dbeafe",
+                          }}
+                        >
+                          <th
+                            style={{
+                              padding:
+                                "14px 12px",
+                              textAlign:
+                                "center",
+                              whiteSpace:
+                                "nowrap",
+                            }}
+                          >
+                            STT
+                          </th>
+
+                          <th
+                            style={{
+                              padding:
+                                "14px 16px",
+                              textAlign:
+                                "left",
+                              whiteSpace:
+                                "nowrap",
+                            }}
+                          >
+                            Họ tên
+                          </th>
+
+                          <th
+                            style={{
+                              padding:
+                                "14px 16px",
+                              textAlign:
+                                "center",
+                              whiteSpace:
+                                "nowrap",
+                            }}
+                          >
+                            Lớp
+                          </th>
+
+                          <th
+                            style={{
+                              padding:
+                                "14px 16px",
+                              textAlign:
+                                "center",
+                              whiteSpace:
+                                "nowrap",
+                            }}
+                          >
+                            MSSV
+                          </th>
+
+                          <th
+                            style={{
+                              padding:
+                                "14px 16px",
+                              textAlign:
+                                "center",
+                              whiteSpace:
+                                "nowrap",
+                            }}
+                          >
+                            Trạng thái
+                          </th>
+
+                          <th
+                            style={{
+                              padding:
+                                "14px 16px",
+                              textAlign:
+                                "center",
+                              whiteSpace:
+                                "nowrap",
+                            }}
+                          >
+                            Người xét duyệt
+                          </th>
+
+                          <th
+                            style={{
+                              padding:
+                                "14px 16px",
+                              textAlign:
+                                "center",
+                              whiteSpace:
+                                "nowrap",
+                            }}
+                          >
+                            Lịch sử
+                          </th>
+
+                          <th
+                            style={{
+                              padding:
+                                "14px 16px",
+                              textAlign:
+                                "center",
+                              whiteSpace:
+                                "nowrap",
+                            }}
+                          >
+                            Xem
+                          </th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {students.map(
+                          (sv, index) => (
+                            <tr
+                              key={sv.id}
+                              style={{
+                                borderTop:
+                                  "1px solid #e2e8f0",
+                              }}
+                            >
+                              <td
+                                style={{
+                                  padding:
+                                    "14px 12px",
+                                  textAlign:
+                                    "center",
+                                  color:
+                                    "#475569",
+                                }}
+                              >
+                                {index + 1}
+                              </td>
+
+                              <td
+                                style={{
+                                  padding:
+                                    "14px 16px",
+                                  fontWeight: 600,
+                                  color:
+                                    "#0f172a",
+                                }}
+                              >
+                                {sv.ho_ten}
+                              </td>
+
+                              <td
+                                style={{
+                                  padding:
+                                    "14px 16px",
+                                  textAlign:
+                                    "center",
+                                  color:
+                                    "#475569",
+                                }}
+                              >
+                                {sv.lop}
+                              </td>
+
+                              <td
+                                style={{
+                                  padding:
+                                    "14px 16px",
+                                  textAlign:
+                                    "center",
+                                  color:
+                                    "#475569",
+                                }}
+                              >
+                                {sv.mssv}
+                              </td>
+
+                              <td
+                                style={{
+                                  padding:
+                                    "14px 16px",
+                                  textAlign:
+                                    "center",
+                                }}
+                              >
+                                {(() => {
+                                  const status =
+                                    sv.trang_thai ||
+                                    "chua_danh_gia";
+                                  const statusMap: Record<
+                                    string,
+                                    {
+                                      label: string;
+                                      background: string;
+                                      color: string;
+                                    }
+                                  > = {
+                                    chua_danh_gia: {
+                                      label: "Chưa đánh giá",
+                                      background: "#fef3c7",
+                                      color: "#92400e",
+                                    },
+                                    can_xem_xet: {
+                                      label: "Cần xem xét",
+                                      background: "#dbeafe",
+                                      color: "#1d4ed8",
+                                    },
+                                    da_dat: {
+                                      label: "Hồ sơ đã đạt",
+                                      background: "#dcfce7",
+                                      color: "#15803d",
+                                    },
+                                    khong_dat: {
+                                      label: "Hồ sơ không đạt",
+                                      background: "#fee2e2",
+                                      color: "#b91c1c",
+                                    },
+                                  };
+
+                                  const current =
+                                    statusMap[status] ||
+                                    statusMap.chua_danh_gia;
+
+                                  return (
+                                    <span
+                                      style={{
+                                        display:
+                                          "inline-block",
+                                        padding:
+                                          "6px 12px",
+                                        borderRadius:
+                                          "999px",
+                                        background:
+                                          current.background,
+                                        color:
+                                          current.color,
+                                        fontSize:
+                                          "13px",
+                                        fontWeight:
+                                          600,
+                                      }}
+                                    >
+                                      {current.label}
+                                    </span>
+                                  );
+                                })()}
+                              </td>
+
+                              <td
+                                style={{
+                                  padding:
+                                    "14px 16px",
+                                  textAlign:
+                                    "center",
+                                  color:
+                                    "#64748b",
+                                  fontSize:
+                                    "14px",
+                                  whiteSpace:
+                                    "normal",
+                                }}
+                              >
+                                {sv.nguoi_duyet_id ? (
+                                  <span
+                                    style={{
+                                      color:
+                                        "#15803d",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    {approvers[sv.nguoi_duyet_id] ||
+                                      "Đã duyệt"}
+                                  </span>
+                                ) : (
+                                  "Chưa có"
+                                )}
+                              </td>
+
+                              <td
+                                style={{
+                                  padding:
+                                    "14px 16px",
+                                  textAlign:
+                                    "center",
+                                }}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSelectedStudent(
+                                      sv
+                                    )
+                                  }
+                                  style={{
+                                    border:
+                                      "1px solid #2563eb",
+                                    background:
+                                      "#fff",
+                                    color:
+                                      "#2563eb",
+                                    padding:
+                                      "7px 12px",
+                                    borderRadius:
+                                      "8px",
+                                    fontSize:
+                                      "13px",
+                                    fontWeight:
+                                      600,
+                                    cursor:
+                                      "pointer",
+                                  }}
+                                >
+                                  Xem lịch sử
+                                </button>
+                              </td>
+
+                              <td
+                                style={{
+                                  padding:
+                                    "14px 16px",
+                                  textAlign:
+                                    "center",
+                                }}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    window.location.href =
+                                      `/chutichhsv/students/${sv.id}`;
+                                  }}
+                                  style={{
+                                    border:
+                                      "none",
+                                    background:
+                                      "#2563eb",
+                                    color:
+                                      "#fff",
+                                    padding:
+                                      "7px 12px",
+                                    borderRadius:
+                                      "8px",
+                                    fontSize:
+                                      "13px",
+                                    fontWeight:
+                                      600,
+                                    cursor:
+                                      "pointer",
+                                    display:
+                                      "inline-flex",
+                                    alignItems:
+                                      "center",
+                                    gap: "5px",
+                                  }}
+                                >
+                                  Xem
+                                </button>
+                              </td>
+                            </tr>
+                          )
+                        )}
+
+                        {students.length ===
+                          0 && (
+                          <tr>
+                            <td
+                              colSpan={8}
+                              style={{
+                                padding:
+                                  "40px 20px",
+                                textAlign:
+                                  "center",
+                                color:
+                                  "#64748b",
+                              }}
+                            >
+                              Chưa có sinh viên
+                              nào nộp hồ sơ.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* =====================================================
+          MODAL LỊCH SỬ
+      ===================================================== */}
+
+      {selectedStudent && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background:
+              "rgba(0,0,0,0.35)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: "20px",
+          }}
+          onClick={() =>
+            setSelectedStudent(null)
+          }
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "600px",
+              background: "#fff",
+              borderRadius: "16px",
+              padding: "24px",
+              boxShadow:
+                "0 15px 40px rgba(0,0,0,0.2)",
+            }}
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent:
+                  "space-between",
+                alignItems:
+                  "center",
+                marginBottom: "20px",
+              }}
+            >
+              <div>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "19px",
+                    fontWeight: 700,
+                    color:
+                      "#0f172a",
+                  }}
+                >
+                  Lịch sử xét duyệt
+                </h2>
+
+                <div
+                  style={{
+                    marginTop: "5px",
+                    fontSize:
+                      "14px",
+                    color:
+                      "#64748b",
+                  }}
+                >
+                  {selectedStudent.ho_ten} ·{" "}
+                  {selectedStudent.mssv}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setSelectedStudent(
+                    null
+                  )
+                }
+                style={{
+                  border: "none",
+                  background:
+                    "transparent",
+                  fontSize: "26px",
+                  color:
+                    "#64748b",
+                  cursor:
+                    "pointer",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div
+              style={{
+                border:
+                  "1px solid #e2e8f0",
+                borderRadius: "12px",
+                padding: "16px",
+                background:
+                  "#f8fafc",
+              }}
+            >
+              <div
+                style={{
+                  fontSize:
+                    "14px",
+                  fontWeight: 600,
+                  color:
+                    "#0f172a",
+                  marginBottom:
+                    "8px",
+                }}
+              >
+                {selectedStudent.trang_thai || "chua_danh_gia"}
+              </div>
+
+              <div
+                style={{
+                  fontSize:
+                    "13px",
+                  color:
+                    "#64748b",
+                  lineHeight: 1.5,
+                }}
+              >
+                {selectedStudent.nguoi_duyet_id ? (
+                  <>
+                    Người duyệt: <strong>{approvers[selectedStudent.nguoi_duyet_id] || "Đã duyệt"}</strong>
+                    <br />
+                  </>
+                ) : (
+                  "Chưa có người duyệt\n"
+                )}
+                Ghi chú: {selectedStudent.ghi_chu || "Chưa có ghi chú"}
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent:
+                  "flex-end",
+                marginTop: "20px",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() =>
+                  setSelectedStudent(
+                    null
+                  )
+                }
+                style={{
+                  padding:
+                    "9px 18px",
+                  borderRadius:
+                    "9px",
+                  border:
+                    "1px solid #d1d5db",
+                  background:
+                    "#fff",
+                  color:
+                    "#374151",
+                  fontWeight: 600,
+                  cursor:
+                    "pointer",
+                }}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CRITERIA */}
+
+      {showCriteria && (
+        <CriteriaModal
+          onClose={() =>
+            setShowCriteria(false)
+          }
+        />
+      )}
+
+      <Footer />
+    </div>
+  );
+}
