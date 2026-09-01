@@ -715,7 +715,7 @@ async function renameFile(file: any) {
     boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
   }}
 >
-  <h3 style={{ marginTop: 0 }}>📝 Nhập Báo cáo Thành tích ưu tiên</h3>
+  <h3 style={{ marginTop: 0 }}>📝 Nhập Báo cáo Thành tích khác</h3>
  {lastSaved && (
     <span
       style={{
