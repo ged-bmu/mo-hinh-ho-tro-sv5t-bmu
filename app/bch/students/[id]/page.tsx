@@ -39,6 +39,7 @@ export default function StudentsDetailPage() {
   const [reportOpen, setReportOpen] = useState(false);
   const [zoom, setZoom] = useState(0.6);
   const [previewBlobUrl, setPreviewBlobUrl] = useState("");
+  const [nguoiDuyet, setNguoiDuyet] = useState<any>(null);
   const criteriaList = [
   { key: "dao-duc", title: "Đạo đức tốt", icon: "/icondaoduc.png" },
   { key: "hoc-tap", title: "Học tập tốt" },
@@ -96,7 +97,26 @@ useEffect(() => {
     }
   };
 }, [previewOpen, previewUrl]);
+useEffect(() => {
+  const fetchNguoiDuyet = async () => {
+    if (!profile?.nguoi_duyet_id) {
+      setNguoiDuyet(null);
+      return;
+    }
 
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .eq("id", profile.nguoi_duyet_id)
+      .single();
+
+    if (!error) {
+      setNguoiDuyet(data);
+    }
+  };
+
+  fetchNguoiDuyet();
+}, [profile?.nguoi_duyet_id]);
   useEffect(() => {
     if (!id) return;
 
@@ -146,7 +166,6 @@ async function updateGhiChu() {
     .from("profiles")
     .update({
       ghi_chu: ghiChu,
-      nguoi_duyet_id: user.id,
     })
     .eq("id", id);
 
@@ -159,11 +178,11 @@ async function updateGhiChu() {
   setProfile((prev: any) => ({
     ...prev,
     ghi_chu: ghiChu,
-    nguoi_duyet_id: user.id,
   }));
 
   alert("Đã lưu ghi chú");
 }
+
 async function loadStudent() {
   const { data, error } = await supabase
     .from("profiles")
@@ -191,6 +210,7 @@ async function loadStudent() {
   setTrangThai(trangThaiValue);
   setGhiChu(data.ghi_chu || "");
 }
+
 async function updateCriteria(
   field: string,
   value: boolean
@@ -310,14 +330,18 @@ async function updateTrangThai(value: string) {
     .from("profiles")
     .update({
       trang_thai: value,
-      nguoi_duyet_id: user.id,
+      nguoi_duyet_id:
+        value === "chua_danh_gia" ? null : user.id,
     })
     .eq("id", id)
     .select("trang_thai, nguoi_duyet_id")
     .single();
 
   if (error) {
-    alert("Cập nhật trạng thái thất bại: " + error.message);
+    alert(
+      "Cập nhật trạng thái thất bại: " +
+        error.message
+    );
     return;
   }
 
@@ -326,7 +350,8 @@ async function updateTrangThai(value: string) {
   setProfile((prev: any) => ({
     ...prev,
     trang_thai: value,
-    nguoi_duyet_id: data?.nguoi_duyet_id ?? prev?.nguoi_duyet_id,
+    nguoi_duyet_id:
+      data?.nguoi_duyet_id ?? null,
   }));
 }
 function getDriveFileId(url: string) {

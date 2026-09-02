@@ -670,7 +670,7 @@ return (
           </div>
 
           <div>
-            <b>Email:</b> {profile.email}
+            <b>Email:</b> 
           </div>
 
         <button

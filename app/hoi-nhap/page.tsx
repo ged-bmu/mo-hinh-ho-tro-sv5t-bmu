@@ -28,12 +28,6 @@ export default function HoiNhapPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showProfile, setShowProfile] = useState(false);
 
-  const defaultReport = `
-<p style="margin: 0;">1. Có ý thức hội nhập, giao lưu và tích cực tham gia các hoạt động học thuật, văn hóa, xã hội.</p>
-<p style="margin: 0;">2. Có khả năng sử dụng ngoại ngữ và công nghệ thông tin phục vụ học tập, công việc.</p>
-<p style="margin: 0;">3. &nbsp;</p>
-`;
-
   function sortFilesByName(fileList: any[]) {
     return [...fileList].sort((firstFile, secondFile) =>
       (firstFile.display_name || firstFile.storage_name || "").localeCompare(
@@ -114,7 +108,7 @@ export default function HoiNhapPage() {
     setReport(
       reportData?.content?.trim()
         ? reportData.content
-        : defaultReport
+        : ""
     );
   }
 

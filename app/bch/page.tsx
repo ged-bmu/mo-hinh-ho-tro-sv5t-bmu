@@ -18,7 +18,11 @@ const [ghiChu, setGhiChu] = useState("");
 const [approvers, setApprovers] = useState<Record<string, string>>({});
 const [bchProfile, setBchProfile] = useState<any>(null);
 const [studentProfile, setStudentProfile] = useState<any>(null);
+const [studentSearch, setStudentSearch] = useState("");
+const [statusFilter, setStatusFilter] = useState("all");
 
+  const isReviewedStatus = (status?: string) =>
+    (status || "chua_danh_gia") !== "chua_danh_gia";
 useEffect(() => {
   checkAccount();
 }, []);
@@ -142,7 +146,6 @@ async function updateTrangThai(
     .from("profiles")
     .update({
       trang_thai: value,
-      nguoi_duyet_id: user.id,
     })
     .eq("id", studentId)
     .select("id, trang_thai, nguoi_duyet_id, ghi_chu")
@@ -157,14 +160,22 @@ async function updateTrangThai(
   setStudents((prev) =>
     prev.map((student) =>
       student.id === studentId
-        ? { ...student, ...data }
+        ? {
+            ...student,
+            ...data,
+            nguoi_duyet_id: student.nguoi_duyet_id ?? data?.nguoi_duyet_id ?? null,
+          }
         : student
     )
   );
 
   setSelectedStudent((prev: any) =>
     prev?.id === studentId
-      ? { ...prev, ...data }
+      ? {
+          ...prev,
+          ...data,
+          nguoi_duyet_id: prev?.nguoi_duyet_id ?? data?.nguoi_duyet_id ?? null,
+        }
       : prev
   );
 
@@ -185,7 +196,7 @@ async function updateTrangThai(
 }
 
 // =====================================================
-// TỰ ĐỘNG LƯU GHI CHÚ + NGƯỜI DUYỆT
+// TỰ ĐỘNG LƯU GHI CHÚ
 // =====================================================
 async function updateGhiChu(
   studentId: string,
@@ -204,7 +215,6 @@ async function updateGhiChu(
     .from("profiles")
     .update({
       ghi_chu: value,
-      nguoi_duyet_id: user.id,
     })
     .eq("id", studentId)
     .select("id, ghi_chu, nguoi_duyet_id")
@@ -218,14 +228,22 @@ async function updateGhiChu(
   setStudents((prev) =>
     prev.map((student) =>
       student.id === studentId
-        ? { ...student, ...data }
+        ? {
+            ...student,
+            ...data,
+            nguoi_duyet_id: student.nguoi_duyet_id ?? data?.nguoi_duyet_id ?? null,
+          }
         : student
     )
   );
 
   setSelectedStudent((prev: any) =>
     prev?.id === studentId
-      ? { ...prev, ...data }
+      ? {
+          ...prev,
+          ...data,
+          nguoi_duyet_id: prev?.nguoi_duyet_id ?? data?.nguoi_duyet_id ?? null,
+        }
       : prev
   );
 
@@ -314,6 +332,74 @@ useEffect(() => {
   };
 }, []);
 
+  const normalizedStudentSearch = studentSearch.trim().toLowerCase();
+
+  const filteredStudents = students.filter((sv) => {
+    const searchableValues = [
+      sv.ho_ten,
+      sv.lop,
+      sv.mssv,
+      sv.nganh,
+      sv.chuyen_nganh,
+      sv.nganh_hoc,
+    ]
+      .filter(Boolean)
+      .map((value) => String(value).toLowerCase());
+
+    const matchesSearch =
+      !normalizedStudentSearch ||
+      searchableValues.some((value) =>
+        value.includes(normalizedStudentSearch)
+      );
+
+    const status = sv.trang_thai || "chua_danh_gia";
+    const matchesStatus =
+      statusFilter === "all" || status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const statusStats = [
+    {
+      label: "Nộp",
+      value: filteredStudents.length,
+      color: "#eff6ff",
+      textColor: "#1d4ed8",
+    },
+    {
+      label: "Đạt",
+      value: filteredStudents.filter(
+        (sv) => (sv.trang_thai || "chua_danh_gia") === "da_dat"
+      ).length,
+      color: "#dcfce7",
+      textColor: "#15803d",
+    },
+    {
+      label: "Chưa duyệt",
+      value: filteredStudents.filter(
+        (sv) => (sv.trang_thai || "chua_danh_gia") === "chua_danh_gia"
+      ).length,
+      color: "#fef3c7",
+      textColor: "#92400e",
+    },
+    {
+      label: "Cần xét",
+      value: filteredStudents.filter(
+        (sv) => (sv.trang_thai || "chua_danh_gia") === "can_xem_xet"
+      ).length,
+      color: "#dbeafe",
+      textColor: "#1d4ed8",
+    },
+    {
+      label: "Không đạt",
+      value: filteredStudents.filter(
+        (sv) => (sv.trang_thai || "chua_danh_gia") === "khong_dat"
+      ).length,
+      color: "#fee2e2",
+      textColor: "#b91c1c",
+    },
+  ];
+
   if (loading) {
     return (
       <div
@@ -329,7 +415,16 @@ useEffect(() => {
       </div>
     );
   }
+const handleLogout = async () => {
+  const { error } = await supabase.auth.signOut();
 
+  if (error) {
+    console.error("Lỗi đăng xuất:", error);
+    return;
+  }
+
+  window.location.href = "/introduce";
+};
   return (
     <div
       style={{
@@ -356,73 +451,125 @@ useEffect(() => {
         flex: 1,
       }}
     >
-      {/* PROFILE CARD */}
+{/* PROFILE CARD */}
+<div
+  style={{
+    background: "#fff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "16px",
+    padding: "16px 18px",
+    marginBottom: "24px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "16px",
+    boxShadow: "0 2px 8px rgba(15,23,42,0.04)",
+  }}
+>
+  {/* LEFT - PROFILE */}
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "14px",
+      minWidth: 0,
+    }}
+  >
+    <div
+      style={{
+        width: "52px",
+        height: "52px",
+        flexShrink: 0,
+        borderRadius: "14px",
+        background: "#eff6ff",
+        color: "#2563eb",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "15px",
+        fontWeight: 800,
+        border: "1px solid #dbeafe",
+      }}
+    >
+      BCH
+    </div>
+
+    <div
+      style={{
+        minWidth: 0,
+      }}
+    >
       <div
         style={{
-          background: "#fff",
-          border: "1px solid #e2e8f0",
-          borderRadius: "20px",
-          padding: "28px 30px",
-          marginBottom: "30px",
-          display: "flex",
-          alignItems: "center",
-          gap: "20px",
-          boxShadow: "0 3px 12px rgba(15,23,42,0.05)",
+          fontSize: "12px",
+          color: "#64748b",
+          marginBottom: "2px",
         }}
       >
-        <div
-          style={{
-            width: "68px",
-            height: "68px",
-            flexShrink: 0,
-            borderRadius: "18px",
-            background: "#eff6ff",
-            color: "#2563eb",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "18px",
-            fontWeight: 800,
-            border: "1px solid #dbeafe",
-          }}
-        >
-          BCH
-        </div>
-
-        <div>
-          <div
-            style={{
-              fontSize: "14px",
-              color: "#64748b",
-              marginBottom: "5px",
-            }}
-          >
-            Ban Chấp hành Hội Sinh viên Trường
-          </div>
-
-          <h1
-            style={{
-              margin: 0,
-              fontSize: "26px",
-              lineHeight: 1.3,
-              fontWeight: 750,
-              color: "#0f172a",
-            }}
-          >
-            Đồng chí {bchProfile?.ho_ten}
-          </h1>
-
-          <div
-            style={{
-              marginTop: "7px",
-              fontSize: "14px",
-              color: "#64748b",
-            }}
-          >
-            Phụ trách xét duyệt hồ sơ Sinh viên 5 Tốt
-          </div>
-        </div>
+        Ban Chấp hành Hội Sinh viên Trường
       </div>
+
+      <h1
+        style={{
+          margin: 0,
+          fontSize: "19px",
+          lineHeight: 1.35,
+          fontWeight: 750,
+          color: "#0f172a",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        Đồng chí {bchProfile?.ho_ten}
+      </h1>
+
+      <div
+        style={{
+          marginTop: "2px",
+          fontSize: "12px",
+          color: "#64748b",
+        }}
+      >
+        Phụ trách xét duyệt hồ sơ Sinh viên 5 Tốt
+      </div>
+    </div>
+  </div>
+
+  {/* LOGOUT */}
+  <button
+    onClick={handleLogout}
+    style={{
+      flexShrink: 0,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "7px",
+      padding: "9px 13px",
+      borderRadius: "10px",
+      border: "1px solid #e2e8f0",
+      background: "#fff",
+      color: "#475569",
+      fontSize: "13px",
+      fontWeight: 650,
+      cursor: "pointer",
+      transition: "all 0.2s ease",
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.background = "#fef2f2";
+      e.currentTarget.style.color = "#dc2626";
+      e.currentTarget.style.borderColor = "#fecaca";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.background = "#fff";
+      e.currentTarget.style.color = "#475569";
+      e.currentTarget.style.borderColor = "#e2e8f0";
+    }}
+  >
+    <span>↪</span>
+    Đăng xuất
+  </button>
+</div>
 
       {/* TITLE */}
       <div
@@ -445,31 +592,37 @@ useEffect(() => {
           >
             Danh sách hồ sơ sinh viên
           </h2>
-
-          <p
-            style={{
-              margin: "7px 0 0",
-              color: "#64748b",
-              fontSize: "15px",
-            }}
-          >
-            Các sinh viên đã hoàn tất việc nộp hồ sơ để BCH xem xét.
-          </p>
         </div>
 
         <div
           style={{
-            background: "#eff6ff",
-            color: "#2563eb",
-            border: "1px solid #dbeafe",
-            padding: "9px 15px",
-            borderRadius: "10px",
-            fontSize: "14px",
-            fontWeight: 700,
-            whiteSpace: "nowrap",
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
+            gap: "8px",
           }}
         >
-          {students.length} hồ sơ
+          {statusStats.map((item) => (
+            <div
+              key={item.label}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                background: item.color,
+                border: "1px solid rgba(148, 163, 184, 0.25)",
+                color: item.textColor,
+                borderRadius: "999px",
+                padding: "6px 10px",
+                fontSize: "12px",
+                fontWeight: 700,
+                lineHeight: 1.2,
+              }}
+            >
+              <span>{item.label}</span>
+              <span style={{ fontSize: "13px" }}>{item.value}</span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -504,11 +657,69 @@ useEffect(() => {
 
           <div
             style={{
-              fontSize: "14px",
-              color: "#64748b",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              flexWrap: "wrap",
+              justifyContent: "flex-end",
+              width: "100%",
+              maxWidth: "560px",
             }}
           >
-            Sắp xếp theo lớp và MSSV
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                background: "#f8fafc",
+                border: "1px solid #dbeafe",
+                borderRadius: "10px",
+                padding: "8px 12px",
+                minWidth: "220px",
+                flex: "1 1 260px",
+                maxWidth: "360px",
+              }}
+            >
+              <span style={{ fontSize: "15px" }}>🔎</span>
+              <input
+                type="text"
+                value={studentSearch}
+                onChange={(e) => setStudentSearch(e.target.value)}
+                placeholder="Tìm theo tên, lớp, MSSV, ngành"
+                style={{
+                  border: "none",
+                  outline: "none",
+                  background: "transparent",
+                  width: "100%",
+                  color: "#0f172a",
+                  fontSize: "14px",
+                }}
+              />
+            </div>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              style={{
+                border: "1px solid #dbeafe",
+                borderRadius: "10px",
+                background: "#fff",
+                color: "#0f172a",
+                fontSize: "14px",
+                padding: "9px 12px",
+                minWidth: "170px",
+                outline: "none",
+                cursor: "pointer",
+                height: "42px",
+                boxSizing: "border-box",
+              }}
+            >
+              <option value="all">Tất cả trạng thái</option>
+              <option value="chua_danh_gia">Chưa đánh giá</option>
+              <option value="can_xem_xet">Cần xem xét</option>
+              <option value="da_dat">Hồ sơ đã đạt</option>
+              <option value="khong_dat">Hồ sơ không đạt</option>
+            </select>
           </div>
         </div>
 
@@ -538,7 +749,7 @@ useEffect(() => {
             </thead>
 
             <tbody>
-              {students.map((sv, index) => (
+              {filteredStudents.map((sv, index) => (
                 <tr
                   key={sv.id}
                   style={{
@@ -621,27 +832,18 @@ useEffect(() => {
 </td>
 
 <td style={tdCenterLarge}>
-  {sv.nguoi_duyet_id ? (
-    <span
-      style={{
-        color: "#15803d",
-        fontSize: "15px",
-        fontWeight: 600,
-        whiteSpace: "normal",
-      }}
-    >
-      {approvers[sv.nguoi_duyet_id] || "Đã duyệt"}
-    </span>
-  ) : (
-    <span
-      style={{
-        color: "#64748b",
-        fontSize: "15px",
-      }}
-    >
-      Chưa có
-    </span>
-  )}
+  <span
+    style={{
+      color: sv.nguoi_duyet_id ? "#15803d" : "#64748b",
+      fontSize: "15px",
+      fontWeight: 600,
+      whiteSpace: "normal",
+    }}
+  >
+    {sv.nguoi_duyet_id
+      ? approvers[sv.nguoi_duyet_id] || "Đang tải..."
+      : "Chưa có"}
+  </span>
 </td>
 
                   <td style={tdCenterLarge}>
@@ -703,7 +905,7 @@ useEffect(() => {
                 </tr>
               ))}
 
-              {students.length === 0 && (
+              {filteredStudents.length === 0 && (
                 <tr>
                   <td
                     colSpan={8}
@@ -728,7 +930,7 @@ useEffect(() => {
                         color: "#334155",
                       }}
                     >
-                      Chưa có hồ sơ
+                      {studentSearch ? "Không tìm thấy hồ sơ phù hợp" : "Chưa có hồ sơ"}
                     </div>
 
                     <div
@@ -738,7 +940,9 @@ useEffect(() => {
                         color: "#94a3b8",
                       }}
                     >
-                      Chưa có sinh viên nào nộp hồ sơ.
+                      {studentSearch || statusFilter !== "all"
+                        ? "Thử tìm theo tên, lớp, MSSV, ngành hoặc thay đổi trạng thái lọc."
+                        : "Chưa có sinh viên nào nộp hồ sơ."}
                     </div>
                   </td>
                 </tr>

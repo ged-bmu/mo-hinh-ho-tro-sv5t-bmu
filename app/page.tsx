@@ -483,16 +483,48 @@ return (
     gap: isMobile ? "8px" : "12px", 
   }} 
 > 
-  <h2 
-    style={{ 
-      margin: 0, 
-      fontSize: isMobile ? "17px" : "19px", 
-      fontWeight: 700, 
-      textAlign: isMobile ? "center" : "left", 
-    }} 
-  > 
-    👋 Xin chào, {profile?.ho_ten} 
-  </h2> 
+  <div style={{ flex: 1, minWidth: 0 }}>
+    <h2 
+      style={{ 
+        margin: 0, 
+        fontSize: isMobile ? "17px" : "19px", 
+        fontWeight: 700, 
+        textAlign: isMobile ? "center" : "left", 
+      }} 
+    > 
+      👋 Xin chào, {profile?.ho_ten} 
+    </h2>
+
+{profile?.trang_thai === "da_dat" &&
+  profile?.da_duyet === true && (
+  <div
+    style={{
+      marginTop: "10px",
+      display: "flex",
+      justifyContent: isMobile ? "center" : "flex-start",
+    }}
+  >
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "8px",
+        background: "#dcfce7",
+        color: "#166534",
+        border: "1px solid #86efac",
+        borderRadius: "999px",
+        padding: isMobile ? "8px 12px" : "9px 14px",
+        fontSize: isMobile ? "12px" : "13px",
+        fontWeight: 800,
+        boxShadow: "0 2px 8px rgba(22, 163, 74, 0.12)",
+        textAlign: "center",
+      }}
+    >
+      🎉 Bạn đã đạt danh hiệu Sinh viên 5 tốt cấp Trường, năm học 2025 - 2026 🎉
+    </span>
+  </div>
+)}
+  </div>
 
   <button 
     onClick={handleExport}

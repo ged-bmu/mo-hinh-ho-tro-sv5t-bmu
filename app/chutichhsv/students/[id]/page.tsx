@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 import { authFetch } from "@/lib/auth-fetch";
@@ -19,6 +19,9 @@ export default function StudentsDetailPage() {
   const id = params.id as string;
   const [profile, setProfile] = useState<any>(null);
   const [nhanXet, setNhanXet] = useState("");
+  const [ghiChu, setGhiChu] = useState("");
+  const [trangThai, setTrangThai] = useState("chua_danh_gia");
+  const ghiChuTimer = useRef<NodeJS.Timeout | null>(null);
   const [daoDucFiles, setDaoDucFiles] = useState<any[]>([]);
   const [hocTapFiles, setHocTapFiles] = useState<any[]>([]);
   const [theLucFiles, setTheLucFiles] = useState<any[]>([]);
@@ -26,7 +29,6 @@ export default function StudentsDetailPage() {
   const [hoiNhapFiles, setHoiNhapFiles] = useState<any[]>([]);
   const [uuTienFiles, setUuTienFiles] = useState<any[]>([]);
   const [baoCaoFiles, setBaoCaoFiles] = useState<any[]>([]);
-  const [trangThai, setTrangThai] = useState("");
   const [previewAvatar, setPreviewAvatar] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState({top: 0,left: 0,});
@@ -147,9 +149,101 @@ async function loadReports() {
       return;
     }
 
-    setProfile(data);
+    const trangThaiValue =
+      data.trang_thai === "da_dat" ||
+      data.trang_thai === "khong_dat" ||
+      data.trang_thai === "can_xem_xet"
+        ? data.trang_thai
+        : "chua_danh_gia";
+
+    setProfile({
+      ...data,
+      trang_thai: trangThaiValue,
+    });
     setNhanXet(data.nhan_xet || "");
+    setTrangThai(trangThaiValue);
+    setGhiChu(data.ghi_chu || "");
   }
+
+  async function updateTrangThai(value: string) {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      alert("Không xác định được người duyệt Chủ tịch HSV.");
+      return;
+    }
+
+    const criteriaUpdate =
+      value === "da_dat"
+        ? {
+            "dao-duc": true,
+            "hoc-tap": true,
+            "the-luc": true,
+            "tinh-nguyen": true,
+            "hoi-nhap": true,
+          }
+        : {};
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({
+        trang_thai: value,
+        nguoi_duyet_id: value === "chua_danh_gia" ? null : user.id,
+        ...criteriaUpdate,
+      })
+      .eq("id", id)
+      .select("trang_thai, nguoi_duyet_id")
+      .single();
+
+    if (error) {
+      alert("Cập nhật trạng thái thất bại: " + error.message);
+      return;
+    }
+
+    setTrangThai(value);
+    setProfile((prev: any) => ({
+      ...prev,
+      trang_thai: value,
+      ...(value === "da_dat" ? criteriaUpdate : {}),
+    }));
+  }
+
+  async function updateGhiChu() {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      alert("Không xác định được người duyệt Chủ tịch HSV.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+  ghi_chu: ghiChu,
+  nguoi_duyet_id: user.id,
+})
+      .eq("id", id);
+
+    if (error) {
+      console.error("LỖI LƯU GHI CHÚ:", error);
+      alert("Lưu ghi chú thất bại: " + error.message);
+      return;
+    }
+
+    setProfile((prev: any) => ({
+      ...prev,
+      ghi_chu: ghiChu,
+    }));
+
+    alert("Đã lưu ghi chú");
+  }
+
 async function updateCriteria(
   field: string,
   value: boolean
@@ -624,8 +718,8 @@ return (
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "300px 250px 500px",
-          gap: "40px",
+          gridTemplateColumns: "300px 280px 420px",
+          gap: "32px",
           alignItems: "start",
         }}
       >
@@ -639,29 +733,28 @@ return (
             <b>Lớp:</b> {profile.lop}
           </div>
 
-          <div style={{ marginTop: "40px" }}>
-  <b>Báo cáo:</b>
-
-  <button
-    onClick={() => setReportOpen(true)}
-    style={{
-      marginLeft: "10px",
-      border: "none",
-      background: "none",
-      color: "#2563eb",
-      cursor: "pointer",
-      fontWeight: "600",
-      display: "inline-flex",
-      alignItems: "center",
-      gap: "4px",
-      whiteSpace: "nowrap",
-    }}
-  >
-    <Image src="/iconxem2.png" width={20} height={20} alt="Xem" />
-    Xem
-  </button>
-</div>
-</div>
+          <div style={{ marginTop: "20px" }}>
+            <b>Báo cáo:</b>
+            <button
+              onClick={() => setReportOpen(true)}
+              style={{
+                marginLeft: "10px",
+                border: "none",
+                background: "none",
+                color: "#2563eb",
+                cursor: "pointer",
+                fontWeight: "600",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <Image src="/iconxem2.png" width={20} height={20} alt="Xem" />
+              Xem
+            </button>
+          </div>
+        </div>
 
         {/* Cột 2 */}
         <div>
@@ -669,11 +762,123 @@ return (
             <b>MSSV:</b> {profile.mssv}
           </div>
 
-          <div>
+          <div style={{ marginBottom: "20px" }}>
             <b>Email:</b> {profile.email}
           </div>
+
+          <div style={{ marginTop: "20px" }}>
+            <b>Trạng thái hồ sơ:</b>
+            <select
+              value={trangThai || "chua_danh_gia"}
+              onChange={(e) => updateTrangThai(e.target.value)}
+              style={{
+                display: "block",
+                marginTop: "8px",
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: "10px",
+                border: "1px solid #cbd5e1",
+                fontSize: "14px",
+                fontWeight: 600,
+                cursor: "pointer",
+                background:
+                  trangThai === "khong_dat"
+                    ? "#fee2e2"
+                    : trangThai === "da_dat"
+                    ? "#dcfce7"
+                    : trangThai === "can_xem_xet"
+                    ? "#dbeafe"
+                    : "#f1f5f9",
+                color:
+                  trangThai === "khong_dat"
+                    ? "#b91c1c"
+                    : trangThai === "da_dat"
+                    ? "#15803d"
+                    : trangThai === "can_xem_xet"
+                    ? "#1d4ed8"
+                    : "#64748b",
+              }}
+            >
+              <option value="chua_danh_gia">Chưa đánh giá</option>
+              <option value="can_xem_xet">Cần xem xét</option>
+              <option value="da_dat">Hồ sơ đã đạt</option>
+              <option value="khong_dat">Hồ sơ không đạt</option>
+            </select>
+          </div>
         </div>
+
+        {/* Cột 3 */}
         <div>
+          <div style={{ marginBottom: "10px" }}>
+            <b>Ghi chú:</b>
+          </div>
+
+          <textarea
+            value={ghiChu}
+            onChange={(e) => {
+              const value = e.target.value;
+              setGhiChu(value);
+
+              if (ghiChuTimer.current) {
+                clearTimeout(ghiChuTimer.current);
+              }
+
+              ghiChuTimer.current = setTimeout(async () => {
+                const {
+                  data: { user },
+                  error: userError,
+                } = await supabase.auth.getUser();
+
+                if (userError || !user) return;
+
+                const { error } = await supabase
+                  .from("profiles")
+                  .update({
+  ghi_chu: ghiChu,
+  nguoi_duyet_id: user.id,
+})
+                  .eq("id", id);
+
+                if (!error) {
+                  setProfile((prev: any) => ({
+                    ...prev,
+                    ghi_chu: value,
+                  }));
+                }
+              }, 800);
+            }}
+            placeholder="Nhập ghi chú..."
+            style={{
+              display: "block",
+              width: "100%",
+              minHeight: "110px",
+              padding: "10px 12px",
+              borderRadius: "10px",
+              border: "1px solid #cbd5e1",
+              fontSize: "14px",
+              resize: "vertical",
+              outline: "none",
+              boxSizing: "border-box",
+              background: "#fff",
+            }}
+          />
+
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px" }}>
+            <button
+              onClick={updateGhiChu}
+              style={{
+                padding: "8px 12px",
+                border: "none",
+                borderRadius: "10px",
+                background: "#2563eb",
+                color: "#fff",
+                cursor: "pointer",
+                fontWeight: 600,
+              }}
+            >
+              💾 Lưu ghi chú
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -996,6 +1201,8 @@ return (
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         {/* HEADER */}
@@ -1081,6 +1288,9 @@ return (
     boxShadow:"0 10px 30px rgba(0,0,0,.15)",
     fontFamily:"Times New Roman, serif",
     fontSize:"13pt",
+    position: "relative",
+    overflow: "visible",
+    maxWidth: "100%",
   }}
 >
   {/* Tiêu đề */}
@@ -1134,6 +1344,7 @@ return (
   style={{
     position: "relative",
     height: 0,
+    zIndex: 30,
   }}
 >
   <div
@@ -1147,7 +1358,7 @@ return (
       borderRadius: 6,
       overflow: "hidden",
       background: "#fff",
-      zIndex: 10,
+      zIndex: 30,
     }}
   >
     {profile?.avatar ? (
@@ -1265,6 +1476,8 @@ return (
           fontSize: "15px",
           wordBreak: "break-word",
           overflowWrap: "anywhere",
+          whiteSpace: "normal",
+          maxWidth: "100%",
         }}
         dangerouslySetInnerHTML={{
   __html:
@@ -1296,7 +1509,7 @@ return (
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        zIndex: 999999,
+        zIndex: 10000000,
       }}
     >
       <div

@@ -146,16 +146,6 @@ export default function StatisticsPage() {
       return "Y khoa";
     }
 
-    // -------------------------
-    // DƯỢC HỌC
-    // -------------------------
-
-    if (
-      value.includes("DA") ||
-      value.startsWith("DH")
-    ) {
-      return "Dược học";
-    }
 
     // -------------------------
     // ĐIỀU DƯỠNG
@@ -167,6 +157,16 @@ export default function StatisticsPage() {
       value.startsWith("DDA")
     ) {
       return "Điều dưỡng";
+    }
+     // -------------------------
+    // DƯỢC HỌC
+    // -------------------------
+
+    if (
+      value.includes("DA") ||
+      value.startsWith("DH")
+    ) {
+      return "Dược học";
     }
 
     // -------------------------
@@ -184,18 +184,13 @@ export default function StatisticsPage() {
   };
 
   // =========================================================
-  // KIỂM TRA TRẠNG THÁI
-  // Đủ cả 5 tiêu chí = Đạt
+  // KIỂM TRA TRẠNG THÁI THEO XÉT DUYỆT
+  // Trạng thái 'da_dat' = Đạt
+  // Trạng thái khác = Chưa đạt / Chưa đánh giá
   // =========================================================
 
   const isPassed = (sv: any) => {
-    return (
-      !!sv["dao-duc"] &&
-      !!sv["hoc-tap"] &&
-      !!sv["the-luc"] &&
-      !!sv["tinh-nguyen"] &&
-      !!sv["hoi-nhap"]
-    );
+    return (sv?.trang_thai || "chua_danh_gia") === "da_dat";
   };
 
   // =========================================================

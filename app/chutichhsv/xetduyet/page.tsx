@@ -19,12 +19,27 @@ export default function ChuTichXetDuyetPage() {
     useState(0);
   const [totalStudents, setTotalStudents] =
     useState(0);
-  const [approvedCount, setApprovedCount] =
-    useState(0);
   const [tab, setTab] = useState("");
   const [showCriteria, setShowCriteria] =
     useState(false);
   const [approvers, setApprovers] = useState<Record<string, string>>({});
+  const [savingStatus, setSavingStatus] = useState(false);
+  const [savingNote, setSavingNote] = useState(false);
+  const [quickApproveState, setQuickApproveState] = useState<Record<string, boolean>>({});
+
+  const isReviewedStatus = (status?: string) =>
+    (status || "chua_danh_gia") !== "chua_danh_gia";
+
+  const hasAchievementApproval = (
+    status?: string,
+    approverId?: string
+  ) => (status || "chua_danh_gia") === "da_dat" && !!approverId;
+
+const isApprovalToggled = (student: any) =>
+  !!student?.da_duyet;
+
+const approvalLabel = (student: any) =>
+  isApprovalToggled(student) ? "Đã duyệt" : "Chưa duyệt";
 
   useEffect(() => {
     checkAccount();
@@ -178,10 +193,17 @@ export default function ChuTichXetDuyetPage() {
     }
   }
 
-  const pendingCount =
-    submittedCount - approvedCount > 0
-      ? submittedCount - approvedCount
-      : 0;
+  const approvedCount = students.filter(
+    (sv) =>
+      (sv.trang_thai || "chua_danh_gia") !==
+      "chua_danh_gia"
+  ).length;
+
+  const pendingCount = students.filter(
+    (sv) =>
+      (sv.trang_thai || "chua_danh_gia") ===
+      "chua_danh_gia"
+  ).length;
 
   const submissionPercent =
     totalStudents > 0
@@ -189,6 +211,230 @@ export default function ChuTichXetDuyetPage() {
           (submittedCount / totalStudents) * 100
         )
       : 0;
+
+  async function updateTrangThai(
+    studentId: string,
+    value: string
+  ) {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      alert("Không xác định được tài khoản Chủ tịch HSV.");
+      return;
+    }
+
+    setSavingStatus(true);
+
+const { data, error } = await supabase
+  .from("profiles")
+.update({
+  trang_thai: value,
+  nguoi_duyet_id:
+    value === "chua_danh_gia" ? null : user.id,
+})
+  .eq("id", studentId)
+  .select("id, trang_thai, nguoi_duyet_id, ghi_chu, da_duyet")
+  .single();
+
+    if (error) {
+      console.error("LỖI CẬP NHẬT TRẠNG THÁI:", error);
+      alert("Cập nhật trạng thái thất bại: " + error.message);
+      return;
+    }
+
+    setStudents((prev) =>
+      prev.map((student) =>
+        student.id === studentId
+          ? { ...student, ...data }
+          : student
+      )
+    );
+
+    setSelectedStudent((prev: any) =>
+      prev?.id === studentId
+        ? { ...prev, ...data }
+        : prev
+    );
+
+    if (data?.nguoi_duyet_id) {
+      const { data: approverData } = await supabase
+        .from("profiles")
+        .select("id, ho_ten")
+        .eq("id", data.nguoi_duyet_id)
+        .single();
+
+      if (approverData) {
+        setApprovers((prev) => ({
+          ...prev,
+          [approverData.id]: approverData.ho_ten,
+        }));
+      }
+    }
+  }
+
+async function handleQuickApprove(student: any) {
+  const alreadyApproved = isApprovalToggled(student);
+
+  setSavingStatus(true);
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({
+      da_duyet: !alreadyApproved,
+    })
+    .eq("id", student.id)
+    .select("id, da_duyet")
+    .single();
+
+  setSavingStatus(false);
+
+  if (error) {
+    console.error("LỖI CẬP NHẬT TRẠNG THÁI DUYỆT:", error);
+    alert("Cập nhật trạng thái duyệt thất bại: " + error.message);
+    return;
+  }
+
+  setStudents((prev) =>
+    prev.map((item) =>
+      item.id === student.id
+        ? { ...item, da_duyet: data.da_duyet }
+        : item
+    )
+  );
+
+  setSelectedStudent((prev: any) =>
+    prev?.id === student.id
+      ? { ...prev, da_duyet: data.da_duyet }
+      : prev
+  );
+}
+async function handleApproveAll() {
+  if (students.length === 0) return;
+
+  const allApproved = students.every(
+    (student) => student.da_duyet === true
+  );
+
+  const newApprovalState = !allApproved;
+
+  setSavingStatus(true);
+
+  const studentIds = students.map((student) => student.id);
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({
+      da_duyet: newApprovalState,
+    })
+    .in("id", studentIds)
+    .select("id, da_duyet");
+
+  setSavingStatus(false);
+
+  if (error) {
+    console.error(
+      "LỖI DUYỆT TẤT CẢ:",
+      error
+    );
+
+    alert(
+      "Cập nhật trạng thái duyệt thất bại: " +
+        error.message
+    );
+
+    return;
+  }
+
+  const updatedMap: Record<string, boolean> = {};
+
+  (data || []).forEach((item) => {
+    updatedMap[item.id] = item.da_duyet;
+  });
+
+  setStudents((prev) =>
+    prev.map((student) =>
+      updatedMap[student.id] !== undefined
+        ? {
+            ...student,
+            da_duyet: updatedMap[student.id],
+          }
+        : student
+    )
+  );
+
+  setSelectedStudent((prev: any) =>
+    prev && updatedMap[prev.id] !== undefined
+      ? {
+          ...prev,
+          da_duyet: updatedMap[prev.id],
+        }
+      : prev
+  );
+}
+  async function updateGhiChu(
+    studentId: string,
+    value: string
+  ) {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return;
+    }
+
+    setSavingNote(true);
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({
+  ghi_chu: value,
+  nguoi_duyet_id: user.id,
+})
+      .eq("id", studentId)
+      .select("id, ghi_chu, nguoi_duyet_id, da_duyet")
+      .single();
+
+    setSavingNote(false);
+
+    if (error) {
+      console.error("LỖI TỰ ĐỘNG LƯU GHI CHÚ:", error);
+      return;
+    }
+
+    setStudents((prev) =>
+      prev.map((student) =>
+        student.id === studentId
+          ? { ...student, ...data }
+          : student
+      )
+    );
+
+    setSelectedStudent((prev: any) =>
+      prev?.id === studentId
+        ? { ...prev, ...data }
+        : prev
+    );
+
+    if (data?.nguoi_duyet_id) {
+      const { data: approverData } = await supabase
+        .from("profiles")
+        .select("id, ho_ten")
+        .eq("id", data.nguoi_duyet_id)
+        .single();
+
+      if (approverData) {
+        setApprovers((prev) => ({
+          ...prev,
+          [approverData.id]: approverData.ho_ten,
+        }));
+      }
+    }
+  }
 
   return (
     <div
@@ -430,9 +676,9 @@ export default function ChuTichXetDuyetPage() {
                   style={{
                     display: "grid",
                     gridTemplateColumns:
-                      "repeat(auto-fit, minmax(210px, 1fr))",
-                    gap: "16px",
-                    marginBottom: "25px",
+                      "repeat(auto-fit, minmax(160px, 1fr))",
+                    gap: "12px",
+                    marginBottom: "18px",
                   }}
                 >
                   {/* ĐÃ NỘP */}
@@ -442,8 +688,8 @@ export default function ChuTichXetDuyetPage() {
                       background: "#fff",
                       border:
                         "1px solid #e2e8f0",
-                      borderRadius: "16px",
-                      padding: "21px",
+                      borderRadius: "14px",
+                      padding: "16px 14px",
                       boxShadow:
                         "0 2px 8px rgba(15,23,42,0.04)",
                     }}
@@ -453,9 +699,9 @@ export default function ChuTichXetDuyetPage() {
                         color:
                           "#64748b",
                         fontSize:
-                          "14px",
+                          "12px",
                         marginBottom:
-                          "9px",
+                          "6px",
                       }}
                     >
                       Hồ sơ đã nộp
@@ -464,10 +710,11 @@ export default function ChuTichXetDuyetPage() {
                     <div
                       style={{
                         fontSize:
-                          "30px",
+                          "24px",
                         fontWeight: 700,
                         color:
                           "#0f172a",
+                        lineHeight: 1.1,
                       }}
                     >
                       {submittedCount}
@@ -476,7 +723,7 @@ export default function ChuTichXetDuyetPage() {
                     <div
                       style={{
                         fontSize:
-                          "13px",
+                          "11px",
                         color:
                           "#64748b",
                         marginTop:
@@ -506,9 +753,9 @@ export default function ChuTichXetDuyetPage() {
                         color:
                           "#64748b",
                         fontSize:
-                          "14px",
+                          "12px",
                         marginBottom:
-                          "9px",
+                          "6px",
                       }}
                     >
                       Đã xét duyệt
@@ -517,10 +764,11 @@ export default function ChuTichXetDuyetPage() {
                     <div
                       style={{
                         fontSize:
-                          "30px",
+                          "24px",
                         fontWeight: 700,
                         color:
                           "#16a34a",
+                        lineHeight: 1.1,
                       }}
                     >
                       {approvedCount}
@@ -529,7 +777,7 @@ export default function ChuTichXetDuyetPage() {
                     <div
                       style={{
                         fontSize:
-                          "13px",
+                          "11px",
                         color:
                           "#64748b",
                         marginTop:
@@ -548,8 +796,8 @@ export default function ChuTichXetDuyetPage() {
                       background: "#fff",
                       border:
                         "1px solid #e2e8f0",
-                      borderRadius: "16px",
-                      padding: "21px",
+                      borderRadius: "14px",
+                      padding: "16px 14px",
                       boxShadow:
                         "0 2px 8px rgba(15,23,42,0.04)",
                     }}
@@ -559,9 +807,9 @@ export default function ChuTichXetDuyetPage() {
                         color:
                           "#64748b",
                         fontSize:
-                          "14px",
+                          "12px",
                         marginBottom:
-                          "9px",
+                          "6px",
                       }}
                     >
                       Chưa xét
@@ -570,10 +818,11 @@ export default function ChuTichXetDuyetPage() {
                     <div
                       style={{
                         fontSize:
-                          "30px",
+                          "24px",
                         fontWeight: 700,
                         color:
                           "#d97706",
+                        lineHeight: 1.1,
                       }}
                     >
                       {pendingCount}
@@ -582,7 +831,7 @@ export default function ChuTichXetDuyetPage() {
                     <div
                       style={{
                         fontSize:
-                          "13px",
+                          "11px",
                         color:
                           "#64748b",
                         marginTop:
@@ -600,8 +849,8 @@ export default function ChuTichXetDuyetPage() {
                       background: "#fff",
                       border:
                         "1px solid #e2e8f0",
-                      borderRadius: "16px",
-                      padding: "21px",
+                      borderRadius: "14px",
+                      padding: "16px 14px",
                       boxShadow:
                         "0 2px 8px rgba(15,23,42,0.04)",
                     }}
@@ -611,9 +860,9 @@ export default function ChuTichXetDuyetPage() {
                         color:
                           "#64748b",
                         fontSize:
-                          "14px",
+                          "12px",
                         marginBottom:
-                          "9px",
+                          "6px",
                       }}
                     >
                       Tổng sinh viên
@@ -622,10 +871,11 @@ export default function ChuTichXetDuyetPage() {
                     <div
                       style={{
                         fontSize:
-                          "30px",
+                          "24px",
                         fontWeight: 700,
                         color:
                           "#2563eb",
+                        lineHeight: 1.1,
                       }}
                     >
                       {totalStudents}
@@ -634,7 +884,7 @@ export default function ChuTichXetDuyetPage() {
                     <div
                       style={{
                         fontSize:
-                          "13px",
+                          "11px",
                         color:
                           "#64748b",
                         marginTop:
@@ -775,66 +1025,99 @@ export default function ChuTichXetDuyetPage() {
                       "0 2px 8px rgba(15,23,42,0.04)",
                   }}
                 >
+                <div
+  style={{
+    padding: "22px 25px",
+    borderBottom: "1px solid #e2e8f0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "20px",
+  }}
+>
+  <div>
+    <h2
+      style={{
+        margin: 0,
+        fontSize: "18px",
+        fontWeight: 700,
+        color: "#0f172a",
+      }}
+    >
+      Danh sách hồ sơ đã nộp
+    </h2>
+
+    <div
+      style={{
+        marginTop: "5px",
+        fontSize: "13px",
+        color: "#64748b",
+      }}
+    >
+      Có{" "}
+      <strong
+        style={{
+          color: "#2563eb",
+        }}
+      >
+        {students.length}
+      </strong>{" "}
+      hồ sơ đang chờ xử lý
+    </div>
+  </div>
+
+  <button
+    type="button"
+    onClick={handleApproveAll}
+    disabled={savingStatus || students.length === 0}
+    style={{
+      border: "1px solid #16a34a",
+      background: students.length > 0 &&
+        students.every(
+          (student) => student.da_duyet === true
+        )
+        ? "#dcfce7"
+        : "#16a34a",
+      color: students.length > 0 &&
+        students.every(
+          (student) => student.da_duyet === true
+        )
+        ? "#166534"
+        : "#fff",
+      padding: "9px 16px",
+      borderRadius: "9px",
+      fontSize: "13px",
+      fontWeight: 600,
+      cursor:
+        savingStatus || students.length === 0
+          ? "not-allowed"
+          : "pointer",
+      opacity:
+        savingStatus || students.length === 0
+          ? 0.6
+          : 1,
+      whiteSpace: "nowrap",
+    }}
+  >
+    {students.length > 0 &&
+    students.every(
+      (student) => student.da_duyet === true
+    )
+      ? "Bỏ duyệt tất cả"
+      : "Duyệt tất cả"}
+  </button>
+    </div>
+
                   <div
                     style={{
-                      padding:
-                        "22px 25px",
-                      borderBottom:
-                        "1px solid #e2e8f0",
-                    }}
-                  >
-                    <h2
-                      style={{
-                        margin: 0,
-                        fontSize:
-                          "18px",
-                        fontWeight: 700,
-                        color:
-                          "#0f172a",
-                      }}
-                    >
-                      Danh sách hồ sơ
-                      đã nộp
-                    </h2>
-
-                    <div
-                      style={{
-                        marginTop:
-                          "5px",
-                        fontSize:
-                          "13px",
-                        color:
-                          "#64748b",
-                      }}
-                    >
-                      Có{" "}
-                      <strong
-                        style={{
-                          color:
-                            "#2563eb",
-                        }}
-                      >
-                        {students.length}
-                      </strong>{" "}
-                      hồ sơ đang chờ
-                      xử lý
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      overflowX:
-                        "auto",
+                      overflowX:"auto",
                     }}
                   >
                     <table
                       style={{
-                        width:
-                          "100%",
-                        borderCollapse:
-                          "collapse",
-                        minWidth:
-                          "950px",
+                        width: "100%",
+                        borderCollapse:"collapse",
+                        minWidth: "950px",
                       }}
                     >
                       <thead>
@@ -932,7 +1215,20 @@ export default function ChuTichXetDuyetPage() {
                                 "nowrap",
                             }}
                           >
-                            Lịch sử
+                            Ghi chú
+                          </th>
+
+                          <th
+                            style={{
+                              padding:
+                                "14px 16px",
+                              textAlign:
+                                "center",
+                              whiteSpace:
+                                "nowrap",
+                            }}
+                          >
+                            Duyệt
                           </th>
 
                           <th
@@ -1096,20 +1392,18 @@ export default function ChuTichXetDuyetPage() {
                                     "normal",
                                 }}
                               >
-                                {sv.nguoi_duyet_id ? (
-                                  <span
-                                    style={{
-                                      color:
-                                        "#15803d",
-                                      fontWeight: 600,
-                                    }}
-                                  >
-                                    {approvers[sv.nguoi_duyet_id] ||
-                                      "Đã duyệt"}
-                                  </span>
-                                ) : (
-                                  "Chưa có"
-                                )}
+                                <span
+  style={{
+    color: "#475569",
+    fontWeight: 600,
+  }}
+>
+  {sv.trang_thai === "chua_danh_gia"
+    ? "Chưa có"
+    : sv.nguoi_duyet_id
+      ? approvers[sv.nguoi_duyet_id] || "Đang tải..."
+      : "Chưa có"}
+</span>
                               </td>
 
                               <td
@@ -1146,7 +1440,51 @@ export default function ChuTichXetDuyetPage() {
                                       "pointer",
                                   }}
                                 >
-                                  Xem lịch sử
+                                  Xem ghi chú
+                                </button>
+                              </td>
+
+                              <td
+                                style={{
+                                  padding:
+                                    "14px 16px",
+                                  textAlign:
+                                    "center",
+                                }}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleQuickApprove(sv);
+                                  }}
+                                  disabled={savingStatus}
+                                  style={{
+                                    border:
+                                      "1px solid #16a34a",
+                                    background:
+                                      isApprovalToggled(sv)
+                                        ? "#dcfce7"
+                                        : "#fff",
+                                    color:
+                                      isApprovalToggled(sv)
+                                        ? "#166534"
+                                        : "#16a34a",
+                                    padding:
+                                      "7px 12px",
+                                    borderRadius:
+                                      "8px",
+                                    fontSize:
+                                      "13px",
+                                    fontWeight:
+                                      600,
+                                    cursor: savingStatus
+                                      ? "not-allowed"
+                                      : "pointer",
+                                  }}
+                                >
+                                  {isApprovalToggled(sv)
+                                    ? "Đã duyệt"
+                                    : "Duyệt"}
                                 </button>
                               </td>
 
@@ -1330,36 +1668,124 @@ export default function ChuTichXetDuyetPage() {
             >
               <div
                 style={{
-                  fontSize:
-                    "14px",
-                  fontWeight: 600,
-                  color:
-                    "#0f172a",
-                  marginBottom:
-                    "8px",
+                  display: "grid",
+                  gap: "16px",
                 }}
               >
-                {selectedStudent.trang_thai || "chua_danh_gia"}
-              </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      color: "#334155",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Trạng thái hồ sơ
+                  </div>
 
-              <div
-                style={{
-                  fontSize:
-                    "13px",
-                  color:
-                    "#64748b",
-                  lineHeight: 1.5,
-                }}
-              >
-                {selectedStudent.nguoi_duyet_id ? (
-                  <>
-                    Người duyệt: <strong>{approvers[selectedStudent.nguoi_duyet_id] || "Đã duyệt"}</strong>
-                    <br />
-                  </>
-                ) : (
-                  "Chưa có người duyệt\n"
-                )}
-                Ghi chú: {selectedStudent.ghi_chu || "Chưa có ghi chú"}
+                  <select
+                    value={selectedStudent.trang_thai || "chua_danh_gia"}
+                    onChange={(e) =>
+                      updateTrangThai(
+                        selectedStudent.id,
+                        e.target.value
+                      )
+                    }
+                    disabled={savingStatus}
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "10px",
+                      border: "1px solid #cbd5e1",
+                      background: "#fff",
+                      color: "#0f172a",
+                      fontSize: "14px",
+                      cursor: savingStatus ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    <option value="chua_danh_gia">Chưa đánh giá</option>
+                    <option value="can_xem_xet">Cần xem xét</option>
+                    <option value="da_dat">Hồ sơ đã đạt</option>
+                    <option value="khong_dat">Hồ sơ không đạt</option>
+                  </select>
+                </div>
+
+                <div>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      color: "#334155",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Ghi chú
+                  </div>
+
+                  <textarea
+                    value={selectedStudent.ghi_chu || ""}
+                    onChange={(e) =>
+                      setSelectedStudent((prev: any) =>
+                        prev
+                          ? { ...prev, ghi_chu: e.target.value }
+                          : prev
+                      )
+                    }
+                    rows={6}
+                    placeholder="Nhập ghi chú xét duyệt..."
+                    style={{
+                      width: "100%",
+                      resize: "vertical",
+                      border: "1px solid #cbd5e1",
+                      borderRadius: "10px",
+                      padding: "10px 12px",
+                      fontSize: "14px",
+                      boxSizing: "border-box",
+                      color: "#0f172a",
+                      background: "#fff",
+                    }}
+                  />
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "10px",
+                    fontSize: "13px",
+                    color: "#64748b",
+                  }}
+                >
+                  <span>
+                    <>
+                      Trạng thái duyệt: <strong>{approvalLabel(selectedStudent)}</strong>
+                    </>
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateGhiChu(
+                        selectedStudent.id,
+                        selectedStudent.ghi_chu || ""
+                      )
+                    }
+                    disabled={savingNote}
+                    style={{
+                      padding: "9px 14px",
+                      borderRadius: "9px",
+                      border: "1px solid #2563eb",
+                      background: savingNote ? "#bfdbfe" : "#2563eb",
+                      color: "#fff",
+                      fontWeight: 600,
+                      cursor: savingNote ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {savingNote ? "Đang lưu..." : "Lưu ghi chú"}
+                  </button>
+                </div>
               </div>
             </div>
 
