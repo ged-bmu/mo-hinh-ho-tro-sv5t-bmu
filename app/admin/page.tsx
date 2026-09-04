@@ -21,7 +21,6 @@ export default function AdminPage() {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [notificationTitle, setNotificationTitle] = useState("");
   const [notificationContent, setNotificationContent] = useState("");
-  const [isOpen, setIsOpen] = useState(true);
   const [selectedPassed, setSelectedPassed] = useState<string[] | null>(null);
   const totalStudents = students.length;
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -104,24 +103,7 @@ useEffect(() => {
     supabase.removeChannel(channel);
   };
 }, []);
-async function toggleSubmission() {
-  const newStatus = !isOpen;
 
-  const { error } = await supabase
-    .from("site_settings")
-    .update({
-      submission_open: newStatus,
-    })
-    .eq("id", 1);
-
-  if (error) {
-    console.error(error);
-    alert("Không thể thay đổi trạng thái nhận hồ sơ.");
-    return;
-  }
-
-  setIsOpen(newStatus);
-}
 async function sendGeneralNotification() {
   if (!notificationContent.trim()) {
     alert("Vui lòng nhập nội dung thông báo.");
@@ -284,20 +266,6 @@ async function sendGeneralNotification() {
 
   setProfile(data);
 
-  // Lấy trạng thái nhận hồ sơ
-  const { data: setting, error: settingError } = await supabase
-    .from("site_settings")
-    .select("submission_open")
-    .eq("id", 1)
-    .single();
-
-  if (settingError) {
-    console.error("Lỗi lấy trạng thái nhận hồ sơ:", settingError);
-  }
-
-  if (setting) {
-    setIsOpen(setting.submission_open);
-  }
 
   // Lấy danh sách sinh viên
   const { data: studentsData } = await supabase
@@ -602,29 +570,6 @@ const exportExcel = async () => {
     paddingRight: "20px",
   }}
 >
-  <button
-    type="button"
-    onClick={toggleSubmission}
-    style={{
-      padding: "12px 18px",
-      borderRadius: "10px",
-      border: "none",
-      background: "#2563eb",
-      color: "#fff",
-      fontWeight: 600,
-      cursor: "pointer",
-      transition: "all .2s ease",
-      whiteSpace: "nowrap",
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.background = "#1d4ed8";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.background = "#2563eb";
-    }}
-  >
-    Nhận hồ sơ&nbsp;&nbsp;|&nbsp;&nbsp;{isOpen ? "Mở" : "Đóng"}
-  </button>
 
   <button
     type="button"

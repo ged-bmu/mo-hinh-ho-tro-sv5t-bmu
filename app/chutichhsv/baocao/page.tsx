@@ -60,8 +60,6 @@ export default function StatisticsPage() {
         window.location.href = "/";
         return;
       }
-
-      // Kiểm tra quyền Chủ tịch HSV
       if (
         !profileData?.roles?.includes(
           "chu_tich_hsv"
@@ -491,118 +489,65 @@ export default function StatisticsPage() {
                   TIÊU ĐỀ
               ================================================= */}
 
-              <div
-                style={{
-                  background: "#fff",
-                  border:
-                    "1px solid #e2e8f0",
-                  borderRadius:
-                    "14px",
-                  padding:
-                    "20px 22px",
-                  marginBottom:
-                    "18px",
-                  boxShadow:
-                    "0 2px 8px rgba(15,23,42,0.04)",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent:
-                      "space-between",
-                    alignItems:
-                      "center",
-                    gap: "15px",
-                    flexWrap:
-                      "wrap",
-                  }}
-                >
-                  <div>
-                    <div
-                      style={{
-                        fontSize:
-                          "12px",
-                        color:
-                          "#64748b",
-                        marginBottom:
-                          "5px",
-                      }}
-                    >
-                      Chủ tịch Hội Sinh
-                      viên Trường
-                    </div>
+<div
+  style={{
+    background: "linear-gradient(135deg, #1d4ed8, #2563eb)",
+    borderRadius: "20px",
+    padding: "20px 24px",
+    color: "#fff",
+    marginBottom: "25px",
+    boxShadow: "0 8px 25px rgba(37, 99, 235, 0.18)",
+  }}
+>
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: "10px",
+      flexWrap: "wrap",
+    }}
+  >
+    <div>
+      <h1
+        style={{
+          margin: 0,
+          fontSize: "24px",
+          fontWeight: 700,
+        }}
+      >
+        📊 Thống kê hồ sơ Sinh viên 5 tốt
+      </h1>
 
-                    <h1
-                      style={{
-                        margin: 0,
-                        fontSize:
-                          "22px",
-                        fontWeight: 700,
-                        color:
-                          "#0f172a",
-                      }}
-                    >
-                      📊 Thống kê hồ sơ
-                      Sinh viên 5 tốt
-                    </h1>
+      <p
+        style={{
+          margin: "6px 0 0",
+          fontSize: "13px",
+          opacity: 0.9,
+        }}
+      >
+        Chỉ thống kê các hồ sơ đã nộp
+      </p>
+    </div>
 
-                    <p
-                      style={{
-                        margin:
-                          "6px 0 0",
-                        color:
-                          "#64748b",
-                        fontSize:
-                          "13px",
-                      }}
-                    >
-                      Chỉ thống kê các hồ
-                      sơ đã nộp
-                    </p>
-                  </div>
-
-                  {/* TỔNG ĐÃ NỘP */}
-
-                  <div
-                    style={{
-                      background:
-                        "#dbeafe",
-                      color:
-                        "#1e40af",
-                      padding:
-                        "10px 16px",
-                      borderRadius:
-                        "10px",
-                      textAlign:
-                        "center",
-                      minWidth:
-                        "125px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize:
-                          "12px",
-                        marginBottom:
-                          "3px",
-                      }}
-                    >
-                      Hồ sơ đã nộp
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize:
-                          "25px",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {totalSubmitted}
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <div
+      style={{
+        width: "64px",
+        height: "64px",
+        borderRadius: "18px",
+        background: "rgba(255,255,255,0.15)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "30px",
+        border: "1px solid rgba(255,255,255,0.2)",
+        flexShrink: 0,
+      }}
+    >
+      📊
+    </div>
+  </div>
+</div>
 {/* =================================================
     THỐNG KÊ THEO NGÀNH
 ================================================= */}

@@ -31,7 +31,7 @@ export default function ChuTichHSVPage() {
 
     const { data } = await supabase
       .from("profiles")
-      .select("ho_ten, email, roles")
+      .select("ho_ten, email, roles, chuc_danh")
       .eq("id", user.id)
       .single();
 
@@ -149,7 +149,7 @@ export default function ChuTichHSVPage() {
                         fontWeight: 500,
                       }}
                     >
-                      HỆ THỐNG QUẢN LÝ HỘI SINH VIÊN
+                      HỆ THỐNG QUẢN LÝ VÀ XÉT DUYỆT HỒ SƠ SINH VIÊN 5 TỐT
                     </div>
 
                     <h1
@@ -160,8 +160,7 @@ export default function ChuTichHSVPage() {
                         lineHeight: 1.3,
                       }}
                     >
-                      Chủ tịch Hội Sinh viên Việt Nam Trường Đại học
-                      Y Dược Buôn Ma Thuột
+                      Hội Sinh viên Việt Nam Trường Đại học Y Dược Buôn Ma Thuột
                     </h1>
                   </div>
 
@@ -244,7 +243,7 @@ export default function ChuTichHSVPage() {
                         color: "#0f172a",
                       }}
                     >
-                      Xin chào, Đồng chí {profile?.ho_ten} - Chủ tịch Hội Sinh viên Trường
+                      Xin chào, Đồng chí {profile?.ho_ten} - {profile?.chuc_danh} Hội Sinh viên Trường
                     </div>
                   </div>
                 </div>
@@ -277,7 +276,7 @@ export default function ChuTichHSVPage() {
                     fontSize: "14px",
                   }}
                 >
-                  Quản lý và theo dõi hoạt động của Ban Chấp hành
+                  Quản lý và theo dõi hoạt động của Ban Chấp hành Hội Sinh viên Trường
                 </p>
               </div>
 

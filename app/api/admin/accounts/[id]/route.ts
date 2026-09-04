@@ -220,7 +220,18 @@ export async function DELETE(
         { status: 403 }
       );
     }
+    // Bỏ liên kết người duyệt trước khi xóa tài khoản BCH
+const { error: clearApproverError } = await supabaseAdmin
+  .from("profiles")
+  .update({ nguoi_duyet_id: null })
+  .eq("nguoi_duyet_id", id);
 
+if (clearApproverError) {
+  return NextResponse.json(
+    { error: clearApproverError.message },
+    { status: 500 }
+  );
+}
     // Xóa Auth trước
     const { error: deleteAuthError } =
       await supabaseAdmin.auth.admin.deleteUser(id);

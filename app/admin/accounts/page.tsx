@@ -398,7 +398,7 @@ export default function AccountsPage() {
                       letterSpacing: "0.3px",
                     }}
                   >
-                    HỆ THỐNG QUẢN LÝ HỘI SINH VIÊN
+                    HỆ THỐNG QUẢN LÝ HỒ SƠ SINH VIÊN 5 TỐT
                   </div>
 
                   <h1
@@ -528,8 +528,7 @@ export default function AccountsPage() {
                       fontSize: "13px",
                     }}
                   >
-                    Thêm tài khoản Chủ tịch hoặc thành
-                    viên BCH.
+                    Thêm tài khoản quyền Chủ tịch hoặc quyền BCH.
                   </p>
                 </div>
               </div>

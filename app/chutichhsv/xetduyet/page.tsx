@@ -7,26 +7,27 @@ import Header from "../../components/Header";
 import CriteriaModal from "../../components/CriteriaModal";
 import Footer from "../../components/Footer";
 import SidebarChutichhsv from "../sidebarchutichhsv/page";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 export default function ChuTichXetDuyetPage() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
-  const [selectedStudent, setSelectedStudent] =
-    useState<any>(null);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [showProfile, setShowProfile] = useState(false);
-  const [submittedCount, setSubmittedCount] =
-    useState(0);
-  const [totalStudents, setTotalStudents] =
-    useState(0);
+  const [submittedCount, setSubmittedCount] = useState(0);
+  const [totalStudents, setTotalStudents] = useState(0);
   const [tab, setTab] = useState("");
-  const [showCriteria, setShowCriteria] =
-    useState(false);
+  const [showCriteria, setShowCriteria] = useState(false);
   const [approvers, setApprovers] = useState<Record<string, string>>({});
   const [savingStatus, setSavingStatus] = useState(false);
   const [savingNote, setSavingNote] = useState(false);
   const [quickApproveState, setQuickApproveState] = useState<Record<string, boolean>>({});
-
+  const [isOpen, setIsOpen] = useState(true);
+  const [savingSubmission, setSavingSubmission] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
   const isReviewedStatus = (status?: string) =>
     (status || "chua_danh_gia") !== "chua_danh_gia";
 
@@ -94,6 +95,24 @@ const approvalLabel = (student: any) =>
       }
 
       setProfile(profileData);
+      // LẤY TRẠNG THÁI NHẬN HỒ SƠ
+const {
+  data: setting,
+  error: settingError,
+} = await supabase
+  .from("site_settings")
+  .select("submission_open")
+  .eq("id", 1)
+  .single();
+
+if (settingError) {
+  console.error(
+    "Lỗi lấy trạng thái nhận hồ sơ:",
+    settingError
+  );
+} else if (setting) {
+  setIsOpen(setting.submission_open);
+}
 
       // TỔNG SINH VIÊN
 
@@ -211,7 +230,35 @@ const approvalLabel = (student: any) =>
           (submittedCount / totalStudents) * 100
         )
       : 0;
+async function toggleSubmission() {
+  const newStatus = !isOpen;
 
+  setSavingSubmission(true);
+
+  const { error } = await supabase
+    .from("site_settings")
+    .update({
+      submission_open: newStatus,
+    })
+    .eq("id", 1);
+
+  setSavingSubmission(false);
+
+  if (error) {
+    console.error(
+      "Lỗi thay đổi trạng thái nhận hồ sơ:",
+      error
+    );
+
+    alert(
+      "Không thể thay đổi trạng thái nhận hồ sơ."
+    );
+
+    return;
+  }
+
+  setIsOpen(newStatus);
+}
   async function updateTrangThai(
     studentId: string,
     value: string
@@ -435,7 +482,114 @@ async function handleApproveAll() {
       }
     }
   }
+const filteredStudents = students.filter((student) => {
+  const keyword = searchText.trim().toLowerCase();
 
+  const matchesSearch =
+    !keyword ||
+    String(student.ho_ten || "").toLowerCase().includes(keyword) ||
+    String(student.lop || "").toLowerCase().includes(keyword) ||
+    String(student.mssv || "").toLowerCase().includes(keyword);
+
+  const matchesStatus =
+    filterStatus === "all" ||
+    (student.trang_thai || "chua_danh_gia") === filterStatus;
+
+  return matchesSearch && matchesStatus;
+});
+const exportExcel = async () => {
+  try {
+    const workbook = new ExcelJS.Workbook();
+
+    const worksheet = workbook.addWorksheet("Danh sách SV5T");
+
+    worksheet.mergeCells("A1:D1");
+
+    worksheet.getCell("A1").value =
+      "DANH SÁCH SINH VIÊN ĐẠT DANH HIỆU SINH VIÊN 5 TỐT CẤP TRƯỜNG";
+
+    worksheet.getCell("A1").font = {
+      bold: true,
+      size: 16,
+    };
+
+    worksheet.getCell("A1").alignment = {
+      horizontal: "center",
+    };
+
+    worksheet.addRow([]);
+
+    worksheet.addRow([
+      "STT",
+      "Họ tên",
+      "Lớp",
+      "MSSV",
+    ]);
+
+    const headerRow = worksheet.getRow(3);
+
+    headerRow.font = {
+      bold: true,
+    };
+
+    headerRow.alignment = {
+      horizontal: "center",
+    };
+
+    filteredStudents.forEach((sv, index) => {
+      worksheet.addRow([
+        index + 1,
+        sv.ho_ten,
+        sv.lop,
+        sv.mssv,
+      ]);
+    });
+
+    worksheet.columns = [
+      {
+        width: 10,
+      },
+      {
+        width: 40,
+      },
+      {
+        width: 20,
+      },
+      {
+        width: 20,
+      },
+    ];
+
+    worksheet.eachRow((row) => {
+      row.eachCell((cell) => {
+        cell.border = {
+          top: {
+            style: "thin",
+          },
+          left: {
+            style: "thin",
+          },
+          bottom: {
+            style: "thin",
+          },
+          right: {
+            style: "thin",
+          },
+        };
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    saveAs(
+      new Blob([buffer]),
+      "DanhSachSV5T.xlsx"
+    );
+  } catch (error) {
+    console.error("Lỗi xuất Excel:", error);
+    alert("Không thể xuất file Excel.");
+  }
+};
   return (
     <div
       style={{
@@ -610,62 +764,67 @@ async function handleApproveAll() {
                     </span>
                   </button>
 
-                  <div
-                    style={{
-                      background: "#fff",
-                      border:
-                        "1px solid #e2e8f0",
-                      borderRadius: "18px",
-                      padding: "26px",
-                      boxShadow:
-                        "0 2px 8px rgba(15,23,42,0.04)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "13px",
-                        color: "#64748b",
-                        marginBottom: "7px",
-                      }}
-                    >
-                      Chủ tịch Hội Sinh viên
-                      Trường
-                    </div>
+<div
+  style={{
+    background: "linear-gradient(135deg, #1d4ed8, #2563eb)",
+    borderRadius: "20px",
+    padding: "20px 24px",
+    color: "#fff",
+    marginBottom: "25px",
+    boxShadow: "0 8px 25px rgba(37, 99, 235, 0.18)",
+  }}
+>
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: "10px",
+      flexWrap: "wrap",
+    }}
+  >
+    <div>
+      <div
+        style={{
+          fontSize: "13px",
+          opacity: 0.85,
+          marginBottom: "8px",
+          fontWeight: 500,
+          letterSpacing: "0.3px",
+        }}
+      >
+        HỆ THỐNG QUẢN LÝ HỒ SƠ SINH VIÊN 5 TỐT
+      </div>
 
-                    <h1
-                      style={{
-                        margin: 0,
-                        fontSize: "27px",
-                        fontWeight: 700,
-                        color: "#0f172a",
-                      }}
-                    >
-                      Xét duyệt hồ sơ Sinh
-                      viên 5 tốt cấp trường,
-                      năm học 2025 - 2026
-                    </h1>
+      <h1
+        style={{
+          margin: 0,
+          fontSize: "24px",
+          fontWeight: 700,
+        }}
+      >
+        Xét duyệt hồ sơ Sinh viên 5 tốt
+      </h1>
+    </div>
 
-                    <p
-                      style={{
-                        margin:
-                          "8px 0 0",
-                        color:
-                          "#64748b",
-                        fontSize:
-                          "15px",
-                      }}
-                    >
-                      Xin chào{" "}
-                      <strong
-                        style={{
-                          color:
-                            "#2563eb",
-                        }}
-                      >
-                        {profile?.ho_ten}
-                      </strong>
-                    </p>
-                  </div>
+    <div
+      style={{
+        width: "64px",
+        height: "64px",
+        borderRadius: "18px",
+        background: "rgba(255,255,255,0.15)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "30px",
+        border: "1px solid rgba(255,255,255,0.2)",
+        flexShrink: 0,
+      }}
+    >
+      📋
+    </div>
+  </div>
+</div>
                 </div>
 
                 {/* =================================================
@@ -898,118 +1057,6 @@ async function handleApproveAll() {
                 </div>
 
                 {/* =================================================
-                    TIẾN ĐỘ
-                ================================================= */}
-
-                <div
-                  style={{
-                    background: "#fff",
-                    border:
-                      "1px solid #e2e8f0",
-                    borderRadius: "14px",
-                    padding:
-                      "16px 20px",
-                    marginBottom: "20px",
-                    boxShadow:
-                      "0 2px 8px rgba(15,23,42,0.04)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent:
-                        "space-between",
-                      alignItems:
-                        "center",
-                      marginBottom:
-                        "10px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize:
-                          "14px",
-                        fontWeight: 600,
-                        color:
-                          "#0f172a",
-                      }}
-                    >
-                      Tiến độ nộp hồ sơ
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize:
-                          "13px",
-                        color:
-                          "#64748b",
-                      }}
-                    >
-                      <strong
-                        style={{
-                          color:
-                            "#2563eb",
-                        }}
-                      >
-                        {submittedCount}
-                      </strong>{" "}
-                      / {totalStudents}{" "}
-                      sinh viên
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      height: "8px",
-                      background:
-                        "#e2e8f0",
-                      borderRadius:
-                        "999px",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: `${submissionPercent}%`,
-                        height: "100%",
-                        background:
-                          "#2563eb",
-                        borderRadius:
-                          "999px",
-                        transition:
-                          "width 0.3s ease",
-                      }}
-                    />
-                  </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent:
-                        "space-between",
-                      marginTop: "7px",
-                      fontSize:
-                        "12px",
-                      color:
-                        "#64748b",
-                    }}
-                  >
-                    <span>
-                      Đã gửi hồ sơ
-                    </span>
-
-                    <strong
-                      style={{
-                        color:
-                          "#2563eb",
-                      }}
-                    >
-                      {submissionPercent}%
-                    </strong>
-                  </div>
-                </div>
-
-                {/* =================================================
                     DANH SÁCH
                 ================================================= */}
 
@@ -1066,24 +1113,78 @@ async function handleApproveAll() {
     </div>
   </div>
 
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    flexWrap: "wrap",
+  }}
+>
+  {/* BỘ LỌC TRẠNG THÁI */}
+  <select
+    value={filterStatus}
+    onChange={(e) => setFilterStatus(e.target.value)}
+    style={{
+      padding: "9px 12px",
+      borderRadius: "9px",
+      border: "1px solid #cbd5e1",
+      background: "#fff",
+      color: "#334155",
+      fontSize: "13px",
+      fontWeight: 600,
+      cursor: "pointer",
+      outline: "none",
+    }}
+  >
+    <option value="all">Tất cả trạng thái</option>
+    <option value="chua_danh_gia">Chưa đánh giá</option>
+    <option value="can_xem_xet">Cần xem xét</option>
+    <option value="da_dat">Hồ sơ đã đạt</option>
+    <option value="khong_dat">Hồ sơ không đạt</option>
+  </select>
+
+
+
+  {/* NÚT MỞ / ĐÓNG */}
+  <button
+    type="button"
+    onClick={toggleSubmission}
+    disabled={savingSubmission}
+    style={{
+      border: "1px solid #2563eb",
+      background: isOpen ? "#2563eb" : "#fff",
+      color: isOpen ? "#fff" : "#2563eb",
+      padding: "9px 16px",
+      borderRadius: "9px",
+      fontSize: "13px",
+      fontWeight: 600,
+      cursor: savingSubmission ? "not-allowed" : "pointer",
+      opacity: savingSubmission ? 0.6 : 1,
+      whiteSpace: "nowrap",
+    }}
+  >
+    Nhận hồ sơ&nbsp;&nbsp;|&nbsp;&nbsp;
+    {isOpen ? "Mở" : "Đóng"}
+  </button>
+
+  {/* NÚT DUYỆT TẤT CẢ */}
   <button
     type="button"
     onClick={handleApproveAll}
     disabled={savingStatus || students.length === 0}
     style={{
       border: "1px solid #16a34a",
-      background: students.length > 0 &&
-        students.every(
-          (student) => student.da_duyet === true
-        )
-        ? "#dcfce7"
-        : "#16a34a",
-      color: students.length > 0 &&
-        students.every(
-          (student) => student.da_duyet === true
-        )
-        ? "#166534"
-        : "#fff",
+      background:
+        students.length > 0 &&
+        students.every((student) => student.da_duyet === true)
+          ? "#dcfce7"
+          : "#16a34a",
+      color:
+        students.length > 0 &&
+        students.every((student) => student.da_duyet === true)
+          ? "#166534"
+          : "#fff",
       padding: "9px 16px",
       borderRadius: "9px",
       fontSize: "13px",
@@ -1100,12 +1201,28 @@ async function handleApproveAll() {
     }}
   >
     {students.length > 0 &&
-    students.every(
-      (student) => student.da_duyet === true
-    )
+    students.every((student) => student.da_duyet === true)
       ? "Bỏ duyệt tất cả"
       : "Duyệt tất cả"}
   </button>
+    {/* NÚT XUẤT */}
+<button
+  type="button"
+  onClick={exportExcel}
+  style={{
+    padding: "9px 16px",
+    borderRadius: "9px",
+    border: "none",
+    background: "#16a34a",
+    color: "white",
+    fontSize: "13px",
+    fontWeight: 600,
+    cursor: "pointer",
+  }}
+>
+  Xuất
+</button>
+</div>
     </div>
 
                   <div
@@ -1247,7 +1364,7 @@ async function handleApproveAll() {
                       </thead>
 
                       <tbody>
-                        {students.map(
+                        {filteredStudents.map(
                           (sv, index) => (
                             <tr
                               key={sv.id}
@@ -1533,25 +1650,22 @@ async function handleApproveAll() {
                           )
                         )}
 
-                        {students.length ===
-                          0 && (
-                          <tr>
-                            <td
-                              colSpan={8}
-                              style={{
-                                padding:
-                                  "40px 20px",
-                                textAlign:
-                                  "center",
-                                color:
-                                  "#64748b",
-                              }}
-                            >
-                              Chưa có sinh viên
-                              nào nộp hồ sơ.
-                            </td>
-                          </tr>
-                        )}
+{filteredStudents.length === 0 && (
+  <tr>
+    <td
+      colSpan={9}
+      style={{
+        padding: "40px 20px",
+        textAlign: "center",
+        color: "#64748b",
+      }}
+    >
+      {students.length === 0
+        ? "Chưa có sinh viên nào nộp hồ sơ."
+        : "Không có hồ sơ phù hợp với bộ lọc."}
+    </td>
+  </tr>
+)}
                       </tbody>
                     </table>
                   </div>
