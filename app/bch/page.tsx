@@ -523,16 +523,6 @@ const handleLogout = async () => {
       >
         Đồng chí {bchProfile?.ho_ten}
       </h1>
-
-      <div
-        style={{
-          marginTop: "2px",
-          fontSize: "12px",
-          color: "#64748b",
-        }}
-      >
-        Phụ trách xét duyệt hồ sơ Sinh viên 5 Tốt
-      </div>
     </div>
   </div>
 
@@ -566,7 +556,6 @@ const handleLogout = async () => {
       e.currentTarget.style.borderColor = "#e2e8f0";
     }}
   >
-    <span>↪</span>
     Đăng xuất
   </button>
 </div>
