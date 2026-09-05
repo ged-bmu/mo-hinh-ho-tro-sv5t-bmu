@@ -1316,9 +1316,10 @@ style={{
           color: "#64748B",
           fontSize: 14,
           padding: "10px 0",
+          marginLeft: "12px",
         }}
       >
-        Chưa có hoạt động sắp tới.
+        Chưa có hoạt động diễn ra trong thời gian sắp tới.
       </div>
     )}
      </>
