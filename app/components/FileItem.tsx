@@ -281,18 +281,6 @@ useEffect(() => {
               flexWrap: "wrap",
             }}
           >
-            <strong
-              style={{
-                fontSize: "14px",
-                maxWidth: isMobile ? "100%" : "40%",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {file.display_name || file.name}
-            </strong>
-
             <div
               style={{
                 display: "flex",
@@ -329,50 +317,6 @@ useEffect(() => {
                 }}
               >
                 ⬇ Tải về
-              </button>
-
-              {/* ZOOM - */}
-              <button
-                onClick={() =>
-                  setZoom((z) => Math.max(0.3, z - 0.1))
-                }
-                style={{
-                  padding: "6px 8px",
-                  borderRadius: "8px",
-                  border: "1px solid #d1d5db",
-                  background: "#fff",
-                  cursor: "pointer",
-                  fontSize: "16px",
-                }}
-              >
-                ➖
-              </button>
-
-              <span
-                style={{
-                  minWidth: 50,
-                  textAlign: "center",
-                  fontWeight: 600,
-                }}
-              >
-                {Math.round(zoom * 100)}%
-              </span>
-
-              {/* ZOOM + */}
-              <button
-                onClick={() =>
-                  setZoom((z) => Math.min(3, z + 0.1))
-                }
-                style={{
-                  padding: "6px 8px",
-                  borderRadius: "8px",
-                  border: "1px solid #d1d5db",
-                  background: "#fff",
-                  cursor: "pointer",
-                  fontSize: "16px",
-                }}
-              >
-                ➕
               </button>
             </div>
           </div>
