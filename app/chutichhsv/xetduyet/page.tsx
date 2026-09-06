@@ -9,6 +9,7 @@ import Footer from "../../components/Footer";
 import SidebarChutichhsv from "../sidebarchutichhsv/page";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import { authFetch } from "@/lib/auth-fetch";
 
 export default function ChuTichXetDuyetPage() {
   const [loading, setLoading] = useState(true);
@@ -324,13 +325,14 @@ const { data, error } = await supabase
 
 async function handleQuickApprove(student: any) {
   const alreadyApproved = isApprovalToggled(student);
+  const newApprovalState = !alreadyApproved;
 
   setSavingStatus(true);
 
   const { data, error } = await supabase
     .from("profiles")
     .update({
-      da_duyet: !alreadyApproved,
+      da_duyet: newApprovalState,
     })
     .eq("id", student.id)
     .select("id, da_duyet")
@@ -339,8 +341,10 @@ async function handleQuickApprove(student: any) {
   setSavingStatus(false);
 
   if (error) {
-    console.error("LỖI CẬP NHẬT TRẠNG THÁI DUYỆT:", error);
-    alert("Cập nhật trạng thái duyệt thất bại: " + error.message);
+    alert(
+      "Cập nhật trạng thái duyệt thất bại: " +
+        error.message
+    );
     return;
   }
 
@@ -357,6 +361,31 @@ async function handleQuickApprove(student: any) {
       ? { ...prev, da_duyet: data.da_duyet }
       : prev
   );
+
+  // 📱 Gửi Push khi hồ sơ đã đạt và được duyệt
+  if (
+    student.trang_thai === "da_dat" &&
+    newApprovalState === true
+  ) {
+    try {
+      await authFetch("/api/send-notification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: student.id,
+          type: "result",
+          title: "🎉 Chúc mừng!",
+          message:
+            "Bạn đã đạt danh hiệu Sinh viên 5 Tốt Cấp Trường năm học 2025 - 2026.",
+          url: "/",
+        }),
+      });
+    } catch (error) {
+      // Lỗi Push không ảnh hưởng đến việc duyệt hồ sơ
+    }
+  }
 }
 async function handleApproveAll() {
   if (students.length === 0) return;
@@ -420,6 +449,38 @@ async function handleApproveAll() {
         }
       : prev
   );
+
+  // 📱 Gửi Push hàng loạt khi DUYỆT TẤT CẢ
+  if (newApprovalState === true) {
+    const studentsToNotify = students.filter(
+      (student) =>
+        student.trang_thai === "da_dat" &&
+        student.da_duyet !== true
+    );
+
+    await Promise.all(
+      studentsToNotify.map(async (student) => {
+        try {
+          await authFetch("/api/send-notification", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: student.id,
+              type: "result",
+              title: "🎉 Chúc mừng!",
+              message:
+                "Bạn đã đạt danh hiệu Sinh viên 5 Tốt Cấp Trường năm học 2025 - 2026.",
+              url: "/",
+            }),
+          });
+        } catch (error) {
+          // Lỗi Push không ảnh hưởng đến việc duyệt hồ sơ
+        }
+      })
+    );
+  }
 }
   async function updateGhiChu(
     studentId: string,
@@ -827,234 +888,199 @@ const exportExcel = async () => {
 </div>
                 </div>
 
-                {/* =================================================
-                    THỐNG KÊ
-                ================================================= */}
+{/* =================================================
+    THỐNG KÊ
+================================================= */}
 
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                      "repeat(auto-fit, minmax(160px, 1fr))",
-                    gap: "12px",
-                    marginBottom: "18px",
-                  }}
-                >
-                  {/* ĐÃ NỘP */}
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+    gap: "12px",
+    marginBottom: "18px",
+  }}
+>
+  {/* HỒ SƠ ĐÃ NỘP */}
 
-                  <div
-                    style={{
-                      background: "#fff",
-                      border:
-                        "1px solid #e2e8f0",
-                      borderRadius: "14px",
-                      padding: "16px 14px",
-                      boxShadow:
-                        "0 2px 8px rgba(15,23,42,0.04)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        color:
-                          "#64748b",
-                        fontSize:
-                          "12px",
-                        marginBottom:
-                          "6px",
-                      }}
-                    >
-                      Hồ sơ đã nộp
-                    </div>
+  <div
+    style={{
+      background: "#fff",
+      border: "1px solid #e2e8f0",
+      borderRadius: "14px",
+      padding: "16px 14px",
+      boxShadow: "0 2px 8px rgba(15,23,42,0.04)",
+    }}
+  >
+    <div
+      style={{
+        color: "#64748b",
+        fontSize: "12px",
+        marginBottom: "6px",
+      }}
+    >
+      Hồ sơ đã nộp
+    </div>
 
-                    <div
-                      style={{
-                        fontSize:
-                          "24px",
-                        fontWeight: 700,
-                        color:
-                          "#0f172a",
-                        lineHeight: 1.1,
-                      }}
-                    >
-                      {submittedCount}
-                    </div>
+    <div
+      style={{
+        fontSize: "24px",
+        fontWeight: 700,
+        color: "#2563eb",
+        lineHeight: 1.1,
+      }}
+    >
+      {submittedCount}
+    </div>
 
-                    <div
-                      style={{
-                        fontSize:
-                          "11px",
-                        color:
-                          "#64748b",
-                        marginTop:
-                          "4px",
-                      }}
-                    >
-                      {submissionPercent}%
-                      tổng sinh viên
-                    </div>
-                  </div>
+    <div
+      style={{
+        fontSize: "11px",
+        color: "#64748b",
+        marginTop: "4px",
+      }}
+    >
+      {submissionPercent}% tổng sinh viên
+    </div>
+  </div>
 
-                  {/* ĐÃ XÉT */}
+  {/* CHƯA ĐÁNH GIÁ */}
 
-                  <div
-                    style={{
-                      background: "#fff",
-                      border:
-                        "1px solid #e2e8f0",
-                      borderRadius: "16px",
-                      padding: "21px",
-                      boxShadow:
-                        "0 2px 8px rgba(15,23,42,0.04)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        color:
-                          "#64748b",
-                        fontSize:
-                          "12px",
-                        marginBottom:
-                          "6px",
-                      }}
-                    >
-                      Đã xét duyệt
-                    </div>
+  <div
+    style={{
+      background: "#fff",
+      border: "1px solid #e2e8f0",
+      borderRadius: "14px",
+      padding: "16px 14px",
+      boxShadow: "0 2px 8px rgba(15,23,42,0.04)",
+    }}
+  >
+    <div
+      style={{
+        color: "#64748b",
+        fontSize: "12px",
+        marginBottom: "6px",
+      }}
+    >
+      Chưa đánh giá
+    </div>
 
-                    <div
-                      style={{
-                        fontSize:
-                          "24px",
-                        fontWeight: 700,
-                        color:
-                          "#16a34a",
-                        lineHeight: 1.1,
-                      }}
-                    >
-                      {approvedCount}
-                    </div>
+    <div
+      style={{
+        fontSize: "24px",
+        fontWeight: 700,
+        color: "#d97706",
+        lineHeight: 1.1,
+      }}
+    >
+      {pendingCount}
+    </div>
 
-                    <div
-                      style={{
-                        fontSize:
-                          "11px",
-                        color:
-                          "#64748b",
-                        marginTop:
-                          "4px",
-                      }}
-                    >
-                      Trong số hồ sơ đã
-                      nộp
-                    </div>
-                  </div>
+    <div
+      style={{
+        fontSize: "11px",
+        color: "#64748b",
+        marginTop: "4px",
+      }}
+    >
+      Cần tiếp tục xử lý
+    </div>
+  </div>
 
-                  {/* CHƯA XÉT */}
+  {/* ĐÃ ĐÁNH GIÁ */}
 
-                  <div
-                    style={{
-                      background: "#fff",
-                      border:
-                        "1px solid #e2e8f0",
-                      borderRadius: "14px",
-                      padding: "16px 14px",
-                      boxShadow:
-                        "0 2px 8px rgba(15,23,42,0.04)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        color:
-                          "#64748b",
-                        fontSize:
-                          "12px",
-                        marginBottom:
-                          "6px",
-                      }}
-                    >
-                      Chưa đánh giá
-                    </div>
+  <div
+    style={{
+      background: "#fff",
+      border: "1px solid #e2e8f0",
+      borderRadius: "14px",
+      padding: "16px 14px",
+      boxShadow: "0 2px 8px rgba(15,23,42,0.04)",
+    }}
+  >
+    <div
+      style={{
+        color: "#64748b",
+        fontSize: "12px",
+        marginBottom: "6px",
+      }}
+    >
+      Đã đánh giá
+    </div>
 
-                    <div
-                      style={{
-                        fontSize:
-                          "24px",
-                        fontWeight: 700,
-                        color:
-                          "#d97706",
-                        lineHeight: 1.1,
-                      }}
-                    >
-                      {pendingCount}
-                    </div>
+    <div
+      style={{
+        fontSize: "24px",
+        fontWeight: 700,
+        color: "#16a34a",
+        lineHeight: 1.1,
+      }}
+    >
+      {approvedCount}
+    </div>
 
-                    <div
-                      style={{
-                        fontSize:
-                          "11px",
-                        color:
-                          "#64748b",
-                        marginTop:
-                          "4px",
-                      }}
-                    >
-                      Cần tiếp tục xử lý
-                    </div>
-                  </div>
+    <div
+      style={{
+        fontSize: "11px",
+        color: "#64748b",
+        marginTop: "4px",
+      }}
+    >
+      Có kết quả xét duyệt
+    </div>
+  </div>
 
-                  {/* TỔNG */}
+  {/* TỶ LỆ ĐẠT */}
 
-                  <div
-                    style={{
-                      background: "#fff",
-                      border:
-                        "1px solid #e2e8f0",
-                      borderRadius: "14px",
-                      padding: "16px 14px",
-                      boxShadow:
-                        "0 2px 8px rgba(15,23,42,0.04)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        color:
-                          "#64748b",
-                        fontSize:
-                          "12px",
-                        marginBottom:
-                          "6px",
-                      }}
-                    >
-                      Tổng sinh viên
-                    </div>
+  <div
+    style={{
+      background: "#fff",
+      border: "1px solid #e2e8f0",
+      borderRadius: "14px",
+      padding: "16px 14px",
+      boxShadow: "0 2px 8px rgba(15,23,42,0.04)",
+    }}
+  >
+    <div
+      style={{
+        color: "#64748b",
+        fontSize: "12px",
+        marginBottom: "6px",
+      }}
+    >
+      Tỷ lệ đạt
+    </div>
 
-                    <div
-                      style={{
-                        fontSize:
-                          "24px",
-                        fontWeight: 700,
-                        color:
-                          "#2563eb",
-                        lineHeight: 1.1,
-                      }}
-                    >
-                      {totalStudents}
-                    </div>
+    <div
+      style={{
+        fontSize: "24px",
+        fontWeight: 700,
+        color: "#7c3aed",
+        lineHeight: 1.1,
+      }}
+    >
+      {approvedCount > 0
+        ? Math.round(
+            (students.filter(
+              (sv) => sv.trang_thai === "da_dat"
+            ).length /
+              approvedCount) *
+              100
+          )
+        : 0}
+      %
+    </div>
 
-                    <div
-                      style={{
-                        fontSize:
-                          "11px",
-                        color:
-                          "#64748b",
-                        marginTop:
-                          "4px",
-                      }}
-                    >
-                      Sinh viên trong hệ
-                      thống
-                    </div>
-                  </div>
-                </div>
+    <div
+      style={{
+        fontSize: "11px",
+        color: "#64748b",
+        marginTop: "4px",
+      }}
+    >
+      Trên số hồ sơ đã đánh giá
+    </div>
+  </div>
+</div>
 
                 {/* =================================================
                     DANH SÁCH

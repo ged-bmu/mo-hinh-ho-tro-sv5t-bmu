@@ -712,43 +712,83 @@ return (
   </h3>
 
   <button
-    onClick={async () => {
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      nhan_xet: nhanXet,
-      ngay_nhan_xet: new Date().toISOString(),
-    })
-    .eq("id", id);
+  type="button"
+  onClick={async () => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        nhan_xet: nhanXet,
+        ngay_nhan_xet: new Date().toISOString(),
+      })
+      .eq("id", id);
 
-if (error) {
-  console.log("LỖI UPDATE:", error);
-  alert(error.message);
-  return;
-}
+    if (error) {
+      alert(error.message);
+      return;
+    }
 
-  await sendNotification(
-    id,
-    "review",
-    "Bạn vừa có nhận xét mới",
-    "Ban chủ nhiệm vừa nhận xét hồ sơ của bạn. Hãy kiểm tra trong mục Quản lí hồ sơ",
-    "/"
-  );
+    // 🔔 Lưu thông báo vào hệ thống
+    await sendNotification(
+      id,
+      "review",
+      "Bạn vừa có nhận xét mới",
+      "Ban chủ nhiệm vừa nhận xét hồ sơ của bạn. Hãy kiểm tra trong mục Quản lí hồ sơ",
+      "/"
+    );
 
-  alert("Đã lưu nhận xét");
-}}
-    style={{
-      padding: "8px 12px",
-      border: "none",
-      borderRadius: "10px",
-      background: "#5b92ff",
-      color: "white",
-      cursor: "pointer",
-      fontWeight: "600",
-    }}
-  >
-    💾 Lưu nhận xét
-  </button>
+    // 📱 Gửi thông báo Push về điện thoại
+    try {
+      await authFetch("/api/send-notification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: id,
+          type: "review",
+          title: "Bạn vừa có nhận xét mới",
+          message:
+            "Ban chủ nhiệm vừa nhận xét hồ sơ của bạn. Hãy kiểm tra trong mục Quản lí hồ sơ.",
+          url: "/",
+        }),
+      });
+    } catch (error) {
+    }
+
+    alert("Đã lưu nhận xét");
+  }}
+  style={{
+    marginTop: "12px",
+    padding: "10px 18px",
+    border: "none",
+    borderRadius: "8px",
+    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+    color: "#fff",
+    fontSize: "14px",
+    fontWeight: 600,
+    cursor: "pointer",
+    boxShadow: "0 3px 8px rgba(37, 99, 235, 0.25)",
+    transition: "all 0.2s ease",
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.transform = "translateY(-1px)";
+    e.currentTarget.style.boxShadow =
+      "0 5px 12px rgba(37, 99, 235, 0.35)";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = "translateY(0)";
+    e.currentTarget.style.boxShadow =
+      "0 3px 8px rgba(37, 99, 235, 0.25)";
+  }}
+  onMouseDown={(e) => {
+    e.currentTarget.style.transform = "translateY(1px)";
+  }}
+  onMouseUp={(e) => {
+    e.currentTarget.style.transform = "translateY(-1px)";
+  }}
+>
+  💾 Lưu nhận xét
+</button>
 </div>
 
 

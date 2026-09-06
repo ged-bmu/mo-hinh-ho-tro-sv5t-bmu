@@ -1188,7 +1188,7 @@ return (
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        zIndex: 999999,
+        zIndex: 99999,
       }}
     >
       <div
@@ -1201,8 +1201,6 @@ return (
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          position: "relative",
-          zIndex: 1,
         }}
       >
         {/* HEADER */}
@@ -1266,31 +1264,31 @@ return (
         </div>
 
         {/* BODY */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "30px",
-            display: "flex",
-            justifyContent: "center",
-            background: "#f1f5f9",
-          }}
-        >
 <div
- ref={setReportRef}
   style={{
-    width:"297mm",
-    minHeight:"420mm",
-    background:"#fff",
-    padding:"30px",
-    borderRadius:"8px",
-    boxSizing:"border-box",
-    boxShadow:"0 10px 30px rgba(0,0,0,.15)",
-    fontFamily:"Times New Roman, serif",
-    fontSize:"13pt",
-    position: "relative",
+    flex: 1,
+    overflow: "auto",
+    padding: "30px",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    background: "#f1f5f9",
+  }}
+>
+<div
+  ref={setReportRef}
+  style={{
+    width: "297mm",
+    minHeight: "420mm",
+    height: "auto",
+    background: "#fff",
+    padding: "30px",
+    borderRadius: "8px",
+    boxSizing: "border-box",
+    boxShadow: "0 10px 30px rgba(0,0,0,.15)",
+    fontFamily: "Times New Roman, serif",
+    fontSize: "13pt",
     overflow: "visible",
-    maxWidth: "100%",
   }}
 >
   {/* Tiêu đề */}
@@ -1344,7 +1342,6 @@ return (
   style={{
     position: "relative",
     height: 0,
-    zIndex: 30,
   }}
 >
   <div
@@ -1358,7 +1355,7 @@ return (
       borderRadius: 6,
       overflow: "hidden",
       background: "#fff",
-      zIndex: 30,
+      zIndex: 10,
     }}
   >
     {profile?.avatar ? (
@@ -1476,8 +1473,6 @@ return (
           fontSize: "15px",
           wordBreak: "break-word",
           overflowWrap: "anywhere",
-          whiteSpace: "normal",
-          maxWidth: "100%",
         }}
         dangerouslySetInnerHTML={{
   __html:
@@ -1706,7 +1701,7 @@ return (
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
-      zIndex: 99999,
+      zIndex: 999999,
     }}
   >
     <img
