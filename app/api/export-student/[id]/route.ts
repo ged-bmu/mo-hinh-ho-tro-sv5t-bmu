@@ -368,7 +368,7 @@ Trường Đại học Y Dược Buôn Ma Thuột
 </div>
 
 <div>
-<b>Email:</b> ${escapeHtml(profile?.email)}
+<b>Email:</b>
 </div>
 
 </td>

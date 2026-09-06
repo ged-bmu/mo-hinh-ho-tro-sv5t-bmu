@@ -971,7 +971,7 @@ const exportExcel = async () => {
                           "6px",
                       }}
                     >
-                      Chưa xét
+                      Chưa đánh giá
                     </div>
 
                     <div
@@ -1362,310 +1362,248 @@ const exportExcel = async () => {
                         </tr>
                       </thead>
 
-                      <tbody>
-                        {filteredStudents.map(
-                          (sv, index) => (
-                            <tr
-                              key={sv.id}
-                              style={{
-                                borderTop:
-                                  "1px solid #e2e8f0",
-                              }}
-                            >
-                              <td
-                                style={{
-                                  padding:
-                                    "14px 12px",
-                                  textAlign:
-                                    "center",
-                                  color:
-                                    "#475569",
-                                }}
-                              >
-                                {index + 1}
-                              </td>
-
-                              <td
-                                style={{
-                                  padding:
-                                    "14px 16px",
-                                  fontWeight: 600,
-                                  color:
-                                    "#0f172a",
-                                }}
-                              >
-                                {sv.ho_ten}
-                              </td>
-
-                              <td
-                                style={{
-                                  padding:
-                                    "14px 16px",
-                                  textAlign:
-                                    "center",
-                                  color:
-                                    "#475569",
-                                }}
-                              >
-                                {sv.lop}
-                              </td>
-
-                              <td
-                                style={{
-                                  padding:
-                                    "14px 16px",
-                                  textAlign:
-                                    "center",
-                                  color:
-                                    "#475569",
-                                }}
-                              >
-                                {sv.mssv}
-                              </td>
-
-                              <td
-                                style={{
-                                  padding:
-                                    "14px 16px",
-                                  textAlign:
-                                    "center",
-                                }}
-                              >
-                                {(() => {
-                                  const status =
-                                    sv.trang_thai ||
-                                    "chua_danh_gia";
-                                  const statusMap: Record<
-                                    string,
-                                    {
-                                      label: string;
-                                      background: string;
-                                      color: string;
-                                    }
-                                  > = {
-                                    chua_danh_gia: {
-                                      label: "Chưa đánh giá",
-                                      background: "#fef3c7",
-                                      color: "#92400e",
-                                    },
-                                    can_xem_xet: {
-                                      label: "Cần xem xét",
-                                      background: "#dbeafe",
-                                      color: "#1d4ed8",
-                                    },
-                                    da_dat: {
-                                      label: "Hồ sơ đã đạt",
-                                      background: "#dcfce7",
-                                      color: "#15803d",
-                                    },
-                                    khong_dat: {
-                                      label: "Hồ sơ không đạt",
-                                      background: "#fee2e2",
-                                      color: "#b91c1c",
-                                    },
-                                  };
-
-                                  const current =
-                                    statusMap[status] ||
-                                    statusMap.chua_danh_gia;
-
-                                  return (
-                                    <span
-                                      style={{
-                                        display:
-                                          "inline-block",
-                                        padding:
-                                          "6px 12px",
-                                        borderRadius:
-                                          "999px",
-                                        background:
-                                          current.background,
-                                        color:
-                                          current.color,
-                                        fontSize:
-                                          "13px",
-                                        fontWeight:
-                                          600,
-                                      }}
-                                    >
-                                      {current.label}
-                                    </span>
-                                  );
-                                })()}
-                              </td>
-
-                              <td
-                                style={{
-                                  padding:
-                                    "14px 16px",
-                                  textAlign:
-                                    "center",
-                                  color:
-                                    "#64748b",
-                                  fontSize:
-                                    "14px",
-                                  whiteSpace:
-                                    "normal",
-                                }}
-                              >
-                                <span
-  style={{
-    color: "#475569",
-    fontWeight: 600,
-  }}
->
-  {sv.trang_thai === "chua_danh_gia"
-    ? "Chưa có"
-    : sv.nguoi_duyet_id
-      ? approvers[sv.nguoi_duyet_id] || "Đang tải..."
-      : "Chưa có"}
-</span>
-                              </td>
-
-                              <td
-                                style={{
-                                  padding:
-                                    "14px 16px",
-                                  textAlign:
-                                    "center",
-                                }}
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setSelectedStudent(
-                                      sv
-                                    )
-                                  }
-                                  style={{
-                                    border:
-                                      "1px solid #2563eb",
-                                    background:
-                                      "#fff",
-                                    color:
-                                      "#2563eb",
-                                    padding:
-                                      "7px 12px",
-                                    borderRadius:
-                                      "8px",
-                                    fontSize:
-                                      "13px",
-                                    fontWeight:
-                                      600,
-                                    cursor:
-                                      "pointer",
-                                  }}
-                                >
-                                  Xem ghi chú
-                                </button>
-                              </td>
-
-                              <td
-                                style={{
-                                  padding:
-                                    "14px 16px",
-                                  textAlign:
-                                    "center",
-                                }}
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    handleQuickApprove(sv);
-                                  }}
-                                  disabled={savingStatus}
-                                  style={{
-                                    border:
-                                      "1px solid #16a34a",
-                                    background:
-                                      isApprovalToggled(sv)
-                                        ? "#dcfce7"
-                                        : "#fff",
-                                    color:
-                                      isApprovalToggled(sv)
-                                        ? "#166534"
-                                        : "#16a34a",
-                                    padding:
-                                      "7px 12px",
-                                    borderRadius:
-                                      "8px",
-                                    fontSize:
-                                      "13px",
-                                    fontWeight:
-                                      600,
-                                    cursor: savingStatus
-                                      ? "not-allowed"
-                                      : "pointer",
-                                  }}
-                                >
-                                  {isApprovalToggled(sv)
-                                    ? "Đã duyệt"
-                                    : "Duyệt"}
-                                </button>
-                              </td>
-
-                              <td
-                                style={{
-                                  padding:
-                                    "14px 16px",
-                                  textAlign:
-                                    "center",
-                                }}
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    window.location.href =
-                                      `/chutichhsv/students/${sv.id}`;
-                                  }}
-                                  style={{
-                                    border:
-                                      "none",
-                                    background:
-                                      "#2563eb",
-                                    color:
-                                      "#fff",
-                                    padding:
-                                      "7px 12px",
-                                    borderRadius:
-                                      "8px",
-                                    fontSize:
-                                      "13px",
-                                    fontWeight:
-                                      600,
-                                    cursor:
-                                      "pointer",
-                                    display:
-                                      "inline-flex",
-                                    alignItems:
-                                      "center",
-                                    gap: "5px",
-                                  }}
-                                >
-                                  Xem
-                                </button>
-                              </td>
-                            </tr>
-                          )
-                        )}
-
-{filteredStudents.length === 0 && (
-  <tr>
-    <td
-      colSpan={9}
+<tbody>
+  {filteredStudents.map((sv, index) => (
+    <tr
+      key={sv.id}
       style={{
-        padding: "40px 20px",
-        textAlign: "center",
-        color: "#64748b",
+        borderTop: "1px solid #e2e8f0",
       }}
     >
-      {students.length === 0
-        ? "Chưa có sinh viên nào nộp hồ sơ."
-        : "Không có hồ sơ phù hợp với bộ lọc."}
-    </td>
-  </tr>
-)}
-                      </tbody>
+      {/* STT */}
+      <td
+        style={{
+          padding: "14px 12px",
+          textAlign: "center",
+          color: "#475569",
+        }}
+      >
+        {index + 1}
+      </td>
+
+      {/* HỌ TÊN */}
+      <td
+        style={{
+          padding: "14px 16px",
+          fontWeight: 600,
+          color: "#0f172a",
+          fontSize: "16px",
+        }}
+      >
+        {sv.ho_ten}
+      </td>
+
+      {/* LỚP */}
+      <td
+        style={{
+          padding: "14px 16px",
+          textAlign: "center",
+          color: "#475569",
+          fontSize: "16px",
+        }}
+      >
+        {sv.lop}
+      </td>
+
+      {/* MSSV */}
+      <td
+        style={{
+          padding: "14px 16px",
+          textAlign: "center",
+          color: "#475569",
+          fontSize: "16px",
+        }}
+      >
+        {sv.mssv}
+      </td>
+
+      {/* TRẠNG THÁI */}
+      <td
+        style={{
+          padding: "14px 16px",
+          textAlign: "center",
+        }}
+      >
+        {(() => {
+          const status = sv.trang_thai || "chua_danh_gia";
+
+          const statusMap: Record<
+            string,
+            {
+              label: string;
+              background: string;
+              color: string;
+            }
+          > = {
+            chua_danh_gia: {
+              label: "Chưa đánh giá",
+              background: "#fef3c7",
+              color: "#92400e",
+            },
+            can_xem_xet: {
+              label: "Cần xem xét",
+              background: "#dbeafe",
+              color: "#1d4ed8",
+            },
+            da_dat: {
+              label: "Hồ sơ đã đạt",
+              background: "#dcfce7",
+              color: "#15803d",
+            },
+            khong_dat: {
+              label: "Hồ sơ không đạt",
+              background: "#fee2e2",
+              color: "#b91c1c",
+            },
+          };
+
+          const current =
+            statusMap[status] || statusMap.chua_danh_gia;
+
+          return (
+            <span
+              style={{
+                display: "inline-block",
+                padding: "6px 12px",
+                borderRadius: "999px",
+                background: current.background,
+                color: current.color,
+                fontSize: "13px",
+                fontWeight: 600,
+              }}
+            >
+              {current.label}
+            </span>
+          );
+        })()}
+      </td>
+
+      {/* NGƯỜI XÉT DUYỆT */}
+      <td
+        style={{
+          padding: "14px 16px",
+          textAlign: "center",
+          color: "#64748b",
+          fontSize: "14px",
+          whiteSpace: "normal",
+        }}
+      >
+        <span
+          style={{
+            color: "#475569",
+            fontWeight: 600,
+          }}
+        >
+          {sv.nguoi_duyet_id
+            ? approvers[sv.nguoi_duyet_id] || "Đang tải..."
+            : "Chưa có"}
+        </span>
+      </td>
+
+      {/* GHI CHÚ */}
+      <td
+        style={{
+          padding: "14px 16px",
+          textAlign: "left",
+          verticalAlign: "top",
+          whiteSpace: "normal",
+          overflowWrap: "break-word",
+          wordBreak: "break-word",
+          width: "160px",
+          maxWidth: "160px",
+          color: "#475569",
+          fontSize: "14px",
+        }}
+      >
+        {sv.ghi_chu || ""}
+      </td>
+
+      {/* DUYỆT */}
+      <td
+        style={{
+          padding: "14px 16px",
+          textAlign: "center",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            handleQuickApprove(sv);
+          }}
+          disabled={savingStatus}
+          style={{
+            border: "1px solid #16a34a",
+            background: isApprovalToggled(sv)
+              ? "#dcfce7"
+              : "#fff",
+            color: isApprovalToggled(sv)
+              ? "#166534"
+              : "#16a34a",
+            padding: "7px 12px",
+            borderRadius: "8px",
+            fontSize: "13px",
+            fontWeight: 600,
+            cursor: savingStatus
+              ? "not-allowed"
+              : "pointer",
+          }}
+        >
+          {isApprovalToggled(sv)
+            ? "Đã duyệt"
+            : "Duyệt"}
+        </button>
+      </td>
+
+      {/* XEM */}
+      <td
+        style={{
+          padding: "14px 16px",
+          textAlign: "center",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href =
+              `/chutichhsv/students/${sv.id}`;
+          }}
+          style={{
+            border: "none",
+            background: "#2563eb",
+            color: "#fff",
+            padding: "7px 12px",
+            borderRadius: "8px",
+            fontSize: "13px",
+            fontWeight: 600,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+          }}
+        >
+          Xem
+        </button>
+      </td>
+    </tr>
+  ))}
+
+  {filteredStudents.length === 0 && (
+    <tr>
+      <td
+        colSpan={9}
+        style={{
+          padding: "40px 20px",
+          textAlign: "center",
+          color: "#64748b",
+        }}
+      >
+        {students.length === 0
+          ? "Chưa có sinh viên nào nộp hồ sơ."
+          : "Không có hồ sơ phù hợp với bộ lọc."}
+      </td>
+    </tr>
+  )}
+</tbody>
                     </table>
                   </div>
                 </div>

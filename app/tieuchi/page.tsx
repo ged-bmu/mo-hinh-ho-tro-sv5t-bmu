@@ -101,8 +101,11 @@ async function submitProfile() {
   const { error } = await supabase
     .from("profiles")
     .update({
-      is_submitted: newSubmittedState,
-      submitted_at: submittedAt,
+       is_submitted: newSubmittedState,
+       submitted_at: submittedAt,
+        ...(newSubmittedState && {
+      trang_thai: "chua_danh_gia",
+     }),
     })
     .eq("id", profile.id);
 
@@ -116,6 +119,9 @@ async function submitProfile() {
     ...prev,
     is_submitted: newSubmittedState,
     submitted_at: submittedAt,
+    ...(newSubmittedState && {
+    trang_thai: "chua_danh_gia",
+  }),
   }));
 }
   const folders = [

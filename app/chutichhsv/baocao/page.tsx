@@ -15,9 +15,12 @@ export default function StatisticsPage() {
   const [selectedTitle, setSelectedTitle] = useState("");
   const [selectedStudents, setSelectedStudents] = useState<any[]>([]);
   const [studentSearch, setStudentSearch] = useState("");
+  const [filterCourse, setFilterCourse] = useState("");
+  const [filterMajor, setFilterMajor] = useState("");
   const [tab, setTab] = useState("");
   const [showProfile, setShowProfile] = useState(false);
   const [showCriteria, setShowCriteria] = useState(false);
+  const [statsMode, setStatsMode] = useState<"major" | "course">("major");
 
   // =========================================================
   // KIỂM TRA TÀI KHOẢN + TẢI DỮ LIỆU
@@ -232,7 +235,60 @@ export default function StatisticsPage() {
       ),
     },
   ];
+// =========================================================
+// THỐNG KÊ THEO KHÓA
+// =========================================================
 
+const getCourse = (lop: string) => {
+  const value = (lop || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "");
+
+  // Lớp mới: YK25, DH25, DDA25, YC25, YTA25...
+  const newCourseMatch = value.match(
+    /^(?:YTA|DDA|YK|DH|ĐD|DD|YC)(\d{2})/
+  );
+
+  if (newCourseMatch) {
+    return Number(newCourseMatch[1]);
+  }
+
+  // Lớp cũ: 21YA, 22DA, 22DDA, 22YTA...
+  const oldCourseMatch = value.match(
+    /^(\d{2})(?:DDA|YTA|YA|DA)/
+  );
+
+  if (oldCourseMatch) {
+    return Number(oldCourseMatch[1]);
+  }
+
+  return null;
+};
+
+const courseNumbers = Array.from(
+  new Set(
+    students
+      .map((sv) => getCourse(sv.lop))
+      .filter((course): course is number => course !== null)
+  )
+).sort((a, b) => b - a);
+
+const courseStats = courseNumbers.map((course) => {
+  const list = students.filter(
+    (sv) => getCourse(sv.lop) === course
+  );
+
+  const passed = list.filter((sv) => isPassed(sv));
+  const failed = list.filter((sv) => !isPassed(sv));
+
+  return {
+    course,
+    list,
+    passed,
+    failed,
+  };
+});
   // =========================================================
   // THỐNG KÊ TRẠNG THÁI
   // =========================================================
@@ -276,28 +332,47 @@ export default function StatisticsPage() {
   // =========================================================
 
   const sortedStudents = [
-    ...selectedStudents,
-  ]
-    .filter((sv) => {
-      const keyword =
-        studentSearch
-          .trim()
-          .toLowerCase();
+  ...selectedStudents,
+]
+  .filter((sv) => {
+    // LỌC THEO KHÓA
+    if (
+      filterCourse &&
+      String(getCourse(sv.lop)) !== filterCourse
+    ) {
+      return false;
+    }
 
-      if (!keyword) return true;
+    // LỌC THEO NGÀNH
+    if (
+      filterMajor &&
+      getMajor(sv.lop) !== filterMajor
+    ) {
+      return false;
+    }
 
-      return (
-        (sv.ho_ten || "")
-          .toLowerCase()
-          .includes(keyword) ||
-        (sv.mssv || "")
-          .toLowerCase()
-          .includes(keyword) ||
-        (sv.lop || "")
-          .toLowerCase()
-          .includes(keyword)
-      );
-    })
+    // TÌM KIẾM
+    const keyword =
+      studentSearch
+        .trim()
+        .toLowerCase();
+
+    if (!keyword) {
+      return true;
+    }
+
+    return (
+      (sv.ho_ten || "")
+        .toLowerCase()
+        .includes(keyword) ||
+      (sv.mssv || "")
+        .toLowerCase()
+        .includes(keyword) ||
+      (sv.lop || "")
+        .toLowerCase()
+        .includes(keyword)
+    );
+  })
     .sort((a, b) => {
       const lopCompare =
         (a.lop || "").localeCompare(
@@ -516,7 +591,7 @@ export default function StatisticsPage() {
           fontWeight: 700,
         }}
       >
-        📊 Thống kê hồ sơ Sinh viên 5 tốt
+        Thống kê hồ sơ Sinh viên 5 tốt
       </h1>
 
       <p
@@ -548,206 +623,500 @@ export default function StatisticsPage() {
     </div>
   </div>
 </div>
+
+{/* =================================================
+    THỐNG KÊ NGÀNH / KHÓA
+================================================= */}
+
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "12px",
+    flexWrap: "wrap",
+    marginBottom: "12px",
+  }}
+>
+  <h2
+    style={{
+      margin: 0,
+      fontSize: "16px",
+      color: "#0f172a",
+    }}
+  >
+    {statsMode === "major" ? "🎓" : "📚"}{" "}
+    <b>
+      {statsMode === "major"
+        ? "Thống kê hồ sơ đã nộp theo ngành"
+        : "Thống kê hồ sơ đã nộp theo khóa"}
+    </b>
+  </h2>
+
+  {/* NÚT CHUYỂN */}
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+    padding: "4px",
+    background: "#fff",
+    border: "1px solid #dbe2ea",
+    borderRadius: "11px",
+    boxShadow: "0 2px 6px rgba(15,23,42,0.06)",
+  }}
+>
+  {/* THEO NGÀNH */}
+  <button
+    type="button"
+    onClick={() => setStatsMode("major")}
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "6px",
+      minWidth: "112px",
+      height: "36px",
+      padding: "0 14px",
+      border: "none",
+      borderRadius: "8px",
+      background:
+        statsMode === "major"
+          ? "#2563eb"
+          : "transparent",
+      color:
+        statsMode === "major"
+          ? "#fff"
+          : "#475569",
+      fontSize: "12px",
+      fontWeight:
+        statsMode === "major"
+          ? 700
+          : 600,
+      cursor: "pointer",
+      boxShadow:
+        statsMode === "major"
+          ? "0 2px 5px rgba(37,99,235,0.25)"
+          : "none",
+      transition: "all 0.2s ease",
+    }}
+  >
+    <span style={{ fontSize: "15px" }}>
+      🎓
+    </span>
+
+    <span>Thống kê ngành</span>
+  </button>
+
+  {/* THEO KHÓA */}
+  <button
+    type="button"
+    onClick={() => setStatsMode("course")}
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "6px",
+      minWidth: "112px",
+      height: "36px",
+      padding: "0 14px",
+      border: "none",
+      borderRadius: "8px",
+      background:
+        statsMode === "course"
+          ? "#2563eb"
+          : "transparent",
+      color:
+        statsMode === "course"
+          ? "#fff"
+          : "#475569",
+      fontSize: "12px",
+      fontWeight:
+        statsMode === "course"
+          ? 700
+          : 600,
+      cursor: "pointer",
+      boxShadow:
+        statsMode === "course"
+          ? "0 2px 5px rgba(37,99,235,0.25)"
+          : "none",
+      transition: "all 0.2s ease",
+    }}
+  >
+    <span style={{ fontSize: "15px" }}>
+      📚
+    </span>
+
+    <span>Thống kê khóa</span>
+  </button>
+</div>
+</div>
+
 {/* =================================================
     THỐNG KÊ THEO NGÀNH
 ================================================= */}
 
-<h2
-  style={{
-    margin: "0 0 12px",
-    fontSize: "16px",
-    color: "#0f172a",
-  }}
->
-  🎓{" "}
-  <b>Thống kê hồ sơ đã nộp theo ngành</b>
-</h2>
+{statsMode === "major" && (
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns:
+        "repeat(4, minmax(0, 1fr))",
+      gap: "12px",
+      marginBottom: "22px",
+    }}
+  >
+    {majorStats.map((item) => {
+      const passed = item.list.filter((sv) =>
+        isPassed(sv)
+      );
 
-<div
-  style={{
-    display: "grid",
-    gridTemplateColumns:
-      "repeat(4, minmax(0, 1fr))",
-    gap: "12px",
-    marginBottom: "22px",
-  }}
->
-  {majorStats.map((item) => {
-    const passed = item.list.filter((sv) =>
-      isPassed(sv)
-    );
+      const failed = item.list.filter(
+        (sv) => !isPassed(sv)
+      );
 
-    const failed = item.list.filter(
-      (sv) => !isPassed(sv)
-    );
+      const total = item.list.length;
 
-    const total = item.list.length;
+      const percent =
+        totalSubmitted === 0
+          ? 0
+          : Math.round(
+              (total / totalSubmitted) * 100
+            );
 
-    const percent =
-      totalSubmitted === 0
-        ? 0
-        : Math.round(
-            (total / totalSubmitted) * 100
-          );
+      const passedPercent =
+        total === 0
+          ? 0
+          : Math.round(
+              (passed.length / total) * 100
+            );
 
-    const passedPercent =
-      total === 0
-        ? 0
-        : Math.round(
-            (passed.length / total) * 100
-          );
-
-    return (
-      <div
-        key={item.label}
-        style={{
-          background: "#fff",
-          border: "1px solid #e2e8f0",
-          borderRadius: "12px",
-          padding: "13px 15px",
-          boxShadow:
-            "0 2px 6px rgba(15,23,42,0.04)",
-        }}
-      >
-        {/* TÊN NGÀNH */}
+      return (
         <div
+          key={item.label}
           style={{
-            fontSize: "13px",
-            fontWeight: 600,
-            color: "#475569",
-            marginBottom: "4px",
+            background: "#fff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "12px",
+            padding: "13px 15px",
+            boxShadow:
+              "0 2px 6px rgba(15,23,42,0.04)",
           }}
         >
-          {item.label}
-        </div>
-
-        {/* TỔNG SỐ */}
-        <div
-          onClick={() =>
-            showStudents(
-              `${item.label} - Hồ sơ đã nộp`,
-              item.list
-            )
-          }
-          style={{
-            fontSize: "26px",
-            lineHeight: 1.1,
-            fontWeight: 700,
-            color: "#2563eb",
-            cursor:
-              total > 0
-                ? "pointer"
-                : "default",
-            marginBottom: "7px",
-          }}
-        >
-          {total}
-          <span
+          <div
             style={{
-              marginLeft: "5px",
+              fontSize: "13px",
+              fontWeight: 600,
+              color: "#475569",
+              marginBottom: "4px",
+            }}
+          >
+            {item.label}
+          </div>
+
+          <div
+            onClick={() =>
+              showStudents(
+                `${item.label} - Hồ sơ đã nộp`,
+                item.list
+              )
+            }
+            style={{
+              fontSize: "26px",
+              lineHeight: 1.1,
+              fontWeight: 700,
+              color: "#2563eb",
+              cursor:
+                total > 0
+                  ? "pointer"
+                  : "default",
+              marginBottom: "7px",
+            }}
+          >
+            {total}
+            <span
+              style={{
+                marginLeft: "5px",
+                fontSize: "12px",
+                fontWeight: 500,
+                color: "#64748b",
+              }}
+            >
+              hồ sơ
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
               fontSize: "12px",
-              fontWeight: 500,
+              marginBottom: "7px",
+            }}
+          >
+            <span
+              onClick={() =>
+                passed.length > 0 &&
+                showStudents(
+                  `${item.label} - Hồ sơ đạt`,
+                  passed
+                )
+              }
+              style={{
+                color: "#15803d",
+                fontWeight: 600,
+                cursor:
+                  passed.length > 0
+                    ? "pointer"
+                    : "default",
+              }}
+            >
+              {passed.length} Đạt
+            </span>
+
+            <span
+              style={{
+                color: "#cbd5e1",
+              }}
+            >
+              |
+            </span>
+
+            <span
+              onClick={() =>
+                failed.length > 0 &&
+                showStudents(
+                  `${item.label} - Hồ sơ chưa đạt`,
+                  failed
+                )
+              }
+              style={{
+                color: "#dc2626",
+                fontWeight: 600,
+                cursor:
+                  failed.length > 0
+                    ? "pointer"
+                    : "default",
+              }}
+            >
+              {failed.length} Chưa đạt
+            </span>
+          </div>
+
+          <div
+            style={{
+              fontSize: "11px",
               color: "#64748b",
             }}
           >
-            hồ sơ
-          </span>
-        </div>
+            {percent}% tổng hồ sơ
+          </div>
 
-        {/* ĐẠT / CHƯA ĐẠT */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            fontSize: "12px",
-            marginBottom: "7px",
-          }}
-        >
-          <span
-            onClick={() =>
-              passed.length > 0 &&
-              showStudents(
-                `${item.label} - Hồ sơ đạt`,
-                passed
-              )
-            }
-            style={{
-              color: "#15803d",
-              fontWeight: 600,
-              cursor:
-                passed.length > 0
-                  ? "pointer"
-                  : "default",
-            }}
-          >
-            {passed.length} Đạt
-          </span>
-
-          <span
-            style={{
-              color: "#cbd5e1",
-            }}
-          >
-            |
-          </span>
-
-          <span
-            onClick={() =>
-              failed.length > 0 &&
-              showStudents(
-                `${item.label} - Hồ sơ chưa đạt`,
-                failed
-              )
-            }
-            style={{
-              color: "#dc2626",
-              fontWeight: 600,
-              cursor:
-                failed.length > 0
-                  ? "pointer"
-                  : "default",
-            }}
-          >
-            {failed.length} Chưa đạt
-          </span>
-        </div>
-
-        {/* TỶ LỆ TRÊN TỔNG */}
-        <div
-          style={{
-            fontSize: "11px",
-            color: "#64748b",
-          }}
-        >
-          {percent}% tổng hồ sơ
-        </div>
-
-        {/* THANH TỶ LỆ ĐẠT */}
-        {total > 0 && (
-          <div
-            style={{
-              marginTop: "7px",
-              height: "4px",
-              background: "#e2e8f0",
-              borderRadius: "999px",
-              overflow: "hidden",
-            }}
-          >
+          {total > 0 && (
             <div
               style={{
-                width: `${passedPercent}%`,
-                height: "100%",
-                background: "#22c55e",
+                marginTop: "7px",
+                height: "4px",
+                background: "#e2e8f0",
                 borderRadius: "999px",
+                overflow: "hidden",
               }}
-            />
+            >
+              <div
+                style={{
+                  width: `${passedPercent}%`,
+                  height: "100%",
+                  background: "#22c55e",
+                  borderRadius: "999px",
+                }}
+              />
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </div>
+)}
+
+{/* =================================================
+    THỐNG KÊ THEO KHÓA
+================================================= */}
+
+{statsMode === "course" && (
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns:
+        "repeat(auto-fit, minmax(190px, 1fr))",
+      gap: "12px",
+      marginBottom: "22px",
+    }}
+  >
+    {courseStats.map((item) => {
+      const total = item.list.length;
+
+      const percent =
+        totalSubmitted === 0
+          ? 0
+          : Math.round(
+              (total / totalSubmitted) * 100
+            );
+
+      const passedPercent =
+        total === 0
+          ? 0
+          : Math.round(
+              (item.passed.length / total) * 100
+            );
+
+      return (
+        <div
+          key={item.course}
+          style={{
+            background: "#fff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "12px",
+            padding: "15px",
+            boxShadow:
+              "0 2px 6px rgba(15,23,42,0.04)",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "13px",
+              fontWeight: 600,
+              color: "#475569",
+              marginBottom: "5px",
+            }}
+          >
+            Khóa {item.course}
           </div>
-        )}
-      </div>
-    );
-  })}
-</div>
+
+          <div
+            onClick={() =>
+              showStudents(
+                `Khóa ${item.course} - Hồ sơ đã nộp`,
+                item.list
+              )
+            }
+            style={{
+              fontSize: "28px",
+              lineHeight: 1.1,
+              fontWeight: 700,
+              color: "#2563eb",
+              cursor:
+                total > 0
+                  ? "pointer"
+                  : "default",
+              marginBottom: "7px",
+            }}
+          >
+            {total}
+            <span
+              style={{
+                marginLeft: "5px",
+                fontSize: "12px",
+                fontWeight: 500,
+                color: "#64748b",
+              }}
+            >
+              hồ sơ
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontSize: "12px",
+              marginBottom: "7px",
+            }}
+          >
+            <span
+              onClick={() =>
+                item.passed.length > 0 &&
+                showStudents(
+                  `Khóa ${item.course} - Hồ sơ đạt`,
+                  item.passed
+                )
+              }
+              style={{
+                color: "#15803d",
+                fontWeight: 600,
+                cursor:
+                  item.passed.length > 0
+                    ? "pointer"
+                    : "default",
+              }}
+            >
+              {item.passed.length} Đạt
+            </span>
+
+            <span
+              style={{
+                color: "#cbd5e1",
+              }}
+            >
+              |
+            </span>
+
+            <span
+              onClick={() =>
+                item.failed.length > 0 &&
+                showStudents(
+                  `Khóa ${item.course} - Hồ sơ chưa đạt`,
+                  item.failed
+                )
+              }
+              style={{
+                color: "#dc2626",
+                fontWeight: 600,
+                cursor:
+                  item.failed.length > 0
+                    ? "pointer"
+                    : "default",
+              }}
+            >
+              {item.failed.length} Chưa đạt
+            </span>
+          </div>
+
+          <div
+            style={{
+              fontSize: "11px",
+              color: "#64748b",
+            }}
+          >
+            {percent}% tổng hồ sơ
+          </div>
+
+          {total > 0 && (
+            <div
+              style={{
+                marginTop: "7px",
+                height: "4px",
+                background: "#e2e8f0",
+                borderRadius: "999px",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${passedPercent}%`,
+                  height: "100%",
+                  background: "#22c55e",
+                  borderRadius: "999px",
+                }}
+              />
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </div>
+)}
 
               {/* =================================================
                   THỐNG KÊ TRẠNG THÁI
@@ -960,82 +1329,119 @@ export default function StatisticsPage() {
                           hồ sơ
                         </div>
                       </div>
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    flexWrap: "wrap",
+  }}
+>
+  {/* BỘ LỌC KHÓA */}
+  <select
+    value={filterCourse}
+    onChange={(e) =>
+      setFilterCourse(e.target.value)
+    }
+    style={{
+      width: "130px",
+      padding: "8px 10px",
+      border: "1px solid #dbe2ea",
+      borderRadius: "8px",
+      outline: "none",
+      fontSize: "13px",
+      background: "#fff",
+      color: "#334155",
+      cursor: "pointer",
+    }}
+  >
+    <option value="">Tất cả khóa</option>
 
-                      <div
-                        style={{
-                          display:
-                            "flex",
-                          alignItems:
-                            "center",
-                          gap: "8px",
-                        }}
-                      >
-                        <input
-                          placeholder="🔍 Tìm MSSV, họ tên, lớp..."
-                          value={
-                            studentSearch
-                          }
-                          onChange={(
-                            e
-                          ) =>
-                            setStudentSearch(
-                              e.target
-                                .value
-                            )
-                          }
-                          style={{
-                            width:
-                              "280px",
-                            maxWidth:
-                              "100%",
-                            padding:
-                              "8px 10px",
-                            border:
-                              "1px solid #dbe2ea",
-                            borderRadius:
-                              "8px",
-                            outline:
-                              "none",
-                            fontSize:
-                              "13px",
-                          }}
-                        />
+    {courseNumbers.map((course) => (
+      <option
+        key={course}
+        value={String(course)}
+      >
+        Khóa {course}
+      </option>
+    ))}
+  </select>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedStudents(
-                              []
-                            );
-                            setSelectedTitle(
-                              ""
-                            );
-                            setStudentSearch(
-                              ""
-                            );
-                          }}
-                          style={{
-                            padding:
-                              "8px 12px",
-                            border:
-                              "1px solid #e2e8f0",
-                            borderRadius:
-                              "8px",
-                            background:
-                              "#f8fafc",
-                            cursor:
-                              "pointer",
-                            color:
-                              "#475569",
-                            fontWeight:
-                              600,
-                            fontSize:
-                              "13px",
-                          }}
-                        >
-                          Đóng
-                        </button>
-                      </div>
+  {/* BỘ LỌC NGÀNH */}
+  <select
+    value={filterMajor}
+    onChange={(e) =>
+      setFilterMajor(e.target.value)
+    }
+    style={{
+      width: "155px",
+      padding: "8px 10px",
+      border: "1px solid #dbe2ea",
+      borderRadius: "8px",
+      outline: "none",
+      fontSize: "13px",
+      background: "#fff",
+      color: "#334155",
+      cursor: "pointer",
+    }}
+  >
+    <option value="">Tất cả ngành</option>
+    <option value="Y khoa">
+      Y khoa
+    </option>
+    <option value="Dược học">
+      Dược học
+    </option>
+    <option value="Điều dưỡng">
+      Điều dưỡng
+    </option>
+    <option value="Y tế công cộng">
+      Y tế công cộng
+    </option>
+  </select>
+
+  {/* TÌM KIẾM */}
+  <input
+    placeholder="🔍 Tìm MSSV, họ tên, lớp..."
+    value={studentSearch}
+    onChange={(e) =>
+      setStudentSearch(e.target.value)
+    }
+    style={{
+      width: "280px",
+      maxWidth: "100%",
+      padding: "8px 10px",
+      border: "1px solid #dbe2ea",
+      borderRadius: "8px",
+      outline: "none",
+      fontSize: "13px",
+    }}
+  />
+
+  {/* ĐÓNG */}
+  <button
+    type="button"
+    onClick={() => {
+      setSelectedStudents([]);
+      setSelectedTitle("");
+      setStudentSearch("");
+      setFilterCourse("");
+      setFilterMajor("");
+    }}
+    style={{
+      padding: "8px 12px",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      background: "#f8fafc",
+      cursor: "pointer",
+      color: "#475569",
+      fontWeight: 600,
+      fontSize: "13px",
+    }}
+  >
+    Đóng
+  </button>
+</div>
                     </div>
                   </div>
 

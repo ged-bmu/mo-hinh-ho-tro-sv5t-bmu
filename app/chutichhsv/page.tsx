@@ -443,10 +443,8 @@ export default function ChuTichHSVPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    alert(
-                      "Chức năng báo cáo sẽ được phát triển."
-                    );
-                  }}
+  window.location.href = "/chutichhsv/baocao";
+}}
                   style={{
                     textAlign: "left",
                     border: "1px solid #e2e8f0",

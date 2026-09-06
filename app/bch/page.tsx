@@ -10,7 +10,6 @@ import Footer from "../components/Footer";
 export default function BCHPage() {
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState<any[]>([]);
-const [selectedStudent, setSelectedStudent] = useState<any>(null);
 const [tab, setTab] = useState("");
 const [showCriteria, setShowCriteria] = useState(false);
 const [showProfile, setShowProfile] = useState(false);
@@ -169,16 +168,6 @@ async function updateTrangThai(
     )
   );
 
-  setSelectedStudent((prev: any) =>
-    prev?.id === studentId
-      ? {
-          ...prev,
-          ...data,
-          nguoi_duyet_id: prev?.nguoi_duyet_id ?? data?.nguoi_duyet_id ?? null,
-        }
-      : prev
-  );
-
   if (data?.nguoi_duyet_id) {
     const { data: approverData } = await supabase
       .from("profiles")
@@ -237,16 +226,6 @@ async function updateGhiChu(
     )
   );
 
-  setSelectedStudent((prev: any) =>
-    prev?.id === studentId
-      ? {
-          ...prev,
-          ...data,
-          nguoi_duyet_id: prev?.nguoi_duyet_id ?? data?.nguoi_duyet_id ?? null,
-        }
-      : prev
-  );
-
   setGhiChu(value);
 
   if (data?.nguoi_duyet_id) {
@@ -293,15 +272,6 @@ useEffect(() => {
           )
         );
 
-        // Cập nhật modal nếu đang mở
-        setSelectedStudent((prev: any) =>
-          prev?.id === updatedStudent.id
-            ? {
-                ...prev,
-                ...updatedStudent,
-              }
-            : prev
-        );
 
         // Nếu có người duyệt mới thì lấy tên người đó
         if (updatedStudent.nguoi_duyet_id) {
@@ -745,9 +715,9 @@ const handleLogout = async () => {
                     borderTop: "1px solid #e2e8f0",
                   }}
                 >
-                  <td style={tdCenterLarge}>
-                    {index + 1}
-                  </td>
+                <td style={tdCenterLarge}>
+  {index + 1}
+</td>
 
                   <td
                     style={{
@@ -835,40 +805,21 @@ const handleLogout = async () => {
   </span>
 </td>
 
-                  <td style={tdCenterLarge}>
-                    <button
-                      type="button"
-                      onClick={async () => {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("ghi_chu")
-    .eq("id", sv.id)
-    .single();
-
-  if (error) {
-    console.error("Lỗi lấy ghi chú:", error);
-    return;
-  }
-
-  setSelectedStudent({
-    ...sv,
-    ghi_chu: data?.ghi_chu || "",
-  });
-}}
-                      style={{
-                        border: "1px solid #2563eb",
-                        background: "#fff",
-                        color: "#2563eb",
-                        padding: "9px 14px",
-                        borderRadius: "9px",
-                        fontSize: "14px",
-                        fontWeight: 650,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Xem ghi chú
-                    </button>
-                  </td>
+               <td
+  style={{
+    ...tdCenterLarge,
+    textAlign: "left",
+    verticalAlign: "top",
+    whiteSpace: "normal",
+    overflowWrap: "break-word",
+    wordBreak: "break-word",
+    width: "160px",
+    maxWidth: "160px",
+    padding: "8px",
+  }}
+>
+  {sv.ghi_chu || ""}
+</td>
 
                   <td style={tdCenterLarge}>
                     <button
@@ -942,141 +893,6 @@ const handleLogout = async () => {
       </div>
     </main>
 
-    {/* MODAL LỊCH SỬ */}
-    {selectedStudent && (
-      <div
-        onClick={() => setSelectedStudent(null)}
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(15,23,42,0.45)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "20px",
-          zIndex: 9999,
-        }}
-      >
-        <div
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            width: "100%",
-            maxWidth: "620px",
-            background: "#fff",
-            borderRadius: "18px",
-            padding: "28px",
-            boxSizing: "border-box",
-            boxShadow: "0 20px 50px rgba(0,0,0,0.2)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              marginBottom: "22px",
-            }}
-          >
-            <div>
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: "21px",
-                  fontWeight: 750,
-                  color: "#0f172a",
-                }}
-              >
-                Ghi chú 
-              </h2>
-
-              <div
-                style={{
-                  marginTop: "6px",
-                  fontSize: "14px",
-                  color: "#64748b",
-                }}
-              >
-                {selectedStudent.ho_ten} ·{" "}
-                {selectedStudent.mssv}
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setSelectedStudent(null)}
-              style={{
-                width: "36px",
-                height: "36px",
-                border: "none",
-                borderRadius: "9px",
-                background: "#f1f5f9",
-                color: "#475569",
-                fontSize: "23px",
-                cursor: "pointer",
-              }}
-            >
-              ×
-            </button>
-          </div>
-
-<div
-  style={{
-    border: "1px solid #e2e8f0",
-    borderRadius: "12px",
-    padding: "18px",
-    background: "#f8fafc",
-  }}
->
-  <div
-    style={{
-      fontSize: "15px",
-      fontWeight: 650,
-      color: "#334155",
-      marginBottom: "7px",
-    }}
-  >
-    Ghi chú
-  </div>
-
-  <div
-    style={{
-      fontSize: "14px",
-      color: "#64748b",
-      lineHeight: 1.5,
-      whiteSpace: "pre-wrap",
-    }}
-  >
-    {selectedStudent.ghi_chu || "Chưa có ghi chú"}
-  </div>
-</div>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              marginTop: "22px",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setSelectedStudent(null)}
-              style={{
-                padding: "10px 20px",
-                borderRadius: "9px",
-                border: "1px solid #cbd5e1",
-                background: "#fff",
-                color: "#334155",
-                fontSize: "14px",
-                fontWeight: 650,
-                cursor: "pointer",
-              }}
-            >
-              Đóng
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
     {showCriteria && (
       <CriteriaModal
         onClose={() => setShowCriteria(false)}
