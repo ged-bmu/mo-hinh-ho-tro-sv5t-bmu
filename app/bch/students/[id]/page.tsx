@@ -10,6 +10,8 @@ import jsPDF from "jspdf";
 import Spinner from "../../../components/Spinner";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import Header from "../../../components/Header";
+import CriteriaModal from "../../../components/CriteriaModal";
 
 export default function StudentsDetailPage() {
   const [reports, setReports] = useState<any[]>([]);
@@ -36,6 +38,9 @@ export default function StudentsDetailPage() {
   const [previewBlobUrl, setPreviewBlobUrl] = useState("");
   const [zoom, setZoom] = useState(0.6);
   const [savingNhanXet, setSavingNhanXet] = useState(false);
+  const [tab, setTab] = useState("");
+  const [showCriteria, setShowCriteria] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const criteriaList = [
   { key: "dao-duc", title: "Đạo đức tốt", icon: "/icondaoduc.png" },
   { key: "hoc-tap", title: "Học tập tốt", icon: "/iconhoctap.png" },
@@ -554,13 +559,14 @@ async function deleteFile(folder: string, file: any) {
 }
 
 return (
-  <div
-    style={{
-      padding: "30px",
-      maxWidth: "1800px",
-      margin: "0 auto",
-    }}
-  >
+  <div style={{ minHeight: "100vh" }}>
+    <Header
+      tab={tab}
+      setTab={setTab}
+      openCriteria={() => setShowCriteria(true)}
+      openProfile={() => setShowProfile(true)}
+    />
+
     <a
       href="/bch"
       style={{
@@ -1212,7 +1218,7 @@ return (
             </div>
           </div>
 
-          <div style={{ height: "min(75vh, 850px)", minHeight: "500px", overflow: "auto", background: "#f1f5f9", display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "20px", boxSizing: "border-box" }}>
+         <div style={{ height: "min(75vh, 850px)", minHeight: "500px", overflow: "hidden", background: "#f1f5f9", display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "20px", boxSizing: "border-box" }}>
             {previewBlobUrl ? (
               currentName.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/) ? (
                 <img src={previewBlobUrl} style={{ width: `${zoom * 100}%`, height: "auto", maxWidth: "none", objectFit: "contain" }} alt="Xem minh chứng" />
@@ -1250,7 +1256,13 @@ return (
     />
   </div>
 )}
+{showCriteria && (
+  <CriteriaModal
+    onClose={() => setShowCriteria(false)}
+  />
+)}
     </div>
+    
   </div>
   );
 }
