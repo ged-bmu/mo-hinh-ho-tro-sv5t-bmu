@@ -40,7 +40,20 @@ async function downloadFileBuffer(
     );
 
     oauth2Client.setCredentials({ refresh_token: refreshToken });
+try {
+  const accessToken = await oauth2Client.getAccessToken();
 
+  console.log("🔑 GOOGLE ACCESS TOKEN TEST:", {
+    hasToken: !!accessToken.token,
+    tokenLength: accessToken.token?.length,
+  });
+} catch (error: any) {
+  console.error("❌ GOOGLE OAUTH TEST FAILED:", {
+    message: error?.message,
+    code: error?.code,
+    response: error?.response?.data,
+  });
+}
     const drive = google.drive({ version: "v3", auth: oauth2Client });
     const response = await drive.files.get(
       { fileId, alt: "media" },
@@ -81,19 +94,6 @@ export async function GET(
     const { error: authError } = await requireAdminOrSelf(request, id);
 
     if (authError) return authError;
-     const getContent = (key: string) => {
-  const content = escapeHtml(
-    reports?.find((r) => r.criteria === key)?.content || "—"
-  );
-
-  return content
-    .split(/\n+/)
-    .map(
-      (line: string) =>
-        `<p class="content-line">${line.trim()}</p>`
-    )
-    .join("");
-};
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -134,19 +134,34 @@ export async function GET(
     });
 
     // =========================
-    // GET DATA REPORT
-    // =========================
-    const { data: reports } = await supabase
-      .from("reports")
-      .select("*")
-      .eq("user_id", id);
+// GET DATA REPORT
+// =========================
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("ho_ten, lop, mssv, email")
-      .eq("id", id)
-      .single();
+const { data: reports } = await supabase
+  .from("reports")
+  .select("*")
+  .eq("user_id", id);
 
+const { data: profile } = await supabase
+  .from("profiles")
+  .select("ho_ten, lop, mssv, email")
+  .eq("id", id)
+  .single();
+
+const getContent = (key: string) => {
+  const rawContent =
+    reports?.find((r) => r.criteria === key)?.content || "";
+
+  if (!rawContent.trim()) {
+    return `<span class="empty">—</span>`;
+  }
+
+  return escapeHtml(rawContent)
+    .split(/\r?\n/)
+    .map((line: string) => line.trim())
+    .filter(Boolean)
+    .join("<br>");
+};
     // =========================
     // REPORT HTML (A4 LANDSCAPE)
     // =========================
@@ -160,10 +175,7 @@ const reportHTML = `
 
 @page {
   size: A4 landscape;
-  margin-top: 30mm;
-  margin-right: 20mm;
-  margin-bottom: 20mm;
-  margin-left: 20mm;
+  margin: 12mm;
 }
 
 * {
@@ -178,226 +190,284 @@ body {
 
 body {
   font-family: "Times New Roman", serif;
-  font-size: 13pt;
+  font-size: 11pt;
   color: #000;
-
-  /* Giãn dòng 1.15 */
-  line-height: 1.15;
+  line-height: 1.25;
 }
 
-/* Tất cả nội dung dạng đoạn */
-p,
-div,
-td,
-th {
-  line-height: 1.15;
-}
+/* =========================
+   TIÊU ĐỀ
+========================= */
 
-/* Khoảng cách đoạn: trước 0pt, sau 6pt */
-p {
-  margin-top: 0;
-  margin-bottom: 6pt;
-}
-
-h2,
-h3 {
+.title {
   text-align: center;
-  margin-top: 0;
-  margin-bottom: 6pt;
-  line-height: 1.15;
-}
-
-h2 {
+  margin: 0 0 4pt 0;
   font-size: 16pt;
+  font-weight: bold;
+  line-height: 1.2;
 }
 
-h3 {
-  font-size: 14pt;
+.subtitle {
+  text-align: center;
+  margin: 0 0 3pt 0;
+  font-size: 13pt;
+  font-weight: bold;
+  line-height: 1.2;
 }
+
+.school-year {
+  text-align: center;
+  margin: 0 0 12pt 0;
+  font-size: 13pt;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+/* =========================
+   BẢNG
+========================= */
 
 table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  margin-top: 15px;
 }
 
 th,
 td {
   border: 1px solid #000;
-  padding: 8px;
   vertical-align: top;
-
-  font-size: 12pt;
-  line-height: 1.15;
-
-  word-wrap: break-word;
 }
 
 th {
-  background: #f2f2f2;
   text-align: center;
+  font-weight: bold;
+  font-size: 11pt;
+  padding: 6px 5px;
+  line-height: 1.15;
+  background: #f2f2f2;
 }
 
-.info {
-  line-height: 1.15;
+td {
+  padding: 6px 6px;
+  font-size: 10.5pt;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
+
+/* =========================
+   CHIỀU RỘNG CỘT
+========================= */
 
 .student {
-  width: 22%;
-  line-height: 1.15;
+  width: 21%;
 }
 
 .criteria {
-  width: 13%;
+  width: 13.166%;
 }
 
-/* Các dòng thông tin sinh viên */
-.student div {
-  margin-top: 0;
-  margin-bottom: 6pt;
-  line-height: 1.15;
-}
-  .content-line {
-  margin-top: 0;
-  margin-bottom: 6pt;
-  line-height: 1.15;
-}
-.info {
-  line-height: 1.15;
+/* =========================
+   THÔNG TIN SINH VIÊN
+========================= */
+
+.student-info {
+  line-height: 1.25;
 }
 
-.info p {
-  margin-top: 0;
-  margin-bottom: 6pt;
-  line-height: 1.15;
+.student-info div {
+  margin: 0 0 4pt 0;
 }
+
+.student-info div:last-child {
+  margin-bottom: 0;
+}
+
+/* =========================
+   NỘI DUNG TIÊU CHÍ
+========================= */
+
+.criteria-content {
+  line-height: 1.25;
+  white-space: normal;
+}
+
+.criteria-content br {
+  line-height: 1.25;
+}
+
+.empty {
+  color: #444;
+}
+
+/* =========================
+   TRÁNH CẮT DÒNG QUÁ XẤU
+========================= */
+
+tr {
+  page-break-inside: avoid;
+}
+
+td,
+th {
+  page-break-inside: avoid;
+}
+
 </style>
 
 </head>
 
 <body>
 
-<h2>BÁO CÁO THÀNH TÍCH</h2>
+<div class="title">
+  BÁO CÁO THÀNH TÍCH
+</div>
 
-<h3>
-ĐỀ NGHỊ CÔNG NHẬN DANH HIỆU SINH VIÊN 5 TỐT CẤP TRƯỜNG
-</h3>
+<div class="subtitle">
+  ĐỀ NGHỊ CÔNG NHẬN DANH HIỆU SINH VIÊN 5 TỐT CẤP TRƯỜNG
+</div>
 
-<h3>
-NĂM HỌC 2025 - 2026
-</h3>
+<div class="school-year">
+  NĂM HỌC 2025 - 2026
+</div>
 
 <table>
 
+<thead>
 <tr>
 
 <th class="student">
-Thông tin sinh viên
+  Thông tin sinh viên
 </th>
 
 <th class="criteria">
-Đạo đức tốt
+  Đạo đức tốt
 </th>
 
 <th class="criteria">
-Học tập tốt
+  Học tập tốt
 </th>
 
 <th class="criteria">
-Thể lực tốt
+  Thể lực tốt
 </th>
 
 <th class="criteria">
-Tình nguyện tốt
+  Tình nguyện tốt
 </th>
 
 <th class="criteria">
-Hội nhập tốt
+  Hội nhập tốt
 </th>
 
 <th class="criteria">
-Thành tích khác
+  Thành tích khác
 </th>
 
 </tr>
+</thead>
+
+<tbody>
 
 <tr>
 
 <td class="student">
 
-<div>
-<b>Họ và tên:</b> ${escapeHtml(profile?.ho_ten)}
-</div>
+  <div class="student-info">
 
-<div>
-<b>MSSV:</b> ${escapeHtml(profile?.mssv)}
-</div>
+    <div>
+      <b>Họ và tên:</b>
+      ${escapeHtml(profile?.ho_ten || "")}
+    </div>
 
-<div>
-<b>Nam/Nữ:</b>
-</div>
+    <div>
+      <b>MSSV:</b>
+      ${escapeHtml(profile?.mssv || "")}
+    </div>
 
-<div>
-<b>Năm sinh:</b>
-</div>
+    <div>
+      <b>Nam/Nữ:</b>
+    </div>
 
-<div>
-<b>Dân tộc:</b>
-</div>
+    <div>
+      <b>Năm sinh:</b>
+    </div>
 
-<div>
-<b>Sinh viên năm thứ:</b>
-</div>
+    <div>
+      <b>Dân tộc:</b>
+    </div>
 
-<div>
-<b>Lớp:</b> ${escapeHtml(profile?.lop)},
-Trường Đại học Y Dược Buôn Ma Thuột
-</div>
+    <div>
+      <b>Sinh viên năm thứ:</b>
+    </div>
 
-<div>
-<b>Chức vụ Đoàn - Hội:</b>
-</div>
+    <div>
+      <b>Lớp:</b>
+      ${escapeHtml(profile?.lop || "")},
+      Trường Đại học Y Dược Buôn Ma Thuột
+    </div>
 
-<div>
-<b>Đảng viên/Đoàn viên:</b>
-</div>
+    <div>
+      <b>Chức vụ Đoàn - Hội:</b>
+    </div>
 
-<div>
-<b>Số điện thoại:</b>
-</div>
+    <div>
+      <b>Đảng viên/Đoàn viên:</b>
+    </div>
 
-<div>
-<b>Email:</b>
-</div>
+    <div>
+      <b>Số điện thoại:</b>
+    </div>
+
+    <div>
+      <b>Email:</b>
+      ${escapeHtml(profile?.email || "")}
+    </div>
+
+  </div>
 
 </td>
 
-<td class="info">
-${getContent("dao-duc")}
+<td>
+  <div class="criteria-content">
+    ${getContent("dao-duc")}
+  </div>
 </td>
 
-<td class="info">
-${getContent("hoc-tap")}
+<td>
+  <div class="criteria-content">
+    ${getContent("hoc-tap")}
+  </div>
 </td>
 
-<td class="info">
-${getContent("the-luc")}
+<td>
+  <div class="criteria-content">
+    ${getContent("the-luc")}
+  </div>
 </td>
 
-<td class="info">
-${getContent("tinh-nguyen")}
+<td>
+  <div class="criteria-content">
+    ${getContent("tinh-nguyen")}
+  </div>
 </td>
 
-<td class="info">
-${getContent("hoi-nhap")}
+<td>
+  <div class="criteria-content">
+    ${getContent("hoi-nhap")}
+  </div>
 </td>
 
-<td class="info">
-${getContent("uu-tien")}
+<td>
+  <div class="criteria-content">
+    ${getContent("uu-tien")}
+  </div>
 </td>
 
 </tr>
+
+</tbody>
 
 </table>
 
