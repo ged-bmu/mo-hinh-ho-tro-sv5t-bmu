@@ -568,7 +568,7 @@ return (
     />
 
     <a
-      href="/bch"
+      href="/chutichhsv/xetduyet"
       style={{
         display: "inline-block",
         marginBottom: "20px",
