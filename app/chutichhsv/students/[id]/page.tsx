@@ -1218,7 +1218,7 @@ return (
             </div>
           </div>
 
-         <div style={{ height: "min(75vh, 850px)", minHeight: "500px", overflow: "hidden", background: "#f1f5f9", display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "20px", boxSizing: "border-box" }}>
+         <div style={{ height: "min(75vh, 850px)", minHeight: "500px", overflow: "auto", background: "#f1f5f9", display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "20px", boxSizing: "border-box" }}>
             {previewBlobUrl ? (
               currentName.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/) ? (
                 <img src={previewBlobUrl} style={{ width: `${zoom * 100}%`, height: "auto", maxWidth: "none", objectFit: "contain" }} alt="Xem minh chứng" />
