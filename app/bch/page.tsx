@@ -826,7 +826,7 @@ const handleLogout = async () => {
                       type="button"
                       onClick={() =>
                         (window.location.href =
-                          `/bch/students/${sv.id}`)
+                          `/bchhh/students/${sv.id}`)
                       }
                       style={{
                         border: "none",
