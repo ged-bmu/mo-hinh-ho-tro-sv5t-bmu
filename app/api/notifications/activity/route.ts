@@ -85,7 +85,7 @@ export async function POST(req: Request) {
           type: "activity",
           title: String(title),
           body: String(body),
-          url: String(url || `/activities/${activityId}`),
+          url: String(url || `/hoat-dong`),
           activityId: String(activityId),
           notificationId: "",
         },

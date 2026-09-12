@@ -220,7 +220,7 @@ loadActivities();
       type: "activity",
       title: "Hoạt động sắp diễn ra",
       content: `${activity.title}${activity.event_time ? ` sẽ diễn ra vào ${activity.event_time}.` : "."}`,
-      target_url: `/activities/${activity.id}`,
+      target_url: `/hoat-dong`,
       is_read: false,
     }));
 
@@ -247,7 +247,7 @@ loadActivities();
         ? ` sẽ diễn ra vào ${activity.event_time}.`
         : "."
     }`,
-    url: `/activities/${activity.id}`,
+    url: `/hoat-dong`,
   }),
 });
 
@@ -327,7 +327,7 @@ function handleEdit(activity: Activity) {
 
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <p className="text-xs font-medium text-gray-500">
-        Đang diễn ra
+        Chưa diễn ra
       </p>
       <p className="mt-1 text-2xl font-bold text-blue-600">
         {
@@ -506,7 +506,7 @@ activities.filter((a) => a.status === "ended").length
     onChange={(e) => setStatus(e.target.value)}
     className="w-full rounded-xl border border-gray-300 px-4 py-3"
   >
-    <option value="upcoming"> Đang diễn ra</option>
+    <option value="upcoming"> Chưa diễn ra</option>
     <option value="ongoing"> Sắp diễn ra</option>
     <option value="ended"> Đã kết thúc</option>
   </select>
@@ -618,7 +618,7 @@ activities.filter((a) => a.status === "ended").length
     }`}
   >
     {activity.status === "upcoming"
-      ? " Đang diễn ra"
+      ? " Chưa diễn ra"
       : activity.status === "ongoing"
       ? " Sắp diễn ra"
       : " Đã kết thúc"}

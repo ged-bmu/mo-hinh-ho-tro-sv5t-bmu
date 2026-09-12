@@ -284,8 +284,8 @@ return (
             Tất cả trạng thái
           </option>
 
-          <option value="Đang diễn ra">
-             Đang diễn ra
+          <option value="Chưa diễn ra">
+             Chưa diễn ra
           </option>
 
           <option value="Đã kết thúc">
@@ -322,7 +322,7 @@ return (
   const status =
     activity.status === "upcoming"
       ? {
-          text: "Đang diễn ra",
+          text: "Chưa diễn ra",
           color: "bg-green-100 text-green-700",
         }
       : activity.status === "ongoing"
