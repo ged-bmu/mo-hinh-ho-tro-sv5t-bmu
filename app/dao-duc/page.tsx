@@ -337,6 +337,7 @@ async function uploadFile(file: File) {
       .insert({
         user_id: user.id,
         folder: "dao-duc",
+        academic_year_id: Number(yearId),
         storage_name: fileName,
         display_name: file.name,
         storage_type: "google_drive",
