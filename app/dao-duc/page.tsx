@@ -415,13 +415,11 @@ async function deleteFile(storageName: string) {
 
   if (!user) return;
 
-  let fileRecord: any = null;
-
   try {
     // ================================
-    // 1. Lấy bản ghi file
+    // 1. Lấy đúng file của đúng năm học
     // ================================
-    const { data, error: findError } =
+    const { data: fileRecord, error: findError } =
       await supabase
         .from("uploaded_files")
         .select(
@@ -429,36 +427,57 @@ async function deleteFile(storageName: string) {
         )
         .eq("user_id", user.id)
         .eq("folder", "dao-duc")
+        .eq("academic_year_id", Number(yearId))
         .eq("storage_name", storageName)
         .single();
 
-    if (findError || !data) {
-      throw new Error(
-        "Không tìm thấy thông tin file"
-      );
+    if (findError || !fileRecord) {
+      throw new Error("Không tìm thấy thông tin file");
     }
 
-    fileRecord = data;
+    // ================================
+    // 2. Xóa trên Google Drive trước
+    // ================================
+    if (fileRecord.drive_file_id) {
+      const response = await fetch("/api/delete-drive", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileId: fileRecord.drive_file_id,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error ||
+            "Không thể xóa file trên Google Drive"
+        );
+      }
+    }
 
     // ================================
-    // 2. Xóa bản ghi DB TRƯỚC (source of truth)
+    // 3. Xóa bản ghi trong Supabase
     // ================================
-    const { error: dbError } =
-      await supabase
-        .from("uploaded_files")
-        .delete()
-        .eq("id", fileRecord.id)
-        .eq("user_id", user.id);
+    const { error: dbError } = await supabase
+      .from("uploaded_files")
+      .delete()
+      .eq("id", fileRecord.id)
+      .eq("user_id", user.id)
+      .eq("academic_year_id", Number(yearId));
 
     if (dbError) {
       throw new Error(
-        "Không thể xóa dữ liệu file: " +
+        "Đã xóa file trên Google Drive nhưng không thể xóa dữ liệu hệ thống: " +
           dbError.message
       );
     }
 
     // ================================
-    // 3. Cập nhật UI ngay (DB đã xóa)
+    // 4. Cập nhật UI
     // ================================
     setFiles((prevFiles) =>
       prevFiles.filter(
@@ -473,75 +492,35 @@ async function deleteFile(storageName: string) {
     });
 
     // ================================
-    // 4. Xóa trên Drive (nếu có)
+    // 5. Lấy thông tin sinh viên để ghi log
     // ================================
-    if (fileRecord.drive_file_id) {
-      try {
-        const response = await fetch(
-          "/api/delete-drive",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              fileId: fileRecord.drive_file_id,
-            }),
-          }
-        );
-
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          console.warn(
-            "Xóa Drive fail nhưng DB đã xóa:",
-            result.error
-          );
-        }
-      } catch (driveError) {
-        console.warn(
-          "Xóa Drive exception nhưng DB đã xóa:",
-          driveError
-        );
-      }
-    }
-
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("ho_ten, lop")
+      .eq("id", user.id)
+      .single();
 
     // ================================
-    // 4. Lấy profile để ghi log
+    // 6. Ghi log
     // ================================
-    const { data: profile } =
-      await supabase
-        .from("profiles")
-        .select("ho_ten, lop")
-        .eq("id", user.id)
-        .single();
+    await supabase.from("activity_logs").insert({
+      user_id: user.id,
+      ho_ten: profile?.ho_ten,
+      lop: profile?.lop,
+      action_type: "delete",
+      target_folder: "dao-duc",
+      target_file:
+        fileRecord.display_name ||
+        fileRecord.storage_name,
+    });
 
     // ================================
-    // 5. Ghi log
+    // 7. Load lại danh sách
     // ================================
-    await supabase
-      .from("activity_logs")
-      .insert({
-        user_id: user.id,
-        ho_ten: profile?.ho_ten,
-        lop: profile?.lop,
-        action_type: "delete",
-        target_folder: "dao-duc",
-        target_file:
-          fileRecord.display_name ||
-          fileRecord.storage_name,
-      });
-
-    // ================================
-    // 6. Load lại
-    // ================================
+    await loadFiles();
 
   } catch (error) {
-    console.error(
-      "Delete error:",
-      error
-    );
+    console.error("Delete error:", error);
 
     alert(
       error instanceof Error
@@ -551,15 +530,22 @@ async function deleteFile(storageName: string) {
   }
 }
 async function renameFile(file: any) {
-  const currentName = file.display_name || file.name;
+  const currentName =
+    file.display_name || file.name;
 
   const ext = currentName.includes(".")
     ? currentName.slice(currentName.lastIndexOf("."))
     : "";
 
-  const currentNameWithoutExt = currentName.replace(/\.[^/.]+$/, "");
+  const currentNameWithoutExt = currentName.replace(
+    /\.[^/.]+$/,
+    ""
+  );
 
-  const input = prompt("Nhập tên mới:", currentNameWithoutExt);
+  const input = prompt(
+    "Nhập tên mới:",
+    currentNameWithoutExt
+  );
 
   if (!input || !input.trim()) return;
 
@@ -567,19 +553,42 @@ async function renameFile(file: any) {
 
   try {
     // ================================
-    // 1. Đổi tên trên Google Drive
+    // 1. Kiểm tra đúng file + đúng năm
     // ================================
-    if (file.drive_file_id) {
-      const response = await fetch("/api/rename-drive", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fileId: file.drive_file_id,
-          newName,
-        }),
-      });
+    const { data: fileRecord, error: findError } =
+      await supabase
+        .from("uploaded_files")
+        .select(
+          "id, storage_name, display_name, drive_file_id"
+        )
+        .eq("id", file.id)
+        .eq("user_id", userId)
+        .eq("academic_year_id", Number(yearId))
+        .single();
+
+    if (findError || !fileRecord) {
+      throw new Error(
+        "Không tìm thấy file trong năm học hiện tại"
+      );
+    }
+
+    // ================================
+    // 2. Đổi tên trên Google Drive
+    // ================================
+    if (fileRecord.drive_file_id) {
+      const response = await fetch(
+        "/api/rename-drive",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fileId: fileRecord.drive_file_id,
+            newName,
+          }),
+        }
+      );
 
       const result = await response.json();
 
@@ -592,15 +601,17 @@ async function renameFile(file: any) {
     }
 
     // ================================
-    // 2. Đổi tên trong Supabase
+    // 3. Đổi tên trong Supabase
     // ================================
-    const { error: updateError } = await supabase
-      .from("uploaded_files")
-      .update({
-        display_name: newName,
-      })
-      .eq("id", file.id)
-      .eq("user_id", userId);
+    const { error: updateError } =
+      await supabase
+        .from("uploaded_files")
+        .update({
+          display_name: newName,
+        })
+        .eq("id", fileRecord.id)
+        .eq("user_id", userId)
+        .eq("academic_year_id", Number(yearId));
 
     if (updateError) {
       throw new Error(
@@ -610,12 +621,12 @@ async function renameFile(file: any) {
     }
 
     // ================================
-    // 3. CẬP NHẬT TRỰC TIẾP STATE
+    // 4. Cập nhật UI
     // ================================
     setFiles((prevFiles) =>
       sortFilesByName(
         prevFiles.map((item) =>
-          item.id === file.id
+          item.id === fileRecord.id
             ? {
                 ...item,
                 display_name: newName,
@@ -625,12 +636,9 @@ async function renameFile(file: any) {
       )
     );
 
-    // ================================
-    // 4. Cập nhật displayNames
-    // ================================
     setDisplayNames((prev) => ({
       ...prev,
-      [file.storage_name]: newName,
+      [fileRecord.storage_name]: newName,
     }));
 
     // ================================
@@ -668,7 +676,6 @@ async function renameFile(file: any) {
     );
   }
 }
-
   return (
   <div
     style={{
