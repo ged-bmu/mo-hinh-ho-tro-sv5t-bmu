@@ -377,7 +377,7 @@ async function uploadFile(file: File) {
     // ================================
     // 10. LOAD LẠI DANH SÁCH
     // ================================
-    await loadFiles();
+    
 
   } catch (error) {
     console.error(
