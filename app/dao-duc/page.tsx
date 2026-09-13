@@ -32,7 +32,7 @@ function DaoDucPage() {
   const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
  const defaultReport = `
 <p style="margin: 0;">1. Không vi phạm pháp luật của Nhà nước, nội quy, quy chế của nhà trường; không bị xử lý kỷ luật trong năm học.</p>
-<p style="margin: 0;">2. Điểm rèn luyện năm học 2025 - 2026: /100.</p>
+<p style="margin: 0;">2. Điểm rèn luyện năm học ${currentAcademicYear?.name || ""}: /100.</p>
 <p style="margin: 0;">3. Tham gia đầy đủ các buổi sinh hoạt chính trị, sinh hoạt công dân.</p>
 <p style="margin: 0;">4.&nbsp;</p>
 `;
@@ -46,10 +46,26 @@ function sortFilesByName(fileList: any[]) {
     )
   );
 }
+async function loadAcademicYear() {
+  const { data, error } = await supabase
+    .from("academic_years")
+    .select("id, name")
+    .eq("id", Number(yearId))
+    .single();
 
+  if (error) {
+    console.error("Lỗi lấy năm học:", error);
+    return null;
+  }
+
+  setCurrentAcademicYear(data);
+  return data;
+}
 useEffect(() => {
+  if (!yearId) return;
+
   checkAccess();
-}, []);
+}, [yearId]);
 
 async function checkAccess() {
   const result = await checkSubmissionAccess(Number(yearId));
@@ -60,10 +76,17 @@ async function checkAccess() {
     return;
   }
 
-  loadFiles();
+  const academicYear = await loadAcademicYear();
+
+  if (!academicYear) {
+    alert("Không xác định được năm học.");
+    return;
+  }
+
+  await loadFiles(academicYear.name);
 }
 
-async function loadFiles() {
+async function loadFiles(academicYearName?: string) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -111,11 +134,19 @@ const { data: reportData } = await supabase
   .eq("academic_year_id", Number(yearId))
   .maybeSingle();
 
-  setReport(
-    reportData?.content?.trim()
-      ? reportData.content
-      : defaultReport
-  );
+setReport(
+  reportData?.content?.trim()
+    ? reportData.content
+    : `
+<p style="margin: 0;">1. Không vi phạm pháp luật của Nhà nước, nội quy, quy chế của nhà trường; không bị xử lý kỷ luật trong năm học.</p>
+
+<p style="margin: 0;">2. Điểm rèn luyện năm học ${academicYearName || ""}: /100.</p>
+
+<p style="margin: 0;">3. Tham gia đầy đủ các buổi sinh hoạt chính trị, sinh hoạt công dân.</p>
+
+<p style="margin: 0;">4.&nbsp;</p>
+`
+);
 }
 async function saveReport() {
   if (!userId) return;
@@ -377,7 +408,7 @@ async function uploadFile(file: File) {
     // ================================
     // 10. LOAD LẠI DANH SÁCH
     // ================================
-    
+    await loadFiles();
 
   } catch (error) {
     console.error(
@@ -778,37 +809,34 @@ async function renameFile(file: any) {
   }}
 >
 <button
-  onClick={async () => {
-    if (!confirm("Tạo lại mẫu báo cáo?")) return;
+onClick={async () => {
+  if (!confirm("Tạo lại mẫu báo cáo?")) return;
 
-    setReport(defaultReport);
+  setReport(defaultReport);
 
-    await supabase
-      .from("reports")
-      .upsert(
-        {
-          user_id: userId,
-          criteria: "dao-duc",
-          content: defaultReport,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "user_id,criteria",
-        }
-      );
+  const { error } = await supabase
+    .from("reports")
+    .upsert(
+      {
+        user_id: userId,
+        criteria: "dao-duc",
+        content: defaultReport,
+        academic_year_id: Number(yearId),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "user_id,criteria,academic_year_id",
+      }
+    );
 
-    setLastSaved(new Date());
-  }}
-  style={{
-    padding: "6px 10px",
-    background: "#fff",
-    color: "#2563eb",
-    border: "1px solid #2563eb",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "13px",
-    fontWeight: 500,
-  }}
+  if (error) {
+    console.error("Lỗi tạo lại mẫu:", error);
+    alert("Không thể tạo lại mẫu báo cáo.");
+    return;
+  }
+
+  setLastSaved(new Date());
+}}
 >
   ↺ Tạo lại mẫu
 </button>

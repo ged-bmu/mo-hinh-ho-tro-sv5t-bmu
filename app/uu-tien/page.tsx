@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { authFetch as fetch } from "../../lib/auth-fetch";
+import { checkSubmissionAccess } from "../../lib/checkSubmissionAccess";
+import Image from "next/image";
 import Sidebar from "../components/Sidebar";
 import FileItem from "../components/FileItem";
 import CriteriaModal from "../components/CriteriaModal";
@@ -10,11 +13,11 @@ import BellUserTemp from "../components/BellUserTemp";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ReportEditor from "../components/ReportEditor";
-import Spinner from "@/app/components/Spinner";
-import Image from "next/image";
-import { checkSubmissionAccess } from "../../lib/checkSubmissionAccess";
+import Spinner from "../components/Spinner";
 
-export default function UuTienPage() {
+function UuTienPage() {
+  const searchParams = useSearchParams();
+  const yearId = searchParams.get("year");
   const [files, setFiles] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
   const [userId, setUserId] = useState("");
@@ -26,6 +29,8 @@ export default function UuTienPage() {
   const [savingReport, setSavingReport] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
+  const defaultReport = ``;
 
 function sortFilesByName(fileList: any[]) {
   return [...fileList].sort((firstFile, secondFile) =>
@@ -36,13 +41,29 @@ function sortFilesByName(fileList: any[]) {
     )
   );
 }
+async function loadAcademicYear() {
+  const { data, error } = await supabase
+    .from("academic_years")
+    .select("id, name")
+    .eq("id", Number(yearId))
+    .single();
 
+  if (error) {
+    console.error("Lỗi lấy năm học:", error);
+    return null;
+  }
+
+  setCurrentAcademicYear(data);
+  return data;
+}
 useEffect(() => {
+  if (!yearId) return;
+
   checkAccess();
-}, []);
+}, [yearId]);
 
 async function checkAccess() {
-  const result = await checkSubmissionAccess();
+  const result = await checkSubmissionAccess(Number(yearId));
 
   if (!result.allowed) {
     alert(result.message);
@@ -50,10 +71,17 @@ async function checkAccess() {
     return;
   }
 
-  loadFiles();
+  const academicYear = await loadAcademicYear();
+
+  if (!academicYear) {
+    alert("Không xác định được năm học.");
+    return;
+  }
+
+  await loadFiles(academicYear.name);
 }
 
-async function loadFiles() {
+async function loadFiles(academicYearName?: string) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -69,8 +97,9 @@ async function loadFiles() {
       "id, storage_name, display_name, storage_type, drive_file_id, drive_url"
     )
     .eq("user_id", user.id)
-    .eq("folder", "uu-tien")
-    .order("id", { ascending: false });
+.eq("folder", "uu-tien")
+.eq("academic_year_id", Number(yearId))
+.order("id", { ascending: false });
 
   if (error) {
     console.error("LOAD UPLOADED FILES ERROR:", error);
@@ -89,44 +118,55 @@ async function loadFiles() {
     setDisplayNames(map);
   }
 
+  // ================================
   // Lấy báo cáo
-  const { data: reportData } = await supabase
-    .from("reports")
-    .select("content")
-    .eq("user_id", user.id)
-    .eq("criteria", "uu-tien")
-    .maybeSingle();
+  // ================================
+const { data: reportData } = await supabase
+  .from("reports")
+  .select("content")
+  .eq("user_id", user.id)
+  .eq("criteria", "uu-tien")
+  .eq("academic_year_id", Number(yearId))
+  .maybeSingle();
 
-  setReport(reportData?.content ?? "");
+setReport(reportData?.content?.trim() ? reportData.content : "");
 }
 async function saveReport() {
   if (!userId) return;
 
   setSavingReport(true);
+const {
+  data: { user },
+} = await supabase.auth.getUser();
 
-  const { error } = await supabase
-    .from("reports")
-    .upsert(
-      {
-        user_id: userId,
-        criteria: "uu-tien",
-        content: report,
-        updated_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "user_id,criteria",
-      }
-    );
-
-  if (error) {
-    console.error("SAVE REPORT ERROR:", error);
-    alert("Không thể lưu báo cáo: " + error.message);
-    setSavingReport(false);
-    return;
-  }
+if (!user) {
+  alert("Chưa đăng nhập.");
+  return;
+}
+const { error } = await supabase
+  .from("reports")
+  .upsert(
+    {
+      user_id: user.id,
+      criteria: "uu-tien",
+      content: report,
+      academic_year_id: Number(yearId),
+    },
+    {
+      onConflict: "user_id,criteria,academic_year_id",
+    }
+  );
 
   setSavingReport(false);
-  setLastSaved(new Date());
+
+if (error) {
+  console.error(error);
+  setSavingReport(false);
+  return;
+}
+
+setSavingReport(false);
+setLastSaved(new Date());
 }
 async function uploadFile(file: File) {
   const {
@@ -182,6 +222,7 @@ async function uploadFile(file: File) {
           mssv: profile.mssv,
           ho_ten: profile.ho_ten,
           criteria: "uu-tien",
+          academic_year_id: Number(yearId),
         }),
       }
     );
@@ -310,6 +351,7 @@ async function uploadFile(file: File) {
       .insert({
         user_id: user.id,
         folder: "uu-tien",
+        academic_year_id: Number(yearId),
         storage_name: fileName,
         display_name: file.name,
         storage_type: "google_drive",
@@ -387,52 +429,69 @@ async function deleteFile(storageName: string) {
 
   if (!user) return;
 
-  let fileRecord: any = null;
-
   try {
     // ================================
-    // 1. Lấy bản ghi file
+    // 1. Lấy đúng file của đúng năm học
     // ================================
-    const {
-      data,
-      error: findError,
-    } = await supabase
-      .from("uploaded_files")
-      .select(
-        "id, storage_name, display_name, drive_file_id"
-      )
-      .eq("user_id", user.id)
-      .eq("folder", "uu-tien")
-      .eq("storage_name", storageName)
-      .single();
-
-    if (findError || !data) {
-      throw new Error(
-        "Không tìm thấy thông tin file"
-      );
-    }
-
-    fileRecord = data;
-
-    // ================================
-    // 2. Xóa DB TRƯỚC (source of truth)
-    // ================================
-    const { error: dbError } =
+    const { data: fileRecord, error: findError } =
       await supabase
         .from("uploaded_files")
-        .delete()
-        .eq("id", fileRecord.id)
-        .eq("user_id", user.id);
+        .select(
+          "id, storage_name, display_name, drive_file_id"
+        )
+        .eq("user_id", user.id)
+        .eq("folder", "uu-tien")
+        .eq("academic_year_id", Number(yearId))
+        .eq("storage_name", storageName)
+        .single();
+
+    if (findError || !fileRecord) {
+      throw new Error("Không tìm thấy thông tin file");
+    }
+
+    // ================================
+    // 2. Xóa trên Google Drive trước
+    // ================================
+    if (fileRecord.drive_file_id) {
+      const response = await fetch("/api/delete-drive", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileId: fileRecord.drive_file_id,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error ||
+            "Không thể xóa file trên Google Drive"
+        );
+      }
+    }
+
+    // ================================
+    // 3. Xóa bản ghi trong Supabase
+    // ================================
+    const { error: dbError } = await supabase
+      .from("uploaded_files")
+      .delete()
+      .eq("id", fileRecord.id)
+      .eq("user_id", user.id)
+      .eq("academic_year_id", Number(yearId));
 
     if (dbError) {
       throw new Error(
-        "Không thể xóa dữ liệu file: " +
+        "Đã xóa file trên Google Drive nhưng không thể xóa dữ liệu hệ thống: " +
           dbError.message
       );
     }
 
     // ================================
-    // 3. Cập nhật UI ngay
+    // 4. Cập nhật UI
     // ================================
     setFiles((prevFiles) =>
       prevFiles.filter(
@@ -447,70 +506,35 @@ async function deleteFile(storageName: string) {
     });
 
     // ================================
-    // 4. Xóa Drive (nếu có)
+    // 5. Lấy thông tin sinh viên để ghi log
     // ================================
-    if (fileRecord.drive_file_id) {
-      try {
-        const response = await fetch(
-          "/api/delete-drive",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              fileId: fileRecord.drive_file_id,
-            }),
-          }
-        );
-
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          console.warn(
-            "Xóa Drive fail nhưng DB đã xóa:",
-            result.error
-          );
-        }
-      } catch (driveError) {
-        console.warn(
-          "Xóa Drive exception nhưng DB đã xóa:",
-          driveError
-        );
-      }
-    }
-
-    // ================================
-    // 5. Lấy profile
-    // ================================
-    const { data: profile } =
-      await supabase
-        .from("profiles")
-        .select("ho_ten, lop")
-        .eq("id", user.id)
-        .single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("ho_ten, lop")
+      .eq("id", user.id)
+      .single();
 
     // ================================
     // 6. Ghi log
     // ================================
-    await supabase
-      .from("activity_logs")
-      .insert({
-        user_id: user.id,
-        ho_ten: profile?.ho_ten,
-        lop: profile?.lop,
-        action_type: "delete",
-        target_folder: "uu-tien",
-        target_file:
-          fileRecord.display_name ||
-          fileRecord.storage_name,
-      });
+    await supabase.from("activity_logs").insert({
+      user_id: user.id,
+      ho_ten: profile?.ho_ten,
+      lop: profile?.lop,
+      action_type: "delete",
+      target_folder: "uu-tien",
+      target_file:
+        fileRecord.display_name ||
+        fileRecord.storage_name,
+    });
+
+    // ================================
+    // 7. Load lại danh sách
+    // ================================
+    await loadFiles();
 
   } catch (error) {
-    console.error(
-      "Delete error:",
-      error
-    );
+    console.error("Delete error:", error);
 
     alert(
       error instanceof Error
@@ -524,13 +548,13 @@ async function renameFile(file: any) {
     file.display_name || file.name;
 
   const ext = currentName.includes(".")
-    ? currentName.slice(
-        currentName.lastIndexOf(".")
-      )
+    ? currentName.slice(currentName.lastIndexOf("."))
     : "";
 
-  const currentNameWithoutExt =
-    currentName.replace(/\.[^/.]+$/, "");
+  const currentNameWithoutExt = currentName.replace(
+    /\.[^/.]+$/,
+    ""
+  );
 
   const input = prompt(
     "Nhập tên mới:",
@@ -543,9 +567,29 @@ async function renameFile(file: any) {
 
   try {
     // ================================
-    // 1. Đổi tên trên Google Drive
+    // 1. Kiểm tra đúng file + đúng năm
     // ================================
-    if (file.drive_file_id) {
+    const { data: fileRecord, error: findError } =
+      await supabase
+        .from("uploaded_files")
+        .select(
+          "id, storage_name, display_name, drive_file_id"
+        )
+        .eq("id", file.id)
+        .eq("user_id", userId)
+        .eq("academic_year_id", Number(yearId))
+        .single();
+
+    if (findError || !fileRecord) {
+      throw new Error(
+        "Không tìm thấy file trong năm học hiện tại"
+      );
+    }
+
+    // ================================
+    // 2. Đổi tên trên Google Drive
+    // ================================
+    if (fileRecord.drive_file_id) {
       const response = await fetch(
         "/api/rename-drive",
         {
@@ -554,7 +598,7 @@ async function renameFile(file: any) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            fileId: file.drive_file_id,
+            fileId: fileRecord.drive_file_id,
             newName,
           }),
         }
@@ -571,7 +615,7 @@ async function renameFile(file: any) {
     }
 
     // ================================
-    // 2. Đổi tên trong Supabase
+    // 3. Đổi tên trong Supabase
     // ================================
     const { error: updateError } =
       await supabase
@@ -579,8 +623,9 @@ async function renameFile(file: any) {
         .update({
           display_name: newName,
         })
-        .eq("id", file.id)
-        .eq("user_id", userId);
+        .eq("id", fileRecord.id)
+        .eq("user_id", userId)
+        .eq("academic_year_id", Number(yearId));
 
     if (updateError) {
       throw new Error(
@@ -590,12 +635,12 @@ async function renameFile(file: any) {
     }
 
     // ================================
-    // 3. Cập nhật UI
+    // 4. Cập nhật UI
     // ================================
     setFiles((prevFiles) =>
       sortFilesByName(
         prevFiles.map((item) =>
-          item.id === file.id
+          item.id === fileRecord.id
             ? {
                 ...item,
                 display_name: newName,
@@ -607,42 +652,36 @@ async function renameFile(file: any) {
 
     setDisplayNames((prev) => ({
       ...prev,
-      [file.storage_name]: newName,
+      [fileRecord.storage_name]: newName,
     }));
 
     // ================================
-    // 4. Lấy profile
+    // 5. Lấy thông tin sinh viên
     // ================================
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const { data: profile } =
-      await supabase
-        .from("profiles")
-        .select("ho_ten, lop")
-        .eq("id", user?.id)
-        .single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("ho_ten, lop")
+      .eq("id", user?.id)
+      .single();
 
     // ================================
-    // 5. Ghi log
+    // 6. Ghi log
     // ================================
-    await supabase
-      .from("activity_logs")
-      .insert({
-        user_id: user?.id,
-        ho_ten: profile?.ho_ten,
-        lop: profile?.lop,
-        action_type: "rename",
-        target_folder: "uu-tien",
-        target_file: newName,
-      });
+    await supabase.from("activity_logs").insert({
+      user_id: user?.id,
+      ho_ten: profile?.ho_ten,
+      lop: profile?.lop,
+      action_type: "rename",
+      target_folder: "uu-tien",
+      target_file: newName,
+    });
 
   } catch (error) {
-    console.error(
-      "Rename error:",
-      error
-    );
+    console.error("Rename error:", error);
 
     alert(
       error instanceof Error
@@ -651,7 +690,6 @@ async function renameFile(file: any) {
     );
   }
 }
-
   return (
   <div
     style={{
@@ -659,19 +697,12 @@ async function renameFile(file: any) {
       display: "flex",
       flexDirection: "column",
     }}
-  >
-  
-  
-  <Header
-
-  tab={tab}
-
-  setTab={setTab}
-
-  openCriteria={() => setShowCriteria(true)}
-
-  openProfile={() => setShowProfile(true)}
-
+  > 
+<Header
+  tab={tab}
+  setTab={setTab}
+  openCriteria={() => setShowCriteria(true)}
+  openProfile={() => setShowProfile(true)}
 />
 
     <div
@@ -717,7 +748,7 @@ async function renameFile(file: any) {
               marginBottom: "20px",
             }}
           >
-             <Image src="/iconuutien.png" width={32} height={32} alt="Thành tích khác" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} /> Thành tích khác
+             <Image src="/iconuutien.png" width={32} height={32} alt="Thành tích khác tốt" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} /> Thành tích khác tốt
           </h1>
 <div
   style={{
@@ -728,7 +759,7 @@ async function renameFile(file: any) {
     boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
   }}
 >
-  <h3 style={{ marginTop: 0 }}>📝 Nhập Báo cáo Thành tích khác</h3>
+  <h3 style={{ marginTop: 0 }}>📝 Nhập Báo cáo Tiêu chí Thành tích khác tốt</h3>
  {lastSaved && (
     <span
       style={{
@@ -747,6 +778,7 @@ async function renameFile(file: any) {
     </span>
   )}
 <ReportEditor
+  key="uu-tien"
   value={report}
   onChange={setReport}
 />
@@ -754,25 +786,27 @@ async function renameFile(file: any) {
   style={{
     display: "flex",
     justifyContent: "flex-end",
-    alignItems: "center",
+    gap: "8px",
     marginTop: "16px",
   }}
 >
+
   <button
     onClick={saveReport}
     disabled={savingReport}
     style={{
-      padding: "6px 14px",
+      padding: "6px 12px",
       background: "#2563eb",
       color: "#fff",
       border: "1px solid #2563eb",
       borderRadius: "6px",
-      cursor: "pointer",
-      fontSize: "14px",
+      cursor: savingReport ? "not-allowed" : "pointer",
+      fontSize: "13px",
       fontWeight: 500,
+      opacity: savingReport ? 0.7 : 1,
     }}
   >
-    {savingReport ? "Đang lưu..." : <b>💾 Lưu</b>}
+    {savingReport ? "Đang lưu..." : "💾 Lưu"}
   </button>
 </div>
 </div>
@@ -822,7 +856,7 @@ async function renameFile(file: any) {
       display: "block",
     }}
   >
-{uploading ? (
+ {uploading ? (
   <div
     style={{
       display: "flex",
@@ -832,7 +866,6 @@ async function renameFile(file: any) {
     }}
   >
     <Spinner size={32} />
-
   </div>
 ) : (
   <>
@@ -864,7 +897,6 @@ async function renameFile(file: any) {
     </div>
   </>
 )}
-
 
     <input
       type="file"
@@ -935,5 +967,12 @@ async function renameFile(file: any) {
     )}
     <Footer />
     </div>
+  );
+}
+export default function UuTienPageWrapper() {
+  return (
+    <Suspense fallback={null}>
+      <UuTienPage />
+    </Suspense>
   );
 }

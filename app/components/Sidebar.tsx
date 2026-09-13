@@ -16,6 +16,7 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(true);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
 
   // submenu minh chứng
   const [showProofMenu, setShowProofMenu] = useState(false);
@@ -38,7 +39,25 @@ export default function Sidebar() {
     return () =>
       window.removeEventListener("resize", checkMobile);
   }, []);
+useEffect(() => {
+  async function loadAcademicYear() {
+    const { data, error } = await supabase
+      .from("academic_years")
+      .select("id, name")
+      .order("id", { ascending: false })
+      .limit(1)
+      .single();
 
+    if (error) {
+      console.error("Lỗi lấy năm học:", error);
+      return;
+    }
+
+    setCurrentAcademicYear(data);
+  }
+
+  loadAcademicYear();
+}, []);
   async function checkRole() {
     const {
       data: { user },
@@ -56,37 +75,37 @@ export default function Sidebar() {
   }
 
   const proofMenus = [
-    {
-      name: "Đạo đức tốt",
-      icon: "/icondaoduc.png",
-      href: "/dao-duc",
-    },
-    {
-      name: "Học tập tốt",
-      icon: "/iconhoctap.png",
-      href: "/hoc-tap",
-    },
-    {
-      name: "Thể lực tốt",
-      icon: "/icontheluc.png",
-      href: "/the-luc",
-    },
-    {
-      name: "Tình nguyện tốt",
-      icon: "/icontinhnguyen.png",
-      href: "/tinh-nguyen",
-    },
-    {
-      name: "Hội nhập tốt",
-      icon: "/iconhoinhap.png",
-      href: "/hoi-nhap",
-    },
-    {
-      name: "Thành tích khác",
-      icon: "/iconuutien.png",
-      href: "/uu-tien",
-    },
-  ];
+  {
+    name: "Đạo đức tốt",
+    icon: "/icondaoduc.png",
+    href: `/dao-duc?year=${currentAcademicYear?.id || ""}`,
+  },
+  {
+    name: "Học tập tốt",
+    icon: "/iconhoctap.png",
+    href: `/hoc-tap?year=${currentAcademicYear?.id || ""}`,
+  },
+  {
+    name: "Thể lực tốt",
+    icon: "/icontheluc.png",
+    href: `/the-luc?year=${currentAcademicYear?.id || ""}`,
+  },
+  {
+    name: "Tình nguyện tốt",
+    icon: "/icontinhnguyen.png",
+    href: `/tinh-nguyen?year=${currentAcademicYear?.id || ""}`,
+  },
+  {
+    name: "Hội nhập tốt",
+    icon: "/iconhoinhap.png",
+    href: `/hoi-nhap?year=${currentAcademicYear?.id || ""}`,
+  },
+  {
+    name: "Thành tích khác",
+    icon: "/iconuutien.png",
+    href: `/uu-tien?year=${currentAcademicYear?.id || ""}`,
+  },
+];
 const proofPaths = [
   "/tieuchi",
   "/dao-duc",

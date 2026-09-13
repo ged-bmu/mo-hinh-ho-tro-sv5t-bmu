@@ -62,6 +62,8 @@ useEffect(() => {
   const [showCriteria, setShowCriteria] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [tab, setTab] = useState("proof");
+  const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
 
   const criteriaList = [
     { key: "dao-duc", title: "Đạo đức tốt" },
@@ -80,24 +82,53 @@ useEffect(() => {
     init();
   }, []);
 
-  async function init() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+async function init() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    await Promise.all([
-      loadProfile(user.id),
-      loadReports(user.id),
-    ]);
-
+  if (!user) {
     setLoading(false);
+    return;
   }
 
+  // Lấy năm học mặc định / năm học mới nhất
+  const { data: academicYear, error: yearError } = await supabase
+    .from("academic_years")
+    .select("id, name")
+    .order("id", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (yearError || !academicYear) {
+    console.error("Lỗi lấy năm học mặc định:", yearError);
+    setLoading(false);
+    return;
+  }
+
+  setCurrentAcademicYear(academicYear);
+
+  await Promise.all([
+  loadProfile(user.id),
+  loadReports(user.id, academicYear.id),
+  loadAcademicYears(),
+]);
+
+  setLoading(false);
+}
+async function loadAcademicYears() {
+  const { data, error } = await supabase
+    .from("academic_years")
+    .select("id, name")
+    .order("id", { ascending: false });
+
+  if (error) {
+    console.error("Lỗi lấy danh sách năm học:", error);
+    return;
+  }
+
+  setAcademicYears(data || []);
+}
   // =========================
   // PROFILE
   // =========================
@@ -156,18 +187,20 @@ console.log("Update error:", updateError);
   // =========================
   // REPORT
   // =========================
+async function loadReports(userId: string, academicYearId: number) {
+  const { data, error } = await supabase
+    .from("reports")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("academic_year_id", academicYearId);
 
-  async function loadReports(userId: string) {
-    const { data } = await supabase
-      .from("reports")
-      .select("*")
-      .eq("user_id", userId);
-
-    if (data) {
-      setReports(data);
-      console.log("Reports:", reports);
-    }
+  if (error) {
+    console.error("Lỗi lấy báo cáo:", error);
+    return;
   }
+
+  setReports(data || []);
+}
 async function removeAvatar() {
   if (!profile?.avatar) return;
 
@@ -311,6 +344,47 @@ return (
       marginBottom: "16px",
     }}
   >
+     {/* CHỌN NĂM HỌC */}
+    <select
+      value={currentAcademicYear?.id || ""}
+      onChange={async (e) => {
+        const yearId = Number(e.target.value);
+
+        const selectedYear = academicYears.find(
+          (year) => year.id === yearId
+        );
+
+        if (!selectedYear) return;
+
+        setCurrentAcademicYear(selectedYear);
+
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          await loadReports(user.id, yearId);
+        }
+      }}
+      style={{
+        padding: "10px 14px",
+        borderRadius: "10px",
+        border: "1px solid #cbd5e1",
+        background: "#fff",
+        color: "#1e3a8a",
+        fontWeight: 600,
+        fontSize: "14px",
+        cursor: "pointer",
+        outline: "none",
+      }}
+    >
+      {academicYears.map((year) => (
+        <option key={year.id} value={year.id}>
+          Năm học {year.name}
+        </option>
+      ))}
+    </select>
+
     <button
       onClick={exportPDF}
       style={{
@@ -561,7 +635,7 @@ return (
       color: "#64748b",
     }}
   >
-    Năm học 2025 – 2026
+    Năm học {currentAcademicYear?.name || "—"}
   </div>
 
   <hr
