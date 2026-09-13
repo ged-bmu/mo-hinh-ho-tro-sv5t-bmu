@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { authFetch as fetch } from "../../lib/auth-fetch";
@@ -15,7 +15,7 @@ import Footer from "../components/Footer";
 import ReportEditor from "../components/ReportEditor";
 import Spinner from "../components/Spinner";
 
-export default function DaoDucPage() {
+function DaoDucPage() {
   const searchParams = useSearchParams();
   const yearId = searchParams.get("year");
   const [files, setFiles] = useState<any[]>([]);
@@ -981,5 +981,12 @@ async function renameFile(file: any) {
     )}
     <Footer />
     </div>
+  );
+}
+export default function DaoDucPageWrapper() {
+  return (
+    <Suspense fallback={null}>
+      <DaoDucPage />
+    </Suspense>
   );
 }
