@@ -788,7 +788,7 @@ async function renameFile(file: any) {
     </span>
   )}
 <ReportEditor
-  key="hoc-tap"
+  key={`hoc-tap-${yearId}`}
   value={report}
   onChange={setReport}
 />

@@ -18,6 +18,7 @@ import Spinner from "../components/Spinner";
 function DaoDucPage() {
   const searchParams = useSearchParams();
   const yearId = searchParams.get("year");
+  console.log("DAO DUC YEAR ID:", yearId);
   const [files, setFiles] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
   const [userId, setUserId] = useState("");
@@ -149,41 +150,68 @@ setReport(
 );
 }
 async function saveReport() {
-  if (!userId) return;
+  if (!yearId || isNaN(Number(yearId))) {
+    alert("Không xác định được năm học.");
+    return;
+  }
+
+  if (!report.trim()) {
+    alert("Nội dung báo cáo không được để trống.");
+    return;
+  }
 
   setSavingReport(true);
-const {
-  data: { user },
-} = await supabase.auth.getUser();
 
-if (!user) {
-  alert("Chưa đăng nhập.");
-  return;
-}
-const { error } = await supabase
-  .from("reports")
-  .upsert(
-    {
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      alert("Chưa đăng nhập.");
+      return;
+    }
+
+    const academicYearId = Number(yearId);
+
+    console.log("Lưu báo cáo:", {
       user_id: user.id,
       criteria: "dao-duc",
-      content: report,
-      academic_year_id: Number(yearId),
-    },
-    {
-      onConflict: "user_id,criteria,academic_year_id",
-    }
-  );
+      academic_year_id: academicYearId,
+    });
 
-  setSavingReport(false);
+    const { data, error } = await supabase
+      .from("reports")
+      .upsert(
+        {
+          user_id: user.id,
+          criteria: "dao-duc",
+          academic_year_id: academicYearId,
+          content: report,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "user_id,criteria,academic_year_id",
+        }
+      )
+      .select()
+      .single();
 
-if (error) {
-  console.error(error);
-  setSavingReport(false);
-  return;
-}
+    setUserId(user.id);
+    setLastSaved(new Date());
 
-setSavingReport(false);
-setLastSaved(new Date());
+    alert("Đã lưu báo cáo.");
+  } catch (error) {
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Không thể lưu báo cáo"
+    );
+  } finally {
+    setSavingReport(false);
+  }
 }
 async function uploadFile(file: File) {
   const {
@@ -810,9 +838,26 @@ async function renameFile(file: any) {
 >
 <button
 onClick={async () => {
+  if (!yearId || isNaN(Number(yearId))) {
+    alert("Không xác định được năm học.");
+    return;
+  }
+
+  if (!userId) {
+    alert("Chưa xác định được tài khoản sinh viên.");
+    return;
+  }
+
   if (!confirm("Tạo lại mẫu báo cáo?")) return;
 
-  setReport(defaultReport);
+  const newReport = `
+<p style="margin: 0;">1. Không vi phạm pháp luật của Nhà nước, nội quy, quy chế của nhà trường; không bị xử lý kỷ luật trong năm học.</p>
+<p style="margin: 0;">2. Điểm rèn luyện năm học ${currentAcademicYear?.name || ""}: /100.</p>
+<p style="margin: 0;">3. Tham gia đầy đủ các buổi sinh hoạt chính trị, sinh hoạt công dân.</p>
+<p style="margin: 0;">4.&nbsp;</p>
+`;
+
+  setReport(newReport);
 
   const { error } = await supabase
     .from("reports")
@@ -820,7 +865,7 @@ onClick={async () => {
       {
         user_id: userId,
         criteria: "dao-duc",
-        content: defaultReport,
+        content: newReport,
         academic_year_id: Number(yearId),
         updated_at: new Date().toISOString(),
       },
@@ -831,11 +876,12 @@ onClick={async () => {
 
   if (error) {
     console.error("Lỗi tạo lại mẫu:", error);
-    alert("Không thể tạo lại mẫu báo cáo.");
+    alert("Không thể tạo lại mẫu báo cáo: " + error.message);
     return;
   }
 
   setLastSaved(new Date());
+  alert("Đã tạo lại mẫu báo cáo.");
 }}
 >
   ↺ Tạo lại mẫu
