@@ -19,6 +19,8 @@ export default function AdminPage() {
   const [students, setStudents] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
+  const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
   const [notificationTitle, setNotificationTitle] = useState("");
   const [notificationContent, setNotificationContent] = useState("");
   const [selectedPassed, setSelectedPassed] = useState<string[] | null>(null);
@@ -71,6 +73,7 @@ export default function AdminPage() {
   });
 useEffect(() => {
   checkAdmin();
+  loadAcademicYears();
 
   const channel = supabase
     .channel("admin-student-profile-status")
@@ -241,6 +244,23 @@ async function sendGeneralNotification() {
       "Đã xảy ra lỗi khi gửi thông báo."
     );
   }
+}
+async function loadAcademicYears() {
+  const { data, error } = await supabase
+    .from("academic_years")
+    .select("id, name, is_current")
+    .order("id", { ascending: true });
+
+  if (error) {
+    console.error("Lỗi lấy năm học:", error);
+    return;
+  }
+
+  setAcademicYears(data || []);
+
+  const current = data?.find((year) => year.is_current);
+
+  setCurrentAcademicYear(current || null);
 }
   async function checkAdmin() {
   const {
@@ -570,7 +590,111 @@ const exportExcel = async () => {
     paddingRight: "20px",
   }}
 >
+  <button
+  type="button"
+  onClick={async () => {
+    const name = window.prompt(
+      "Nhập tên năm học mới:",
+      "2027 - 2028"
+    );
 
+    if (!name?.trim()) return;
+
+    const { error } = await supabase
+      .from("academic_years")
+      .insert({
+        name: name.trim(),
+        is_current: false,
+        submission_open: false,
+      });
+
+    if (error) {
+      console.error("Lỗi thêm năm học:", error);
+      alert("Không thể thêm năm học: " + error.message);
+      return;
+    }
+
+    await loadAcademicYears();
+
+    alert(`Đã thêm năm học ${name.trim()}`);
+  }}
+  style={{
+    padding: "12px 18px",
+    height: "44px",
+    borderRadius: "10px",
+    border: "1px solid #16a34a",
+    background: "#fff",
+    color: "#16a34a",
+    fontWeight: 600,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  }}
+>
+  ＋ Thêm năm học
+</button>
+<select
+  value={currentAcademicYear?.id || ""}
+ onChange={async (e) => {
+  const selected = academicYears.find(
+    (year) => year.id === Number(e.target.value)
+  );
+
+  if (!selected) return;
+
+  const confirmed = window.confirm(
+    `Chuyển năm học mặc định sang ${selected.name}?`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  // Tắt năm hiện tại
+  const { error: resetError } = await supabase
+    .from("academic_years")
+    .update({ is_current: false })
+    .neq("id", selected.id);
+
+  if (resetError) {
+    console.error("Lỗi tắt năm học cũ:", resetError);
+    alert("Không thể thay đổi năm học.");
+    return;
+  }
+
+  // Bật năm được chọn
+  const { error: updateError } = await supabase
+    .from("academic_years")
+    .update({ is_current: true })
+    .eq("id", selected.id);
+
+  if (updateError) {
+    console.error("Lỗi cập nhật năm học:", updateError);
+    alert("Không thể thay đổi năm học.");
+    return;
+  }
+
+  setCurrentAcademicYear(selected);
+
+  alert(`Đã chuyển sang năm học ${selected.name}`);
+}}
+ style={{
+  padding: "12px 14px",
+  minWidth: "180px",
+  height: "44px",
+  borderRadius: "10px",
+  border: "1px solid #2563eb",
+  background: "#fff",
+  color: "#2563eb",
+  fontWeight: 600,
+  cursor: "pointer",
+}}
+>
+  {academicYears.map((year) => (
+    <option key={year.id} value={year.id}>
+      📅 Năm học: {year.name}
+    </option>
+  ))}
+</select>
   <button
     type="button"
     onClick={() => setShowNotificationModal(true)}

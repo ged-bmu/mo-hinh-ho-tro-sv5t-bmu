@@ -52,6 +52,7 @@ export async function POST(request: Request) {
       mssv,
       ho_ten,
       criteria,
+      academic_year_id,
     } = body;
 
     // ==============================
@@ -213,7 +214,14 @@ export async function POST(request: Request) {
     oauth2Client.setCredentials({
       refresh_token: refreshToken,
     });
-
+console.log("GOOGLE OAUTH CHECK:", {
+  hasClientId: !!clientId,
+  hasClientSecret: !!clientSecret,
+  hasRefreshToken: !!refreshToken,
+  refreshTokenLength: refreshToken?.length,
+  hasFolderId: !!folderId,
+  redirectUri,
+});
     // Lấy access token
     const accessTokenResponse =
       await oauth2Client.getAccessToken();

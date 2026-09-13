@@ -19,53 +19,91 @@ export default function TieuChiPage() {
   const [showProfile, setShowProfile] = useState(false);
   const [hoverSubmit, setHoverSubmit] = useState(false);
   const [submissionOpen, setSubmissionOpen] = useState(true);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
+  const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null); 
 
-  useEffect(() => {loadProfile();
+useEffect(() => {
+  loadProfile();
+  loadAcademicYears();
 
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth <= 768);
+  };
 
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
 
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+  return () => window.removeEventListener("resize", checkMobile);
+}, []);
 
-  async function loadProfile() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+useEffect(() => {
+  if (!currentAcademicYear) return;
 
-    if (!user) return;
+  loadYearProfile(currentAcademicYear.id);
+}, [currentAcademicYear]);
 
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+  async function loadAcademicYears() {
+  const { data, error } = await supabase
+    .from("academic_years")
+    .select("id, name, is_current")
+    .order("id", { ascending: false });
 
-    setProfile(data);
-    setLoading(false);
-     const { data: setting, error: settingError } = await supabase
-    .from("site_settings")
-    .select("submission_open")
-    .eq("id", 1)
+  if (error) {
+    console.error("Lỗi lấy năm học:", error);
+    return;
+  }
+  setAcademicYears(data || []);
+  const current = data?.find((year) => year.is_current);
+  if (current) {
+    setCurrentAcademicYear(current);
+  }
+}
+
+async function loadProfile() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
     .single();
 
-  if (settingError) {
-    console.error(
-      "Lỗi lấy trạng thái nhận hồ sơ:",
-      settingError
-    );
-  }
-
-  if (setting) {
-    setSubmissionOpen(setting.submission_open);
-  }
-
+  setProfile(data);
   setLoading(false);
+}
+  async function loadYearProfile(yearId: number) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const { data: yearProfile, error: yearProfileError } = await supabase
+    .from("student_year_profiles")
+    .select("is_submitted, submitted_at, trang_thai")
+    .eq("user_id", user.id)
+    .eq("academic_year_id", yearId)
+    .maybeSingle();
+
+  if (yearProfileError) {
+    console.error(
+      "Lỗi lấy trạng thái hồ sơ theo năm:",
+      yearProfileError
+    );
+    return;
   }
+
+  setProfile((prev: any) => ({
+    ...prev,
+    is_submitted: yearProfile?.is_submitted ?? false,
+    submitted_at: yearProfile?.submitted_at ?? null,
+    trang_thai: yearProfile?.trang_thai ?? null,
+  }));
+}
 async function submitProfile() {
   if (!profile?.id) return;
 
@@ -98,16 +136,27 @@ async function submitProfile() {
     ? new Date().toISOString()
     : null;
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-       is_submitted: newSubmittedState,
-       submitted_at: submittedAt,
-        ...(newSubmittedState && {
-      trang_thai: "chua_danh_gia",
-     }),
-    })
-    .eq("id", profile.id);
+if (!currentAcademicYear) {
+  alert("Chưa xác định được năm học.");
+  return;
+}
+
+const { error } = await supabase
+  .from("student_year_profiles")
+  .upsert(
+    {
+      user_id: profile.id,
+      academic_year_id: currentAcademicYear.id,
+      is_submitted: newSubmittedState,
+      submitted_at: submittedAt,
+      trang_thai: newSubmittedState
+        ? "chua_danh_gia"
+        : profile.trang_thai,
+    },
+    {
+      onConflict: "user_id,academic_year_id",
+    }
+  );
 
   if (error) {
     console.error(error);
@@ -115,14 +164,14 @@ async function submitProfile() {
     return;
   }
 
-  setProfile((prev: any) => ({
-    ...prev,
-    is_submitted: newSubmittedState,
-    submitted_at: submittedAt,
-    ...(newSubmittedState && {
+setProfile((prev: any) => ({
+  ...prev,
+  is_submitted: newSubmittedState,
+  submitted_at: submittedAt,
+  ...(newSubmittedState && {
     trang_thai: "chua_danh_gia",
   }),
-  }));
+}));
 }
   const folders = [
   {
@@ -322,39 +371,37 @@ const percent = (completed / 5) * 100;
       flexShrink: 0,
     }}
   >
-    {/* Xem báo cáo */}
-    <a
-      href="/bao-cao"
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-3px) scale(1.03)";
-        e.currentTarget.style.background = "#1d4ed8";
-        e.currentTarget.style.boxShadow =
-          "0 6px 16px rgba(37, 99, 235, 0.25)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0) scale(1)";
-        e.currentTarget.style.background = "#2563eb";
-        e.currentTarget.style.boxShadow = "none";
-      }}
-      style={{
-        background: "#2563eb",
-        color: "#fff",
-        textDecoration: "none",
-        padding: isMobile ? "10px 12px" : "11px 16px",
-        borderRadius: "12px",
-        fontWeight: 600,
-        fontSize: "14px",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: isMobile ? "42px" : "44px",
-        boxSizing: "border-box",
-        transition: "all .25s ease",
-        whiteSpace: "nowrap",
-      }}
-    >
-      Xem báo cáo
-    </a>
+<select
+  value={currentAcademicYear?.id || ""}
+  onChange={(e) => {
+    const selected = academicYears.find(
+      (year) => year.id === Number(e.target.value)
+    );
+
+    if (!selected) return;
+
+    setCurrentAcademicYear(selected);
+  }}
+  style={{
+    background: "#fff",
+    color: "#2563eb",
+    border: "2px solid #2563eb",
+    padding: isMobile ? "10px 12px" : "11px 16px",
+    borderRadius: "12px",
+    fontWeight: 600,
+    fontSize: "14px",
+    height: isMobile ? "42px" : "44px",
+    boxSizing: "border-box",
+    cursor: "pointer",
+    outline: "none",
+  }}
+>
+  {academicYears.map((year) => (
+    <option key={year.id} value={year.id}>
+      {year.name}
+    </option>
+  ))}
+</select>
 
     {/* Gửi báo cáo */}
 {/* Gửi báo cáo */}
@@ -499,7 +546,7 @@ const percent = (completed / 5) * 100;
               {folders.map((folder) => (
                 <a
                   key={folder.name}
-                  href={folder.link}
+                  href={`${folder.link}?year=${currentAcademicYear?.id || ""}`}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-6px)";
                   }}

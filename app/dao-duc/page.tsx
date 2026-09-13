@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { authFetch as fetch } from "../../lib/auth-fetch";
 import { checkSubmissionAccess } from "../../lib/checkSubmissionAccess";
@@ -15,6 +16,8 @@ import ReportEditor from "../components/ReportEditor";
 import Spinner from "../components/Spinner";
 
 export default function DaoDucPage() {
+  const searchParams = useSearchParams();
+  const yearId = searchParams.get("year");
   const [files, setFiles] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
   const [userId, setUserId] = useState("");
@@ -26,6 +29,7 @@ export default function DaoDucPage() {
   const [savingReport, setSavingReport] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
  const defaultReport = `
 <p style="margin: 0;">1. Không vi phạm pháp luật của Nhà nước, nội quy, quy chế của nhà trường; không bị xử lý kỷ luật trong năm học.</p>
 <p style="margin: 0;">2. Điểm rèn luyện năm học 2025 - 2026: /100.</p>
@@ -48,7 +52,7 @@ useEffect(() => {
 }, []);
 
 async function checkAccess() {
-  const result = await checkSubmissionAccess();
+  const result = await checkSubmissionAccess(Number(yearId));
 
   if (!result.allowed) {
     alert(result.message);
@@ -75,8 +79,9 @@ async function loadFiles() {
       "id, storage_name, display_name, storage_type, drive_file_id, drive_url"
     )
     .eq("user_id", user.id)
-    .eq("folder", "dao-duc")
-    .order("id", { ascending: false });
+.eq("folder", "dao-duc")
+.eq("academic_year_id", Number(yearId))
+.order("id", { ascending: false });
 
   if (error) {
     console.error("LOAD UPLOADED FILES ERROR:", error);
@@ -98,12 +103,13 @@ async function loadFiles() {
   // ================================
   // Lấy báo cáo
   // ================================
-  const { data: reportData } = await supabase
-    .from("reports")
-    .select("content")
-    .eq("user_id", user.id)
-    .eq("criteria", "dao-duc")
-    .maybeSingle();
+const { data: reportData } = await supabase
+  .from("reports")
+  .select("content")
+  .eq("user_id", user.id)
+  .eq("criteria", "dao-duc")
+  .eq("academic_year_id", Number(yearId))
+  .maybeSingle();
 
   setReport(
     reportData?.content?.trim()
@@ -115,18 +121,25 @@ async function saveReport() {
   if (!userId) return;
 
   setSavingReport(true);
+const {
+  data: { user },
+} = await supabase.auth.getUser();
 
-  const { error } = await supabase
+if (!user) {
+  alert("Chưa đăng nhập.");
+  return;
+}
+const { error } = await supabase
   .from("reports")
   .upsert(
     {
-      user_id: userId,
+      user_id: user.id,
       criteria: "dao-duc",
       content: report,
-      updated_at: new Date().toISOString(),
+      academic_year_id: Number(yearId),
     },
     {
-      onConflict: "user_id,criteria",
+      onConflict: "user_id,criteria,academic_year_id",
     }
   );
 
@@ -195,6 +208,7 @@ async function uploadFile(file: File) {
           mssv: profile.mssv,
           ho_ten: profile.ho_ten,
           criteria: "dao-duc",
+          academic_year_id: Number(yearId),
         }),
       }
     );

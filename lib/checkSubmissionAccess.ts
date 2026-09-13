@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 
-export async function checkSubmissionAccess() {
+export async function checkSubmissionAccess(yearId?: number) {
   // Kiểm tra người dùng
   const {
     data: { user },
@@ -13,15 +13,27 @@ export async function checkSubmissionAccess() {
     };
   }
 
-  // Lấy trạng thái hồ sơ
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("is_submitted")
-    .eq("id", user.id)
-    .single();
+  // Kiểm tra năm học
+  if (!yearId) {
+    return {
+      allowed: false,
+      message: "Chưa xác định được năm học.",
+    };
+  }
 
-  if (profileError) {
-    console.error("Lỗi lấy trạng thái hồ sơ:", profileError);
+  // Lấy trạng thái hồ sơ theo năm học
+  const { data: yearProfile, error: yearProfileError } = await supabase
+    .from("student_year_profiles")
+    .select("is_submitted")
+    .eq("user_id", user.id)
+    .eq("academic_year_id", yearId)
+    .maybeSingle();
+
+  if (yearProfileError) {
+    console.error(
+      "Lỗi lấy trạng thái hồ sơ theo năm:",
+      yearProfileError
+    );
 
     return {
       allowed: false,
@@ -29,11 +41,11 @@ export async function checkSubmissionAccess() {
     };
   }
 
-  // Lấy trạng thái nhận hồ sơ
+  // Lấy trạng thái nhận hồ sơ theo năm
   const { data: setting, error: settingError } = await supabase
-    .from("site_settings")
+    .from("academic_years")
     .select("submission_open")
-    .eq("id", 1)
+    .eq("id", yearId)
     .single();
 
   if (settingError) {
@@ -49,10 +61,10 @@ export async function checkSubmissionAccess() {
   }
 
   // Đã nộp hoặc đã đóng nhận hồ sơ
-  if (profile?.is_submitted || !setting?.submission_open) {
+  if (yearProfile?.is_submitted || !setting?.submission_open) {
     return {
       allowed: false,
-      message: profile?.is_submitted
+      message: yearProfile?.is_submitted
         ? "Bạn đã nộp hồ sơ. Không thể chỉnh sửa tiêu chí."
         : "Hệ thống đã đóng nhận hồ sơ. Không thể chỉnh sửa tiêu chí.",
     };

@@ -23,165 +23,193 @@ export default function BangDiemPage() {
   const [currentSemester, setCurrentSemester] = useState<"hk1" | "hk2" | "summer">("hk1");
   const [showAddSubject, setShowAddSubject] = useState(false);
   const [examInputs, setExamInputs] = useState<any>({});
+  const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [isMobile, setIsMobile] = useState(false);
 useEffect(() => {
   const checkMobile = () => {
     setIsMobile(window.innerWidth <= 768);
   };
-
   checkMobile();
-
   window.addEventListener("resize", checkMobile);
-
   return () => {
     window.removeEventListener("resize", checkMobile);
   };
 }, []);
-  useEffect(() => {
+useEffect(() => {
+  loadAcademicYears();
+}, []);
+useEffect(() => {
+  if (!currentAcademicYear) return;
 
-    loadSubjects();
+  loadSubjects(currentAcademicYear.id);
+}, [currentAcademicYear]);
+async function loadSubjects(yearId?: number) {
+  const { data: user } = await supabase.auth.getUser();
 
-  }, []);
+  if (!user.user) {
+    console.log("Chưa đăng nhập");
+    return;
+  }
 
+  // Nếu chưa truyền yearId thì lấy năm học hiện tại của hệ thống
+  let selectedYearId = yearId;
 
+  if (!selectedYearId) {
+    const { data: currentYear, error: yearError } = await supabase
+      .from("academic_years")
+      .select("id, name, is_current")
+      .eq("is_current", true)
+      .single();
 
-  async function loadSubjects(){
-
-    const {
-      data:user
-    } = await supabase.auth.getUser();
-
-
-    if(!user.user){
-      console.log("Chưa đăng nhập");
+    if (yearError || !currentYear) {
+      console.log("LỖI LẤY NĂM HỌC:", yearError);
       return;
     }
 
+    selectedYearId = currentYear.id;
+    setCurrentAcademicYear(currentYear);
+  }
 
+  // Lấy điểm theo năm học được chọn
+  const { data, error } = await supabase
+    .from("subjects")
+    .select("*")
+    .eq("user_id", user.user.id)
+    .eq("academic_year_id", selectedYearId)
+    .order("created_at", {
+      ascending: true,
+    });
 
-    const {
-      data,
-      error
-    } = await supabase
-      .from("subjects")
-      .select("*")
-      .eq(
-        "user_id",
-        user.user.id
-      )
-      .order(
-        "created_at",
-        {
-          ascending:true
-        }
-      );
+  if (error) {
+    console.log("LỖI LẤY MÔN:", error);
+    alert(error.message);
+    return;
+  }
 
-if(error){
-  console.log("LỖI LƯU MÔN:", error);
-  alert(error.message);
-  return;
+  setSubjectsHK1(
+    data?.filter((s) => s.semester === "hk1") || []
+  );
+
+  setSubjectsHK2(
+    data?.filter((s) => s.semester === "hk2") || []
+  );
+
+  setSubjectsSummer(
+    data?.filter((s) => s.semester === "summer") || []
+  );
 }
-    setSubjectsHK1(
-      data.filter(
-        (s)=>s.semester==="hk1"
-      )
-    );
-    setSubjectsHK2(
-      data.filter(
-        (s)=>s.semester==="hk2"
-      )
-    );
-    setSubjectsSummer(
-      data.filter(
-        (s)=>s.semester==="summer"
-      )
-    );
-  }
-  async function addSubject(subject:any){
-      console.log("BẮT ĐẦU LƯU:", subject);
-    const {
-      data:user
-    } = await supabase.auth.getUser();
-    if(!user.user) return;
-    const {
-      error
-    } = await supabase
-      .from("subjects")
-      .insert({
-        ...subject,
-        user_id:user.user.id,
-        semester:currentSemester
+async function loadAcademicYears() {
+  const { data, error } = await supabase
+    .from("academic_years")
+    .select("id, name, is_current")
+    .order("id", { ascending: false });
 
-      });
-    if(error){
-      console.log(error);
-      return;
-    }
-    loadSubjects();
+  if (error) {
+    console.error("Lỗi lấy năm học:", error);
+    return;
   }
-async function deleteSubject(id:number){
 
+  setAcademicYears(data || []);
+
+  // Mặc định xem năm BCN đang chọn
+  const current = data?.find((year) => year.is_current);
+
+  if (current) {
+    setCurrentAcademicYear(current);
+  }
+}
+async function addSubject(subject: any) {
+  console.log("BẮT ĐẦU LƯU:", subject);
+
+  const { data: user } = await supabase.auth.getUser();
+
+  if (!user.user) return;
+
+  // Lấy năm học hiện tại
+  const { data: currentYear, error: yearError } = await supabase
+    .from("academic_years")
+    .select("id, name")
+    .eq("is_current", true)
+    .single();
+
+  if (yearError || !currentYear) {
+    console.log("LỖI LẤY NĂM HỌC:", yearError);
+    alert("Không xác định được năm học hiện tại.");
+    return;
+  }
+
+  console.log("Lưu môn vào năm học:", currentYear.name);
+
+  const { error } = await supabase
+    .from("subjects")
+    .insert({
+      ...subject,
+      user_id: user.user.id,
+      semester: currentSemester,
+      academic_year_id: currentYear.id,
+    });
+
+  if (error) {
+    console.log("LỖI LƯU MÔN:", error);
+    alert(error.message);
+    return;
+  }
+
+  loadSubjects();
+}
+async function deleteSubject(id: number) {
   console.log("ĐANG XÓA:", id);
+
+  const { data: subject, error: findError } = await supabase
+    .from("subjects")
+    .select("id, academic_year_id")
+    .eq("id", id)
+    .single();
+
+  if (findError || !subject) {
+    console.log("LỖI TÌM MÔN:", findError);
+    return;
+  }
 
   const { error } = await supabase
     .from("subjects")
     .delete()
-    .eq(
-      "id",
-      id
-    );
+    .eq("id", id)
+    .eq("academic_year_id", subject.academic_year_id);
 
-
-  if(error){
+  if (error) {
     console.log("LỖI XÓA:", error);
     return;
   }
 
-
   console.log("XÓA THÀNH CÔNG");
 
   loadSubjects();
-
 }
 
+async function updateSubject(subject: any) {
+  const {
+    id,
+    academic_year_id,
+    user_id,
+    ...updateData
+  } = subject;
 
+  const { error } = await supabase
+    .from("subjects")
+    .update(updateData)
+    .eq("id", id)
+    .eq("academic_year_id", academic_year_id);
 
-
-  // ==========================
-  // CẬP NHẬT MÔN
-  // ==========================
-
-  async function updateSubject(subject:any){
-
-
-    const {
-      id,
-      ...updateData
-    } = subject;
-
-
-
-    const {
-      error
-    } = await supabase
-      .from("subjects")
-      .update(updateData)
-      .eq(
-        "id",
-        id
-      );
-
-
-
-    if(error){
-      console.log(error);
-      return;
-    }
-
-
-    loadSubjects();
-
+  if (error) {
+    console.log("LỖI CẬP NHẬT:", error);
+    alert(error.message);
+    return;
   }
+
+  loadSubjects();
+}
 
 const allSubjects = [
   ...subjectsHK1,
@@ -262,18 +290,37 @@ const gpa4Year =
     height={30}
     alt="Mục tiêu học tập"
     style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}
-  /> Mục tiêu học tập
+  /> Mục tiêu học tập năm học {currentAcademicYear?.name}
 </h1>
+<select
+  value={currentAcademicYear?.id || ""}
+  onChange={(e) => {
+    const selected = academicYears.find(
+      (year) => year.id === Number(e.target.value)
+    );
 
-         <p
+    if (!selected) return;
+
+    setCurrentAcademicYear(selected);
+  }}
   style={{
-    color: "#666",
-    marginBottom: isMobile ? 20 : 30,
-    fontSize: isMobile ? 14 : 16,
+    padding: "10px 14px",
+    borderRadius: 10,
+    border: "1px solid #2563eb",
+    background: "#fff",
+    color: "#2563eb",
+    fontWeight: 600,
+    cursor: "pointer",
+    marginBottom: 20,
   }}
 >
-  Quản lý điểm trung bình từng học kỳ.
-</p>
+  {academicYears.map((year) => (
+    <option key={year.id} value={year.id}>
+    Năm học: {year.name}
+    </option>
+  ))}
+</select>
+
 <div
   style={{
     display: "grid",
