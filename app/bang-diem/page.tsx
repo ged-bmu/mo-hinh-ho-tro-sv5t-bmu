@@ -1057,7 +1057,7 @@ function getLetter(total:number){
   if(total >= 8.46) return "A";
   if(total >= 7.76) return "B+";
   if(total >= 6.96) return "B";
-  if(total >= 6.46) return "C+";
+  if(total >= 6.26) return "C+";
   if(total >= 5.46) return "C";
   if(total >= 4.96) return "D+";
   if(total >= 3.96) return "D";
