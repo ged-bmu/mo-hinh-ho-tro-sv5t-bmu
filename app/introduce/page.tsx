@@ -1801,6 +1801,17 @@ async function handleLogin() {
   >
     {authMode === "login" ? "Đăng nhập" : "Đăng ký"}
   </button>
+  <p
+  style={{
+    margin: "8px 12px",
+    fontSize: "11px",
+    color: "#dc2626",
+    textAlign: "center",
+    lineHeight: 1.5,
+  }}
+>
+  Sinh viên liên hệ CLB Sinh viên 5 tốt BMU trong trường hợp quên mật khẩu.
+</p>
 </form>
 
     </div>

@@ -14,22 +14,96 @@ import NotificationCard from "./components/NotificationCard";
 
 export default function Home() {
   const [profile, setProfile] = useState<any>(null);
-  const [tab, setTab] = useState("proof");
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [tab, setTab] = useState("proof");
   const [showCriteria, setShowCriteria] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [nextActivities, setNextActivities] = useState<any[]>([]);
   const [showActivities, setShowActivities] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [generalNotification, setGeneralNotification] = useState<any>(null);
+  const [currentAcademicYearId, setCurrentAcademicYearId] = useState<number | null>(null);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [registrationLoading, setRegistrationLoading] = useState(false);
 
 useEffect(() => {
   checkUser();
   loadProfile();
   loadNextActivity();
+  loadRegistrationStatus();
 }, []);
+
+useEffect(() => {
+  let channel: ReturnType<typeof supabase.channel> | null = null;
+  let active = true;
+
+  const initRealtime = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!active || !user) return;
+
+    // Theo dõi mở/đóng đợt đăng ký và chuyển năm học
+    channel = supabase
+      .channel("student-registration-year-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "academic_years",
+        },
+        async () => {
+          if (active) {
+            await loadRegistrationStatus();
+          }
+        }
+      )
+      .subscribe();
+  };
+
+  initRealtime();
+
+  return () => {
+    active = false;
+    if (channel) {
+      supabase.removeChannel(channel);
+    }
+  };
+}, []);
+
+
+useEffect(() => {
+  let active = true;
+
+  const channel = supabase
+    .channel("student-registration-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "student_year_profiles",
+      },
+      async () => {
+        if (active) {
+          await loadRegistrationStatus();
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    active = false;
+    void supabase.removeChannel(channel);
+  };
+}, []);
+
+
 useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -162,6 +236,110 @@ useEffect(() => {
     supabase.removeChannel(channel);
   };
 }, []);
+
+async function loadRegistrationStatus() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  // Lấy năm học hiện tại và trạng thái mở đăng ký
+  const { data: year, error: yearError } = await supabase
+    .from("academic_years")
+    .select("id, submission_open")
+    .eq("is_current", true)
+    .maybeSingle();
+
+  if (yearError || !year) {
+    setCurrentAcademicYearId(null);
+    setRegistrationOpen(false);
+    setIsRegistered(false);
+    return;
+  }
+
+  setCurrentAcademicYearId(year.id);
+  setRegistrationOpen(year.submission_open === true);
+
+  // Lấy trạng thái đăng ký của sinh viên trong năm học này
+  const { data: registration, error } = await supabase
+    .from("student_year_profiles")
+    .select("dang_ky_phan_dau")
+    .eq("user_id", user.id)
+    .eq("academic_year_id", year.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Lỗi tải trạng thái đăng ký:", error);
+    return;
+  }
+
+  setIsRegistered(registration?.dang_ky_phan_dau === true);
+}
+
+async function toggleRegistration() {
+  if (registrationLoading || !registrationOpen || !currentAcademicYearId) {
+    return;
+  }
+
+  setRegistrationLoading(true);
+
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("Vui lòng đăng nhập lại.");
+      return;
+    }
+
+    const nextStatus = !isRegistered;
+
+    const { data: existing, error: findError } = await supabase
+      .from("student_year_profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("academic_year_id", currentAcademicYearId)
+      .maybeSingle();
+
+    if (findError) throw findError;
+
+    if (existing) {
+      const { error } = await supabase
+        .from("student_year_profiles")
+        .update({ dang_ky_phan_dau: nextStatus })
+        .eq("user_id", user.id)
+        .eq("academic_year_id", currentAcademicYearId);
+
+      if (error) throw error;
+    } else if (nextStatus) {
+      const { error } = await supabase
+        .from("student_year_profiles")
+        .insert({
+          user_id: user.id,
+          academic_year_id: currentAcademicYearId,
+          dang_ky_phan_dau: true,
+        });
+
+      if (error) throw error;
+    }
+
+    setIsRegistered(nextStatus);
+
+    alert(
+      nextStatus
+        ? "Đăng ký phấn đấu danh hiệu Sinh viên 5 tốt thành công!"
+        : "Đã hủy đăng ký phấn đấu."
+    );
+  } catch (error) {
+    console.error("Lỗi đăng ký phấn đấu:", error);
+    alert("Không thể cập nhật đăng ký. Vui lòng thử lại.");
+  } finally {
+    setRegistrationLoading(false);
+  }
+}
+
 async function loadProfile() {
   const {
     data: { user },
@@ -525,6 +703,37 @@ return (
   </div>
 )}
   </div>
+
+{registrationOpen && (
+  <button
+    type="button"
+    onClick={toggleRegistration}
+    disabled={registrationLoading}
+    style={{
+      background: isRegistered ? "#fff7ed" : "#2563eb",
+      color: isRegistered ? "#c2410c" : "#ffffff",
+      border: isRegistered
+        ? "1px solid #fdba74"
+        : "1px solid #2563eb",
+      padding: "9px 16px",
+      borderRadius: "10px",
+      fontWeight: 700,
+      fontSize: "14px",
+      cursor: registrationLoading ? "wait" : "pointer",
+      opacity: registrationLoading ? 0.7 : 1,
+      width: isMobile ? "100%" : "auto",
+      transition: "all .25s ease",
+      lineHeight: 1.2,
+      whiteSpace: "nowrap",
+    }}
+  >
+    {registrationLoading
+      ? "Đang cập nhật..."
+      : isRegistered
+      ? "↩ Hủy đăng ký"
+      : "Đăng ký phấn đấu"}
+  </button>
+)}
 
   <button 
     onClick={handleExport}

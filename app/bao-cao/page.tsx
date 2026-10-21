@@ -61,6 +61,10 @@ useEffect(() => {
   const [exporting, setExporting] = useState(false);
   const [showCriteria, setShowCriteria] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+const [editHoTen, setEditHoTen] = useState("");
+const [editLop, setEditLop] = useState("");
+const [savingProfile, setSavingProfile] = useState(false);
   const [tab, setTab] = useState("proof");
   const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
@@ -184,6 +188,51 @@ console.log("Update error:", updateError);
     }
   }
 
+  async function savePersonalInfo() {
+  if (!profile) return;
+
+  const hoTen = editHoTen.trim();
+  const lop = editLop.trim();
+
+  if (!hoTen || !lop) {
+    alert("Vui lòng nhập đầy đủ họ tên và lớp.");
+    return;
+  }
+
+  setSavingProfile(true);
+
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({
+        ho_ten: hoTen,
+        lop: lop,
+      })
+      .eq("id", profile.id)
+      .select("id, ho_ten, lop")
+      .single();
+
+    if (error) {
+      console.error("Lỗi cập nhật thông tin:", error);
+      alert("Không thể cập nhật thông tin. Vui lòng thử lại.");
+      return;
+    }
+
+    setProfile((prev: any) => ({
+      ...prev,
+      ho_ten: data.ho_ten,
+      lop: data.lop,
+    }));
+
+    setShowEditProfile(false);
+    alert("Cập nhật thông tin cá nhân thành công!");
+  } catch (error) {
+    console.error(error);
+    alert("Đã xảy ra lỗi khi cập nhật thông tin.");
+  } finally {
+    setSavingProfile(false);
+  }
+}
   // =========================
   // REPORT
   // =========================
@@ -627,16 +676,32 @@ return (
     ĐỀ NGHỊ CÔNG NHẬN DANH HIỆU SINH VIÊN 5 TỐT CẤP TRƯỜNG
   </div>
 
-  <div
-    style={{
-      marginTop: 6,
-      fontSize: 16,
-      left: 35,
-      color: "#64748b",
-    }}
-  >
-    Năm học {currentAcademicYear?.name || "—"}
-  </div>
+  <button
+  type="button"
+  onClick={() => {
+    setEditHoTen(profile?.ho_ten || "");
+    setEditLop(profile?.lop || "");
+    setShowEditProfile(true);
+  }}
+  style={{
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 14,
+    padding: "10px 16px",
+    border: "1px solid #2563eb",
+    borderRadius: 10,
+    background: "#eff6ff",
+    color: "#1d4ed8",
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: "pointer",
+    maxWidth: "100%",
+  }}
+>
+  Chỉnh sửa thông tin cá nhân
+</button>
 
   <hr
     style={{
@@ -837,6 +902,230 @@ return (
     )}
   </main>
 </div>
+  
+{showEditProfile && (
+  <div
+    onClick={(e) => {
+      if (e.target === e.currentTarget && !savingProfile) {
+        setShowEditProfile(false);
+      }
+    }}
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(15, 23, 42, 0.55)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 100000,
+      padding: 16,
+      overflowY: "auto",
+    }}
+  >
+    <div
+      style={{
+        width: "100%",
+        maxWidth: 460,
+        maxHeight: "90dvh",
+        overflowY: "auto",
+        background: "#fff",
+        borderRadius: 18,
+        padding: isMobile ? 20 : 28,
+        boxShadow: "0 20px 60px rgba(0,0,0,.25)",
+        boxSizing: "border-box",
+      }}
+    >
+      <h2
+        style={{
+          margin: "0 0 8px",
+          color: "#1e3a8a",
+          fontSize: 22,
+          textAlign: "center",
+        }}
+      >
+        Chỉnh sửa thông tin cá nhân
+      </h2>
+
+      <p
+        style={{
+          margin: "0 0 24px",
+          color: "#64748b",
+          fontSize: 14,
+          textAlign: "center",
+          lineHeight: 1.5,
+        }}
+      >
+        Vui lòng kiểm tra thông tin trước khi lưu.
+      </p>
+
+      {/* MSSV: chỉ xem, không được sửa */}
+      <div style={{ marginBottom: 18 }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: 7,
+            fontWeight: 600,
+            fontSize: 14,
+            color: "#475569",
+          }}
+        >
+          Mã số sinh viên (MSSV)
+        </label>
+
+        <input
+          type="text"
+          value={profile?.mssv || ""}
+          readOnly
+          disabled
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "12px 14px",
+            border: "1px solid #e2e8f0",
+            borderRadius: 10,
+            background: "#f1f5f9",
+            color: "#94a3b8",
+            fontSize: 15,
+            cursor: "not-allowed",
+            opacity: 1,
+            WebkitTextFillColor: "#94a3b8",
+          }}
+        />
+
+        <small
+          style={{
+            display: "block",
+            marginTop: 6,
+            color: "#94a3b8",
+            fontSize: 12,
+          }}
+        >
+          MSSV gắn với tài khoản đăng nhập nên không thể chỉnh sửa.
+        </small>
+      </div>
+
+      {/* Họ và tên */}
+      <div style={{ marginBottom: 18 }}>
+        <label
+          htmlFor="edit-ho-ten"
+          style={{
+            display: "block",
+            marginBottom: 7,
+            fontWeight: 600,
+            fontSize: 14,
+            color: "#334155",
+          }}
+        >
+          Họ và tên <span style={{ color: "#dc2626" }}>*</span>
+        </label>
+
+        <input
+          id="edit-ho-ten"
+          type="text"
+          value={editHoTen}
+          onChange={(e) => setEditHoTen(e.target.value)}
+          maxLength={150}
+          autoComplete="name"
+          disabled={savingProfile}
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "12px 14px",
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#fff",
+            color: "#0f172a",
+            fontSize: 16,
+            outlineColor: "#2563eb",
+          }}
+        />
+      </div>
+
+      {/* Lớp */}
+      <div style={{ marginBottom: 24 }}>
+        <label
+          htmlFor="edit-lop"
+          style={{
+            display: "block",
+            marginBottom: 7,
+            fontWeight: 600,
+            fontSize: 14,
+            color: "#334155",
+          }}
+        >
+          Lớp <span style={{ color: "#dc2626" }}>*</span>
+        </label>
+
+        <input
+          id="edit-lop"
+          type="text"
+          value={editLop}
+          onChange={(e) => setEditLop(e.target.value)}
+          maxLength={100}
+          disabled={savingProfile}
+          placeholder="Ví dụ: Y khoa K25"
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "12px 14px",
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#fff",
+            color: "#0f172a",
+            fontSize: 16,
+            outlineColor: "#2563eb",
+          }}
+        />
+      </div>
+
+      {/* Nút thao tác */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: isMobile ? "column-reverse" : "row",
+          justifyContent: "flex-end",
+          gap: 10,
+        }}
+      >
+        <button
+          type="button"
+          disabled={savingProfile}
+          onClick={() => setShowEditProfile(false)}
+          style={{
+            padding: "12px 18px",
+            border: "1px solid #cbd5e1",
+            borderRadius: 10,
+            background: "#fff",
+            color: "#475569",
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: savingProfile ? "not-allowed" : "pointer",
+          }}
+        >
+          Hủy
+        </button>
+
+        <button
+          type="button"
+          disabled={savingProfile}
+          onClick={savePersonalInfo}
+          style={{
+            padding: "12px 18px",
+            border: "none",
+            borderRadius: 10,
+            background: savingProfile ? "#93c5fd" : "#2563eb",
+            color: "#fff",
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: savingProfile ? "not-allowed" : "pointer",
+          }}
+        >
+          {savingProfile ? "Đang lưu..." : "Lưu thay đổi"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
     {showCriteria && (
       <CriteriaModal

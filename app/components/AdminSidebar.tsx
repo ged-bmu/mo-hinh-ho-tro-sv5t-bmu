@@ -78,6 +78,10 @@ export default function AdminSidebar() {
             👥 Quản lý tài khoản
           </a>
 
+          <a href="/admin/theodoitvclb" style={menuStyle}>
+            👥 Theo dõi CLB
+          </a>
+
           <a href="/admin/statistics" style={menuStyle}>
             📊 Thống kê
           </a>
