@@ -69,6 +69,7 @@ const toolbarDangerStyle: React.CSSProperties = {
   const [tab, setTab] = useState("proof");
   const [showCriteria, setShowCriteria] = useState(false);
   const [notificationTitle, setNotificationTitle] = useState("");
+  const [notificationTarget, setNotificationTarget] = useState<"all" | "registered">("all");
   const [notificationContent, setNotificationContent] = useState("");
   const [selectedPassed, setSelectedPassed] = useState<string[] | null>(null);
   const totalStudents = students.length;
@@ -77,6 +78,7 @@ const toolbarDangerStyle: React.CSSProperties = {
   const [showProfile, setShowProfile] = useState(false);
   const keyword = search.toLowerCase();
   const pathname = usePathname();
+  const [sending, setSending] = useState(false);
   const filteredStudents = students.filter((sv) => {
     const matchSearch =
       sv.ho_ten?.toLowerCase().includes(keyword) ||
@@ -150,118 +152,131 @@ return matchSearch && matchFilter && matchRegistration;
     };
   }, []);
 
-  async function sendGeneralNotification() {
-    if (!notificationContent.trim()) {
-      alert("Vui lòng nhập nội dung thông báo.");
-      return;
-    }
+ 
+async function sendGeneralNotification() {
+  if (!notificationContent.trim()) {
+    alert("Vui lòng nhập nội dung thông báo.");
+    return;
+  }
 
-    try {
-      const { data: profiles, error: profilesError } = await supabase
+  if (!currentAcademicYear?.id) {
+    alert("Chưa có năm học được chọn.");
+    return;
+  }
+
+  try {
+    let studentIds: string[] = [];
+
+    if (notificationTarget === "all") {
+      const { data, error } = await supabase
         .from("profiles")
         .select("id")
         .eq("role", "student");
 
-      if (profilesError) {
-        console.error(profilesError);
-        alert("Không thể lấy danh sách sinh viên.");
-        return;
-      }
+      if (error) throw error;
 
-      if (!profiles || profiles.length === 0) {
-        alert("Không có sinh viên nào để gửi thông báo.");
-        return;
-      }
+      studentIds = (data || []).map((item) => item.id);
+    } else {
+      const { data, error } = await supabase
+        .from("student_year_profiles")
+        .select("user_id")
+        .eq("academic_year_id", currentAcademicYear.id)
+        .eq("dang_ky_phan_dau", true);
 
-      const title = notificationTitle.trim() || "🔔 SV5T BMU";
-      const content = notificationContent.trim();
+      if (error) throw error;
 
-      const notifications = profiles.map((profile) => ({
-        user_id: profile.id,
-        type: "general",
-        title,
-        content,
-        target_url: "/thongbaouser",
-        is_read: false,
-      }));
-
-      const { error: notificationError } = await supabase
-        .from("notifications")
-        .insert(notifications);
-
-      if (notificationError) {
-        console.error(notificationError);
-
-        alert(
-          "Không thể lưu thông báo: " + notificationError.message
-        );
-
-        return;
-      }
-
-      let successCount = 0;
-      let failureCount = 0;
-
-      await Promise.all(
-        profiles.map(async (profile) => {
-          try {
-            const response = await authFetch(
-              "/api/send-notification",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  type: "general",
-                  title,
-                  message: content,
-                  url: "/thongbaouser",
-                  userId: profile.id,
-                }),
-              }
-            );
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-              successCount++;
-            } else {
-              failureCount++;
-
-              console.error(
-                "Không gửi được push cho user:",
-                profile.id,
-                result
-              );
-            }
-          } catch (error) {
-            failureCount++;
-
-            console.error(
-              "Lỗi gửi push cho user:",
-              profile.id,
-              error
-            );
-          }
-        })
-      );
-
-      alert(
-        `Đã gửi thông báo cho ${profiles.length} sinh viên.\n\n` +
-          `📱 Thiết bị nhận được: ${successCount}\n` +
-          `⚠️ Không gửi được/không có thiết bị: ${failureCount}`
-      );
-
-      setNotificationTitle("");
-      setNotificationContent("");
-      setShowNotificationModal(false);
-    } catch (error) {
-      console.error("Lỗi gửi thông báo chung:", error);
-
-      alert("Đã xảy ra lỗi khi gửi thông báo.");
+      studentIds = [
+        ...new Set((data || []).map((item) => item.user_id)),
+      ];
     }
+
+    if (studentIds.length === 0) {
+      alert("Không có sinh viên thuộc nhóm đối tượng đã chọn.");
+      return;
+    }
+
+    const title = notificationTitle.trim() || "🔔 SV5T BMU";
+    const content = notificationContent.trim();
+
+    const notifications = studentIds.map((userId) => ({
+      user_id: userId,
+      type: "general",
+      title,
+      content,
+      target_url: "/thongbaouser",
+      is_read: false,
+    }));
+
+    const { error: notificationError } = await supabase
+      .from("notifications")
+      .insert(notifications);
+
+    if (notificationError) {
+      throw notificationError;
+    }
+
+    let successCount = 0;
+    let failureCount = 0;
+
+    await Promise.all(
+      studentIds.map(async (userId) => {
+        try {
+          const response = await authFetch(
+            "/api/send-notification",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                type: "general",
+                title,
+                message: content,
+                url: "/thongbaouser",
+                userId,
+              }),
+            }
+          );
+
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            successCount++;
+          } else {
+            failureCount++;
+            console.error("Không gửi được push:", userId, result);
+          }
+        } catch (error) {
+          failureCount++;
+          console.error("Lỗi gửi push:", userId, error);
+        }
+      })
+    );
+
+    const targetName =
+      notificationTarget === "all"
+        ? "toàn bộ sinh viên"
+        : `sinh viên đăng ký phấn đấu năm học ${currentAcademicYear.name}`;
+
+    alert(
+      `Đã lưu thông báo cho ${studentIds.length} sinh viên thuộc nhóm ${targetName}.\n\n` +
+        `📱 Gửi push thành công: ${successCount}\n` +
+        `⚠️ Push thất bại/không có thiết bị: ${failureCount}`
+    );
+
+    setNotificationTitle("");
+    setNotificationContent("");
+    setNotificationTarget("all");
+    setShowNotificationModal(false);
+  } catch (error: any) {
+    console.error("Lỗi gửi thông báo chung:", error);
+    alert(
+      "Không thể gửi thông báo: " +
+        (error?.message || "Vui lòng thử lại.")
+    );
   }
+}
+
 
   async function loadAcademicYears() {
     const { data, error } = await supabase
@@ -2533,7 +2548,7 @@ return (
         registrationStatuses[sv.id] === true
           ? "#166534"
           : "#92400e",
-      fontSize: 12,
+      fontSize: 14,
       fontWeight: 700,
       whiteSpace: "nowrap",
       cursor:
@@ -2749,15 +2764,60 @@ return (
                         </button>
                       </div>
 
-                      <div
-                        style={{
-                          marginBottom:
-                            "22px",
-                        }}
-                      >
-                        <label className="notification-label">
-                          Nội dung
-                        </label>
+                      
+<div style={{ marginBottom: 20 }}>
+  <label className="notification-label">
+    Đối tượng nhận thông báo
+  </label>
+
+  <select
+    value={notificationTarget}
+    onChange={(e) =>
+      setNotificationTarget(
+        e.target.value as "all" | "registered"
+      )
+    }
+    style={{
+      width: "100%",
+      height: 46,
+      padding: "0 12px",
+      border: "1px solid #d1d5db",
+      borderRadius: 10,
+      background: "#fff",
+      color: "#111827",
+      fontSize: 14,
+      fontWeight: 600,
+      outline: "none",
+    }}
+  >
+    <option value="all">
+      Toàn bộ sinh viên
+    </option>
+
+    <option value="registered">
+      Sinh viên đăng ký phấn đấu năm học {currentAcademicYear?.name || ""}
+    </option>
+  </select>
+
+  {notificationTarget === "registered" && (
+    <p
+      style={{
+        margin: "8px 0 0",
+        color: "#64748b",
+        fontSize: 12,
+        lineHeight: 1.5,
+      }}
+    >
+      Chỉ gửi cho sinh viên đã đăng ký phấn đấu
+      trong năm học {currentAcademicYear?.name || "đang chọn"}.
+    </p>
+  )}
+</div>
+
+<div style={{ marginBottom: 22 }}>
+  <label className="notification-label">
+    Nội dung
+  </label>
 
                         <textarea
                           className="notification-textarea"
@@ -2795,15 +2855,33 @@ return (
                           Hủy
                         </button>
 
-                        <button
-                          type="button"
-                          className="notification-save"
-                          onClick={
-                            sendGeneralNotification
-                          }
-                        >
-                          Lưu
-                        </button>
+                      <button
+  onClick={async () => {
+    if (sending) return;
+    setSending(true);
+    try {
+      await sendGeneralNotification();
+    } finally {
+      setSending(false);
+    }
+  }}
+  disabled={sending}
+  style={{
+    background: sending ? "#9ca3af" : "#2563eb",
+    color: "#ffffff",
+    padding: "12px 24px",
+    border: "none",
+    borderRadius: "10px",
+    fontWeight: 600,
+    fontSize: "14px",
+    cursor: sending ? "not-allowed" : "pointer",
+    opacity: sending ? 0.7 : 1,
+    transition: "all 0.2s ease",
+    boxShadow: sending ? "none" : "0 4px 10px rgba(37, 99, 235, 0.25)",
+  }}
+>
+  {sending ? " Đang gửi..." : "Gửi thông báo"}
+</button>
                       </div>
                     </div>
                   </div>

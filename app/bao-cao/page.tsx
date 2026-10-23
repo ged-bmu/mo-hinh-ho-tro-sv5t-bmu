@@ -23,7 +23,7 @@ export default function BaoCaoPage() {
   const [showCrop, setShowCrop] = useState(false);
   const [scale, setScale] = useState(1.2);
   const editorRef = useRef<any>(null);
-  const canvas = editorRef.current?.getImageScaledToCanvas();
+
   useEffect(() => {
   function handleClickOutside(event: MouseEvent) {
     if (
@@ -64,6 +64,10 @@ useEffect(() => {
   const [showEditProfile, setShowEditProfile] = useState(false);
 const [editHoTen, setEditHoTen] = useState("");
 const [editLop, setEditLop] = useState("");
+const [editGioiTinh, setEditGioiTinh] = useState("");
+const [editNamSinh, setEditNamSinh] = useState("");
+const [editDanToc, setEditDanToc] = useState("");
+const [editChucVuDoanHoi, setEditChucVuDoanHoi] = useState("");
 const [savingProfile, setSavingProfile] = useState(false);
   const [tab, setTab] = useState("proof");
   const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
@@ -151,30 +155,32 @@ async function handleAvatarUpload(
     .upload(fileName, file, {
       upsert: true,
     });
-console.log("Upload error:", error);
-if (error) {
-  console.log(error);
-  alert(error.message);
-  return;
-}
+
+  if (error) {
+    console.error("Lỗi upload ảnh đại diện:", error);
+    alert(error.message);
+    return;
+  }
 
   const { data } = supabase.storage
     .from("avatars")
     .getPublicUrl(fileName);
-console.log(data.publicUrl);
-const avatar = `${data.publicUrl}?v=${Date.now()}`;
 
- const { data: updateData, error: updateError } = await supabase
-  .from("profiles")
-  .update({ avatar })
-  .eq("id", profile.id)
-  .select();
+  const avatar = `${data.publicUrl}?v=${Date.now()}`;
 
-console.log("Update data:", updateData);
-console.log("Update error:", updateError);
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({ avatar })
+    .eq("id", profile.id)
+    .select();
+
+  if (updateError) {
+    console.error("Lỗi cập nhật avatar:", updateError);
+    alert(updateError.message);
+    return;
+  }
 
   await loadProfile(profile.id);
-  console.log("Profile sau khi load:", profile);
 }
   async function loadProfile(userId: string) {
     const { data } = await supabase
@@ -187,16 +193,53 @@ console.log("Update error:", updateError);
       setProfile(data);
     }
   }
+  function getStudentYear(lop: string) {
+  if (!lop) return "";
 
-  async function savePersonalInfo() {
+  // Lấy 2 chữ số đầu tiên của mã lớp, ví dụ 22DA1 → 22
+  const match = lop.match(/(?:^|\D)(\d{2})(?=[A-Z])/i);
+
+  if (!match) return "";
+
+  const admissionYear = 2000 + Number(match[1]);
+  const now = new Date();
+
+  // Năm học bắt đầu từ ngày 01/09
+  const academicYearStart =
+    now.getMonth() >= 8
+      ? now.getFullYear()
+      : now.getFullYear() - 1;
+
+  const studentYear = academicYearStart - admissionYear + 1;
+
+  if (studentYear < 1) return "";
+
+  return studentYear;
+}
+
+
+async function savePersonalInfo() {
   if (!profile) return;
 
   const hoTen = editHoTen.trim();
   const lop = editLop.trim();
+  const namSinh = editNamSinh.trim();
 
   if (!hoTen || !lop) {
     alert("Vui lòng nhập đầy đủ họ tên và lớp.");
     return;
+  }
+
+  if (namSinh) {
+    const year = Number(namSinh);
+    if (
+      !Number.isInteger(year) ||
+      year < 1900 ||
+      year > new Date().getFullYear()
+    ) {
+      alert("Vui lòng nhập năm sinh hợp lệ.");
+      return;
+    }
   }
 
   setSavingProfile(true);
@@ -207,9 +250,13 @@ console.log("Update error:", updateError);
       .update({
         ho_ten: hoTen,
         lop: lop,
+        gioi_tinh: editGioiTinh || null,
+        nam_sinh: namSinh ? Number(namSinh) : null,
+        dan_toc: editDanToc.trim() || null,
+        chuc_vu_doan_hoi: editChucVuDoanHoi.trim() || null,
       })
       .eq("id", profile.id)
-      .select("id, ho_ten, lop")
+      .select("*")
       .single();
 
     if (error) {
@@ -220,8 +267,7 @@ console.log("Update error:", updateError);
 
     setProfile((prev: any) => ({
       ...prev,
-      ho_ten: data.ho_ten,
-      lop: data.lop,
+      ...data,
     }));
 
     setShowEditProfile(false);
@@ -233,6 +279,7 @@ console.log("Update error:", updateError);
     setSavingProfile(false);
   }
 }
+
   // =========================
   // REPORT
   // =========================
@@ -322,7 +369,6 @@ await supabase.storage
   function printReport() {
     window.print();
   }
-console.log("Render avatar:", profile?.avatar);
   // =========================
   // RETURN
   // =========================
@@ -679,10 +725,16 @@ return (
   <button
   type="button"
   onClick={() => {
-    setEditHoTen(profile?.ho_ten || "");
-    setEditLop(profile?.lop || "");
-    setShowEditProfile(true);
-  }}
+  setEditHoTen(profile?.ho_ten || "");
+  setEditLop(profile?.lop || "");
+  setEditGioiTinh(profile?.gioi_tinh || "");
+  setEditNamSinh(
+    profile?.nam_sinh != null ? String(profile.nam_sinh) : ""
+  );
+  setEditDanToc(profile?.dan_toc || "");
+  setEditChucVuDoanHoi(profile?.chuc_vu_doan_hoi || "");
+  setShowEditProfile(true);
+}}
   style={{
     display: "inline-flex",
     alignItems: "center",
@@ -820,21 +872,27 @@ return (
                           <b>MSSV:</b> {profile?.mssv}
                         </div>
 
-                        <div>
-                          <b>Nam/Nữ:</b>
-                        </div>
+                       <div>
+  <b>Nam/Nữ:</b> {profile?.gioi_tinh || ""}
+</div>
 
-                        <div>
-                          <b>Năm sinh:</b>
-                        </div>
+<div>
+  <b>Năm sinh:</b> {profile?.nam_sinh || ""}
+</div>
 
-                        <div>
-                          <b>Dân tộc:</b>
-                        </div>
+<div>
+  <b>Dân tộc:</b> {profile?.dan_toc || ""}
+</div>
 
-                        <div>
-                          <b>Sinh viên năm thứ:</b>
-                        </div>
+                       <div>
+  <b>Sinh viên năm thứ:</b>{" "}
+  {profile?.lop
+    ? (() => {
+        const year = getStudentYear(profile.lop);
+        return year ? year : "";
+      })()
+    : ""}
+</div>
 
                         <div>
                           <b>Lớp:</b> {profile?.lop},
@@ -843,8 +901,9 @@ return (
                         </div>
 
                         <div>
-                          <b>Chức vụ Đoàn - Hội:</b>
-                        </div>
+  <b>Chức vụ Đoàn - Hội:</b>{" "}
+  {profile?.chuc_vu_doan_hoi || ""}
+</div>
 
                         <div>
                           <b>Đảng viên/Đoàn viên:</b>
@@ -1077,6 +1136,152 @@ return (
           }}
         />
       </div>
+
+{/* Giới tính */}
+<div style={{ marginBottom: 18 }}>
+  <label
+    htmlFor="edit-gioi-tinh"
+    style={{
+      display: "block",
+      marginBottom: 7,
+      fontWeight: 600,
+      fontSize: 14,
+      color: "#334155",
+    }}
+  >
+    Nam/Nữ
+  </label>
+
+  <select
+    id="edit-gioi-tinh"
+    value={editGioiTinh}
+    onChange={(e) => setEditGioiTinh(e.target.value)}
+    disabled={savingProfile}
+    style={{
+      width: "100%",
+      boxSizing: "border-box",
+      padding: "12px 14px",
+      border: "1px solid #cbd5e1",
+      borderRadius: 10,
+      background: "#fff",
+      color: "#0f172a",
+      fontSize: 16,
+    }}
+  >
+    <option value="">-- Chọn giới tính --</option>
+    <option value="Nam">Nam</option>
+    <option value="Nữ">Nữ</option>
+  </select>
+</div>
+
+{/* Năm sinh */}
+<div style={{ marginBottom: 18 }}>
+  <label
+    htmlFor="edit-nam-sinh"
+    style={{
+      display: "block",
+      marginBottom: 7,
+      fontWeight: 600,
+      fontSize: 14,
+      color: "#334155",
+    }}
+  >
+    Năm sinh
+  </label>
+
+  <input
+    id="edit-nam-sinh"
+    type="number"
+    value={editNamSinh}
+    onChange={(e) => setEditNamSinh(e.target.value)}
+    min={1900}
+    max={new Date().getFullYear()}
+    disabled={savingProfile}
+    placeholder="Ví dụ: 2005"
+    style={{
+      width: "100%",
+      boxSizing: "border-box",
+      padding: "12px 14px",
+      border: "1px solid #cbd5e1",
+      borderRadius: 10,
+      background: "#fff",
+      color: "#0f172a",
+      fontSize: 16,
+    }}
+  />
+</div>
+
+{/* Dân tộc */}
+<div style={{ marginBottom: 18 }}>
+  <label
+    htmlFor="edit-dan-toc"
+    style={{
+      display: "block",
+      marginBottom: 7,
+      fontWeight: 600,
+      fontSize: 14,
+      color: "#334155",
+    }}
+  >
+    Dân tộc
+  </label>
+
+  <input
+    id="edit-dan-toc"
+    type="text"
+    value={editDanToc}
+    onChange={(e) => setEditDanToc(e.target.value)}
+    maxLength={100}
+    disabled={savingProfile}
+    placeholder="Ví dụ: Kinh"
+    style={{
+      width: "100%",
+      boxSizing: "border-box",
+      padding: "12px 14px",
+      border: "1px solid #cbd5e1",
+      borderRadius: 10,
+      background: "#fff",
+      color: "#0f172a",
+      fontSize: 16,
+    }}
+  />
+</div>
+
+{/* Chức vụ Đoàn - Hội */}
+<div style={{ marginBottom: 24 }}>
+  <label
+    htmlFor="edit-chuc-vu-doan-hoi"
+    style={{
+      display: "block",
+      marginBottom: 7,
+      fontWeight: 600,
+      fontSize: 14,
+      color: "#334155",
+    }}
+  >
+    Chức vụ Đoàn - Hội
+  </label>
+
+  <input
+    id="edit-chuc-vu-doan-hoi"
+    type="text"
+    value={editChucVuDoanHoi}
+    onChange={(e) => setEditChucVuDoanHoi(e.target.value)}
+    maxLength={200}
+    disabled={savingProfile}
+    placeholder="Ví dụ: Bí thư Chi đoàn (không bắt buộc)"
+    style={{
+      width: "100%",
+      boxSizing: "border-box",
+      padding: "12px 14px",
+      border: "1px solid #cbd5e1",
+      borderRadius: 10,
+      background: "#fff",
+      color: "#0f172a",
+      fontSize: 16,
+    }}
+  />
+</div>
 
       {/* Nút thao tác */}
       <div
