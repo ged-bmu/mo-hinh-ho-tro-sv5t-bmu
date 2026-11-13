@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import Footer from "../../components/Footer";
 import Header from "../../components/Header";
@@ -15,11 +16,21 @@ type Activity = {
   organizer: string | null;
   document: string | null;
   detail_content: string | null;
+  activity_link: string | null;
   event_time: string | null;
   end_time: string | null;
   registration_deadline: string | null;
   created_at: string;
   status: string;
+};
+
+type StudentRecipient = {
+  id: string;
+  ho_ten: string;
+  lop: string;
+  mssv: string;
+  da_dang_ky: boolean;
+  co_token: boolean;
 };
 
 const criterionLabel: Record<string, string> = {
@@ -34,8 +45,32 @@ const criterionLabel: Record<string, string> = {
 function formatDate(date?: string |null) {
   return date || "Chưa có";
 }
+function getActivityStatus(activity: Activity, now: number) {
+  if (!activity.event_time || !activity.end_time) {
+    if (activity.status === "upcoming") return "scheduled";
+    if (activity.status === "ongoing") return "ongoing";
+    if (activity.status === "ended") return "ended";
+    return "not_started";
+  }
+
+  const start = new Date(activity.event_time).getTime();
+  const end = new Date(activity.end_time).getTime();
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+    if (activity.status === "upcoming") return "scheduled";
+    if (activity.status === "ongoing") return "ongoing";
+    if (activity.status === "ended") return "ended";
+    return "not_started";
+  }
+
+  if (now < start) return "scheduled";
+  if (now <= end) return "ongoing";
+
+  return "ended";
+}
 export default function ActivitiesAdminPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [currentTime, setCurrentTime] = useState(Date.now());useEffect(() => {const timer = setInterval(() => {setCurrentTime(Date.now());}, 30000);return () => clearInterval(timer);}, []);
   const [openId, setOpenId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -48,13 +83,22 @@ export default function ActivitiesAdminPage() {
   const [criterion, setCriterion] = useState("hoc_tap");
   const [organizer, setOrganizer] = useState("");
   const [detailContent, setDetailContent] = useState("");
+  const [activityLink, setActivityLink] = useState("");
+  const [showLinkInput, setShowLinkInput] = useState(false);
   const [eventTime, setEventTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [timeType, setTimeType] = useState<"single" | "range">("single");
   const [deadline, setDeadline] = useState("");
   const [isActive, setIsActive] = useState(true);
-  const [status, setStatus] = useState("upcoming");
   const [showProfile, setShowProfile] = useState(false);
+  const [showRecipientModal, setShowRecipientModal] = useState(false);
+  const [mounted, setMounted] = useState(false);useEffect(() => {setMounted(true);}, []);
+  const [recipientLoading, setRecipientLoading] = useState(false);
+  const [sendingNotification, setSendingNotification] = useState(false);
+  const [recipientStudents, setRecipientStudents] = useState<StudentRecipient[]>([]);
+  const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>([]);
+  const [tokenFilter, setTokenFilter] = useState("all");
+  const [currentAcademicYear, setCurrentAcademicYear] = useState("");
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const criterionStyle: Record<
   string,
   { bg: string; text: string }
@@ -104,13 +148,53 @@ function handleDocumentUpload(
     loadActivities();
   }, []);
 
+  useEffect(() => {
+  if (!showRecipientModal) return;
+
+  const previousOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+
+  return () => {
+    document.body.style.overflow = previousOverflow;
+  };
+}, [showRecipientModal]);
+
   async function handleSave() {
-    if (!title.trim()) {
-      alert("Vui lòng nhập tên hoạt động");
-      return;
+  if (!title.trim()) {
+    alert("Vui lòng nhập tên hoạt động");
+    return;
+  }
+
+  if (!eventTime || !endTime) {
+    alert("Vui lòng chọn đầy đủ thời gian bắt đầu và kết thúc.");
+    return;
+  }
+
+  if (new Date(endTime).getTime() <= new Date(eventTime).getTime()) {
+    alert("Thời gian kết thúc phải sau thời gian bắt đầu.");
+    return;
+  }
+let normalizedLink = activityLink.trim();
+
+if (normalizedLink) {
+  if (!/^https?:\/\//i.test(normalizedLink)) {
+    normalizedLink = `https://${normalizedLink}`;
+  }
+
+  try {
+    const parsedLink = new URL(normalizedLink);
+
+    if (!["http:", "https:"].includes(parsedLink.protocol)) {
+      throw new Error("invalid");
     }
 
-    setLoading(true);
+    normalizedLink = parsedLink.href;
+  } catch {
+    alert("Đường dẫn không hợp lệ. Vui lòng nhập liên kết bắt đầu bằng https://");
+    return;
+  }
+}
+  setLoading(true);
 let documentUrl: string | null = null;
 
 if (documentFile) {
@@ -143,10 +227,11 @@ if (editingId) {
       organizer: organizer || null,
       document: documentUrl,
       detail_content: detailContent || null,
+      activity_link: normalizedLink || null,
       event_time: eventTime || null,
-      end_time: timeType === "range" ? endTime || null : null,
+      end_time: endTime,
       registration_deadline: deadline || null,
-      status,
+      status: "upcoming",
     })
     .eq("id", editingId));
 }else {
@@ -158,10 +243,11 @@ if (editingId) {
       organizer: organizer || null,
       document: documentUrl,
       detail_content: detailContent || null,
-      event_time: eventTime || null,
-      end_time: timeType === "range" ? endTime || null : null,
+      activity_link: normalizedLink || null,
+      event_time: eventTime || null, 
+      end_time: endTime,
       registration_deadline: deadline || null,
-      status,
+      status: "upcoming",
     })
     .select()
     .single();
@@ -187,6 +273,8 @@ setTitle("");
 setCriterion("hoc_tap");
 setOrganizer("");
 setDetailContent("");
+setActivityLink("");
+setShowLinkInput(false);
 setEventTime("");
 setEndTime("");
 setDeadline("");
@@ -195,77 +283,92 @@ setIsActive(true);
 
 loadActivities();
   }
-  async function notifyUpcomingActivity(activity: Activity) {
+
+  const loadRecipients = async (activity: Activity) => {
   try {
-    // Lấy toàn bộ sinh viên
-    const { data: profiles, error: profilesError } = await supabase
-  .from("profiles")
-  .select("id")
-  .eq("role", "student");
+    setRecipientLoading(true);
 
-    if (profilesError) {
-      console.error(profilesError);
-      alert("Không thể lấy danh sách sinh viên.");
-      return;
+    // Lấy năm học hiện tại
+    const { data: year, error: yearError } = await supabase
+      .from("academic_years")
+      .select("id, name")
+      .eq("is_current", true)
+      .maybeSingle();
+
+    if (yearError) throw yearError;
+
+    setCurrentAcademicYear(year?.name || "Chưa thiết lập");
+
+    // Lấy danh sách sinh viên
+    const { data: profiles, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, ho_ten, lop, mssv")
+      .eq("role", "student")
+      .order("ho_ten", { ascending: true });
+
+    if (profileError) throw profileError;
+
+    const studentIds = (profiles || []).map((student) => student.id);
+
+    // Lấy tài khoản đã bật thông báo điện thoại
+    let tokenRows: { user_id: string; token: string }[] = [];
+
+    if (studentIds.length > 0) {
+      const { data, error } = await supabase
+        .from("notification_tokens")
+        .select("user_id, token")
+        .in("user_id", studentIds);
+
+      if (error) throw error;
+      tokenRows = (data || []) as { user_id: string; token: string }[];
     }
 
-    if (!profiles || profiles.length === 0) {
-      alert("Không có sinh viên nào để gửi thông báo.");
-      return;
+    // Lấy sinh viên đã đăng ký phấn đấu trong năm học hiện tại
+    let registeredRows: { user_id: string }[] = [];
+
+    if (year) {
+      const { data, error } = await supabase
+        .from("student_year_profiles")
+        .select("user_id")
+        .eq("academic_year_id", year.id)
+        .eq("dang_ky_phan_dau", true);
+
+      if (error) throw error;
+      registeredRows = (data || []) as { user_id: string }[];
     }
 
-    // Tạo nội dung thông báo
-    const notifications = profiles.map((profile) => ({
-      user_id: profile.id,
-      type: "activity",
-      title: "Hoạt động sắp diễn ra",
-      content: `${activity.title}${activity.event_time ? ` sẽ diễn ra vào ${activity.event_time}.` : "."}`,
-      target_url: `/hoat-dong`,
-      is_read: false,
+    const tokenUserIds = new Set(
+      tokenRows
+        .filter((item) => item.token)
+        .map((item) => item.user_id)
+    );
+
+    const registeredIds = new Set(
+      registeredRows.map((item) => item.user_id)
+    );
+
+    const recipients: StudentRecipient[] = (profiles || []).map((student) => ({
+      id: student.id,
+      ho_ten: student.ho_ten || "",
+      lop: student.lop || "",
+      mssv: student.mssv || "",
+      da_dang_ky: registeredIds.has(student.id),
+      co_token: tokenUserIds.has(student.id),
     }));
 
-    // Gửi thông báo
-    const { error: notificationError } = await supabase
-      .from("notifications")
-      .insert(notifications);
-
-    if (notificationError) {
-      console.error(notificationError);
-      alert("Không thể gửi thông báo: " + notificationError.message);
-      return;
-    }
-    const response = await authFetch("/api/notifications/activity", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    activityId: activity.id,
-    title: "📢 Hoạt động sắp diễn ra",
-    body: `${activity.title}${
-      activity.event_time
-        ? ` sẽ diễn ra vào ${activity.event_time}.`
-        : "."
-    }`,
-    url: `/hoat-dong`,
-  }),
-});
-
-const fcmResult = await response.json();
-
-if (!response.ok) {
-  console.error("FCM ERROR:", fcmResult);
-  alert(
-    "Đã tạo thông báo trong hệ thống nhưng gửi thông báo điện thoại thất bại."
-  );
-  return;
-}
-
-    alert(`Đã gửi thông báo cho ${profiles.length} sinh viên.`);
+    setRecipientStudents(recipients);
+    setSelectedRecipientIds([]);
+    setSelectedActivity(activity);
+    setShowRecipientModal(true);
   } catch (error) {
-    console.error(error);
-    alert("Đã xảy ra lỗi khi gửi thông báo.");
+    console.error("Lỗi tải danh sách người nhận:", error);
+    alert("Không thể tải danh sách sinh viên. Vui lòng thử lại!");
+  } finally {
+    setRecipientLoading(false);
   }
+};
+async function notifyUpcomingActivity(activity: Activity) {
+  await loadRecipients(activity);
 }
 
   async function handleDelete(id: string) {
@@ -282,10 +385,99 @@ function handleEdit(activity: Activity) {
   setCriterion(activity.criterion || "hoc_tap");
   setOrganizer(activity.organizer || "");
   setDetailContent(activity.detail_content || "");
+  setActivityLink(activity.activity_link || "");
+  setShowLinkInput(!!activity.activity_link);
   setEventTime(activity.event_time || "");
+  setEndTime(activity.end_time || "");
   setDeadline(activity.registration_deadline || "");
-  setStatus(activity.status || "upcoming");
 }
+// Chọn / bỏ chọn một sinh viên
+const toggleRecipient = (id: string) => {
+  setSelectedRecipientIds((prev) =>
+    prev.includes(id)
+      ? prev.filter((item) => item !== id)
+      : [...prev, id]
+  );
+};
+
+const filteredRecipientStudents = recipientStudents.filter((student) => {
+  if (tokenFilter === "enabled") return student.co_token;
+  if (tokenFilter === "disabled") return !student.co_token;
+  return true;
+});
+// Chọn tất cả tài khoản có bật thông báo điện thoại
+const selectAllWithToken = () => {
+  setSelectedRecipientIds(
+    recipientStudents
+      .filter((student) => student.co_token)
+      .map((student) => student.id)
+  );
+};
+
+// Chọn sinh viên đã đăng ký phấn đấu và có bật thông báo
+const selectRegisteredWithToken = () => {
+  setSelectedRecipientIds(
+    recipientStudents
+      .filter((student) => student.da_dang_ky && student.co_token)
+      .map((student) => student.id)
+  );
+};
+
+// Gửi thông báo cho danh sách đã chọn
+const sendSelectedNotifications = async () => {
+  if (!selectedActivity) return;
+
+  if (selectedRecipientIds.length === 0) {
+    alert("Vui lòng chọn ít nhất một sinh viên.");
+    return;
+  }
+
+  if (!confirm(`Gửi thông báo cho ${selectedRecipientIds.length} tài khoản đã chọn?`)) {
+    return;
+  }
+
+  try {
+    setSendingNotification(true);
+
+    const response = await authFetch("/api/notifications/activity", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        activityId: selectedActivity.id,
+        title: "📢 Hoạt động sắp diễn ra",
+        body: `${selectedActivity.title}${
+  selectedActivity.event_time
+    ? ` sẽ diễn ra vào ${formatEventDateTime(selectedActivity.event_time)}.`
+    : "."
+}`,
+        url: "/hoat-dong",
+        userIds: selectedRecipientIds,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Gửi thông báo thất bại.");
+    }
+
+    alert(
+      `Đã gửi thông báo điện thoại.\nSố tài khoản được chọn: ${selectedRecipientIds.length}\nSố thông báo gửi thành công: ${result.sent ?? 0}`
+    );
+
+    setShowRecipientModal(false);
+    setSelectedRecipientIds([]);
+  } catch (error) {
+    console.error(error);
+    alert(
+      error instanceof Error ? error.message : "Có lỗi khi gửi thông báo."
+    );
+  } finally {
+    setSendingNotification(false);
+  }
+};
   return (
     <div className="min-h-screen bg-gray-50">
        <Header
@@ -327,23 +519,27 @@ function handleEdit(activity: Activity) {
 
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <p className="text-xs font-medium text-gray-500">
-        Chưa diễn ra
+        Sắp diễn ra
       </p>
       <p className="mt-1 text-2xl font-bold text-blue-600">
         {
-activities.filter((a) => a.status === "upcoming").length
-        }
+activities.filter(
+  (a) => getActivityStatus(a, currentTime) === "scheduled"
+).length
+}
       </p>
     </div>
 
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <p className="text-xs font-medium text-gray-500">
-        Hết hạn đăng ký
+        Đang diễn ra
       </p>
       <p className="mt-1 text-2xl font-bold text-red-600">
         {
-activities.filter((a) => a.status === "ended").length
-        }
+activities.filter(
+  (a) => getActivityStatus(a, currentTime) === "ongoing"
+).length
+}
       </p>
     </div>
   </div>
@@ -363,18 +559,76 @@ activities.filter((a) => a.status === "ended").length
               </div>
 
               <div className="space-y-5">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-700">
-  Tên hoạt động <span className="text-red-500">*</span>
-</label>
+                {/* TÊN HOẠT ĐỘNG */}
+<div>
+  <label className="mb-2 block text-sm font-semibold text-gray-700">
+    Tên hoạt động <span className="text-red-500">*</span>
+  </label>
 
-<input
-  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-  placeholder="Nhập tên hoạt động"
-  value={title}
-  onChange={(e) => setTitle(e.target.value)}
-/>
-                </div>
+  <input
+    type="text"
+    required
+    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+    placeholder="Nhập tên hoạt động..."
+    value={title}
+    onChange={(e) => setTitle(e.target.value)}
+  />
+</div>
+{/* MÔ TẢ HOẠT ĐỘNG */}
+<div>
+  <label className="mb-2 block text-sm font-semibold text-gray-700">
+    Mô tả hoạt động
+  </label>
+
+  <textarea
+    rows={4}
+    className="w-full resize-y rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+    placeholder="Nhập nội dung mô tả hoạt động... Ví dụ: Vui lòng kiểm tra email để biết thêm thông tin chi tiết."
+    value={detailContent}
+    onChange={(e) => setDetailContent(e.target.value)}
+  />
+</div>
+{/* LIÊN KẾT HOẠT ĐỘNG */}
+<div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+  <div className="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <p className="font-semibold text-blue-900">
+        🔗 Liên kết hoạt động
+      </p>
+      <p className="mt-1 text-xs text-blue-700">
+        Thêm đường dẫn đăng ký hoặc truy cập hoạt động.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      onClick={() => setShowLinkInput(!showLinkInput)}
+      className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+    >
+      {showLinkInput ? "Ẩn ô liên kết" : "🔗 Chèn liên kết"}
+    </button>
+  </div>
+
+  {showLinkInput && (
+    <div className="mt-4">
+      <label className="mb-2 block text-sm font-semibold text-gray-700">
+        Đường dẫn truy cập
+      </label>
+
+      <input
+        type="url"
+        className="w-full rounded-xl border border-blue-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+        placeholder="https://example.com"
+        value={activityLink}
+        onChange={(e) => setActivityLink(e.target.value)}
+      />
+
+      <p className="mt-2 text-xs text-gray-500">
+        Sinh viên sẽ nhìn thấy nút truy cập hoạt động và có thể mở liên kết này.
+      </p>
+    </div>
+  )}
+</div>
 
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-gray-700">
@@ -457,33 +711,33 @@ activities.filter((a) => a.status === "ended").length
   </div>
 )}
                 </div>
+                <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="min-w-0">
+  <label className="mb-2 block text-sm font-semibold text-gray-700">
+    Thời gian bắt đầu
+  </label>
+  <input
+    type="datetime-local"
+    step="60"
+    className="box-border w-full min-w-0 max-w-full rounded-xl border border-gray-300 px-3 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+    value={eventTime}
+    onChange={(e) => setEventTime(e.target.value)}
+  />
+</div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-700">
-                    Chi tiết / Liên kết
-                  </label>
-                  <textarea
-                    className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                    rows={4}
-                    placeholder="Mô tả ngắn hoặc đường dẫn chi tiết..."
-                    value={detailContent}
-                    onChange={(e) => setDetailContent(e.target.value)}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-gray-700">
-                      Thời gian diễn ra
-                    </label>
-                    <input
-                      type="text"
-                      step="60"
-                      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                      value={eventTime}
-                      onChange={(e) => setEventTime(e.target.value)}
-                    />
-                  </div>
+<div className="min-w-0">
+  <label className="mb-2 block text-sm font-semibold text-gray-700">
+    Thời gian kết thúc
+  </label>
+  <input
+    type="datetime-local"
+    step="60"
+    min={eventTime || undefined}
+    className="box-border w-full min-w-0 max-w-full rounded-xl border border-gray-300 px-3 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+    value={endTime}
+    onChange={(e) => setEndTime(e.target.value)}
+  />
+</div>
 
                   <div>
                     <label className="mb-2 block text-sm font-semibold text-gray-700">
@@ -496,20 +750,13 @@ activities.filter((a) => a.status === "ended").length
                       onChange={(e) => setDeadline(e.target.value)}
                     />
                   </div>
-  <div>
+<div>
   <label className="mb-2 block text-sm font-semibold text-gray-700">
-    Trạng thái
+    Trạng thái hoạt động
   </label>
-
-  <select
-    value={status}
-    onChange={(e) => setStatus(e.target.value)}
-    className="w-full rounded-xl border border-gray-300 px-4 py-3"
-  >
-    <option value="upcoming"> Chưa diễn ra</option>
-    <option value="ongoing"> Sắp diễn ra</option>
-    <option value="ended"> Đã kết thúc</option>
-  </select>
+  <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+    Tự động cập nhật
+  </div>
 </div>
                 </div>
 <div className="mt-4 flex gap-3">
@@ -533,11 +780,12 @@ activities.filter((a) => a.status === "ended").length
         setCriterion("hoc_tap");
         setOrganizer("");
         setDetailContent("");
+        setActivityLink("");
+setShowLinkInput(false);
         setEventTime("");
         setEndTime("");
         setDeadline("");
         setDocumentFile(null);
-        setStatus("upcoming");
       }}
       className="rounded-xl border border-gray-300 px-6 py-3 font-semibold transition hover:bg-gray-100"
     >
@@ -605,24 +853,30 @@ activities.filter((a) => a.status === "ended").length
   </span>
 
   <span className="text-gray-500">
-    📅 {formatDate(activity.event_time)}
-  </span>
+  📅 {formatEventDateTime(activity.event_time)}
+  {" - "}
+  {formatEventDateTime(activity.end_time)}
+</span>
 
-  <span
-    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-      activity.status === "upcoming"
-        ? "bg-green-100 text-green-700"
-        : activity.status === "ongoing"
-        ? "bg-blue-100 text-blue-700"
-        : "bg-gray-200 text-gray-700"
-    }`}
-  >
-    {activity.status === "upcoming"
-      ? " Chưa diễn ra"
-      : activity.status === "ongoing"
-      ? " Sắp diễn ra"
-      : " Đã kết thúc"}
-  </span>
+<span
+  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+    getActivityStatus(activity, currentTime) === "scheduled"
+      ? "bg-blue-100 text-blue-700"
+      : getActivityStatus(activity, currentTime) === "ongoing"
+      ? "bg-green-100 text-green-700"
+      : getActivityStatus(activity, currentTime) === "ended"
+      ? "bg-gray-200 text-gray-700"
+      : "bg-yellow-100 text-yellow-700"
+  }`}
+>
+  {getActivityStatus(activity, currentTime) === "scheduled"
+    ? "Sắp diễn ra"
+    : getActivityStatus(activity, currentTime) === "ongoing"
+    ? "Đang diễn ra"
+    : getActivityStatus(activity, currentTime) === "ended"
+    ? "Đã kết thúc"
+    : "Chưa diễn ra"}
+</span>
 </div>
 </div>
 
@@ -683,15 +937,37 @@ activities.filter((a) => a.status === "ended").length
                               </p>
                             </div>
 
-                            <div className="md:col-span-2">
-                              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                Chi tiết
-                              </p>
+                            {/* MÔ TẢ HOẠT ĐỘNG */}
+<div className="md:col-span-2">
+  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+    Mô tả hoạt động
+  </p>
 
-                              <p className="mt-1 whitespace-pre-wrap break-words">
-                                {activity.detail_content || "Chưa có"}
-                              </p>
-                            </div>
+  <p className="mt-1 whitespace-pre-wrap break-words text-gray-700">
+    {activity.detail_content || "Chưa có mô tả"}
+  </p>
+</div>
+
+{/* LIÊN KẾT HOẠT ĐỘNG */}
+<div className="md:col-span-2">
+  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+    Liên kết hoạt động
+  </p>
+
+  {activity.activity_link ? (
+    <a
+      href={activity.activity_link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-2 inline-flex max-w-full items-center gap-2 break-all rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:border-blue-400 hover:bg-blue-100"
+    >
+      🔗 {activity.activity_link}
+      <span className="shrink-0">↗</span>
+    </a>
+  ) : (
+    <p className="mt-1 text-gray-500">Chưa có liên kết</p>
+  )}
+</div>
                           </div>
 
                           <div className="mt-6 flex justify-end">
@@ -727,6 +1003,257 @@ activities.filter((a) => a.status === "ended").length
           </div>
         </div>
       </main>
+
+
+{showRecipientModal && mounted && createPortal(
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      zIndex: 2147483647,
+      background: "rgba(0,0,0,0.65)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "16px",
+      pointerEvents: "auto",
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "100%",
+        maxWidth: "1100px",
+        height: "85vh",
+        background: "#fff",
+        borderRadius: "16px",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        pointerEvents: "auto",
+      }}
+    >
+      {/* TIÊU ĐỀ */}
+      <div style={{
+        flexShrink: 0,
+        padding: "18px 22px",
+        borderBottom: "1px solid #ddd",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}>
+        <div>
+          <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#111" }}>
+            Chọn người nhận thông báo
+          </h2>
+          <p style={{ color: "#555", marginTop: "5px" }}>
+            Hoạt động: {selectedActivity?.title}
+          </p>
+          <p style={{ color: "#2563eb", fontSize: "14px" }}>
+            Năm học: {currentAcademicYear}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowRecipientModal(false)}
+          style={{
+            cursor: "pointer",
+            fontSize: "30px",
+            padding: "5px 12px",
+            color: "#555",
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* THANH CÔNG CỤ */}
+<div style={{
+  flexShrink: 0,
+  padding: "14px 20px",
+  borderBottom: "1px solid #ddd",
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  gap: "10px",
+}}>
+  <button
+    type="button"
+    onClick={selectAllWithToken}
+    style={{
+      background: "#2563eb",
+      color: "white",
+      padding: "9px 14px",
+      borderRadius: "8px",
+      cursor: "pointer",
+    }}
+  >
+    Chọn tất cả tài khoản
+  </button>
+
+  <button
+    type="button"
+    onClick={selectRegisteredWithToken}
+    style={{
+      background: "#16a34a",
+      color: "white",
+      padding: "9px 14px",
+      borderRadius: "8px",
+      cursor: "pointer",
+    }}
+  >
+    Chọn tài khoản đã đăng ký phấn đấu
+  </button>
+
+  <select
+    value={tokenFilter}
+    onChange={(e) => setTokenFilter(e.target.value)}
+    style={{
+      border: "1px solid #ccc",
+      borderRadius: "8px",
+      padding: "10px",
+      color: "#333",
+      background: "white",
+    }}
+  >
+    <option value="all">Tất cả tài khoản</option>
+    <option value="enabled">Đã bật thông báo điện thoại</option>
+    <option value="disabled">Chưa bật thông báo điện thoại</option>
+  </select>
+
+  <strong style={{ color: "#333" }}>
+    Đã chọn: {selectedRecipientIds.length} tài khoản
+  </strong>
+</div>
+
+      {/* DANH SÁCH CUỘN ĐỘC LẬP */}
+      <div
+        style={{
+          flex: "1 1 0",
+          minHeight: 0,
+          overflowY: "auto",
+          overflowX: "auto",
+          padding: "14px 20px",
+          pointerEvents: "auto",
+        }}
+      >
+        <p style={{ fontSize: "12px", color: "#666", marginBottom: "12px" }}>
+          Tài khoản chưa bật thông báo điện thoại sẽ không thể chọn.
+        </p>
+
+        <table style={{
+          width: "100%",
+          minWidth: "750px",
+          borderCollapse: "collapse",
+          fontSize: "14px",
+          color: "#222",
+        }}>
+          <thead style={{
+  background: "#f3f4f6",
+}}>
+            <tr>
+              {["Chọn", "STT", "Họ tên", "Lớp", "MSSV", "Trạng thái đăng ký mô hình"].map((item) => (
+                <th key={item} style={{
+                  border: "1px solid #ccc",
+                  padding: "12px",
+                }}>
+                  {item}
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody>
+            {filteredRecipientStudents.map((student, index) => (
+              <tr key={student.id}>
+                <td style={{ border: "1px solid #ccc", padding: "12px", textAlign: "center" }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedRecipientIds.includes(student.id)}
+                    disabled={!student.co_token}
+                    onChange={() => toggleRecipient(student.id)}
+                    style={{ width: "17px", height: "17px", cursor: student.co_token ? "pointer" : "not-allowed" }}
+                  />
+                </td>
+                <td style={{ border: "1px solid #ccc", padding: "12px", textAlign: "center" }}>
+                  {index + 1}
+                </td>
+                <td style={{ border: "1px solid #ccc", padding: "12px" }}>
+                  <div style={{ fontWeight: 600 }}>{student.ho_ten}</div>
+                  {!student.co_token && (
+                    <div style={{ color: "red", fontSize: "12px" }}>
+                      Chưa bật thông báo điện thoại
+                    </div>
+                  )}
+                </td>
+                <td style={{ border: "1px solid #ccc", padding: "12px", textAlign: "center" }}>
+                  {student.lop}
+                </td>
+                <td style={{ border: "1px solid #ccc", padding: "12px", textAlign: "center" }}>
+                  {student.mssv}
+                </td>
+                <td style={{ border: "1px solid #ccc", padding: "12px", textAlign: "center" }}>
+                  {student.da_dang_ky ? "Đã đăng ký" : "Chưa đăng ký"}
+                </td>
+              </tr>
+            ))}
+
+            {filteredRecipientStudents.length === 0 && (
+              <tr>
+                <td colSpan={6} style={{ padding: "30px", textAlign: "center" }}>
+                  Không có sinh viên.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* NÚT CUỐI */}
+      <div style={{
+        flexShrink: 0,
+        padding: "14px 20px",
+        borderTop: "1px solid #ddd",
+        display: "flex",
+        justifyContent: "flex-end",
+        gap: "10px",
+      }}>
+        <button
+          type="button"
+          onClick={() => setShowRecipientModal(false)}
+          style={{
+            border: "1px solid #ccc",
+            borderRadius: "8px",
+            padding: "9px 18px",
+            cursor: "pointer",
+          }}
+        >
+          Hủy
+        </button>
+
+        <button
+          type="button"
+          onClick={sendSelectedNotifications}
+          disabled={sendingNotification || selectedRecipientIds.length === 0}
+          style={{
+            background: "#2563eb",
+            color: "white",
+            borderRadius: "8px",
+            padding: "9px 18px",
+            cursor: "pointer",
+            opacity: sendingNotification || selectedRecipientIds.length === 0 ? 0.5 : 1,
+          }}
+        >
+          {sendingNotification ? "Đang gửi..." : "Gửi thông báo đã chọn"}
+        </button>
+      </div>
+    </div>
+  </div>,
+  document.body
+)}
+
+
 {documentModal && (
   <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50">
     <div className="flex h-[85vh] w-[90vw] max-w-5xl flex-col rounded-2xl bg-white shadow-xl">
@@ -768,4 +1295,20 @@ activities.filter((a) => a.status === "ended").length
     <Footer/>
     </div>
   );
+}
+function formatEventDateTime(value: string | null) {
+  if (!value) return "Chưa xác định";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "Chưa xác định";
+
+  return date.toLocaleString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).replace(",", " ·");
 }

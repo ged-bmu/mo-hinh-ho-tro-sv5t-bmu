@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import { getMessaging } from "firebase-admin/messaging";
 import { app } from "@/lib/firebase-admin";
@@ -10,103 +11,143 @@ export async function POST(req: Request) {
 
     if (authError) return authError;
 
-    const { activityId, title, body, url } = await req.json();
+    const { activityId, title, body, url, userIds } = await req.json();
 
-    if (!activityId || !title || !body) {
+    if (
+      !activityId ||
+      !title ||
+      !body ||
+      !Array.isArray(userIds) ||
+      userIds.length === 0
+    ) {
       return NextResponse.json(
-        { error: "Thiếu dữ liệu thông báo" },
+        { error: "Thiếu thông tin hoặc chưa chọn người nhận." },
         { status: 400 }
       );
     }
 
-    // 1. Lấy tất cả sinh viên
-    const { data: profiles, error: profilesError } = await supabaseAdmin
-  .from("profiles")
-  .select("id")
-  .eq("role", "student");
+    // Lọc ID trùng và ID không hợp lệ
+    const selectedIds = [
+      ...new Set(
+        userIds.filter(
+          (id: unknown): id is string =>
+            typeof id === "string" && id.trim() !== ""
+        )
+      ),
+    ];
 
-    if (profilesError) {
+    if (selectedIds.length === 0) {
       return NextResponse.json(
-        { error: profilesError.message },
-        { status: 500 }
+        { error: "Danh sách người nhận không hợp lệ." },
+        { status: 400 }
       );
     }
 
-    const userIds = profiles?.map((p) => p.id) || [];
+    // Chỉ lấy tài khoản sinh viên hợp lệ
+    const { data: profiles, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("role", "student")
+      .in("id", selectedIds);
 
-    if (userIds.length === 0) {
-      return NextResponse.json({
-        success: true,
-        students: 0,
-        sent: 0,
-      });
-    }
+    if (profileError) throw profileError;
 
-    // 2. Lấy FCM token của các sinh viên
-   const { data: tokens, error: tokenError } = await supabaseAdmin
-  .from("notification_tokens")
-  .select("user_id, token")
-  .in("user_id", userIds);
-  
-    if (tokenError) {
+    const validUserIds = (profiles || []).map((item) => item.id);
+
+    if (validUserIds.length === 0) {
       return NextResponse.json(
-        { error: tokenError.message },
-        { status: 500 }
+        { error: "Không tìm thấy tài khoản sinh viên hợp lệ." },
+        { status: 400 }
       );
     }
 
-    const fcmTokens = [...new Set(
-      (tokens || [])
-        .map((item) => item.token)
-        .filter(Boolean)
-    )];
+    // Chỉ lấy tài khoản có token thông báo điện thoại
+    const { data: tokens, error: tokenError } = await supabaseAdmin
+      .from("notification_tokens")
+      .select("user_id, token")
+      .in("user_id", validUserIds);
 
-    if (fcmTokens.length === 0) {
+    if (tokenError) throw tokenError;
+
+    const validTokenRows = (tokens || []).filter(
+      (item) => item.token && item.token.trim() !== ""
+    );
+
+    const eligibleUserIds = [
+      ...new Set(validTokenRows.map((item) => item.user_id)),
+    ];
+
+    const fcmTokens = [
+      ...new Set(validTokenRows.map((item) => item.token)),
+    ];
+
+    // Không có token thì không tạo thông báo và không gửi FCM
+    if (eligibleUserIds.length === 0 || fcmTokens.length === 0) {
       return NextResponse.json({
         success: true,
-        students: userIds.length,
+        selected: selectedIds.length,
+        eligibleStudents: 0,
         tokens: 0,
         sent: 0,
+        failed: 0,
+        message: "Không có tài khoản nào bật thông báo điện thoại.",
       });
     }
 
-    // 3. Gửi FCM theo batch, mỗi batch tối đa 500 token
+    // Tạo thông báo trong hệ thống cho đúng tài khoản có token
+    const notificationRows = eligibleUserIds.map((userId) => ({
+      user_id: userId,
+      type: "activity",
+      title,
+      content: body,
+      target_url: url || "/hoat-dong",
+      is_read: false,
+    }));
+
+    const { error: notificationError } = await supabaseAdmin
+      .from("notifications")
+      .insert(notificationRows);
+
+    if (notificationError) throw notificationError;
+
+    // Gửi thông báo điện thoại
     const messaging = getMessaging(app);
-    const batchSize = 500;
+
+    let sent = 0;
+    let failed = 0;
     const invalidTokens: string[] = [];
-    let successCount = 0;
-    let failureCount = 0;
 
-    for (let offset = 0; offset < fcmTokens.length; offset += batchSize) {
-      const tokenBatch = fcmTokens.slice(offset, offset + batchSize);
-      const response = await messaging.sendEachForMulticast({
-        tokens: tokenBatch,
-        data: {
-          type: "activity",
-          title: String(title),
-          body: String(body),
-          url: String(url || `/hoat-dong`),
-          activityId: String(activityId),
-          notificationId: "",
-        },
-      });
+    for (let i = 0; i < fcmTokens.length; i += 500) {
+      const batch = fcmTokens.slice(i, i + 500);
 
-      successCount += response.successCount;
-      failureCount += response.failureCount;
+      const result = await messaging.sendEachForMulticast({
+  tokens: batch,
+  data: {
+    title: String(title),
+    body: String(body),
+    type: "activity",
+    url: url || "/hoat-dong",
+    activityId: String(activityId),
+  },
+});
 
-      response.responses.forEach((result, index) => {
-        const errorCode = result.error?.code;
+      sent += result.successCount;
+      failed += result.failureCount;
 
+      result.responses.forEach((item, index) => {
         if (
-          !result.success &&
-          (errorCode === "messaging/registration-token-not-registered" ||
-            errorCode === "messaging/invalid-registration-token")
+          !item.success &&
+          (
+            item.error?.code === "messaging/invalid-registration-token" ||
+            item.error?.code === "messaging/registration-token-not-registered"
+          )
         ) {
-          invalidTokens.push(tokenBatch[index]);
+          invalidTokens.push(batch[index]);
         }
       });
     }
 
+    // Xóa token không còn hợp lệ
     if (invalidTokens.length > 0) {
       const { error: deleteError } = await supabaseAdmin
         .from("notification_tokens")
@@ -114,24 +155,28 @@ export async function POST(req: Request) {
         .in("token", invalidTokens);
 
       if (deleteError) {
-        console.error("❌ Không thể xóa FCM token hết hạn:", deleteError);
+        console.error("Lỗi xóa token không hợp lệ:", deleteError);
       }
     }
 
     return NextResponse.json({
       success: true,
-      students: userIds.length,
+      selected: selectedIds.length,
+      eligibleStudents: eligibleUserIds.length,
       tokens: fcmTokens.length,
-      sent: successCount,
-      failed: failureCount,
-      removedTokens: invalidTokens.length,
+      sent,
+      failed,
+      message: "Đã xử lý gửi thông báo.",
     });
-  } catch (error: any) {
-    console.error("❌ ACTIVITY FCM ERROR:", error);
+  } catch (error) {
+    console.error("ACTIVITY NOTIFICATION ERROR:", error);
 
     return NextResponse.json(
       {
-        error: error?.message || "Lỗi gửi notification",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Không thể gửi thông báo.",
       },
       { status: 500 }
     );
