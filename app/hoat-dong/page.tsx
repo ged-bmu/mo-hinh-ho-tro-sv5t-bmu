@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -15,6 +16,8 @@ type Activity = {
   criterion: string | null;
   organizer: string | null;
   document: string | null;
+  document_names?: string[] | null;
+  documents?: string[] | null;
   detail_content: string | null;
   activity_link: string | null;
   event_time: string | null;
@@ -51,6 +54,20 @@ function formatDate(date?: string | null) {
     year: "numeric",
   });
 }
+function getDocumentStoragePath(url: string): string | null {
+  const marker = "/documents/";
+  const index = url.indexOf(marker);
+
+  if (index === -1) return null;
+
+  try {
+    return decodeURIComponent(
+      url.slice(index + marker.length).split("?")[0]
+    );
+  } catch {
+    return null;
+  }
+}
 function getActivityStatus(activity: Activity, now: number) {
   const start = activity.event_time
     ? new Date(activity.event_time).getTime()
@@ -84,12 +101,20 @@ export default function ActivitiesPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [showCriteria,setShowCriteria]=useState(false);
   const [documentModal, setDocumentModal] = useState(false);
-  const [currentDocument, setCurrentDocument] = useState<string | null>(null);
+  const [currentDocuments, setCurrentDocuments] = useState<string[]>([]);
+  const [currentDocumentNames, setCurrentDocumentNames] = useState<string[]>([]);
+  const [currentDocumentIndex, setCurrentDocumentIndex] = useState(0);
+  const [documentActivityId, setDocumentActivityId] = useState<string | null>(null);
   const [tab, setTab] = useState("proof");
   const [filterCriterion, setFilterCriterion] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [showProfile, setShowProfile] = useState(false);
   const [currentTime, setCurrentTime] = useState(Date.now());
+  const [mounted, setMounted] = useState(false);
+
+useEffect(() => {
+  setMounted(true);
+}, []);
 
 useEffect(() => {
   const timer = setInterval(() => {
@@ -445,7 +470,7 @@ const status =
         rel="noopener noreferrer"
         className="inline-flex max-w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98]"
       >
-        <span>🔗 Truy cập hoạt động</span>
+        <span>Truy cập hoạt động</span>
         <span aria-hidden="true">↗</span>
       </a>
     </div>
@@ -461,19 +486,34 @@ const status =
   <b>📑 Văn bản đính kèm</b>
   <br />
 
-  {activity.document ? (
-    <button
-      onClick={() => {
-        setCurrentDocument(activity.document);
-        setDocumentModal(true);
-      }}
-      className="mt-2 rounded-lg border border-sky-300 bg-white px-3 py-2 text-sm font-medium text-sky-700 transition hover:bg-sky-50"
-    >
-      <span className="inline-flex items-center gap-1 whitespace-nowrap">
-        <Image src="/iconxem2.png" width={20} height={20} alt="Xem" />
-        Xem
-      </span>
-    </button>
+  {(activity.documents?.length || activity.document) ? (
+<button
+  onClick={() => {
+    const docs = activity.documents?.length
+      ? activity.documents
+      : activity.document
+      ? [activity.document]
+      : [];
+
+    const names = docs.map((url, index) =>
+      activity.document_names?.[index] ||
+      getDocumentStoragePath(url)?.split("/").pop() ||
+      `Văn bản ${index + 1}`
+    );
+
+    setCurrentDocuments(docs);
+    setCurrentDocumentNames(names);
+    setCurrentDocumentIndex(0);
+    setDocumentActivityId(activity.id);
+    setDocumentModal(true);
+  }}
+  className="mt-2 rounded-lg border border-sky-300 bg-white px-3 py-2 text-sm font-medium text-sky-700 transition hover:bg-sky-50"
+>
+  <span className="inline-flex items-center gap-1 whitespace-nowrap">
+    <Image src="/iconxem2.png" width={20} height={20} alt="Xem" />
+    Xem ({activity.documents?.length || (activity.document ? 1 : 0)})
+  </span>
+</button>
   ) : (
     <span className="text-gray-500">
       Chưa có
@@ -496,38 +536,196 @@ const status =
         onClose={() => setShowCriteria(false)}
       />
     )}
-    {documentModal && (
-  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50">
-    <div className="flex h-[85vh] w-[90vw] max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
 
-      <div className="flex items-center justify-between border-b px-6 py-4">
-        <h2 className="text-lg font-bold">
-          Văn bản đính kèm
-        </h2>
+
+{documentModal && mounted && createPortal(
+  <div
+    onClick={() => setDocumentModal(false)}
+    style={{
+      position: "fixed",
+      inset: 0,
+      zIndex: 2147483647,
+      width: "100vw",
+      height: "100dvh",
+      padding: "12px",
+      background: "rgba(0,0,0,0.75)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        position: "relative",
+        width: "100%",
+        maxWidth: "1400px",
+        height: "calc(100dvh - 24px)",
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        borderRadius: "12px",
+        background: "#fff",
+        boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
+      }}
+    >
+      {/* THANH TIÊU ĐỀ */}
+      <div
+        style={{
+          flexShrink: 0,
+          minHeight: "64px",
+          padding: "12px 16px",
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          borderBottom: "1px solid #e5e7eb",
+          background: "#fff",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p
+            style={{
+              fontSize: "14px",
+              fontWeight: 700,
+              color: "#111827",
+              overflowWrap: "anywhere",
+            }}
+          >
+            {currentDocumentNames[currentDocumentIndex] ||
+              `Văn bản ${currentDocumentIndex + 1}`}
+          </p>
+
+          <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "3px" }}>
+            Văn bản {currentDocumentIndex + 1} / {currentDocuments.length}
+          </p>
+        </div>
+
+        <a
+          href={`/api/activity-documents/${documentActivityId}/${currentDocumentIndex}`}
+          download
+          style={{
+            flexShrink: 0,
+            padding: "9px 12px",
+            borderRadius: "8px",
+            background: "#2563eb",
+            color: "#fff",
+            fontSize: "12px",
+            fontWeight: 700,
+            textDecoration: "none",
+          }}
+        >
+          Tải xuống ↓
+        </a>
 
         <button
+          type="button"
           onClick={() => setDocumentModal(false)}
-          className="text-2xl text-gray-500 hover:text-black"
+          style={{
+            flexShrink: 0,
+            width: "36px",
+            height: "36px",
+            borderRadius: "8px",
+            color: "#6b7280",
+            fontSize: "25px",
+            cursor: "pointer",
+          }}
         >
-          ✕
+          ×
         </button>
       </div>
 
-      <div className="flex-1">
-        {currentDocument ? (
-          <iframe
-            src={`${currentDocument}#toolbar=0&navpanes=0&scrollbar=0`}
-            className="h-full w-full border-0"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-gray-500">
-            Chưa có văn bản đính kèm.
-          </div>
+      {/* KHUNG HIỂN THỊ */}
+      <div
+        style={{
+          position: "relative",
+          flex: 1,
+          minHeight: 0,
+          overflow: "hidden",
+          background: "#e5e7eb",
+        }}
+      >
+        {currentDocuments.length > 0 && (
+          <>
+            <iframe
+              key={currentDocuments[currentDocumentIndex]}
+              src={`${currentDocuments[currentDocumentIndex]}#toolbar=0&navpanes=0`}
+              title={
+                currentDocumentNames[currentDocumentIndex] || "Văn bản"
+              }
+              style={{
+                display: "block",
+                width: "100%",
+                height: "100%",
+                border: 0,
+                background: "#fff",
+              }}
+            />
+
+            {/* NÚT VĂN BẢN TRƯỚC */}
+            {currentDocumentIndex > 0 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentDocumentIndex((prev) => prev - 1)
+                }
+                aria-label="Văn bản trước"
+                style={{
+                  position: "absolute",
+                  left: "14px",
+                  top: "14px",
+                  zIndex: 5,
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.96)",
+                  color: "#1f2937",
+                  fontSize: "30px",
+                  lineHeight: 1,
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+                  cursor: "pointer",
+                }}
+              >
+                ‹
+              </button>
+            )}
+
+            {/* NÚT VĂN BẢN TIẾP THEO */}
+            {currentDocumentIndex < currentDocuments.length - 1 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentDocumentIndex((prev) => prev + 1)
+                }
+                aria-label="Văn bản tiếp theo"
+                style={{
+                  position: "absolute",
+                  right: "14px",
+                  top: "14px",
+                  zIndex: 5,
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.96)",
+                  color: "#1f2937",
+                  fontSize: "30px",
+                  lineHeight: 1,
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+                  cursor: "pointer",
+                }}
+              >
+                ›
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>
-  </div>
+  </div>,
+  document.body
 )}
+
+
     <Footer />
   </div>
 );

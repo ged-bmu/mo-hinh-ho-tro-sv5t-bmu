@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 import { authFetch } from "@/lib/auth-fetch";
+import { getStudentStudyYear } from "@/lib/studentInfo";
 import { sendNotification } from "@/lib/notification";
 import Spinner from "../../../components/Spinner";
 import Image from "next/image";
@@ -1184,26 +1185,30 @@ const { error } = await supabase
 
                     <div>
                       <b>
-                        Nam/Nữ:
-                      </b>
+                        Nam/Nữ: 
+                      </b>{" "}
+                      {profile?.gioi_tinh || ""}
                     </div>
 
                     <div>
                       <b>
                         Năm sinh:
-                      </b>
+                      </b>{" "}
+                      {profile?.nam_sinh || ""}
                     </div>
 
                     <div>
                       <b>
                         Dân tộc:
-                      </b>
+                      </b>{" "}
+                      {profile?.dan_toc || ""}
                     </div>
 
                     <div>
                       <b>
                         Sinh viên năm thứ:
-                      </b>
+                      </b>{" "}
+                      {getStudentStudyYear(profile?.lop) ?? ""}
                     </div>
 
                     <div>
@@ -1216,7 +1221,8 @@ const { error } = await supabase
                     <div>
                       <b>
                         Chức vụ Đoàn - Hội:
-                      </b>
+                      </b>{" "}
+                      {profile?.chuc_vu_doan_hoi || ""}
                     </div>
 
                     <div>

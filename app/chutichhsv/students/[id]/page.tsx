@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 import { authFetch } from "@/lib/auth-fetch";
 import { sendNotification } from "@/lib/notification";
+import { getStudentStudyYear } from "@/lib/studentInfo";
 import { FaFilePdf } from "react-icons/fa";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -909,12 +910,12 @@ return (
                 >
                   <div><b>Họ và tên:</b> {profile?.ho_ten}</div>
                   <div><b>MSSV:</b> {profile?.mssv}</div>
-                  <div><b>Nam/Nữ:</b></div>
-                  <div><b>Năm sinh:</b></div>
-                  <div><b>Dân tộc:</b></div>
-                  <div><b>Sinh viên năm thứ:</b></div>
+                  <div><b>Nam/Nữ:</b> {profile?.gioi_tinh || ""}</div>
+                  <div><b>Năm sinh:</b> {profile?.nam_sinh || ""}</div>
+                  <div><b>Dân tộc:</b> {profile?.dan_toc || ""}</div>
+                  <div><b>Sinh viên năm thứ:</b> {getStudentStudyYear(profile?.lop) ?? ""}</div>
                   <div><b>Lớp:</b> {profile?.lop}, Trường Đại học Y Dược Buôn Ma Thuột</div>
-                  <div><b>Chức vụ Đoàn - Hội:</b></div>
+                  <div><b>Chức vụ Đoàn - Hội:</b> {profile?.chuc_vu_doan_hoi || ""}</div>
                   <div><b>Đảng viên/Đoàn viên:</b></div>
                   <div><b>Số điện thoại:</b></div>
                   <div><b>Email:</b> {profile?.email}</div>

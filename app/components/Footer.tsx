@@ -27,7 +27,7 @@ export default function Footer() {
               lineHeight: 1.3,
             }}
           >
-            MÔ HÌNH HỖ TRỢ SINH VIÊN PHẤN ĐẤU ĐẠT DANH HIỆU SINH VIÊN 5 TỐT CÁC CẤP
+            HỆ THỐNG HỖ TRỢ SINH VIÊN 5 TỐT TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT
           </h3>
 
           <p
@@ -37,8 +37,7 @@ export default function Footer() {
               lineHeight: 1.45,
             }}
           >
-            Hệ thống theo dõi hồ sơ Sinh viên 5 tốt thuộc Câu lạc bộ Sinh viên 5
-            tốt Trường Đại học Y Dược Buôn Ma Thuột.
+            Hệ thống thuộc Mô hình hỗ trợ Sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt các cấp.
           </p>
 
           <div
@@ -72,6 +71,21 @@ export default function Footer() {
           </h3>
 
           <a
+            href="https://www.facebook.com/profile.php?id=100085955413497"
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              textDecoration: "none",
+              color: "#111827",
+            }}
+          >
+            <FaFacebook color="#1877F2" size={20} />
+            Tuổi trẻ BMU
+          </a>
+          <a
             href="https://www.facebook.com/profile.php?id=100093817715642"
             target="_blank"
             rel="noreferrer"
@@ -84,7 +98,7 @@ export default function Footer() {
             }}
           >
             <FaFacebook color="#1877F2" size={20} />
-            Facebook
+            CLB Sinh viên 5 tốt BMU
           </a>
         </div>
       </div>

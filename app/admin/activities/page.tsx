@@ -16,6 +16,7 @@ type Activity = {
   organizer: string | null;
   document: string | null;
   documents: string[] | null;
+  document_names: string[] | null;
   detail_content: string | null;
   activity_link: string | null;
   event_time: string | null;
@@ -92,7 +93,11 @@ export default function ActivitiesAdminPage() {
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const [documentModal, setDocumentModal] = useState(false);
   const [currentDocuments, setCurrentDocuments] = useState<string[]>([]);
+  const [currentDocumentNames, setCurrentDocumentNames] = useState<string[]>([]);
+  const [currentDocumentIndex, setCurrentDocumentIndex] = useState(0);
+  const [documentActivityId, setDocumentActivityId] = useState<string | null>(null);
   const [editingDocuments, setEditingDocuments] = useState<string[]>([]);
+  const [editingDocumentNames, setEditingDocumentNames] = useState<string[]>([]);
   const [originalDocuments, setOriginalDocuments] = useState<string[]>([]);
   const [showCriteria,setShowCriteria]=useState(false);
   const [tab, setTab] = useState("proof");
@@ -147,14 +152,27 @@ export default function ActivitiesAdminPage() {
 function handleDocumentUpload(
   e: React.ChangeEvent<HTMLInputElement>
 ) {
-  if (e.target.files?.length) {
-    setDocumentFiles((prev) => [
-      ...prev,
-      ...Array.from(e.target.files || []),
-    ]);
+  const input = e.currentTarget;
+  const files = Array.from(input.files ?? []);
+
+  if (files.length === 0) return;
+
+  const validFiles = files.filter((file) => {
+    const valid =
+      /\.(pdf|doc|docx)$/i.test(file.name);
+
+    if (!valid) {
+      alert(`File không đúng định dạng: ${file.name}`);
+    }
+
+    return valid;
+  });
+
+  if (validFiles.length > 0) {
+    setDocumentFiles((prev) => [...prev, ...validFiles]);
   }
 
-  e.target.value = "";
+  input.value = "";
 }
   async function loadActivities() {
     const { data, error } = await supabase
@@ -221,6 +239,7 @@ async function handleSave() {
   setLoading(true);
 
   const documentUrls = editingId ? [...editingDocuments] : [];
+  const documentNames = editingId ? [...editingDocumentNames] : [];
   const uploadedPaths: string[] = [];
 
   try {
@@ -262,6 +281,7 @@ console.log("TẢI FILE THÀNH CÔNG:", uploadData);
         .getPublicUrl(fileName);
 
       documentUrls.push(data.publicUrl);
+      documentNames.push(file.name);
     }
 
     // DỮ LIỆU HOẠT ĐỘNG
@@ -271,6 +291,7 @@ console.log("TẢI FILE THÀNH CÔNG:", uploadData);
       organizer: organizer || null,
       document: documentUrls[0] || null,
       documents: documentUrls,
+      document_names: documentNames,
       detail_content: detailContent || null,
       activity_link: normalizedLink || null,
       event_time: eventTime,
@@ -332,6 +353,7 @@ console.log("TẢI FILE THÀNH CÔNG:", uploadData);
     setEndTime("");
     setDeadline("");
     setDocumentFiles([]);
+    setEditingDocuments([]);
     setEditingDocuments([]);
     setOriginalDocuments([]);
 
@@ -505,8 +527,15 @@ function handleEdit(activity: Activity) {
     ? [activity.document]
     : [];
 
+  const names = docs.map((url, index) =>
+    activity.document_names?.[index] ||
+    getDocumentStoragePath(url)?.split("/").pop() ||
+    `Văn bản ${index + 1}`
+  );
+
   setEditingId(activity.id);
   setEditingDocuments(docs);
+  setEditingDocumentNames(names);
   setOriginalDocuments(docs);
   setDocumentFiles([]);
 
@@ -827,7 +856,6 @@ activities.filter(
   onChange={handleDocumentUpload}
   className="hidden"
 />
-
 {/* DANH SÁCH VĂN BẢN ĐÃ CÓ */}
 {editingDocuments.length > 0 && (
   <div className="mt-4 space-y-2">
@@ -852,12 +880,16 @@ activities.filter(
         <button
           type="button"
           onClick={() => {
-            if (confirm("Gỡ văn bản này khỏi hoạt động?")) {
-              setEditingDocuments((prev) =>
-                prev.filter((item) => item !== url)
-              );
-            }
-          }}
+  if (confirm("Gỡ văn bản này khỏi hoạt động?")) {
+    setEditingDocuments((prev) =>
+      prev.filter((_, i) => i !== index)
+    );
+
+    setEditingDocumentNames((prev) =>
+      prev.filter((_, i) => i !== index)
+    );
+  }
+}}
           className="shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-100"
         >
           Xóa
@@ -951,9 +983,11 @@ activities.filter(
                 </div>
 <div className="mt-4 flex gap-3">
   <button
-    onClick={handleSave}
-    className="flex-1 rounded-xl bg-blue-600 py-3.5 text-base font-semibold text-white transition hover:bg-blue-700 active:scale-[0.99]"
-  >
+  type="button"
+  onClick={handleSave}
+  disabled={loading}
+  className="flex-1 rounded-xl bg-blue-600 py-3.5 text-base font-semibold text-white transition hover:bg-blue-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+>
     {loading
       ? "Đang lưu..."
       : editingId
@@ -977,6 +1011,7 @@ activities.filter(
   setDeadline("");
   setDocumentFiles([]);
   setEditingDocuments([]);
+  setEditingDocumentNames([]);
   setOriginalDocuments([]);
 
   const input = document.getElementById(
@@ -1110,16 +1145,25 @@ activities.filter(
                                 Văn bản
                               </p>
 <button
-  onClick={() => {
-    const docs = activity.documents?.length
-      ? activity.documents
-      : activity.document
-      ? [activity.document]
-      : [];
+onClick={() => {
+  const docs = activity.documents?.length
+    ? activity.documents
+    : activity.document
+    ? [activity.document]
+    : [];
 
-    setCurrentDocuments(docs);
-    setDocumentModal(true);
-  }}
+  const names = docs.map((url, index) =>
+    activity.document_names?.[index] ||
+    getDocumentStoragePath(url)?.split("/").pop() ||
+    `Văn bản ${index + 1}`
+  );
+
+  setCurrentDocuments(docs);
+  setCurrentDocumentNames(names);
+  setCurrentDocumentIndex(0);
+  setDocumentActivityId(activity.id);
+  setDocumentModal(true);
+}}
   className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
 >
   <span className="inline-flex items-center gap-1 whitespace-nowrap">
@@ -1457,63 +1501,178 @@ activities.filter(
 )}
 
 
+
+
 {documentModal && mounted && createPortal(
   <div
-    className="fixed inset-0 flex items-center justify-center bg-black/60 p-3"
-    style={{ zIndex: 2147483647 }}
+    style={{
+      position: "fixed",
+      inset: 0,
+      zIndex: 2147483647,
+      width: "100vw",
+      height: "100dvh",
+      background: "rgba(0,0,0,0.75)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "12px",
+    }}
   >
-    <div className="flex h-[85vh] w-[90vw] max-w-5xl flex-col rounded-2xl bg-white shadow-xl">
+    <div
+      style={{
+        width: "100%",
+        maxWidth: "1400px",
+        height: "100%",
+        background: "#fff",
+        borderRadius: "12px",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {/* THANH TIÊU ĐỀ */}
+      <div
+        style={{
+          flexShrink: 0,
+          padding: "12px 16px",
+          borderBottom: "1px solid #ddd",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+        }}
+      >
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <p
+            style={{
+              fontSize: "15px",
+              fontWeight: 700,
+              color: "#111",
+              overflowWrap: "anywhere",
+            }}
+          >
+            {currentDocumentNames[currentDocumentIndex] ||
+              `Văn bản ${currentDocumentIndex + 1}`}
+          </p>
 
-      <div className="flex items-center justify-between border-b px-6 py-4">
-        <h2 className="text-lg font-bold">
-          Văn bản đính kèm
-        </h2>
+          <p style={{ fontSize: "12px", color: "#666", marginTop: "3px" }}>
+            Văn bản {currentDocumentIndex + 1} / {currentDocuments.length}
+          </p>
+        </div>
+
+        <a
+          href={`/api/activity-documents/${documentActivityId}/${currentDocumentIndex}`}
+          download
+          style={{
+            flexShrink: 0,
+            color: "#2563eb",
+            fontSize: "13px",
+            fontWeight: 600,
+            textDecoration: "none",
+          }}
+        >
+          Tải xuống ↓
+        </a>
 
         <button
+          type="button"
           onClick={() => setDocumentModal(false)}
-          className="text-2xl text-gray-500 hover:text-black"
+          style={{
+            flexShrink: 0,
+            fontSize: "26px",
+            color: "#555",
+            padding: "0 8px",
+          }}
         >
-          ✕
+          ×
         </button>
       </div>
 
-<div className="flex-1 min-h-0 overflow-y-auto p-4">
-  {currentDocuments.length > 0 ? (
-    <div className="space-y-6">
-      {currentDocuments.map((url, index) => (
-        <div key={`${url}-${index}`} className="w-full">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-gray-700">
-              Văn bản {index + 1}
-            </p>
+      {/* KHU VỰC XEM VĂN BẢN */}
+      <div
+        style={{
+          flex: "1 1 0",
+          minHeight: 0,
+          position: "relative",
+          background: "#e5e7eb",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {currentDocuments.length > 0 && (
+          <>
+            <iframe
+              key={currentDocuments[currentDocumentIndex]}
+              src={`${currentDocuments[currentDocumentIndex]}#toolbar=0&navpanes=0`}
+              title={currentDocumentNames[currentDocumentIndex] || "Văn bản"}
+              style={{
+                width: "100%",
+                height: "100%",
+                border: "none",
+                background: "#fff",
+              }}
+            />
 
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-blue-600 hover:underline"
-            >
-              Mở trong tab mới ↗
-            </a>
-          </div>
+            {currentDocumentIndex > 0 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentDocumentIndex((prev) => prev - 1)
+                }
+                style={{
+                  position: "absolute",
+                  left: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: "44px",
+                  height: "44px",
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.95)",
+                  color: "#1f2937",
+                  fontSize: "28px",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+                  cursor: "pointer",
+                }}
+                aria-label="Văn bản trước"
+              >
+                ‹
+              </button>
+            )}
 
-          <iframe
-            src={`${url}#toolbar=0&navpanes=0&scrollbar=0`}
-            className="h-[600px] w-full rounded-lg border border-gray-200"
-          />
-        </div>
-      ))}
-    </div>
-  ) : (
-    <div className="flex h-full items-center justify-center text-gray-500">
-      Chưa có văn bản đính kèm.
-    </div>
-  )}
-</div>
+            {currentDocumentIndex < currentDocuments.length - 1 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentDocumentIndex((prev) => prev + 1)
+                }
+                style={{
+                  position: "absolute",
+                  right: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: "44px",
+                  height: "44px",
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.95)",
+                  color: "#1f2937",
+                  fontSize: "28px",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+                  cursor: "pointer",
+                }}
+                aria-label="Văn bản tiếp theo"
+              >
+                ›
+              </button>
+            )}
+          </>
+        )}
+      </div>
     </div>
   </div>,
   document.body
 )}
+
   {showCriteria && (
       <CriteriaModal
         onClose={() => setShowCriteria(false)}
