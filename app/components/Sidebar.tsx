@@ -12,6 +12,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [notificationEnabled, setNotificationEnabled] = useState(false);
   const [notificationLoading, setNotificationLoading] = useState(false);
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -190,21 +191,29 @@ async function checkNotificationStatus() {
       .limit(1);
 
     if (error) {
-      console.error(
-        "Lỗi kiểm tra notification:",
-        error
-      );
+      console.error("Lỗi kiểm tra notification:", error);
       return;
     }
 
-    setNotificationEnabled(
-      Array.isArray(data) && data.length > 0
-    );
+    const enabled = Array.isArray(data) && data.length > 0;
+
+    setNotificationEnabled(enabled);
+
+    // Đã bật thông báo thì không hỏi nữa
+    if (enabled) {
+      setShowNotificationPrompt(false);
+      return;
+    }
+
+    // Kiểm tra người dùng đã lựa chọn trước đó chưa
+    const promptKey = `notification_prompt_${user.id}`;
+    const alreadyAsked = localStorage.getItem(promptKey);
+
+    if (!alreadyAsked) {
+      setShowNotificationPrompt(true);
+    }
   } catch (error) {
-    console.error(
-      "Lỗi kiểm tra trạng thái thông báo:",
-      error
-    );
+    console.error("Lỗi kiểm tra trạng thái thông báo:", error);
   }
 }
 async function handleToggleNotification() {
@@ -295,6 +304,131 @@ async function handleToggleNotification() {
     setNotificationLoading(false);
   }
 }
+// Người dùng đồng ý bật thông báo
+async function acceptNotificationPrompt() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    localStorage.setItem(
+      `notification_prompt_${user.id}`,
+      "accepted"
+    );
+  }
+
+  setShowNotificationPrompt(false);
+
+  await handleToggleNotification();
+}
+
+// Người dùng chọn để sau
+async function dismissNotificationPrompt() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    localStorage.setItem(
+      `notification_prompt_${user.id}`,
+      "dismissed"
+    );
+  }
+
+  setShowNotificationPrompt(false);
+}
+
+const renderNotificationPrompt = () => {
+  if (!showNotificationPrompt) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.55)",
+        zIndex: 100000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 380,
+          background: "#fff",
+          borderRadius: 18,
+          padding: 24,
+          textAlign: "center",
+          boxShadow: "0 15px 40px rgba(0,0,0,0.2)",
+        }}
+      >
+        <div style={{ fontSize: 42, marginBottom: 12 }}>
+          🔔
+        </div>
+
+        <h3
+          style={{
+            fontSize: 20,
+            fontWeight: 700,
+            color: "#1e3a8a",
+            marginBottom: 12,
+          }}
+        >
+          Bật thông báo SV5T BMU?
+        </h3>
+
+        <p
+          style={{
+            fontSize: 14,
+            color: "#4b5563",
+            lineHeight: 1.6,
+            marginBottom: 22,
+          }}
+        >
+          Cho phép Hệ thống SV5T BMU thông báo hoạt động mới
+          và những cập nhật quan trọng trên thiết bị
+        </p>
+
+        <button
+          onClick={acceptNotificationPrompt}
+          style={{
+            width: "100%",
+            padding: 13,
+            border: "none",
+            borderRadius: 10,
+            background: "#2563eb",
+            color: "#fff",
+            fontSize: 15,
+            fontWeight: 600,
+            cursor: "pointer",
+            marginBottom: 10,
+          }}
+        >
+          🔔 Bật thông báo
+        </button>
+
+        <button
+          onClick={dismissNotificationPrompt}
+          style={{
+            width: "100%",
+            padding: 12,
+            border: "1px solid #e5e7eb",
+            borderRadius: 10,
+            background: "#fff",
+            color: "#6b7280",
+            fontSize: 14,
+            cursor: "pointer",
+          }}
+        >
+          Để sau
+        </button>
+      </div>
+    </div>
+  );
+};
   // =======================
   // MOBILE
   // =======================
@@ -302,6 +436,7 @@ async function handleToggleNotification() {
   if (isMobile) {
     return (
       <>
+      {renderNotificationPrompt()}
         {mobileMenu && (
           <div
             className="mobile-menu-overlay"
@@ -455,6 +590,9 @@ async function handleToggleNotification() {
 // =======================
 
 return (
+  <>
+   {renderNotificationPrompt()}
+
   <aside
     style={{
       width: collapsed ? "80px" : "280px",
@@ -780,5 +918,6 @@ onMouseLeave={(e) => {
   />
 </button>
   </aside>
+  </>
 );
 }
