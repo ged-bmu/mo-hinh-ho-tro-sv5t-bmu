@@ -289,7 +289,8 @@ function safeFileName(name: string) {
 
 async function createStudentReportPDF(
   supabase: any,
-  student: any
+  student: any,
+  academicYearId: number
 ): Promise<Buffer> {
   const {
     data: reports,
@@ -297,7 +298,8 @@ async function createStudentReportPDF(
   } = await supabase
     .from("reports")
     .select("*")
-    .eq("user_id", student.id);
+    .eq("user_id", student.id)
+    .eq("academic_year_id", academicYearId);
 
   if (reportsError) {
     throw reportsError;
@@ -662,6 +664,17 @@ export async function GET(
         "search"
       ) || "";
 
+    const academicYearId = Number(
+      searchParams.get("academic_year_id")
+    );
+
+    if (!Number.isInteger(academicYearId) || academicYearId <= 0) {
+      return NextResponse.json(
+        { error: "Thiếu năm học cần xuất hồ sơ." },
+        { status: 400 }
+      );
+    }
+
     // ==================================================
     // FOLDER MAP
     // ==================================================
@@ -693,56 +706,71 @@ export async function GET(
     // GET STUDENTS
     // ==================================================
 
-    let query =
-      supabase
-        .from("profiles")
-        .select(`
-          id,
-          ho_ten,
-          lop,
-          mssv,
-          email,
-          "dao-duc",
-          "hoc-tap",
-          "the-luc",
-          "tinh-nguyen",
-          "hoi-nhap",
-          is_submitted
-        `)
-        .eq(
-          "role",
-          "student"
-        );
+    const { data: yearProfiles, error: yearProfilesError } = await supabase
+      .from("student_year_profiles")
+      .select("user_id, is_submitted")
+      .eq("academic_year_id", academicYearId);
 
-    if (search.trim()) {
-      const safeSearch =
-        search
-          .replace(
-            /[.,()]/g,
-            " "
-          )
-          .trim();
+    if (yearProfilesError) throw yearProfilesError;
 
-      query = query.or(
-        `ho_ten.ilike.%${safeSearch}%,mssv.ilike.%${safeSearch}%,lop.ilike.%${safeSearch}%`
-      );
-    }
+    const yearProfileMap = new Map(
+      (yearProfiles || []).map((item: any) => [item.user_id, item])
+    );
+    const userIds = [...yearProfileMap.keys()];
 
-    const {
-      data: students,
-      error,
-    } = await query;
+    const { data: profiles, error: profilesError } = userIds.length
+      ? await supabase
+          .from("profiles")
+          .select("id, ho_ten, lop, mssv, email")
+          .eq("role", "student")
+          .in("id", userIds)
+      : { data: [], error: null };
 
-    if (error) {
-      throw error;
-    }
+    if (profilesError) throw profilesError;
+
+    const { data: criteriaRows, error: criteriaError } = await supabase
+      .from("student_criteria_results")
+      .select("user_id, dao_duc, hoc_tap, the_luc, tinh_nguyen, hoi_nhap")
+      .eq("academic_year_id", academicYearId)
+      .order("updated_at", { ascending: true });
+
+    if (criteriaError) throw criteriaError;
+
+    const criteriaMap = new Map(
+      (criteriaRows || []).map((item: any) => [item.user_id, item])
+    );
+
+    const students = (profiles || []).map((student: any) => {
+      const criteria = criteriaMap.get(student.id) as any;
+      const yearProfile = yearProfileMap.get(student.id) as any;
+      return {
+        ...student,
+        "dao-duc": criteria?.dao_duc === true,
+        "hoc-tap": criteria?.hoc_tap === true,
+        "the-luc": criteria?.the_luc === true,
+        "tinh-nguyen": criteria?.tinh_nguyen === true,
+        "hoi-nhap": criteria?.hoi_nhap === true,
+        is_submitted: yearProfile?.is_submitted === true,
+      };
+    });
+
+    const normalizedSearch = search.trim().toLocaleLowerCase("vi");
+    const searchedStudents = normalizedSearch
+      ? students.filter((student: any) =>
+          [student.ho_ten, student.mssv, student.lop, student.email]
+            .filter(Boolean)
+            .some((value) =>
+              String(value).toLocaleLowerCase("vi").includes(normalizedSearch)
+            )
+        )
+      : students;
 
     // ==================================================
     // FILTER
     // ==================================================
 
     let filteredStudents =
-      students || [];
+      searchedStudents || [];
 
     if (
       filter ===
@@ -967,7 +995,8 @@ export async function GET(
           const pdfBuffer =
             await createStudentReportPDF(
               supabase,
-              student
+              student,
+              academicYearId
             );
 
           studentFolder.file(
@@ -1018,7 +1047,8 @@ export async function GET(
             .eq(
               "user_id",
               student.id
-            );
+            )
+            .eq("academic_year_id", academicYearId);
 
         if (filesError) {
           console.error(

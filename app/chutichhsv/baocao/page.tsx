@@ -78,27 +78,37 @@ export default function StatisticsPage() {
       // CHỈ LẤY HỒ SƠ ĐÃ NỘP
       // =====================================================
 
-      const {
-        data,
-        error,
-      } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("role", "student")
-        .eq("is_submitted", true)
-        .order("lop", {
-          ascending: true,
-        })
-        .order("mssv", {
-          ascending: true,
-        });
+      const { data: currentYear, error: yearError } = await supabase
+        .from("academic_years")
+        .select("id")
+        .eq("is_current", true)
+        .maybeSingle();
 
-      if (error) {
-        console.error(
-          "Lỗi tải hồ sơ:",
-          error
-        );
+      if (yearError || !currentYear) {
+        console.error("Lỗi tải năm học hiện tại:", yearError);
+        setStudents([]);
+        return;
+      }
 
+      const { data: yearProfiles, error: yearProfilesError } = await supabase
+        .from("student_year_profiles")
+        .select("user_id")
+        .eq("academic_year_id", currentYear.id)
+        .eq("is_submitted", true);
+
+      const userIds = [...new Set((yearProfiles || []).map((item) => item.user_id))];
+      const { data, error } = userIds.length
+        ? await supabase
+            .from("profiles")
+            .select("*")
+            .eq("role", "student")
+            .in("id", userIds)
+            .order("lop", { ascending: true })
+            .order("mssv", { ascending: true })
+        : { data: [], error: null };
+
+      if (yearProfilesError || error) {
+        console.error("Lỗi tải hồ sơ theo năm:", yearProfilesError || error);
         setStudents([]);
       } else {
         setStudents(data || []);

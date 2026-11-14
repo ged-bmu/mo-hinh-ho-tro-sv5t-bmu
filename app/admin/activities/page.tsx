@@ -15,6 +15,7 @@ type Activity = {
   criterion: string | null;
   organizer: string | null;
   document: string | null;
+  documents: string[] | null;
   detail_content: string | null;
   activity_link: string | null;
   event_time: string | null;
@@ -68,15 +69,31 @@ function getActivityStatus(activity: Activity, now: number) {
 
   return "ended";
 }
+function getDocumentStoragePath(url: string): string | null {
+  const marker = "/documents/";
+  const index = url.indexOf(marker);
+
+  if (index === -1) return null;
+
+  try {
+    return decodeURIComponent(
+      url.slice(index + marker.length).split("?")[0]
+    );
+  } catch {
+    return null;
+  }
+}
 export default function ActivitiesAdminPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [currentTime, setCurrentTime] = useState(Date.now());useEffect(() => {const timer = setInterval(() => {setCurrentTime(Date.now());}, 30000);return () => clearInterval(timer);}, []);
   const [openId, setOpenId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const [documentModal, setDocumentModal] = useState(false);
-  const [currentDocument, setCurrentDocument] = useState<string | null>(null);
+  const [currentDocuments, setCurrentDocuments] = useState<string[]>([]);
+  const [editingDocuments, setEditingDocuments] = useState<string[]>([]);
+  const [originalDocuments, setOriginalDocuments] = useState<string[]>([]);
   const [showCriteria,setShowCriteria]=useState(false);
   const [tab, setTab] = useState("proof");
   const [title, setTitle] = useState("");
@@ -88,7 +105,6 @@ export default function ActivitiesAdminPage() {
   const [eventTime, setEventTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [deadline, setDeadline] = useState("");
-  const [isActive, setIsActive] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
   const [showRecipientModal, setShowRecipientModal] = useState(false);
   const [mounted, setMounted] = useState(false);useEffect(() => {setMounted(true);}, []);
@@ -132,8 +148,13 @@ function handleDocumentUpload(
   e: React.ChangeEvent<HTMLInputElement>
 ) {
   if (e.target.files?.length) {
-    setDocumentFile(e.target.files[0]);
+    setDocumentFiles((prev) => [
+      ...prev,
+      ...Array.from(e.target.files || []),
+    ]);
   }
+
+  e.target.value = "";
 }
   async function loadActivities() {
     const { data, error } = await supabase
@@ -159,7 +180,8 @@ function handleDocumentUpload(
   };
 }, [showRecipientModal]);
 
-  async function handleSave() {
+
+async function handleSave() {
   if (!title.trim()) {
     alert("Vui lòng nhập tên hoạt động");
     return;
@@ -174,115 +196,171 @@ function handleDocumentUpload(
     alert("Thời gian kết thúc phải sau thời gian bắt đầu.");
     return;
   }
-let normalizedLink = activityLink.trim();
 
-if (normalizedLink) {
-  if (!/^https?:\/\//i.test(normalizedLink)) {
-    normalizedLink = `https://${normalizedLink}`;
-  }
+  let normalizedLink = activityLink.trim();
 
-  try {
-    const parsedLink = new URL(normalizedLink);
-
-    if (!["http:", "https:"].includes(parsedLink.protocol)) {
-      throw new Error("invalid");
+  if (normalizedLink) {
+    if (!/^https?:\/\//i.test(normalizedLink)) {
+      normalizedLink = `https://${normalizedLink}`;
     }
 
-    normalizedLink = parsedLink.href;
-  } catch {
-    alert("Đường dẫn không hợp lệ. Vui lòng nhập liên kết bắt đầu bằng https://");
-    return;
-  }
-}
-  setLoading(true);
-let documentUrl: string | null = null;
+    try {
+      const parsedLink = new URL(normalizedLink);
 
-if (documentFile) {
-  const fileName = `${Date.now()}-${documentFile.name}`;
+      if (!["http:", "https:"].includes(parsedLink.protocol)) {
+        throw new Error("invalid");
+      }
 
-  const { error: uploadError } = await supabase.storage
-    .from("documents")
-    .upload(fileName, documentFile);
-
-  if (uploadError) {
-    alert(uploadError.message);
-    setLoading(false);
-    return;
-  }
-
-  const { data } = supabase.storage
-    .from("documents")
-    .getPublicUrl(fileName);
-
-  documentUrl = data.publicUrl;
-}
-let error;
-
-if (editingId) {
-  ({ error } = await supabase
-    .from("activities")
-    .update({
-      title,
-      criterion: criterion || null,
-      organizer: organizer || null,
-      document: documentUrl,
-      detail_content: detailContent || null,
-      activity_link: normalizedLink || null,
-      event_time: eventTime || null,
-      end_time: endTime,
-      registration_deadline: deadline || null,
-      status: "upcoming",
-    })
-    .eq("id", editingId));
-}else {
-  const { data, error: insertError } = await supabase
-    .from("activities")
-    .insert({
-      title,
-      criterion: criterion || null,
-      organizer: organizer || null,
-      document: documentUrl,
-      detail_content: detailContent || null,
-      activity_link: normalizedLink || null,
-      event_time: eventTime || null, 
-      end_time: endTime,
-      registration_deadline: deadline || null,
-      status: "upcoming",
-    })
-    .select()
-    .single();
-
-  error = insertError;
-
-  if (!insertError && data) {
-    console.log("Hoạt động mới:", data);
-
-    // chỗ này lát gắn gửi thông báo
-  }
-}
-
-    setLoading(false);
-
-    if (error) {
-      alert(error.message);
+      normalizedLink = parsedLink.href;
+    } catch {
+      alert("Đường dẫn không hợp lệ. Vui lòng kiểm tra lại.");
       return;
     }
-setEditingId(null);
-
-setTitle("");
-setCriterion("hoc_tap");
-setOrganizer("");
-setDetailContent("");
-setActivityLink("");
-setShowLinkInput(false);
-setEventTime("");
-setEndTime("");
-setDeadline("");
-setDocumentFile(null);
-setIsActive(true);
-
-loadActivities();
   }
+
+  setLoading(true);
+
+  const documentUrls = editingId ? [...editingDocuments] : [];
+  const uploadedPaths: string[] = [];
+
+  try {
+    // TẢI LÊN CÁC VĂN BẢN MỚI
+    for (const file of documentFiles) {
+      const safeFileName = file.name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D")
+        .replace(/[^a-zA-Z0-9._-]/g, "_");
+
+      const fileName = `${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}-${safeFileName}`;
+
+      console.log("Bắt đầu tải file:", file.name, file.size);
+
+const { data: uploadData, error: uploadError } = await supabase.storage
+  .from("documents")
+  .upload(fileName, file, {
+    cacheControl: "3600",
+    upsert: false,
+  });
+
+if (uploadError) {
+  console.error("LỖI TẢI FILE:", uploadError);
+  throw new Error(
+    `Không tải được file ${file.name}: ${uploadError.message}`
+  );
+}
+
+console.log("TẢI FILE THÀNH CÔNG:", uploadData);
+
+      uploadedPaths.push(fileName);
+
+      const { data } = supabase.storage
+        .from("documents")
+        .getPublicUrl(fileName);
+
+      documentUrls.push(data.publicUrl);
+    }
+
+    // DỮ LIỆU HOẠT ĐỘNG
+    const activityData = {
+      title: title.trim(),
+      criterion: criterion || null,
+      organizer: organizer || null,
+      document: documentUrls[0] || null,
+      documents: documentUrls,
+      detail_content: detailContent || null,
+      activity_link: normalizedLink || null,
+      event_time: eventTime,
+      end_time: endTime,
+      registration_deadline: deadline || null,
+      status: "upcoming",
+    };
+
+    let saveError;
+
+    if (editingId) {
+      const { error } = await supabase
+        .from("activities")
+        .update(activityData)
+        .eq("id", editingId);
+
+      saveError = error;
+    } else {
+      const { error } = await supabase
+        .from("activities")
+        .insert(activityData);
+
+      saveError = error;
+    }
+
+    if (saveError) throw saveError;
+
+    // XÓA VĂN BẢN CŨ ĐÃ ĐƯỢC GỠ KHỎI DANH SÁCH
+    const removedDocuments = originalDocuments.filter(
+      (url) => !documentUrls.includes(url)
+    );
+
+    const removedPaths = removedDocuments
+      .map(getDocumentStoragePath)
+      .filter((path): path is string => !!path);
+
+    if (removedPaths.length > 0) {
+      const { error: removeError } = await supabase.storage
+        .from("documents")
+        .remove(removedPaths);
+
+      if (removeError) {
+        console.error("Lỗi xóa văn bản cũ:", removeError);
+        alert("Đã lưu hoạt động nhưng một số văn bản cũ chưa xóa được.");
+      }
+    }
+
+    alert(editingId ? "Đã cập nhật hoạt động!" : "Đã thêm hoạt động!");
+
+    // ĐẶT LẠI BIỂU MẪU
+    setEditingId(null);
+    setTitle("");
+    setCriterion("hoc_tap");
+    setOrganizer("");
+    setDetailContent("");
+    setActivityLink("");
+    setShowLinkInput(false);
+    setEventTime("");
+    setEndTime("");
+    setDeadline("");
+    setDocumentFiles([]);
+    setEditingDocuments([]);
+    setOriginalDocuments([]);
+
+    const input = document.getElementById(
+      "document-upload"
+    ) as HTMLInputElement | null;
+
+    if (input) input.value = "";
+
+    await loadActivities();
+  } catch (error) {
+    console.error("Lỗi lưu hoạt động:", error);
+
+    // DỌN CÁC FILE MỚI NẾU LƯU THẤT BẠI
+    if (uploadedPaths.length > 0) {
+      await supabase.storage
+        .from("documents")
+        .remove(uploadedPaths);
+    }
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Không thể lưu hoạt động."
+    );
+  } finally {
+    setLoading(false);
+  }
+}
 
   const loadRecipients = async (activity: Activity) => {
   try {
@@ -371,16 +449,67 @@ async function notifyUpcomingActivity(activity: Activity) {
   await loadRecipients(activity);
 }
 
-  async function handleDelete(id: string) {
-    if (!confirm("Bạn có chắc muốn xóa hoạt động này?")) return;
-
-    await supabase.from("activities").delete().eq("id", id);
-
-    loadActivities();
+async function handleDelete(id: string) {
+  if (!confirm("Bạn có chắc muốn xóa hoạt động và toàn bộ văn bản đính kèm?")) {
+    return;
   }
+
+  try {
+    const { data: activity, error: fetchError } = await supabase
+      .from("activities")
+      .select("document, documents")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const allDocuments = [
+      ...(activity.documents || []),
+      ...(activity.document ? [activity.document] : []),
+    ];
+
+    const paths = [...new Set(allDocuments)]
+      .map(getDocumentStoragePath)
+      .filter((path): path is string => !!path);
+
+    if (paths.length > 0) {
+      const { error: removeError } = await supabase.storage
+        .from("documents")
+        .remove(paths);
+
+      if (removeError) throw removeError;
+    }
+
+    const { error: deleteError } = await supabase
+      .from("activities")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) throw deleteError;
+
+    alert("Đã xóa hoạt động và các văn bản đính kèm!");
+    loadActivities();
+  } catch (error) {
+    console.error("Lỗi xóa hoạt động:", error);
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Không thể xóa hoạt động hoặc văn bản."
+    );
+  }
+}
 function handleEdit(activity: Activity) {
+  const docs = activity.documents?.length
+    ? activity.documents
+    : activity.document
+    ? [activity.document]
+    : [];
+
   setEditingId(activity.id);
-  setDocumentFile(null);
+  setEditingDocuments(docs);
+  setOriginalDocuments(docs);
+  setDocumentFiles([]);
+
   setTitle(activity.title);
   setCriterion(activity.criterion || "hoc_tap");
   setOrganizer(activity.organizer || "");
@@ -390,6 +519,16 @@ function handleEdit(activity: Activity) {
   setEventTime(activity.event_time || "");
   setEndTime(activity.end_time || "");
   setDeadline(activity.registration_deadline || "");
+
+  setOpenId(null);
+
+  const input = document.getElementById(
+    "document-upload"
+  ) as HTMLInputElement | null;
+
+  if (input) input.value = "";
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 // Chọn / bỏ chọn một sinh viên
 const toggleRecipient = (id: string) => {
@@ -551,11 +690,13 @@ activities.filter(
             <div className="rounded-2xl border border-gray-200 bg-white p-7 shadow-sm">
               <div className="mb-6">
                 <h3 className="text-xl font-bold text-gray-900">
-                  Thêm hoạt động mới
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Điền đầy đủ thông tin để tạo hoạt động mới.
-                </p>
+  {editingId ? "Chỉnh sửa hoạt động" : "Thêm hoạt động mới"}
+</h3>
+<p className="mt-1 text-sm text-gray-500">
+  {editingId
+    ? "Cập nhật thông tin và văn bản đính kèm của hoạt động."
+    : "Điền đầy đủ thông tin để tạo hoạt động mới."}
+</p>
               </div>
 
               <div className="space-y-5">
@@ -593,10 +734,10 @@ activities.filter(
   <div className="flex flex-wrap items-center justify-between gap-3">
     <div>
       <p className="font-semibold text-blue-900">
-        🔗 Liên kết hoạt động
+        Liên kết hoạt động
       </p>
       <p className="mt-1 text-xs text-blue-700">
-        Thêm đường dẫn đăng ký hoặc truy cập hoạt động.
+        Thêm đường dẫn đăng ký hoặc chi tiết hoạt động.
       </p>
     </div>
 
@@ -663,53 +804,102 @@ activities.filter(
                   <label className="mb-2 block text-sm font-semibold text-gray-700">
                     Văn bản ban hành
                   </label>
-                <label
+<label
   htmlFor="document-upload"
-  className="flex cursor-pointer items-center justify-between rounded-xl border border-gray-300 bg-white px-5 py-4 transition hover:border-gray-500 hover:bg-gray-50"
+  className="flex cursor-pointer items-center justify-between rounded-xl border border-gray-300 bg-white px-5 py-4 transition hover:border-blue-500 hover:bg-blue-50"
 >
   <div>
     <p className="font-semibold text-gray-800">
-      📄 Văn bản đính kèm
-    </p>
-
-    <p className="mt-1 text-sm text-gray-500">
-      PDF, DOC, DOCX
+      📄 Chọn văn bản đính kèm
     </p>
   </div>
 
-  <div className="rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200">
-    Chọn tệp
-  </div>
+  <span className="rounded-lg border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
+    + Chọn tệp
+  </span>
 </label>
 
 <input
   id="document-upload"
   type="file"
   accept=".pdf,.doc,.docx"
+  multiple
   onChange={handleDocumentUpload}
   className="hidden"
 />
 
-{documentFile && (
-  <div className="mt-3 flex items-center justify-between rounded-xl border border-gray-300 bg-gray-50 px-4 py-3">
-    <div>
-      <p className="text-sm font-medium text-gray-800">
-        📎 {documentFile.name}
-      </p>
-      <p className="mt-1 text-xs text-gray-500">
-        Đã chọn tệp
-      </p>
-    </div>
+{/* DANH SÁCH VĂN BẢN ĐÃ CÓ */}
+{editingDocuments.length > 0 && (
+  <div className="mt-4 space-y-2">
+    <p className="text-sm font-semibold text-green-800">
+      Văn bản hiện tại ({editingDocuments.length})
+    </p>
 
-    <button
-      type="button"
-      onClick={() => setDocumentFile(null)}
-      className="rounded-lg px-3 py-1 text-sm text-red-600 transition hover:bg-red-50"
-    >
-      Xóa
-    </button>
+    {editingDocuments.map((url, index) => (
+      <div
+        key={url}
+        className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-green-200 bg-green-50 p-3"
+      >
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="min-w-0 flex-1 break-all text-sm font-medium text-green-700 underline"
+        >
+          📄 Văn bản {index + 1}: {getDocumentStoragePath(url)?.split("/").pop() || "Xem văn bản"}
+        </a>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (confirm("Gỡ văn bản này khỏi hoạt động?")) {
+              setEditingDocuments((prev) =>
+                prev.filter((item) => item !== url)
+              );
+            }
+          }}
+          className="shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-100"
+        >
+          Xóa
+        </button>
+      </div>
+    ))}
   </div>
 )}
+
+{/* DANH SÁCH VĂN BẢN MỚI */}
+{documentFiles.length > 0 && (
+  <div className="mt-4 space-y-2">
+    <p className="text-sm font-semibold text-blue-800">
+      Văn bản mới sẽ tải lên ({documentFiles.length})
+    </p>
+
+    {documentFiles.map((file, index) => (
+      <div
+        key={`${file.name}-${index}`}
+        className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3"
+      >
+        <p className="min-w-0 flex-1 break-all text-sm text-gray-700">
+          📎 {file.name}
+        </p>
+
+        <button
+          type="button"
+          onClick={() => {
+            setDocumentFiles((prev) =>
+              prev.filter((_, i) => i !== index)
+            );
+          }}
+          className="shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-100"
+        >
+          Xóa
+        </button>
+      </div>
+    ))}
+  </div>
+)}
+
+
                 </div>
                 <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="min-w-0">
@@ -774,19 +964,27 @@ activities.filter(
   {editingId && (
     <button
       type="button"
-      onClick={() => {
-        setEditingId(null);
-        setTitle("");
-        setCriterion("hoc_tap");
-        setOrganizer("");
-        setDetailContent("");
-        setActivityLink("");
-setShowLinkInput(false);
-        setEventTime("");
-        setEndTime("");
-        setDeadline("");
-        setDocumentFile(null);
-      }}
+     onClick={() => {
+  setEditingId(null);
+  setTitle("");
+  setCriterion("hoc_tap");
+  setOrganizer("");
+  setDetailContent("");
+  setActivityLink("");
+  setShowLinkInput(false);
+  setEventTime("");
+  setEndTime("");
+  setDeadline("");
+  setDocumentFiles([]);
+  setEditingDocuments([]);
+  setOriginalDocuments([]);
+
+  const input = document.getElementById(
+    "document-upload"
+  ) as HTMLInputElement | null;
+
+  if (input) input.value = "";
+}}
       className="rounded-xl border border-gray-300 px-6 py-3 font-semibold transition hover:bg-gray-100"
     >
       Hủy
@@ -913,18 +1111,23 @@ setShowLinkInput(false);
                               </p>
 <button
   onClick={() => {
-    console.log("Document:", activity.document);
+    const docs = activity.documents?.length
+      ? activity.documents
+      : activity.document
+      ? [activity.document]
+      : [];
 
-    setCurrentDocument(activity.document);
+    setCurrentDocuments(docs);
     setDocumentModal(true);
   }}
   className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
 >
   <span className="inline-flex items-center gap-1 whitespace-nowrap">
     <Image src="/iconxem2.png" width={20} height={20} alt="Xem" />
-    Xem
+    Xem ({activity.documents?.length || (activity.document ? 1 : 0)})
   </span>
-</button>                </div>
+</button>
+                </div>
 
                             <div>
                               <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -1254,8 +1457,11 @@ setShowLinkInput(false);
 )}
 
 
-{documentModal && (
-  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50">
+{documentModal && mounted && createPortal(
+  <div
+    className="fixed inset-0 flex items-center justify-center bg-black/60 p-3"
+    style={{ zIndex: 2147483647 }}
+  >
     <div className="flex h-[85vh] w-[90vw] max-w-5xl flex-col rounded-2xl bg-white shadow-xl">
 
       <div className="flex items-center justify-between border-b px-6 py-4">
@@ -1271,20 +1477,42 @@ setShowLinkInput(false);
         </button>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        {currentDocument ? (
-          <iframe
-  src={`${currentDocument}#toolbar=0&navpanes=0&scrollbar=0`}
-  className="h-full w-full border-0"
-/>
-        ) : (
-          <div className="flex h-full items-center justify-center text-gray-500">
-            Chưa có văn bản đính kèm.
+<div className="flex-1 min-h-0 overflow-y-auto p-4">
+  {currentDocuments.length > 0 ? (
+    <div className="space-y-6">
+      {currentDocuments.map((url, index) => (
+        <div key={`${url}-${index}`} className="w-full">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-gray-700">
+              Văn bản {index + 1}
+            </p>
+
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-blue-600 hover:underline"
+            >
+              Mở trong tab mới ↗
+            </a>
           </div>
-        )}
-      </div>
+
+          <iframe
+            src={`${url}#toolbar=0&navpanes=0&scrollbar=0`}
+            className="h-[600px] w-full rounded-lg border border-gray-200"
+          />
+        </div>
+      ))}
     </div>
-  </div>
+  ) : (
+    <div className="flex h-full items-center justify-center text-gray-500">
+      Chưa có văn bản đính kèm.
+    </div>
+  )}
+</div>
+    </div>
+  </div>,
+  document.body
 )}
   {showCriteria && (
       <CriteriaModal

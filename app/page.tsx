@@ -25,6 +25,9 @@ export default function Home() {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [generalNotification, setGeneralNotification] = useState<any>(null);
   const [currentAcademicYearId, setCurrentAcademicYearId] = useState<number | null>(null);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [criteriaResults, setCriteriaResults] = useState<any>(null);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [registrationLoading, setRegistrationLoading] = useState(false);
@@ -34,7 +37,74 @@ useEffect(() => {
   loadProfile();
   loadNextActivity();
   loadRegistrationStatus();
+
+  const interval = setInterval(() => {
+    loadNextActivity();
+  }, 30000);
+
+  return () => clearInterval(interval);
 }, []);
+
+useEffect(() => {
+  let active = true;
+
+  async function loadCurrentYearCriteria() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!active || !user || !currentAcademicYearId) {
+      if (active) setCriteriaResults(null);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("student_criteria_results")
+      .select("dao_duc, hoc_tap, the_luc, tinh_nguyen, hoi_nhap")
+      .eq("user_id", user.id)
+      .eq("academic_year_id", currentAcademicYearId)
+      .maybeSingle();
+
+    if (!active) return;
+    if (error) {
+      console.error("Lỗi tải kết quả tiêu chí năm học hiện tại:", error);
+      setCriteriaResults(null);
+      return;
+    }
+
+    setCriteriaResults(data);
+  }
+
+  void loadCurrentYearCriteria();
+
+  return () => {
+    active = false;
+  };
+}, [currentAcademicYearId]);
+
+useEffect(() => {
+  if (!currentAcademicYearId) return;
+
+  const channel = supabase
+    .channel(`student-criteria-${currentAcademicYearId}`)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "student_criteria_results", filter: `academic_year_id=eq.${currentAcademicYearId}` },
+      async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase
+          .from("student_criteria_results")
+          .select("dao_duc, hoc_tap, the_luc, tinh_nguyen, hoi_nhap")
+          .eq("user_id", user.id)
+          .eq("academic_year_id", currentAcademicYearId)
+          .maybeSingle();
+        setCriteriaResults(data);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    void supabase.removeChannel(channel);
+  };
+}, [currentAcademicYearId]);
 
 useEffect(() => {
   let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -243,6 +313,17 @@ async function loadRegistrationStatus() {
   } = await supabase.auth.getUser();
 
   if (!user) return;
+
+  const { data: years, error: yearsError } = await supabase
+    .from("academic_years")
+    .select("id, name, is_current")
+    .order("id", { ascending: false });
+
+  if (yearsError) {
+    console.error("Lỗi tải danh sách năm học:", yearsError);
+  } else {
+    setAcademicYears(years || []);
+  }
 
   // Lấy năm học hiện tại và trạng thái mở đăng ký
   const { data: year, error: yearError } = await supabase
@@ -455,14 +536,68 @@ useEffect(() => {
     }
   };
 }, []);
+function getActivityStatus(activity: any) {
+  const now = new Date().getTime();
+  const start = activity.event_time
+    ? new Date(activity.event_time).getTime()
+    : NaN;
+  const end = activity.end_time
+    ? new Date(activity.end_time).getTime()
+    : NaN;
+
+  // Ưu tiên xác định trạng thái theo thời gian thực
+  if (Number.isFinite(start) && Number.isFinite(end)) {
+    if (now < start) return "scheduled";
+    if (now <= end) return "ongoing";
+    return "ended";
+  }
+
+  // Nếu thiếu thời gian thì sử dụng trạng thái trong database
+  if (activity.status === "upcoming" || activity.status === "scheduled") {
+    return "scheduled";
+  }
+
+  if (activity.status === "ongoing") return "ongoing";
+  if (activity.status === "ended") return "ended";
+
+  return "ended";
+}
+
 async function loadNextActivity() {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("activities")
     .select("*")
-    .eq("status", "ongoing")
     .order("event_time", { ascending: true });
 
-  setNextActivities(data || []);
+  if (error) {
+    console.error("Lỗi tải hoạt động:", error);
+    return;
+  }
+
+  const activities = (data || [])
+    .map((activity: any) => ({
+      ...activity,
+      displayStatus: getActivityStatus(activity),
+    }))
+    .filter(
+      (activity: any) =>
+        activity.displayStatus === "scheduled" ||
+        activity.displayStatus === "ongoing"
+    )
+    .sort((a: any, b: any) => {
+      // Đang diễn ra hiển thị trước
+      if (a.displayStatus !== b.displayStatus) {
+        return a.displayStatus === "ongoing" ? -1 : 1;
+      }
+
+      // Cùng trạng thái thì sắp xếp theo thời gian bắt đầu
+      return (
+        new Date(a.event_time).getTime() -
+        new Date(b.event_time).getTime()
+      );
+    });
+
+  setNextActivities(activities);
 }
 if (loading) {
 
@@ -479,14 +614,15 @@ if (loading) {
     </div>
   );
 }
-const handleExport = async () => {
+const handleExport = async (academicYearId: number) => {
   if (exporting || !profile?.id) return;
 
   setExporting(true);
+  setShowExportMenu(false);
 
   try {
     const response = await fetch(
-      `/api/export-student/${profile.id}`
+      `/api/export-student/${profile.id}?year=${academicYearId}`
     );
 
     if (!response.ok) {
@@ -532,11 +668,11 @@ const handleExport = async () => {
 };
 
 const achievedCriteria = [
-  profile?.["dao-duc"],
-  profile?.["hoc-tap"],
-  profile?.["the-luc"],
-  profile?.["tinh-nguyen"],
-  profile?.["hoi-nhap"],
+  criteriaResults?.dao_duc,
+  criteriaResults?.hoc_tap,
+  criteriaResults?.the_luc,
+  criteriaResults?.tinh_nguyen,
+  criteriaResults?.hoi_nhap,
 ].filter(Boolean).length;
 
 const circleRadius = 54;
@@ -735,57 +871,77 @@ return (
   </button>
 )}
 
-  <button 
-    onClick={handleExport}
-    disabled={exporting}
-    onMouseEnter={(e) => { 
-      e.currentTarget.style.transform = "translateY(-2px) scale(1.02)"; 
-      e.currentTarget.style.background = "#15803d"; 
-    }} 
-    onMouseLeave={(e) => { 
-      e.currentTarget.style.transform = "translateY(0) scale(1)"; 
-      e.currentTarget.style.background = "#16a34a"; 
-      e.currentTarget.style.boxShadow = "none"; 
-    }} 
-    style={{ 
-      background: "#16a34a", 
-      color: "#fff", 
-      border: "none", 
-      padding: "9px 16px", 
-      borderRadius: "10px", 
-      fontWeight: 600, 
-      fontSize: "14px",
-      cursor: "pointer", 
-      width: isMobile ? "100%" : "auto", 
-      transition: "all .25s ease", 
-      lineHeight: 1.2,
-    }} 
-  > 
-    {exporting ? ( 
-      <span 
-        style={{ 
-          display: "flex", 
-          alignItems: "center", 
-          justifyContent: "center", 
-          gap: "7px", 
-        }} 
-      > 
-        <span 
-          style={{ 
-            width: "14px", 
-            height: "14px", 
-            border: "2px solid rgba(255,255,255,.4)", 
-            borderTopColor: "#fff", 
-            borderRadius: "50%", 
-            animation: "spin .7s linear infinite", 
-          }} 
-        /> 
-        Đang xuất hồ sơ 
-      </span> 
-    ) : ( 
-      "Xuất hồ sơ" 
-    )} 
-  </button> 
+  <div style={{ position: "relative", width: isMobile ? "100%" : "auto" }}>
+    <button
+      type="button"
+      onClick={() => setShowExportMenu((open) => !open)}
+      disabled={exporting || academicYears.length === 0}
+      style={{
+        background: "#16a34a",
+        color: "#fff",
+        border: "none",
+        padding: "9px 16px",
+        borderRadius: "10px",
+        fontWeight: 600,
+        fontSize: "14px",
+        cursor: exporting ? "wait" : "pointer",
+        width: isMobile ? "100%" : "auto",
+        transition: "all .25s ease",
+        lineHeight: 1.2,
+      }}
+    >
+      {exporting ? "Đang xuất hồ sơ..." : "Xuất hồ sơ ▾"}
+    </button>
+
+    {showExportMenu && !exporting && (
+      <div
+        role="menu"
+        aria-label="Chọn năm học để xuất hồ sơ"
+        style={{
+          position: "absolute",
+          right: 0,
+          top: "calc(100% + 8px)",
+          zIndex: 50,
+          minWidth: isMobile ? "100%" : "220px",
+          padding: "6px",
+          border: "1px solid #e2e8f0",
+          borderRadius: "12px",
+          background: "#fff",
+          boxShadow: "0 12px 30px rgba(15, 23, 42, 0.16)",
+        }}
+      >
+        <div style={{ padding: "8px 10px", color: "#64748b", fontSize: 12, fontWeight: 700 }}>
+          Chọn năm học
+        </div>
+        {academicYears.map((year) => (
+          <button
+            key={year.id}
+            type="button"
+            role="menuitem"
+            onClick={() => void handleExport(year.id)}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              width: "100%",
+              padding: "10px",
+              border: 0,
+              borderRadius: "8px",
+              background: "transparent",
+              color: "#0f172a",
+              textAlign: "left",
+              fontSize: 14,
+              cursor: "pointer",
+            }}
+            onMouseEnter={(event) => { event.currentTarget.style.background = "#f1f5f9"; }}
+            onMouseLeave={(event) => { event.currentTarget.style.background = "transparent"; }}
+          >
+            <span>{year.name}</span>
+            {year.is_current && <span style={{ color: "#15803d", fontSize: 12 }}>Hiện tại</span>}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
 </div>
 <div
   style={{
@@ -1426,21 +1582,53 @@ style={{
               minWidth: 0,
             }}
           >
-            {/* Tên hoạt động */}
-            <div
-              style={{
-                flex: "1 1 40%",
-                minWidth: 0,
-                fontWeight: 700,
-                fontSize: 14,
-                color: "#0F172A",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {activity.title}
-            </div>
+            {/* Tên hoạt động và trạng thái */}
+<div
+  style={{
+    flex: "1 1 40%",
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: 5,
+  }}
+>
+  <div
+    style={{
+      fontWeight: 700,
+      fontSize: 14,
+      color: "#0F172A",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+    }}
+  >
+    {activity.title}
+  </div>
+
+  <span
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      width: "fit-content",
+      padding: "3px 9px",
+      borderRadius: 999,
+      fontSize: 11,
+      fontWeight: 800,
+      background:
+        activity.displayStatus === "ongoing"
+          ? "#DCFCE7"
+          : "#DBEAFE",
+      color:
+        activity.displayStatus === "ongoing"
+          ? "#15803D"
+          : "#1D4ED8",
+    }}
+  >
+    {activity.displayStatus === "ongoing"
+      ? "● Đang diễn ra"
+      : "◷ Sắp diễn ra"}
+  </span>
+</div>
 
             {/* Tiêu chí */}
             <div

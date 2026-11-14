@@ -151,9 +151,9 @@ useEffect(() => {
 async function loadCurrentAcademicYear() {
   const { data, error } = await supabase
     .from("academic_years")
-    .select("id, name")
+    .select("id, name, is_current")
     .eq("is_current", true)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Lỗi lấy năm học hiện tại:", error);
@@ -163,6 +163,9 @@ async function loadCurrentAcademicYear() {
   if (data) {
     setCurrentAcademicYear(data);
     setAcademicYearName(data.name);
+  } else {
+    setCurrentAcademicYear(null);
+    setCriteriaResults(null);
   }
 }
 async function loadCriteriaResults() {
@@ -180,31 +183,17 @@ async function loadCriteriaResults() {
     return;
   }
 
-  if (data) {
-    setCriteriaResults(data);
-    return;
-  }
-
-  const { data: newData, error: insertError } = await supabase
-    .from("student_criteria_results")
-    .insert({
-      user_id: id,
-      academic_year_id: currentAcademicYear.id,
-      dao_duc: false,
-      hoc_tap: false,
-      the_luc: false,
-      tinh_nguyen: false,
-      hoi_nhap: false,
-    })
-    .select()
-    .single();
-
-  if (insertError) {
-    console.error("CREATE CRITERIA RESULTS ERROR:", insertError);
-    return;
-  }
-
-  setCriteriaResults(newData);
+  // An empty result is a valid all-unchecked state. Create the year-specific
+  // row only when a checkbox is actually changed.
+  setCriteriaResults(data || {
+    user_id: id,
+    academic_year_id: currentAcademicYear.id,
+    dao_duc: false,
+    hoc_tap: false,
+    the_luc: false,
+    tinh_nguyen: false,
+    hoi_nhap: false,
+  });
 }
   // =====================================================
   // LOAD REPORT THEO NĂM HỌC
@@ -336,6 +325,11 @@ async function updateCriteria(
       {
         user_id: id,
         academic_year_id: currentAcademicYear.id,
+        dao_duc: criteriaResults?.dao_duc ?? false,
+        hoc_tap: criteriaResults?.hoc_tap ?? false,
+        the_luc: criteriaResults?.the_luc ?? false,
+        tinh_nguyen: criteriaResults?.tinh_nguyen ?? false,
+        hoi_nhap: criteriaResults?.hoi_nhap ?? false,
         [dbField]: value,
         updated_at: new Date().toISOString(),
       },

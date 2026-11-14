@@ -21,6 +21,7 @@ export default function TieuChiPage() {
   const [submissionOpen, setSubmissionOpen] = useState(true);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null); 
+  const [criteriaResults, setCriteriaResults] = useState<any>(null);
 
 useEffect(() => {
   loadProfile();
@@ -42,20 +43,69 @@ useEffect(() => {
   loadYearProfile(currentAcademicYear.id);
 }, [currentAcademicYear]);
 
-  async function loadAcademicYears() {
+useEffect(() => {
+  let active = true;
+
+  async function loadCriteriaResults() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!active || !user || !currentAcademicYear?.id) {
+      if (active) setCriteriaResults(null);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("student_criteria_results")
+      .select("dao_duc, hoc_tap, the_luc, tinh_nguyen, hoi_nhap")
+      .eq("user_id", user.id)
+      .eq("academic_year_id", currentAcademicYear.id)
+      .maybeSingle();
+
+    if (!active) return;
+    if (error) {
+      console.error("Lỗi tải kết quả tiêu chí:", error);
+      setCriteriaResults(null);
+      return;
+    }
+
+    setCriteriaResults(data);
+  }
+
+  void loadCriteriaResults();
+  return () => {
+    active = false;
+  };
+}, [currentAcademicYear?.id]);
+
+function hasPassedCriterion(field: string) {
+  const resultField: Record<string, string> = {
+    "dao-duc": "dao_duc",
+    "hoc-tap": "hoc_tap",
+    "the-luc": "the_luc",
+    "tinh-nguyen": "tinh_nguyen",
+    "hoi-nhap": "hoi_nhap",
+  };
+
+  return criteriaResults?.[resultField[field]] === true;
+}
+
+async function loadAcademicYears() {
   const { data, error } = await supabase
     .from("academic_years")
-    .select("id, name, is_current")
+    .select("id, name, is_current, submission_open")
     .order("id", { ascending: false });
 
   if (error) {
     console.error("Lỗi lấy năm học:", error);
     return;
   }
+
   setAcademicYears(data || []);
+
   const current = data?.find((year) => year.is_current);
+
   if (current) {
     setCurrentAcademicYear(current);
+    setSubmissionOpen(current.submission_open);
   }
 }
 
@@ -107,27 +157,30 @@ async function loadProfile() {
 async function submitProfile() {
   if (!profile?.id) return;
 
-  // Kiểm tra trạng thái nhận hồ sơ mới nhất
-  const { data: setting, error: settingError } = await supabase
-    .from("site_settings")
-    .select("submission_open")
-    .eq("id", 1)
-    .single();
+// KIỂM TRA TRẠNG THÁI NHẬN HỒ SƠ THEO NĂM HỌC
+if (!currentAcademicYear?.id) {
+  alert("Chưa xác định được năm học.");
+  return;
+}
 
-  if (settingError) {
-    console.error(settingError);
-    alert("Không thể kiểm tra trạng thái nhận hồ sơ.");
-    return;
-  }
+const { data: yearSetting, error: settingError } = await supabase
+  .from("academic_years")
+  .select("submission_open")
+  .eq("id", currentAcademicYear.id)
+  .single();
 
-  // Đã đóng
-  if (!setting?.submission_open) {
-    setSubmissionOpen(false);
+if (settingError || !yearSetting) {
+  console.error("Lỗi kiểm tra trạng thái nhận hồ sơ:", settingError);
+  alert("Không thể kiểm tra trạng thái nhận hồ sơ.");
+  return;
+}
 
-    alert("Hồ sơ đã hết hạn gửi. Hiện tại hệ thống không còn nhận hồ sơ.");
+setSubmissionOpen(yearSetting.submission_open);
 
-    return;
-  }
+if (!yearSetting.submission_open) {
+  alert("Hồ sơ đã hết hạn gửi. Hiện tại hệ thống không còn nhận hồ sơ.");
+  return;
+}
 
   // Nếu đang ở trạng thái đã nộp → cho phép chỉnh sửa
   const newSubmittedState = !profile.is_submitted;
@@ -233,11 +286,11 @@ setProfile((prev: any) => ({
     );
   }
 const completed = [
-  profile?.["dao-duc"],
-  profile?.["hoc-tap"],
-  profile?.["the-luc"],
-  profile?.["tinh-nguyen"],
-  profile?.["hoi-nhap"],
+  criteriaResults?.dao_duc,
+  criteriaResults?.hoc_tap,
+  criteriaResults?.the_luc,
+  criteriaResults?.tinh_nguyen,
+  criteriaResults?.hoi_nhap,
 ].filter(Boolean).length;
 
 const percent = (completed / 5) * 100;
@@ -374,14 +427,15 @@ const percent = (completed / 5) * 100;
 <select
   value={currentAcademicYear?.id || ""}
   onChange={(e) => {
-    const selected = academicYears.find(
-      (year) => year.id === Number(e.target.value)
-    );
+  const selected = academicYears.find(
+    (year) => year.id === Number(e.target.value)
+  );
 
-    if (!selected) return;
+  if (!selected) return;
 
-    setCurrentAcademicYear(selected);
-  }}
+  setCurrentAcademicYear(selected);
+  setSubmissionOpen(selected.submission_open);
+}}
   style={{
     background: "#fff",
     color: "#2563eb",
@@ -633,10 +687,10 @@ const percent = (completed / 5) * 100;
           alignItems: "center",
           padding: "6px 12px",
           borderRadius: "999px",
-          background: profile?.[folder.field]
+          background: hasPassedCriterion(folder.field)
             ? "#dcfce7"
             : "#f3f4f6",
-          color: profile?.[folder.field]
+          color: hasPassedCriterion(folder.field)
             ? "#166534"
             : "#f36060",
           fontWeight: 600,
@@ -645,7 +699,7 @@ const percent = (completed / 5) * 100;
           marginTop: "6px",
         }}
       >
-        {profile?.[folder.field] ? "Đạt" : "Chưa đạt"}
+        {hasPassedCriterion(folder.field) ? "Đạt" : "Chưa đạt"}
       </div>
     )}
   </div>

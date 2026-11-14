@@ -100,13 +100,38 @@ export async function GET(
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
+    const requestedYearId = Number(
+      new URL(request.url).searchParams.get("year")
+    );
+
+    if (!Number.isInteger(requestedYearId) || requestedYearId <= 0) {
+      return NextResponse.json(
+        { success: false, error: "Vui lòng chọn năm học để xuất hồ sơ." },
+        { status: 400 }
+      );
+    }
+
+    const { data: academicYear, error: yearError } = await supabase
+      .from("academic_years")
+      .select("id, name")
+      .eq("id", requestedYearId)
+      .maybeSingle();
+
+    if (yearError || !academicYear) {
+      return NextResponse.json(
+        { success: false, error: "Không tìm thấy năm học đã chọn." },
+        { status: 404 }
+      );
+    }
+
     // =========================
     // GET FILES
     // =========================
     const { data: files, error } = await supabase
       .from("uploaded_files")
       .select("*")
-      .eq("user_id", id);
+      .eq("user_id", id)
+      .eq("academic_year_id", academicYear.id);
 
     if (error) {
       return NextResponse.json(
@@ -140,7 +165,8 @@ export async function GET(
 const { data: reports } = await supabase
   .from("reports")
   .select("*")
-  .eq("user_id", id);
+  .eq("user_id", id)
+  .eq("academic_year_id", academicYear.id);
 
 const { data: profile } = await supabase
   .from("profiles")
@@ -329,7 +355,7 @@ th {
 </div>
 
 <div class="school-year">
-  NĂM HỌC 2025 - 2026
+  NĂM HỌC ${escapeHtml(academicYear.name)}
 </div>
 
 <table>
@@ -564,7 +590,7 @@ const pdfBuffer = await page.pdf({
 
     const safeZipName = `${profile?.ho_ten || "SinhVien"}-${
       profile?.lop || ""
-    }-${profile?.mssv || id}.zip`
+    }-${profile?.mssv || id}-${academicYear.name}.zip`
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replaceAll(" ", "_");

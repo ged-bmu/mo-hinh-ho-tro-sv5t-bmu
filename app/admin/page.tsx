@@ -445,7 +445,10 @@ async function toggleStudentRegistration(sv: any) {
 }
 
   async function loadCriteriaResults(yearId: number) {
-    if (!yearId) return;
+    if (!yearId) {
+      setCriteriaResults({});
+      return;
+    }
 
     const { data, error } = await supabase
       .from("student_criteria_results")
@@ -457,7 +460,8 @@ async function toggleStudentRegistration(sv: any) {
         tinh_nguyen,
         hoi_nhap,
         is_submitted,
-        submitted_at
+        submitted_at,
+        updated_at
       `)
       .eq("academic_year_id", yearId);
 
@@ -468,9 +472,15 @@ async function toggleStudentRegistration(sv: any) {
 
     const mapped: Record<string, any> = {};
 
-    (data || []).forEach((item) => {
-      mapped[item.user_id] = item;
-    });
+    (data || [])
+      .sort(
+        (a: any, b: any) =>
+          new Date(a.updated_at || a.created_at || 0).getTime() -
+          new Date(b.updated_at || b.created_at || 0).getTime()
+      )
+      .forEach((item) => {
+        mapped[item.user_id] = item;
+      });
 
     setCriteriaResults(mapped);
   }
@@ -1998,7 +2008,7 @@ return (
 
                 try {
                   const response = await authFetch(
-                    `/api/export-all-student?filter=${encodeURIComponent(filterResult)}&search=${encodeURIComponent(search)}`
+                    `/api/export-all-student?academic_year_id=${encodeURIComponent(String(currentAcademicYear?.id ?? ""))}&filter=${encodeURIComponent(filterResult)}&search=${encodeURIComponent(search)}`
                   );
 
                   if (!response.ok) {

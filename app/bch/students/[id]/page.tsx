@@ -41,6 +41,15 @@ export default function StudentsDetailPage() {
   const [tab, setTab] = useState("");
   const [showCriteria, setShowCriteria] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [currentAcademicYearId, setCurrentAcademicYearId] = useState<number | null>(null);
+  const [criteriaResults, setCriteriaResults] = useState<any>(null);
+  const criteriaFieldMap: Record<string, string> = {
+    "dao-duc": "dao_duc",
+    "hoc-tap": "hoc_tap",
+    "the-luc": "the_luc",
+    "tinh-nguyen": "tinh_nguyen",
+    "hoi-nhap": "hoi_nhap",
+  };
   const criteriaList = [
   { key: "dao-duc", title: "Đạo đức tốt", icon: "/icondaoduc.png" },
   { key: "hoc-tap", title: "Học tập tốt", icon: "/iconhoctap.png" },
@@ -99,14 +108,46 @@ useEffect(() => {
     if (!id) return;
 
     loadStudent();
-    loadFiles();
-    loadReports();
+    loadCurrentAcademicYear();
   }, [id]);
+useEffect(() => {
+  if (!id || !currentAcademicYearId) return;
+  loadFiles();
+  loadReports();
+  loadCriteriaResults();
+}, [id, currentAcademicYearId]);
+async function loadCurrentAcademicYear() {
+  const { data, error } = await supabase
+    .from("academic_years")
+    .select("id")
+    .eq("is_current", true)
+    .maybeSingle();
+  if (error) {
+    console.error("Lỗi tải năm học hiện tại:", error);
+    return;
+  }
+  setCurrentAcademicYearId(data?.id ?? null);
+}
+async function loadCriteriaResults() {
+  if (!currentAcademicYearId) return;
+  const { data, error } = await supabase
+    .from("student_criteria_results")
+    .select("*")
+    .eq("user_id", id)
+    .eq("academic_year_id", currentAcademicYearId)
+    .maybeSingle();
+  if (error) {
+    console.error("Lỗi tải kết quả tiêu chí:", error);
+    return;
+  }
+  setCriteriaResults(data);
+}
 async function loadReports() {
   const { data, error } = await supabase
     .from("reports")
     .select("*")
-    .eq("user_id", id);
+    .eq("user_id", id)
+    .eq("academic_year_id", currentAcademicYearId);
   if (error) {
     return;
   }
@@ -177,24 +218,46 @@ async function updateCriteria(
   field: string,
   value: boolean
 ) {
-const { error } = await supabase
-  .from("profiles")
-  .update({
-    [field]: value,
-    nhan_xet: nhanXet,
-    ngay_nhan_xet: new Date().toISOString(),
-  })
-  .eq("id", id);
+  if (!currentAcademicYearId) {
+    alert("Chưa xác định được năm học hiện tại.");
+    return;
+  }
+
+  const fieldMap: Record<string, string> = {
+    "dao-duc": "dao_duc",
+    "hoc-tap": "hoc_tap",
+    "the-luc": "the_luc",
+    "tinh-nguyen": "tinh_nguyen",
+    "hoi-nhap": "hoi_nhap",
+  };
+  const dbField = fieldMap[field];
+  if (!dbField) return;
+
+  const { data, error } = await supabase
+    .from("student_criteria_results")
+    .upsert(
+      {
+        user_id: id,
+        academic_year_id: currentAcademicYearId,
+        dao_duc: criteriaResults?.dao_duc ?? false,
+        hoc_tap: criteriaResults?.hoc_tap ?? false,
+        the_luc: criteriaResults?.the_luc ?? false,
+        tinh_nguyen: criteriaResults?.tinh_nguyen ?? false,
+        hoi_nhap: criteriaResults?.hoi_nhap ?? false,
+        [dbField]: value,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,academic_year_id" }
+    )
+    .select()
+    .single();
 
   if (error) {
     alert("Cập nhật thất bại");
     return;
   }
 
-  setProfile({
-    ...profile,
-    [field]: value,
-  });
+  setCriteriaResults(data);
 
   const titleMap: Record<string, string> = {
     "dao-duc": "Đạo đức tốt",
@@ -220,7 +283,8 @@ async function loadFiles() {
   const { data, error } = await supabase
     .from("uploaded_files")
     .select("*")
-    .eq("user_id", id);
+    .eq("user_id", id)
+    .eq("academic_year_id", currentAcademicYearId);
 
   if (error) {
     return;
@@ -1153,7 +1217,7 @@ return (
                     {criterion.icon && <Image src={criterion.icon} width={24} height={24} alt={criterion.title} style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} />}
                     {criterion.title}
                   </span>
-                  <input type="checkbox" checked={profile?.[criterion.key] || false} onChange={(e) => updateCriteria(criterion.key, e.target.checked)} style={{ width: "18px", height: "18px", cursor: "pointer", flexShrink: 0 }} />
+                  <input type="checkbox" checked={criteriaResults?.[criteriaFieldMap[criterion.key]] === true} onChange={(e) => updateCriteria(criterion.key, e.target.checked)} style={{ width: "18px", height: "18px", cursor: "pointer", flexShrink: 0 }} />
                 </div>
               </th>
             ))}
@@ -1186,7 +1250,7 @@ return (
               <strong style={{ fontSize: "16px", whiteSpace: "nowrap" }}>
                 Minh chứng {criterion.title.replace(" tốt", "").toLowerCase()}
               </strong>
-              <input type="checkbox" checked={profile?.[previewFolder] || false} onChange={(e) => updateCriteria(previewFolder, e.target.checked)} style={{ width: "18px", height: "18px", cursor: "pointer", flexShrink: 0 }} />
+              <input type="checkbox" checked={criteriaResults?.[criteriaFieldMap[previewFolder]] === true} onChange={(e) => updateCriteria(previewFolder, e.target.checked)} style={{ width: "18px", height: "18px", cursor: "pointer", flexShrink: 0 }} />
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "7px", marginLeft: "auto" }}>

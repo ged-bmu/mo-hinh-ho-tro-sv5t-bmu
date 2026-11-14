@@ -93,21 +93,35 @@ export default function ThongKeNamSinhPage() {
       // LẤY TẤT CẢ SINH VIÊN
       // =====================================================
 
-const {
-  data: studentData,
-  error: studentError,
-} = await supabase
-  .from("profiles")
-  .select("id, ho_ten, mssv, lop, role, is_submitted")
-  .eq("role", "student")
-  .eq("is_submitted", true)
-  .order("lop", { ascending: true })
-  .order("mssv", { ascending: true });
+const { data: currentYear, error: yearError } = await supabase
+  .from("academic_years")
+  .select("id")
+  .eq("is_current", true)
+  .maybeSingle();
 
-      if (studentError) {
+const { data: yearProfiles, error: yearProfilesError } = currentYear
+  ? await supabase
+      .from("student_year_profiles")
+      .select("user_id")
+      .eq("academic_year_id", currentYear.id)
+      .eq("is_submitted", true)
+  : { data: [], error: null };
+
+const userIds = [...new Set((yearProfiles || []).map((item) => item.user_id))];
+const { data: studentData, error: studentError } = userIds.length
+  ? await supabase
+      .from("profiles")
+      .select("id, ho_ten, mssv, lop, role")
+      .eq("role", "student")
+      .in("id", userIds)
+      .order("lop", { ascending: true })
+      .order("mssv", { ascending: true })
+  : { data: [], error: null };
+
+      if (yearError || yearProfilesError || studentError) {
         console.error(
           "Lỗi tải danh sách sinh viên:",
-          studentError
+          yearError || yearProfilesError || studentError
         );
 
         setStudents([]);

@@ -6,6 +6,7 @@ import Link from "next/link";
 
 export default function StatisticsPage() {
   const [students, setStudents] = useState<any[]>([]);
+  const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
   const [selectedTitle, setSelectedTitle] =
     useState("");
   const [selectedStudents, setSelectedStudents] =
@@ -21,12 +22,47 @@ export default function StatisticsPage() {
   const [submissionFilter, setSubmissionFilter] =
   useState("all");
   const loadData = async () => {
-    const { data } = await supabase
-  .from("profiles")
-  .select("*")
-  .neq("role", "admin");
+    const { data: year, error: yearError } = await supabase
+      .from("academic_years")
+      .select("id, name")
+      .eq("is_current", true)
+      .maybeSingle();
 
-    setStudents(data || []);
+    if (yearError || !year) {
+      console.error("Lỗi tải năm học hiện tại:", yearError);
+      setCurrentAcademicYear(null);
+      setStudents([]);
+      return;
+    }
+
+    setCurrentAcademicYear(year);
+    const [profilesResult, yearProfilesResult, criteriaResult] = await Promise.all([
+      supabase.from("profiles").select("id, ho_ten, mssv, lop, role").eq("role", "student"),
+      supabase.from("student_year_profiles").select("user_id, is_submitted").eq("academic_year_id", year.id),
+      supabase.from("student_criteria_results").select("user_id, dao_duc, hoc_tap, the_luc, tinh_nguyen, hoi_nhap").eq("academic_year_id", year.id),
+    ]);
+
+    if (profilesResult.error || yearProfilesResult.error || criteriaResult.error) {
+      console.error("Lỗi tải thống kê năm học:", profilesResult.error || yearProfilesResult.error || criteriaResult.error);
+      setStudents([]);
+      return;
+    }
+
+    const yearProfileMap = new Map((yearProfilesResult.data || []).map((item) => [item.user_id, item]));
+    const criteriaMap = new Map((criteriaResult.data || []).map((item) => [item.user_id, item]));
+    setStudents((profilesResult.data || []).map((student) => {
+      const yearProfile = yearProfileMap.get(student.id);
+      const criteria = criteriaMap.get(student.id);
+      return {
+        ...student,
+        is_submitted: yearProfile?.is_submitted === true,
+        "dao-duc": criteria?.dao_duc === true,
+        "hoc-tap": criteria?.hoc_tap === true,
+        "the-luc": criteria?.the_luc === true,
+        "tinh-nguyen": criteria?.tinh_nguyen === true,
+        "hoi-nhap": criteria?.hoi_nhap === true,
+      };
+    }));
   };
 const filteredStudents =
   submissionFilter === "submitted"

@@ -29,6 +29,8 @@ export default function ChuTichXetDuyetPage() {
   const [savingSubmission, setSavingSubmission] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [currentYear, setCurrentYear] = useState<any>(null);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
   const isReviewedStatus = (status?: string) =>
     (status || "chua_danh_gia") !== "chua_danh_gia";
 
@@ -47,171 +49,195 @@ const approvalLabel = (student: any) =>
     checkAccount();
   }, []);
 
-  async function checkAccount() {
-    try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+async function checkAccount() {
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-      if (userError) {
-        console.error(
-          "Lỗi lấy tài khoản:",
-          userError
-        );
-        window.location.href = "/introduce";
-        return;
-      }
+    if (userError || !user) {
+      window.location.href = "/introduce";
+      return;
+    }
 
-      if (!user) {
-        window.location.href = "/introduce";
-        return;
-      }
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("ho_ten, email, roles")
+      .eq("id", user.id)
+      .single();
 
-      const {
-        data: profileData,
-        error: profileError,
-      } = await supabase
-        .from("profiles")
-        .select("ho_ten, email, roles")
-        .eq("id", user.id)
-        .single();
+    if (profileError || !profileData?.roles?.includes("chu_tich_hsv")) {
+      window.location.href = "/";
+      return;
+    }
 
-      if (profileError) {
-        console.error(
-          "Lỗi kiểm tra quyền:",
-          profileError
-        );
-        window.location.href = "/";
-        return;
-      }
+    setProfile(profileData);
 
-      if (
-        !profileData?.roles?.includes(
-          "chu_tich_hsv"
-        )
-      ) {
-        window.location.href = "/";
-        return;
-      }
+    // LẤY DANH SÁCH NĂM HỌC
+    const { data: yearsData, error: yearsError } = await supabase
+      .from("academic_years")
+      .select("id, name, submission_open, is_current")
+      .order("id", { ascending: false });
 
-      setProfile(profileData);
-      // LẤY TRẠNG THÁI NHẬN HỒ SƠ
-const {
-  data: setting,
-  error: settingError,
-} = await supabase
-  .from("site_settings")
-  .select("submission_open")
-  .eq("id", 1)
-  .single();
+    if (yearsError || !yearsData || yearsData.length === 0) {
+      console.error("Lỗi lấy danh sách năm học:", yearsError);
+      alert("Không tìm thấy năm học.");
+      setLoading(false);
+      return;
+    }
 
-if (settingError) {
-  console.error(
-    "Lỗi lấy trạng thái nhận hồ sơ:",
-    settingError
-  );
-} else if (setting) {
-  setIsOpen(setting.submission_open);
+    setAcademicYears(yearsData);
+
+    // ƯU TIÊN NĂM HỌC ĐANG ĐƯỢC ĐÁNH DẤU HIỆN TẠI
+    const selectedYear =
+      yearsData.find((year) => year.is_current) || yearsData[0];
+
+    await loadYearData(selectedYear.id);
+
+    // ĐẾM TỔNG SINH VIÊN
+    const { count, error: countError } = await supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "student");
+
+    if (countError) {
+      console.error("Lỗi đếm sinh viên:", countError);
+    } else {
+      setTotalStudents(count || 0);
+    }
+  } catch (error) {
+    console.error("Lỗi kiểm tra tài khoản:", error);
+  } finally {
+    setLoading(false);
+  }
 }
 
-      // TỔNG SINH VIÊN
+// TẢI DỮ LIỆU THEO NĂM HỌC ĐƯỢC CHỌN
+async function loadYearData(yearId: number) {
+  setLoading(true);
 
-      const {
-        count: totalCount,
-        error: totalError,
-      } = await supabase
-        .from("profiles")
-        .select("id", {
-          count: "exact",
-          head: true,
-        })
-        .eq("role", "student");
+  try {
+    const { data: yearData, error: yearError } = await supabase
+      .from("academic_years")
+      .select("id, name, submission_open, is_current")
+      .eq("id", yearId)
+      .single();
 
-      if (totalError) {
-        console.error(
-          "Lỗi đếm tổng sinh viên:",
-          totalError
+    if (yearError || !yearData) {
+      console.error("Lỗi lấy năm học:", yearError);
+      alert("Không thể tải thông tin năm học.");
+      return;
+    }
+
+    setCurrentYear(yearData);
+    setIsOpen(yearData.submission_open);
+
+    // LẤY HỒ SƠ ĐÃ NỘP CỦA NĂM HỌC
+    const { data: yearProfiles, error: yearProfilesError } = await supabase
+      .from("student_year_profiles")
+      .select("*")
+      .eq("academic_year_id", yearData.id)
+      .eq("is_submitted", true);
+
+    if (yearProfilesError) {
+      console.error("Lỗi lấy hồ sơ theo năm học:", yearProfilesError);
+      alert("Không thể tải danh sách hồ sơ.");
+      return;
+    }
+
+    const userIds = (yearProfiles || []).map((item) => item.user_id);
+
+    if (userIds.length === 0) {
+      setStudents([]);
+      setSubmittedCount(0);
+      setApprovers({});
+      return;
+    }
+
+    // LẤY THÔNG TIN SINH VIÊN
+    const { data: profilesData, error: profilesError } = await supabase
+      .from("profiles")
+      .select("*")
+      .in("id", userIds)
+      .eq("role", "student");
+
+    if (profilesError) {
+      console.error("Lỗi lấy thông tin sinh viên:", profilesError);
+      alert("Không thể tải thông tin sinh viên.");
+      return;
+    }
+
+    const profileMap = new Map<string, any>(
+      (profilesData || []).map((item) => [item.id, item])
+    );
+
+    // GHÉP THÔNG TIN SINH VIÊN VỚI HỒ SƠ NĂM HỌC
+    const studentList = (yearProfiles || [])
+      .map((yearProfile) => {
+        const studentProfile = profileMap.get(yearProfile.user_id);
+
+        if (!studentProfile) return null;
+
+        return {
+          ...studentProfile,
+          ...yearProfile,
+          id: studentProfile.id,
+          user_id: studentProfile.id,
+          year_profile_id: yearProfile.id,
+        };
+      })
+      .filter(Boolean)
+      .sort((a: any, b: any) => {
+        const classCompare = String(a.lop || "").localeCompare(
+          String(b.lop || ""),
+          "vi"
         );
-      } else {
-        setTotalStudents(totalCount || 0);
-      }
 
-      // HỒ SƠ ĐÃ NỘP
+        return (
+          classCompare ||
+          String(a.mssv || "").localeCompare(String(b.mssv || ""))
+        );
+      });
 
-      const {
-        data: submittedStudents,
-        count: submittedCountData,
-        error: submittedError,
-      } = await supabase
+    setStudents(studentList);
+    setSubmittedCount(studentList.length);
+
+    // LẤY TÊN NGƯỜI XÉT DUYỆT
+    const approverIds = [
+      ...new Set(
+        studentList
+          .map((sv: any) => sv.nguoi_duyet_id)
+          .filter(Boolean)
+      ),
+    ];
+
+    if (approverIds.length > 0) {
+      const { data: approversData, error: approversError } = await supabase
         .from("profiles")
-        .select("*", {
-          count: "exact",
-        })
-        .eq("role", "student")
-        .eq("is_submitted", true)
-        .order("lop", {
-          ascending: true,
-        })
-        .order("mssv", {
-          ascending: true,
+        .select("id, ho_ten")
+        .in("id", approverIds);
+
+      if (approversError) {
+        console.error("Lỗi lấy tên người xét duyệt:", approversError);
+      } else {
+        const approverMap: Record<string, string> = {};
+
+        (approversData || []).forEach((item) => {
+          approverMap[item.id] = item.ho_ten;
         });
 
-      if (submittedError) {
-        console.error(
-          "Lỗi lấy hồ sơ đã nộp:",
-          submittedError
-        );
-      } else {
-        const studentList = submittedStudents || [];
-        setSubmittedCount(
-          submittedCountData || 0
-        );
-        setStudents(studentList);
-
-        const approverIds = [
-          ...new Set(
-            studentList
-              .map((sv) => sv.nguoi_duyet_id)
-              .filter(Boolean)
-          ),
-        ];
-
-        if (approverIds.length > 0) {
-          const {
-            data: approversData,
-            error: approversError,
-          } = await supabase
-            .from("profiles")
-            .select("id, ho_ten")
-            .in("id", approverIds);
-
-          if (approversError) {
-            console.error(
-              "Lỗi lấy tên người duyệt:",
-              approversError
-            );
-          } else {
-            const map: Record<string, string> = {};
-            (approversData || []).forEach((item) => {
-              map[item.id] = item.ho_ten;
-            });
-            setApprovers(map);
-          }
-        } else {
-          setApprovers({});
-        }
+        setApprovers(approverMap);
       }
-
-      setLoading(false);
-    } catch (error) {
-      console.error(
-        "Lỗi kiểm tra tài khoản:",
-        error
-      );
-      setLoading(false);
+    } else {
+      setApprovers({});
     }
+  } catch (error) {
+    console.error("Lỗi tải dữ liệu năm học:", error);
+  } finally {
+    setLoading(false);
   }
+}
 
   const approvedCount = students.filter(
     (sv) =>
@@ -232,119 +258,110 @@ if (settingError) {
         )
       : 0;
 async function toggleSubmission() {
-  const newStatus = !isOpen;
+  if (!currentYear?.id) return;
 
+  const newStatus = !isOpen;
   setSavingSubmission(true);
 
   const { error } = await supabase
-    .from("site_settings")
-    .update({
-      submission_open: newStatus,
-    })
-    .eq("id", 1);
+    .from("academic_years")
+    .update({ submission_open: newStatus })
+    .eq("id", currentYear.id);
 
   setSavingSubmission(false);
 
   if (error) {
-    console.error(
-      "Lỗi thay đổi trạng thái nhận hồ sơ:",
-      error
-    );
-
-    alert(
-      "Không thể thay đổi trạng thái nhận hồ sơ."
-    );
-
+    console.error("Lỗi thay đổi trạng thái nhận hồ sơ:", error);
+    alert("Không thể thay đổi trạng thái nhận hồ sơ.");
     return;
   }
 
   setIsOpen(newStatus);
+  setCurrentYear((prev: any) =>
+    prev ? { ...prev, submission_open: newStatus } : prev
+  );
 }
-  async function updateTrangThai(
-    studentId: string,
-    value: string
-  ) {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+async function updateTrangThai(studentId: string, value: string) {
+  if (!currentYear?.id) return;
 
-    if (userError || !user) {
-      alert("Không xác định được tài khoản Chủ tịch HSV.");
-      return;
-    }
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-    setSavingStatus(true);
-
-const { data, error } = await supabase
-  .from("profiles")
-.update({
-  trang_thai: value,
-  nguoi_duyet_id:
-    value === "chua_danh_gia" ? null : user.id,
-})
-  .eq("id", studentId)
-  .select("id, trang_thai, nguoi_duyet_id, ghi_chu, da_duyet")
-  .single();
-
-    if (error) {
-      console.error("LỖI CẬP NHẬT TRẠNG THÁI:", error);
-      alert("Cập nhật trạng thái thất bại: " + error.message);
-      return;
-    }
-
-    setStudents((prev) =>
-      prev.map((student) =>
-        student.id === studentId
-          ? { ...student, ...data }
-          : student
-      )
-    );
-
-    setSelectedStudent((prev: any) =>
-      prev?.id === studentId
-        ? { ...prev, ...data }
-        : prev
-    );
-
-    if (data?.nguoi_duyet_id) {
-      const { data: approverData } = await supabase
-        .from("profiles")
-        .select("id, ho_ten")
-        .eq("id", data.nguoi_duyet_id)
-        .single();
-
-      if (approverData) {
-        setApprovers((prev) => ({
-          ...prev,
-          [approverData.id]: approverData.ho_ten,
-        }));
-      }
-    }
+  if (userError || !user) {
+    alert("Không xác định được tài khoản Chủ tịch HSV.");
+    return;
   }
-
-async function handleQuickApprove(student: any) {
-  const alreadyApproved = isApprovalToggled(student);
-  const newApprovalState = !alreadyApproved;
 
   setSavingStatus(true);
 
   const { data, error } = await supabase
-    .from("profiles")
+    .from("student_year_profiles")
     .update({
-      da_duyet: newApprovalState,
+      trang_thai: value,
+      nguoi_duyet_id: value === "chua_danh_gia" ? null : user.id,
     })
-    .eq("id", student.id)
-    .select("id, da_duyet")
+    .eq("user_id", studentId)
+    .eq("academic_year_id", currentYear.id)
+    .select("user_id, trang_thai, nguoi_duyet_id, ghi_chu, da_duyet")
     .single();
 
   setSavingStatus(false);
 
   if (error) {
-    alert(
-      "Cập nhật trạng thái duyệt thất bại: " +
-        error.message
-    );
+    console.error("LỖI CẬP NHẬT TRẠNG THÁI:", error);
+    alert("Cập nhật trạng thái thất bại: " + error.message);
+    return;
+  }
+
+  const updated = { ...data, id: studentId };
+
+  setStudents((prev) =>
+    prev.map((student) =>
+      student.id === studentId ? { ...student, ...updated } : student
+    )
+  );
+
+  setSelectedStudent((prev: any) =>
+    prev?.id === studentId ? { ...prev, ...updated } : prev
+  );
+
+  if (data.nguoi_duyet_id) {
+    const { data: approverData } = await supabase
+      .from("profiles")
+      .select("id, ho_ten")
+      .eq("id", data.nguoi_duyet_id)
+      .single();
+
+    if (approverData) {
+      setApprovers((prev) => ({
+        ...prev,
+        [approverData.id]: approverData.ho_ten,
+      }));
+    }
+  }
+}
+
+async function handleQuickApprove(student: any) {
+  if (!currentYear?.id) return;
+
+  const newApprovalState = !isApprovalToggled(student);
+
+  setSavingStatus(true);
+
+  const { data, error } = await supabase
+    .from("student_year_profiles")
+    .update({ da_duyet: newApprovalState })
+    .eq("user_id", student.id)
+    .eq("academic_year_id", currentYear.id)
+    .select("user_id, da_duyet")
+    .single();
+
+  setSavingStatus(false);
+
+  if (error) {
+    alert("Cập nhật trạng thái duyệt thất bại: " + error.message);
     return;
   }
 
@@ -362,11 +379,8 @@ async function handleQuickApprove(student: any) {
       : prev
   );
 
-  // 📱 Gửi Push khi hồ sơ đã đạt và được duyệt
-  if (
-    student.trang_thai === "da_dat" &&
-    newApprovalState === true
-  ) {
+  // GỬI THÔNG BÁO KHI SINH VIÊN ĐẠT VÀ ĐƯỢC DUYỆT
+  if (student.trang_thai === "da_dat" && newApprovalState) {
     try {
       await authFetch("/api/send-notification", {
         method: "POST",
@@ -377,18 +391,17 @@ async function handleQuickApprove(student: any) {
           userId: student.id,
           type: "result",
           title: "🎉 Chúc mừng!",
-          message:
-            "Bạn đã đạt danh hiệu Sinh viên 5 Tốt Cấp Trường năm học 2025 - 2026.",
+          message: `Bạn đã đạt danh hiệu Sinh viên 5 Tốt Cấp Trường năm học ${currentYear.name}.`,
           url: "/",
         }),
       });
     } catch (error) {
-      // Lỗi Push không ảnh hưởng đến việc duyệt hồ sơ
+      console.error("Lỗi gửi thông báo:", error);
     }
   }
 }
 async function handleApproveAll() {
-  if (students.length === 0) return;
+  if (!currentYear?.id || students.length === 0) return;
 
   const allApproved = students.every(
     (student) => student.da_duyet === true
@@ -401,57 +414,42 @@ async function handleApproveAll() {
   const studentIds = students.map((student) => student.id);
 
   const { data, error } = await supabase
-    .from("profiles")
-    .update({
-      da_duyet: newApprovalState,
-    })
-    .in("id", studentIds)
-    .select("id, da_duyet");
+    .from("student_year_profiles")
+    .update({ da_duyet: newApprovalState })
+    .eq("academic_year_id", currentYear.id)
+    .in("user_id", studentIds)
+    .select("user_id, da_duyet");
 
   setSavingStatus(false);
 
   if (error) {
-    console.error(
-      "LỖI DUYỆT TẤT CẢ:",
-      error
-    );
-
-    alert(
-      "Cập nhật trạng thái duyệt thất bại: " +
-        error.message
-    );
-
+    console.error("LỖI DUYỆT TẤT CẢ:", error);
+    alert("Cập nhật trạng thái duyệt thất bại: " + error.message);
     return;
   }
 
   const updatedMap: Record<string, boolean> = {};
 
   (data || []).forEach((item) => {
-    updatedMap[item.id] = item.da_duyet;
+    updatedMap[item.user_id] = item.da_duyet;
   });
 
   setStudents((prev) =>
     prev.map((student) =>
       updatedMap[student.id] !== undefined
-        ? {
-            ...student,
-            da_duyet: updatedMap[student.id],
-          }
+        ? { ...student, da_duyet: updatedMap[student.id] }
         : student
     )
   );
 
   setSelectedStudent((prev: any) =>
     prev && updatedMap[prev.id] !== undefined
-      ? {
-          ...prev,
-          da_duyet: updatedMap[prev.id],
-        }
+      ? { ...prev, da_duyet: updatedMap[prev.id] }
       : prev
   );
 
-  // 📱 Gửi Push hàng loạt khi DUYỆT TẤT CẢ
-  if (newApprovalState === true) {
+  // CHỈ GỬI THÔNG BÁO CHO SINH VIÊN ĐẠT, CHƯA ĐƯỢC DUYỆT
+  if (newApprovalState) {
     const studentsToNotify = students.filter(
       (student) =>
         student.trang_thai === "da_dat" &&
@@ -470,79 +468,65 @@ async function handleApproveAll() {
               userId: student.id,
               type: "result",
               title: "🎉 Chúc mừng!",
-              message:
-                "Bạn đã đạt danh hiệu Sinh viên 5 Tốt Cấp Trường năm học 2025 - 2026.",
+              message: `Bạn đã đạt danh hiệu Sinh viên 5 Tốt Cấp Trường năm học ${currentYear.name}.`,
               url: "/",
             }),
           });
         } catch (error) {
-          // Lỗi Push không ảnh hưởng đến việc duyệt hồ sơ
+          console.error("Lỗi gửi thông báo:", error);
         }
       })
     );
   }
 }
-  async function updateGhiChu(
-    studentId: string,
-    value: string
-  ) {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+async function updateGhiChu(studentId: string, value: string) {
+  if (!currentYear?.id) return;
 
-    if (userError || !user) {
-      return;
-    }
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-    setSavingNote(true);
+  if (userError || !user) return;
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .update({
-  ghi_chu: value,
-  nguoi_duyet_id: user.id,
-})
-      .eq("id", studentId)
-      .select("id, ghi_chu, nguoi_duyet_id, da_duyet")
-      .single();
+  setSavingNote(true);
 
-    setSavingNote(false);
+  const { data, error } = await supabase
+    .from("student_year_profiles")
+    .update({
+      ghi_chu: value,
+      nguoi_duyet_id: user.id,
+    })
+    .eq("user_id", studentId)
+    .eq("academic_year_id", currentYear.id)
+    .select("user_id, ghi_chu, nguoi_duyet_id, da_duyet")
+    .single();
 
-    if (error) {
-      console.error("LỖI TỰ ĐỘNG LƯU GHI CHÚ:", error);
-      return;
-    }
+  setSavingNote(false);
 
-    setStudents((prev) =>
-      prev.map((student) =>
-        student.id === studentId
-          ? { ...student, ...data }
-          : student
-      )
-    );
-
-    setSelectedStudent((prev: any) =>
-      prev?.id === studentId
-        ? { ...prev, ...data }
-        : prev
-    );
-
-    if (data?.nguoi_duyet_id) {
-      const { data: approverData } = await supabase
-        .from("profiles")
-        .select("id, ho_ten")
-        .eq("id", data.nguoi_duyet_id)
-        .single();
-
-      if (approverData) {
-        setApprovers((prev) => ({
-          ...prev,
-          [approverData.id]: approverData.ho_ten,
-        }));
-      }
-    }
+  if (error) {
+    console.error("LỖI TỰ ĐỘNG LƯU GHI CHÚ:", error);
+    alert("Không thể lưu ghi chú: " + error.message);
+    return;
   }
+
+  const updated = { ...data, id: studentId };
+
+  setStudents((prev) =>
+    prev.map((student) =>
+      student.id === studentId ? { ...student, ...updated } : student
+    )
+  );
+
+  setSelectedStudent((prev: any) =>
+    prev?.id === studentId ? { ...prev, ...updated } : prev
+  );
+
+  setApprovers((prev) => ({
+    ...prev,
+    [user.id]: profile?.ho_ten || prev[user.id] || "Chủ tịch HSV",
+  }));
+}
 const filteredStudents = students.filter((student) => {
   const keyword = searchText.trim().toLowerCase();
 
@@ -858,14 +842,58 @@ const exportExcel = async () => {
       </div>
 
       <h1
-        style={{
-          margin: 0,
-          fontSize: "24px",
-          fontWeight: 700,
-        }}
-      >
-        Xét duyệt hồ sơ Sinh viên 5 tốt
-      </h1>
+  style={{
+    margin: 0,
+    fontSize: "24px",
+    fontWeight: 700,
+  }}
+>
+  Xét duyệt hồ sơ Sinh viên 5 tốt
+</h1>
+
+<div
+  style={{
+    marginTop: "12px",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    flexWrap: "wrap",
+  }}
+>
+  <span
+    style={{
+      fontSize: "14px",
+      fontWeight: 600,
+    }}
+  >
+    Chọn năm học:
+  </span>
+
+  <select
+    value={currentYear?.id || ""}
+    onChange={(e) => loadYearData(Number(e.target.value))}
+    disabled={loading}
+    style={{
+      padding: "8px 12px",
+      borderRadius: "9px",
+      border: "1px solid rgba(255,255,255,0.5)",
+      background: "#fff",
+      color: "#1d4ed8",
+      fontSize: "14px",
+      fontWeight: 600,
+      cursor: loading ? "not-allowed" : "pointer",
+      outline: "none",
+      minWidth: "150px",
+    }}
+  >
+    {academicYears.map((year) => (
+      <option key={year.id} value={year.id}>
+        {year.name}
+        {year.is_current ? " (Hiện tại)" : ""}
+      </option>
+    ))}
+  </select>
+</div>
     </div>
 
     <div
@@ -1591,7 +1619,7 @@ const exportExcel = async () => {
           type="button"
           onClick={() => {
             window.location.href =
-              `/chutichhsv/students/${sv.id}`;
+              `/chutichhsv/students/${sv.id}?year=${currentYear?.id ?? ""}`;
           }}
           style={{
             border: "none",
