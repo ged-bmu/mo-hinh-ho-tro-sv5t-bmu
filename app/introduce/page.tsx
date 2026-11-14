@@ -454,45 +454,20 @@ async function handleLogin() {
         : undefined,
     }}
   >
-    <b>
-      {" "}Với mục tiêu{" "}
-      <span
-        style={{
-          color: "#2563eb",
-          fontWeight: 600,
-        }}
-      >
-        tăng cường ứng dụng công nghệ và thúc đẩy chuyển đổi số
-      </span>{" "}
-      trong công tác Đoàn – Hội,{" "}
-      <span
-        style={{
-          color: "#2563eb",
-          fontWeight: 600,
-        }}
-      >
-        Hệ thống Hỗ trợ Sinh viên 5 Tốt BMU
-      </span>{" "}
-      là nền tảng trực tuyến do{" "}
-      <span
-        style={{
-          color: "#2563eb",
-          fontWeight: 600,
-        }}
-      >
-        Câu lạc bộ Sinh viên 5 Tốt Trường Đại học Y Dược Buôn Ma Thuột
-      </span>{" "}
-      xây dựng nhằm hỗ trợ sinh viên trong quá trình{" "}
-      <span
-        style={{
-          color: "#2563eb",
-          fontWeight: 600,
-        }}
-      >
-        chuẩn bị hồ sơ xét danh hiệu Sinh viên 5 tốt các cấp
-      </span>
-      .
-    </b>
+<b>
+  Với mục tiêu{" "}
+  <span style={{ color: "#2563eb", fontWeight: 600 }}>
+    tăng cường ứng dụng công nghệ thông tin và thúc đẩy chuyển đổi số
+  </span>{" "}
+  trong công tác Hội và phong trào sinh viên,{" "}
+  <span style={{ color: "#2563eb", fontWeight: 600 }}>
+    Hệ thống hỗ trợ Sinh viên 5 tốt BMU
+  </span>{" "} là mô hình Chuyển đổi số được ban hành theo <span style={{ color: "#2563eb", fontWeight: 600 }}>
+    Kế hoạch số 03/KH-HSV ngày 27/8/2026 của Ban Chấp hành Hội Sinh viên Trường
+   {" "}</span>
+   nhằm hỗ trợ sinh viên theo dõi quá trình rèn luyện, hoàn
+   thiện hồ sơ Sinh viên 5 tốt cấp Trường.
+</b>
   </div>
 
       {/* ===== 3 CARD BÊN DƯỚI ===== */}
@@ -860,34 +835,30 @@ async function handleLogin() {
             margin: 0,
           }}
         >
+          <p>
           <b>Hệ thống hỗ trợ Sinh viên 5 tốt BMU</b> là nền tảng trực tuyến
           được phát triển bởi{" "}
           <b>
             Câu lạc bộ Sinh viên 5 tốt Trường Đại học Y Dược Buôn Ma Thuột
           </b>
-          . Đây là nội dung thuộc{" "}
+          , thuộc{" "}
           <b>
             Mô hình hỗ trợ Sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt
             các cấp
-          </b>{" "}
-          nhằm hỗ trợ sinh viên trong quá trình chuẩn bị hồ sơ xét danh hiệu{" "}
-          <b>Sinh viên 5 tốt</b>.
+          </b>
+          </p>
+          <p>
+          Hệ thống được xây dựng nhằm đồng hành cùng sinh viên trong quá trình phấn đấu,
+           rèn luyện và hoàn thiện hồ sơ Sinh viên 5 tốt cấp Trường. Thông qua nền
+          tảng, sinh viên có thể theo dõi các tiêu chí, quản lý minh chứng, cập nhật kết
+          quả học tập, theo dõi tiến độ và nhận hướng dẫn từ Câu lạc bộ Sinh viên 5 tốt. 
+          Đồng thời, hệ thống hỗ trợ cán bộ quản lý tập trung hồ sơ, kiểm tra minh chứng
+          và phản hồi kết quả xử lý.
         </p>
-
-        <p
-          style={{
-            fontSize: isMobile ? "15px" : "18px",
-            lineHeight: 1.8,
-            textAlign: "justify",
-            margin: "18px 0 0",
-          }}
-        >
-          Hệ thống được xây dựng với mục tiêu giúp sinh viên quản lý minh
-          chứng một cách khoa học, theo dõi tiến độ hoàn thiện hồ sơ, tiếp
-          nhận nhận xét từ Ban Chủ nhiệm Câu lạc bộ và xuất hồ sơ phục vụ
-          công tác xét chọn. Việc quản lý minh chứng tập trung góp phần giảm
-          thời gian chuẩn bị hồ sơ, hạn chế sai sót và nâng cao hiệu quả
-          trong quá trình xét duyệt.
+        <p>Với phương thức quản lý trực tuyến, hệ thống giúp quá trình chuẩn bị
+          hồ sơ trở nên thuận tiện, khoa học và minh bạch hơn, góp phần hỗ trợ sinh viên
+          chủ động trong hành trình chinh phục danh hiệu Sinh viên 5 tốt.
+        </p>
         </p>
       </section>
 
@@ -959,11 +930,15 @@ async function handleLogin() {
           }}
         >
           Để đạt được danh hiệu, sinh viên cần phấn đấu và đáp ứng đầy đủ các
-          tiêu chuẩn ở 05 tiêu chí: Đạo đức tốt, Học tập tốt, Thể lực tốt,
-          Tình nguyện tốt và Hội nhập tốt theo quy định của Hội Sinh viên
-          Việt Nam. Danh hiệu được xét chọn ở các cấp từ cấp trường đến cấp
-          tỉnh, thành phố và cấp Trung ương, là sự ghi nhận xứng đáng cho quá
-          trình rèn luyện, cống hiến và phát triển toàn diện của mỗi sinh viên.
+          tiêu chuẩn ở 05 tiêu chí: 
+          <p> <b> Đạo đức tốt:</b> Rèn luyện phẩm chất, đạo đức và lối sống tích cực. </p>
+          <p><b> Học tập tốt:</b> Đạt kết quả học tập cao, có tinh thần học hỏi, nghiên cứu khoa học và sáng tạo. </p>
+          <p><b> Thể lực tốt:</b> Có sức khỏe tốt, tích cực tham gia các hoạt động thể thao và rèn luyện thể chất. </p>
+          <p><b> Tình nguyện tốt:</b> Tham gia tích cực các hoạt động tình nguyện, góp phần xây dựng cộng đồng. </p>
+          <p><b> Hội nhập tốt:</b> Chủ động trau dồi năng lực ngoại ngữ, tích lũy, rèn luyện các kỹ năng mềm, kỹ năng hội nhập</p>
+          <p>Danh hiệu được xét chọn ở các cấp Trường, tỉnh/thành phố và Trung ương, là sự ghi nhận 
+            cho quá trình nỗ lực, rèn luyện và phát triển toàn diện của mỗi sinh viên.
+          </p>
         </p>
       </section>
 
@@ -1021,13 +996,13 @@ async function handleLogin() {
             Hỗ trợ sinh viên xây dựng lộ trình phấn đấu đạt danh hiệu Sinh
             viên 5 tốt.
           </li>
-          <li>Chuẩn hóa việc lưu trữ minh chứng theo từng tiêu chí.</li>
-          <li>Rút ngắn thời gian chuẩn bị và nộp hồ sơ.</li>
+          <li>Quản lý và lưu trữ minh chứng theo từng tiêu chí.</li>
+          <li> Theo dõi tiến độ học tập, rèn luyện và hoàn thiện hồ sơ.</li>
           <li>
-            Nâng cao hiệu quả quản lý, xét duyệt của Ban Chủ nhiệm Câu lạc bộ.
+            Hỗ trợ kiểm tra, phản hồi và quản lý hồ sơ tập trung.
           </li>
           <li>
-            Thúc đẩy chuyển đổi số trong công tác Hội và phong trào sinh viên.
+           Đơn giản hóa quy trình chuẩn bị hồ sơ Sinh viên 5 tốt.
           </li>
         </ul>
       </section>
