@@ -147,6 +147,11 @@ const proofPaths = [
       icon: "🔔",
       href: "/thongbaouser",
     },
+    {
+      name: "Hướng dẫn",
+      icon: "📖",
+      href: "/huong-dan",
+    },
 
    ...(isAdmin === false
   ? [

@@ -69,22 +69,6 @@ export default function Footer() {
           >
             Kết nối với chúng tôi
           </h3>
-
-          <a
-            href="https://www.facebook.com/profile.php?id=100085955413497"
-            target="_blank"
-            rel="noreferrer"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              textDecoration: "none",
-              color: "#111827",
-            }}
-          >
-            <FaFacebook color="#1877F2" size={20} />
-            Tuổi trẻ BMU
-          </a>
           <a
             href="https://www.facebook.com/profile.php?id=100093817715642"
             target="_blank"
@@ -98,7 +82,7 @@ export default function Footer() {
             }}
           >
             <FaFacebook color="#1877F2" size={20} />
-            CLB Sinh viên 5 tốt BMU
+            CLB Sinh viên 5 tốt
           </a>
         </div>
       </div>

@@ -218,10 +218,32 @@ async function checkUser() {
 
   setLoading(false);
 }
-function formatEventTime(value: string | null) {
-  if (!value) return "Chưa cập nhật thời gian";
+function formatEventTime(start: string | null, end: string | null) {
+  const formatDate = (value: string | null) => {
+    if (!value) return null;
 
-  return value;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+
+    return date.toLocaleDateString("vi-VN", {
+      timeZone: "Asia/Ho_Chi_Minh",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  const startDate = formatDate(start);
+  const endDate = formatDate(end);
+
+  if (startDate && endDate) {
+    return `${startDate} - ${endDate}`;
+  }
+
+  if (startDate) return `Từ ngày ${startDate}`;
+  if (endDate) return `Đến ngày ${endDate}`;
+
+  return "Chưa cập nhật thời gian";
 }
 const criterionLabel: Record<string, string> = {
   dao_duc: "Đạo đức tốt",
@@ -1687,7 +1709,7 @@ style={{
                 display: isMobile ? "none" : "block",
               }}
             >
-              🕒 {formatEventTime(activity.event_time)}
+              🕒 {formatEventTime(activity.event_time, activity.end_time)}
             </div>
 
             {/* Xem chi tiết */}

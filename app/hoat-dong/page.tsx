@@ -405,84 +405,14 @@ const status =
                     {open && (
   <div className="border-t px-5 py-5 text-sm">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                          <b>📌 Tiêu chí</b>
-                          <br />
-                          {criterionLabel[
-                            activity.criterion || ""
-                          ] || "Chưa có"}
-                        </div>
+                        
 
                         <div>
                           <b>🏢 Đơn vị tổ chức</b>
                           <br />
                           {activity.organizer || "Chưa có"}
                         </div>
-
-                        <div>
-  <b>📅 Thời gian</b>
-  <br />
-  <div className="mt-1">
-    <p>
-      Bắt đầu: {formatDate(activity.event_time)}
-    </p>
-    <p>
-      Kết thúc: {formatDate(activity.end_time)}
-    </p>
-  </div>
-</div>
-
-                        <div>
-                          <b>⏰ Hạn đăng ký</b>
-                          <br />
-                          {formatDate(
-                            activity.registration_deadline
-                          )}
-                        </div>
-
-                        
-{/* MÔ TẢ HOẠT ĐỘNG */}
-<div className="md:col-span-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
-  <p className="mb-2 font-bold text-gray-800">
-    📝 Mô tả hoạt động
-  </p>
-
-  <div className="whitespace-pre-wrap break-words leading-7 text-gray-700">
-    {activity.detail_content || "Chưa có mô tả hoạt động."}
-  </div>
-</div>
-
-{/* LIÊN KẾT HOẠT ĐỘNG */}
-<div className="md:col-span-2 rounded-xl border border-blue-200 bg-blue-50 p-4">
-  <p className="mb-2 font-bold text-blue-900">
-    🔗 Liên kết hoạt động
-  </p>
-
-  {activity.activity_link ? (
-    <div>
-      <p className="mb-3 text-sm text-blue-800">
-        Nhấn nút bên dưới để đăng ký hoặc truy cập thông tin hoạt động.
-      </p>
-
-      <a
-        href={activity.activity_link}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex max-w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98]"
-      >
-        <span>Truy cập hoạt động</span>
-        <span aria-hidden="true">↗</span>
-      </a>
-    </div>
-  ) : (
-    <p className="text-sm text-gray-500">
-      Hoạt động này chưa có liên kết truy cập.
-    </p>
-  )}
-</div>
-
-
-                        <div>
+<div>
   <b>📑 Văn bản đính kèm</b>
   <br />
 
@@ -520,6 +450,67 @@ const status =
     </span>
   )}
 </div>
+
+                        <div>
+  <b>📅 Thời gian</b>
+  <br />
+  <div className="mt-1">
+    <p>
+      Bắt đầu: {formatDate(activity.event_time)}
+    </p>
+    <p>
+      Kết thúc: {formatDate(activity.end_time)}
+    </p>
+  </div>
+</div>
+
+                        <div>
+                          <b>⏰ Hạn đăng ký</b>
+                          <br />
+                          {formatDate(
+                            activity.registration_deadline
+                          )}
+                        </div>
+
+                        
+{/* MÔ TẢ HOẠT ĐỘNG */}
+<div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+  <p className="mb-2 font-bold text-gray-800">
+    📝 Mô tả hoạt động
+  </p>
+
+  <div className="whitespace-pre-wrap break-words leading-7 text-gray-700">
+    {activity.detail_content || "Chưa có mô tả hoạt động."}
+  </div>
+</div>
+
+{/* LIÊN KẾT HOẠT ĐỘNG */}
+<div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+  <p className="mb-2 font-bold text-blue-900">
+    🔗 Liên kết hoạt động
+  </p>
+
+  {activity.activity_link ? (
+    <div>
+      <a
+        href={activity.activity_link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex max-w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98]"
+      >
+        <span>Truy cập hoạt động</span>
+        <span aria-hidden="true">↗</span>
+      </a>
+    </div>
+  ) : (
+    <p className="text-sm text-gray-500">
+      Hoạt động này chưa có liên kết truy cập.
+    </p>
+  )}
+</div>
+
+
+
 </div>
                       </div>
                     )}
