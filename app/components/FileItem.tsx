@@ -10,11 +10,19 @@ export default function FileItem({
   url,
   onDelete,
   onRename,
+  orderNumber,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
 }: {
   file: any;
   url: string;
   onDelete: () => void;
   onRename: (file: any) => void;
+  orderNumber: number;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  isFirst?: boolean;
 }) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -110,150 +118,205 @@ useEffect(() => {
         boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
     >
-      {/* ================= DÒNG FILE ================= */}
+            {/* ================= DÒNG FILE ================= */}
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: isMobile ? "stretch" : "center",
           flexDirection: isMobile ? "column" : "row",
-          gap: isMobile ? "12px" : "16px",
+          alignItems: isMobile ? "stretch" : "center",
+          justifyContent: "space-between",
+          gap: "12px",
           width: "100%",
         }}
       >
-        {/* LEFT */}
+        {/* TÊN FILE */}
         <div
           style={{
             display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            alignItems: isMobile ? "stretch" : "center",
-            gap: "10px",
+            alignItems: "flex-start",
+            gap: "9px",
             flex: 1,
             minWidth: 0,
           }}
         >
-          <span
+          <strong
             style={{
-              width: "100%",
-              overflowWrap: "anywhere",
-              wordBreak: "break-all",
+              flexShrink: 0,
+              color: "#2563eb",
+              background: "#eff6ff",
+              padding: "3px 8px",
+              borderRadius: "6px",
             }}
           >
-            📄 {file.display_name || file.name}
-          </span>
+            {String(orderNumber).padStart(2, "0")}
+          </strong>
 
-          {/* CÁC NÚT */}
-          <div
+          <span
             style={{
+              minWidth: 0,
+              overflowWrap: "anywhere",
+              wordBreak: "break-word",
+            }}
+          >
+            {file.display_name || file.name}
+          </span>
+        </div>
+
+        {/* 5 NÚT CHỨC NĂNG */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: isMobile ? "flex-start" : "flex-end",
+            gap: "8px",
+            flexShrink: 0,
+          }}
+        >
+          {/* XEM */}
+          <button
+            onClick={() => setPreviewOpen((prev) => !prev)}
+            title={previewOpen ? "Ẩn xem" : "Xem minh chứng"}
+            style={{
+              width: "42px",
+              height: "42px",
+              padding: 0,
               display: "flex",
-              gap: "8px",
-              width: isMobile ? "100%" : "auto",
+              alignItems: "center",
+              justifyContent: "center",
+              background: previewOpen ? "#64748b" : "#2563eb",
+              border: "none",
+              borderRadius: "9px",
+              cursor: "pointer",
               flexShrink: 0,
             }}
           >
-            {/* XEM */}
-            <button
-              onClick={() => setPreviewOpen((prev) => !prev)}
-              style={{
-                background: previewOpen ? "#64748b" : "#2563eb",
-                color: "white",
-                border: "none",
-                padding: "6px 12px",
-                borderRadius: "8px",
-                cursor: "pointer",
-                width: isMobile ? "calc(50% - 4px)" : "auto",
-                whiteSpace: "nowrap",
-              }}
-            >
-              <Image
-                src="/iconxem2.png"
-                width={20}
-                height={20}
-                alt="Xem"
-                style={{
-                  display: "inline-block",
-                  verticalAlign: "middle",
-                  marginRight: 4,
-                }}
-              />
-              {previewOpen ? "Ẩn xem" : "Xem"}
-            </button>
+            <Image
+              src="/iconxem2.png"
+              width={20}
+              height={20}
+              alt="Xem"
+            />
+          </button>
 
-            {/* ĐỔI TÊN */}
-            <button
-              onClick={() => onRename(file)}
-              style={{
-                background: "#22c55e",
-                color: "white",
-                border: "none",
-                padding: isMobile ? "4px 8px" : "6px 12px",
-                borderRadius: "8px",
-                cursor: "pointer",
-                width: isMobile ? "calc(50% - 4px)" : "auto",
-              }}
-            >
-              <Image
-                src="/iconchinhsua.png"
-                width={20}
-                height={20}
-                alt="Đổi tên"
-                style={{
-                  display: "inline-block",
-                  verticalAlign: "middle",
-                  marginRight: 4,
-                }}
-              />
-              Đổi tên
-            </button>
-          </div>
-        </div>
+          {/* ĐỔI TÊN */}
+          <button
+            onClick={() => onRename(file)}
+            title="Đổi tên và báo cáo minh chứng"
+            style={{
+              width: "42px",
+              height: "42px",
+              padding: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#22c55e",
+              border: "none",
+              borderRadius: "9px",
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            <Image
+              src="/iconchinhsua.png"
+              width={20}
+              height={20}
+              alt="Đổi tên"
+            />
+          </button>
 
-        {/* XÓA */}
-        <button
-          disabled={deleting}
-          onClick={async () => {
-            const ok = window.confirm("Bạn có chắc muốn xóa file này không?");
-            if (!ok) return;
+          {/* DI CHUYỂN LÊN */}
+          <button
+            onClick={onMoveUp}
+            disabled={orderNumber === 1}
+            title="Di chuyển lên"
+            style={{
+              width: "42px",
+              height: "42px",
+              padding: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#e2e8f0",
+              color: "#1e293b",
+              border: "none",
+              borderRadius: "9px",
+              cursor: orderNumber === 1 ? "not-allowed" : "pointer",
+              opacity: orderNumber === 1 ? 0.4 : 1,
+              flexShrink: 0,
+              fontSize: "20px",
+            }}
+          >
+            ↑
+          </button>
 
-            setDeleting(true);
+          {/* DI CHUYỂN XUỐNG */}
+          <button
+            onClick={onMoveDown}
+            title="Di chuyển xuống"
+            style={{
+              width: "42px",
+              height: "42px",
+              padding: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#e2e8f0",
+              color: "#1e293b",
+              border: "none",
+              borderRadius: "9px",
+              cursor: "pointer",
+              flexShrink: 0,
+              fontSize: "20px",
+            }}
+          >
+            ↓
+          </button>
 
-            try {
-              await onDelete();
-            } finally {
-              setDeleting(false);
-            }
-          }}
-          style={{
-            border: "none",
-            background: "#ef4444",
-            color: "white",
-            padding: "8px 12px",
-            borderRadius: "8px",
-            cursor: deleting ? "not-allowed" : "pointer",
-            opacity: deleting ? 0.7 : 1,
-            width: isMobile ? "100%" : "auto",
-            marginTop: isMobile ? "8px" : 0,
-          }}
-        >
-          {deleting ? (
-            <Spinner size={18} />
-          ) : (
-            <>
+          {/* XÓA */}
+          <button
+            disabled={deleting}
+            title="Xóa minh chứng"
+            onClick={async () => {
+              const ok = window.confirm(
+                "Bạn có chắc muốn xóa file này không?"
+              );
+              if (!ok) return;
+
+              setDeleting(true);
+
+              try {
+                await onDelete();
+              } finally {
+                setDeleting(false);
+              }
+            }}
+            style={{
+              width: "42px",
+              height: "42px",
+              padding: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#ef4444",
+              border: "none",
+              borderRadius: "9px",
+              cursor: deleting ? "not-allowed" : "pointer",
+              opacity: deleting ? 0.7 : 1,
+              flexShrink: 0,
+            }}
+          >
+            {deleting ? (
+              <Spinner size={20} />
+            ) : (
               <Image
                 src="/iconthungrac.png"
                 width={20}
                 height={20}
                 alt="Xóa"
-                style={{
-                  display: "inline-block",
-                  verticalAlign: "middle",
-                  marginRight: 4,
-                }}
               />
-              Xóa
-            </>
-          )}
-        </button>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* ================= PREVIEW SỔ XUỐNG ================= */}
