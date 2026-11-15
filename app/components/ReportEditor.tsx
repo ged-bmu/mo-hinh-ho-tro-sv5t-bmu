@@ -1,41 +1,47 @@
+
 "use client";
 
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect } from "react";
+
 type Props = {
   value: string;
   onChange: (value: string) => void;
+  editable?: boolean;
 };
 
 export default function ReportEditor({
   value,
   onChange,
+  editable = true,
 }: Props) {
-
   const editor = useEditor({
-  extensions: [
-  StarterKit.configure({
-    bulletList: false,
-    orderedList: false,
-    listItem: false,
-  }),
-],
-  content: "",
+    extensions: [
+      StarterKit.configure({
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+      }),
+    ],
+    content: "",
+    editable,
+    immediatelyRender: false,
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
+  });
 
-  immediatelyRender: false,
+  useEffect(() => {
+    if (!editor) return;
 
-  onUpdate: ({ editor }) => {
-    onChange(editor.getHTML());
-  },
-});
-useEffect(() => {
-  if (!editor) return;
+    editor.setEditable(editable);
 
-  if (value !== editor.getHTML()) {
-    editor.commands.setContent(value);
-  }
-}, [editor, value]);
+    if (value !== editor.getHTML()) {
+      editor.commands.setContent(value);
+    }
+  }, [editor, value, editable]);
+
   if (!editor) return null;
 
   return (
@@ -47,59 +53,60 @@ useEffect(() => {
         background: "#fff",
       }}
     >
-      {/* Toolbar */}
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          padding: "5px",
-          borderBottom: "1px solid #e5e7eb",
-          background: "#f8fafc",
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleBold().run()}
+      {editable && (
+        <div
           style={{
-            padding: "6px 12px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            cursor: "pointer",
-            background: editor.isActive("bold") ? "#2563eb" : "#fff",
-            color: editor.isActive("bold") ? "#fff" : "#000",
-            fontWeight: "bold",
+            display: "flex",
+            gap: "8px",
+            padding: "5px",
+            borderBottom: "1px solid #e5e7eb",
+            background: "#f8fafc",
           }}
         >
-          B
-        </button>
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            style={{
+              padding: "6px 12px",
+              border: "1px solid #d1d5db",
+              borderRadius: "8px",
+              cursor: "pointer",
+              background: editor.isActive("bold") ? "#2563eb" : "#fff",
+              color: editor.isActive("bold") ? "#fff" : "#000",
+              fontWeight: "bold",
+            }}
+          >
+            B
+          </button>
 
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          style={{
-            padding: "6px 12px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            cursor: "pointer",
-            background: editor.isActive("italic") ? "#2563eb" : "#fff",
-            color: editor.isActive("italic") ? "#fff" : "#000",
-            fontStyle: "italic",
-          }}
-        >
-          I
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            style={{
+              padding: "6px 12px",
+              border: "1px solid #d1d5db",
+              borderRadius: "8px",
+              cursor: "pointer",
+              background: editor.isActive("italic") ? "#2563eb" : "#fff",
+              color: editor.isActive("italic") ? "#fff" : "#000",
+              fontStyle: "italic",
+            }}
+          >
+            I
+          </button>
+        </div>
+      )}
 
       <EditorContent
-  editor={editor}
-  style={{
-    maxHeight: "240px",
-    overflowY: "auto",
-    padding: "16px",
-    lineHeight: "1.7",
-    outline: "none",
-  }}
-/>
+        editor={editor}
+        style={{
+          maxHeight: "240px",
+          overflowY: "auto",
+          padding: "16px",
+          lineHeight: "1.7",
+          outline: "none",
+        }}
+      />
     </div>
   );
 }

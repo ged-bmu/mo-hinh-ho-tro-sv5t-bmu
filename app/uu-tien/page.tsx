@@ -113,7 +113,6 @@ function UuTienPage() {
   const [tab, setTab] = useState("proof");
   const [displayNames, setDisplayNames] = useState<  Record<string, string>>({});
   const [report, setReport] = useState("");
-  const [savingReport, setSavingReport] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [selectedEvidence, setSelectedEvidence] = useState<any>(null);
@@ -207,43 +206,6 @@ const { data: reportData } = await supabase
   .maybeSingle();
 
 setReport(reportData?.content?.trim() ? reportData.content : "");
-}
-async function saveReport() {
-  if (!userId) return;
-
-  setSavingReport(true);
-const {
-  data: { user },
-} = await supabase.auth.getUser();
-
-if (!user) {
-  alert("Chưa đăng nhập.");
-  return;
-}
-const { error } = await supabase
-  .from("reports")
-  .upsert(
-    {
-      user_id: user.id,
-      criteria: "uu-tien",
-      content: buildReportWithEvidence(report, files),
-      academic_year_id: Number(yearId),
-    },
-    {
-      onConflict: "user_id,criteria,academic_year_id",
-    }
-  );
-
-  setSavingReport(false);
-
-if (error) {
-  console.error(error);
-  setSavingReport(false);
-  return;
-}
-
-setSavingReport(false);
-setLastSaved(new Date());
 }
 async function syncEvidenceReports(
   nextFiles: any[],
@@ -996,9 +958,10 @@ await syncEvidenceReports(normalizedFiles);
     </span>
   )}
 <ReportEditor
-  key="uu-tien"
+  key={`uu-tien-${yearId}`}
   value={report}
   onChange={setReport}
+  editable={false}
 />
 <div
   style={{
@@ -1009,23 +972,7 @@ await syncEvidenceReports(normalizedFiles);
   }}
 >
 
-  <button
-    onClick={saveReport}
-    disabled={savingReport}
-    style={{
-      padding: "6px 12px",
-      background: "#2563eb",
-      color: "#fff",
-      border: "1px solid #2563eb",
-      borderRadius: "6px",
-      cursor: savingReport ? "not-allowed" : "pointer",
-      fontSize: "13px",
-      fontWeight: 500,
-      opacity: savingReport ? 0.7 : 1,
-    }}
-  >
-    {savingReport ? "Đang lưu..." : "💾 Lưu"}
-  </button>
+  
 </div>
 </div>
           <div

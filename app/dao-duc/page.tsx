@@ -115,7 +115,6 @@ function DaoDucPage() {
   const [tab, setTab] = useState("proof");
   const [displayNames, setDisplayNames] = useState<  Record<string, string>>({});
   const [report, setReport] = useState("");
-  const [savingReport, setSavingReport] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [selectedEvidence, setSelectedEvidence] = useState<any>(null);
@@ -227,70 +226,6 @@ const mainReport = reportData?.content?.trim()
 `;
 
 setReport(mainReport);
-}
-async function saveReport() {
-  if (!yearId || isNaN(Number(yearId))) {
-    alert("Không xác định được năm học.");
-    return;
-  }
-
-  if (!report.trim()) {
-    alert("Nội dung báo cáo không được để trống.");
-    return;
-  }
-
-  setSavingReport(true);
-
-  try {
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      alert("Chưa đăng nhập.");
-      return;
-    }
-
-    const academicYearId = Number(yearId);
-
-    console.log("Lưu báo cáo:", {
-      user_id: user.id,
-      criteria: "dao-duc",
-      academic_year_id: academicYearId,
-    });
-
-    const { data, error } = await supabase
-      .from("reports")
-      .upsert(
-        {
-          user_id: user.id,
-          criteria: "dao-duc",
-          academic_year_id: academicYearId,
-          content: buildReportWithEvidence(report, files),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "user_id,criteria,academic_year_id",
-        }
-      )
-      .select()
-      .single();
-
-    setUserId(user.id);
-    setLastSaved(new Date());
-
-    alert("Đã lưu báo cáo.");
-  } catch (error) {
-
-    alert(
-      error instanceof Error
-        ? error.message
-        : "Không thể lưu báo cáo"
-    );
-  } finally {
-    setSavingReport(false);
-  }
 }
 async function syncEvidenceReports(
   nextFiles: any[],
@@ -1047,9 +982,10 @@ await syncEvidenceReports(normalizedFiles);
     </span>
   )}
 <ReportEditor
-  key="dao-duc"
+  key={`dao-duc-${yearId}`}
   value={report}
   onChange={setReport}
+  editable={false}
 />
 
 <div
@@ -1060,23 +996,7 @@ await syncEvidenceReports(normalizedFiles);
     marginTop: "16px",
   }}
 >
-<button
-    onClick={saveReport}
-    disabled={savingReport}
-    style={{
-      padding: "6px 12px",
-      background: "#2563eb",
-      color: "#fff",
-      border: "1px solid #2563eb",
-      borderRadius: "6px",
-      cursor: savingReport ? "not-allowed" : "pointer",
-      fontSize: "13px",
-      fontWeight: 500,
-      opacity: savingReport ? 0.7 : 1,
-    }}
-  >
-    {savingReport ? "Đang lưu..." : "💾 Lưu"}
-  </button>
+
 </div>
 </div>
           <div
