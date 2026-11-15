@@ -1118,7 +1118,12 @@ await syncEvidenceReports(normalizedFiles);
       onDelete={() =>
         deleteFile(file.storage_name)
       }
-      onRename={(file) => setSelectedEvidence(file)}
+onRename={(file) =>
+  setSelectedEvidence({
+    ...file,
+    folder: "tinh-nguyen",
+  })
+      }
   orderNumber={index + 1}
   isFirst={index === 0}
   onMoveUp={() => moveEvidence(file.id, "up")}

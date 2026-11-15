@@ -1117,7 +1117,12 @@ await syncEvidenceReports(normalizedFiles);
       onDelete={() =>
         deleteFile(file.storage_name)
       }
-      onRename={(file) => setSelectedEvidence(file)}
+      onRename={(file) =>
+  setSelectedEvidence({
+    ...file,
+    folder: "hoc-tap",
+  })
+      }
   orderNumber={index + 1}
   isFirst={index === 0}
   onMoveUp={() => moveEvidence(file.id, "up")}

@@ -180,7 +180,7 @@ async function loadFiles(academicYearName?: string) {
   // Lấy file từ uploaded_files
   const { data: uploadedFiles, error } = await supabase
     .from("uploaded_files")
-    .select("id, storage_name, display_name, storage_type, drive_file_id, drive_url, sort_order, report_content")
+    .select("id, folder, storage_name, display_name, storage_type, drive_file_id, drive_url, sort_order, report_content")
     .eq("user_id", user.id)
 .eq("folder", "dao-duc")
 .eq("academic_year_id", Number(yearId))
@@ -1136,7 +1136,12 @@ await syncEvidenceReports(normalizedFiles);
   }}
   url={fileUrl}
   onDelete={() => deleteFile(file.storage_name)}
-  onRename={(file) => setSelectedEvidence(file)}
+  onRename={(file) =>
+  setSelectedEvidence({
+    ...file,
+    folder: "dao-duc",
+  })
+}
   orderNumber={index + 2}
 isFirst={index === 0}
   onMoveUp={() => moveEvidence(file.id, "up")}
