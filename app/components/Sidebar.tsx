@@ -123,22 +123,22 @@ const proofPaths = [
       href: "/",
     },
     {
-      name: "Quản lí hồ sơ",
+      name: "Hồ sơ",
       icon: "🗂️",
       href: "/tieuchi",
     },
     {
-      name: "Xem Báo cáo",
+      name: "Báo cáo",
       icon: "📝",
       href: "/bao-cao",
     },
     {
-      name: "Mục tiêu học tập",
+      name: "Học tập",
       icon: "📊",
       href: "/bang-diem",
     },
     {
-      name: "Hoạt động sắp tới",
+      name: "Hoạt động",
       icon: "🎯",
       href: "/hoat-dong",
     },
@@ -502,8 +502,8 @@ const renderNotificationPrompt = () => {
     {notificationLoading
       ? "Đang xử lý..."
       : notificationEnabled
-      ? "Thông báo: Đang bật"
-      : "Thông báo: Đang tắt"}
+      ? "Thông báo: Bật"
+      : "Thông báo: Tắt"}
   </span>
 </button>
 
@@ -852,8 +852,8 @@ onMouseLeave={(e) => {
     {notificationLoading
       ? "Đang xử lý..."
       : notificationEnabled
-      ? "Thông báo: Đang bật"
-      : "Thông báo: Đang tắt"}
+      ? "Thông báo: Bật"
+      : "Thông báo: Tắt"}
   </span>
 )}
 </button>
