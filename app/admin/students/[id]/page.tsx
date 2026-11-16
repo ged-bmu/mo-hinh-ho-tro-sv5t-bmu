@@ -10,6 +10,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Header from "../../../components/Header";
 import CriteriaModal from "../../../components/CriteriaModal";
+import BangDanhGia from "../../../components/bangdanhgia";
 
 export default function StudentsDetailPage() {
   const params = useParams();
@@ -148,6 +149,34 @@ useEffect(() => {
   loadFiles();
   loadReports();
   loadCriteriaResults();
+}, [id, currentAcademicYear?.id]);
+// TỰ ĐỘNG CẬP NHẬT CHECKBOX KHI BẢNG ĐÁNH GIÁ THAY ĐỔI
+useEffect(() => {
+  if (!id || !currentAcademicYear?.id) return;
+
+  const channel = supabase
+    .channel(`student-criteria-${id}-${currentAcademicYear.id}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "student_criteria_results",
+        filter: `user_id=eq.${id}`,
+      },
+      (payload) => {
+        if (payload.eventType === "DELETE") {
+          loadCriteriaResults();
+        } else if (payload.new) {
+          setCriteriaResults(payload.new);
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }, [id, currentAcademicYear?.id]);
 async function loadCurrentAcademicYear() {
   const { data, error } = await supabase
@@ -296,79 +325,7 @@ async function loadReports() {
     alert("Đã lưu ghi chú");
   }
 
-  // =====================================================
-  // UPDATE TIÊU CHÍ
-  // =====================================================
-async function updateCriteria(
-  field: string,
-  value: boolean
-) {
-  if (!currentAcademicYear?.id) {
-    alert("Chưa xác định được năm học");
-    return;
-  }
 
-  const fieldMap: Record<string, string> = {
-    "dao-duc": "dao_duc",
-    "hoc-tap": "hoc_tap",
-    "the-luc": "the_luc",
-    "tinh-nguyen": "tinh_nguyen",
-    "hoi-nhap": "hoi_nhap",
-  };
-
-  const dbField = fieldMap[field];
-
-  if (!dbField) return;
-
-  const { data, error } = await supabase
-    .from("student_criteria_results")
-    .upsert(
-      {
-        user_id: id,
-        academic_year_id: currentAcademicYear.id,
-        dao_duc: criteriaResults?.dao_duc ?? false,
-        hoc_tap: criteriaResults?.hoc_tap ?? false,
-        the_luc: criteriaResults?.the_luc ?? false,
-        tinh_nguyen: criteriaResults?.tinh_nguyen ?? false,
-        hoi_nhap: criteriaResults?.hoi_nhap ?? false,
-        [dbField]: value,
-        updated_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "user_id,academic_year_id",
-      }
-    )
-    .select()
-    .single();
-
-  if (error) {
-    console.error("UPDATE CRITERIA ERROR:", error);
-    alert("Cập nhật thất bại");
-    return;
-  }
-
-  setCriteriaResults(data);
-
-  const titleMap: Record<string, string> = {
-    "dao-duc": "Đạo đức tốt",
-    "hoc-tap": "Học tập tốt",
-    "the-luc": "Thể lực tốt",
-    "tinh-nguyen": "Tình nguyện tốt",
-    "hoi-nhap": "Hội nhập tốt",
-  };
-
-  await sendNotification(
-    id,
-    "criteria",
-    value
-      ? "Bạn vừa Đạt tiêu chí mới 🎉"
-      : "Tiêu chí của bạn vừa được cập nhật",
-    value
-      ? `Tiêu chí ${titleMap[field]} đã được xác nhận đạt.`
-      : `Tiêu chí ${titleMap[field]} không còn được đánh dấu đạt.`,
-    "/"
-  );
-}
 
   // =====================================================
   // LOAD FILE THEO NĂM HỌC
@@ -674,7 +631,7 @@ async function loadFiles() {
                 textOverflow:
                   "ellipsis",
                 maxWidth: "230px",
-                cursor: "pointer",
+                cursor: "default",
                 color: "#000000",
               }}
             >
@@ -978,7 +935,7 @@ const { error } = await supabase
             style={{
               width: "100%",
               maxWidth: "1120px",
-              minHeight: "420mm",
+              minHeight: "auto",
               margin: "0 auto",
               background: "#fff",
               padding: "30px",
@@ -1265,8 +1222,7 @@ const { error } = await supabase
                         >
                           <div
                             style={{
-                              minHeight:
-                                "520px",
+                              minHeight:"auto",
                               lineHeight:
                                 "1.6",
                               fontSize:
@@ -1613,41 +1569,6 @@ const { error } = await supabase
                               criterion.title
                             }
                           </span>
-
-                          <input
-                            type="checkbox"
-                           checked={
-  criterion.key === "dao-duc"
-    ? criteriaResults?.dao_duc || false
-    : criterion.key === "hoc-tap"
-    ? criteriaResults?.hoc_tap || false
-    : criterion.key === "the-luc"
-    ? criteriaResults?.the_luc || false
-    : criterion.key === "tinh-nguyen"
-    ? criteriaResults?.tinh_nguyen || false
-    : criterion.key === "hoi-nhap"
-    ? criteriaResults?.hoi_nhap || false
-    : false
-}
-                            onChange={(
-                              e
-                            ) =>
-                              updateCriteria(
-                                criterion.key,
-                                e.target
-                                  .checked
-                              )
-                            }
-                            style={{
-                              width:
-                                "18px",
-                              height:
-                                "18px",
-                              cursor:
-                                "pointer",
-                              flexShrink: 0,
-                            }}
-                          />
                         </div>
                       </th>
                     )
@@ -1844,39 +1765,6 @@ const { error } = await supabase
                         )
                         .toLowerCase()}
                     </strong>
-
-                    <input
-                      type="checkbox"
-                      checked={
-  previewFolder === "dao-duc"
-    ? criteriaResults?.dao_duc || false
-    : previewFolder === "hoc-tap"
-    ? criteriaResults?.hoc_tap || false
-    : previewFolder === "the-luc"
-    ? criteriaResults?.the_luc || false
-    : previewFolder === "tinh-nguyen"
-    ? criteriaResults?.tinh_nguyen || false
-    : previewFolder === "hoi-nhap"
-    ? criteriaResults?.hoi_nhap || false
-    : false
-}
-                      onChange={(e) =>
-                        updateCriteria(
-                          previewFolder,
-                          e.target
-                            .checked
-                        )
-                      }
-                      style={{
-                        width:
-                          "18px",
-                        height:
-                          "18px",
-                        cursor:
-                          "pointer",
-                        flexShrink: 0,
-                      }}
-                    />
                   </div>
 
                   <div
@@ -2367,6 +2255,7 @@ const { error } = await supabase
           />
         )}
       </div>
+       <BangDanhGia studentId={id} />
     </div>
   );
 }

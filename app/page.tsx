@@ -31,6 +31,7 @@ export default function Home() {
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [registrationLoading, setRegistrationLoading] = useState(false);
+  const [totalProfilePercent, setTotalProfilePercent] = useState(0);
 
 useEffect(() => {
   checkUser();
@@ -105,7 +106,198 @@ useEffect(() => {
     void supabase.removeChannel(channel);
   };
 }, [currentAcademicYearId]);
+useEffect(() => {
+  let active = true;
 
+  async function loadTotalProfilePercent() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!active || !user || !currentAcademicYearId) {
+      if (active) setTotalProfilePercent(0);
+      return;
+    }
+
+    // Lấy danh sách các ý tiêu chuẩn của năm học
+    const { data: criterionItems, error: itemsError } = await supabase
+      .from("sv5t_criterion_items")
+      .select("id, criterion, item_type")
+      .eq("academic_year_id", currentAcademicYearId);
+
+    if (itemsError) {
+      console.error("Lỗi tải các ý tiêu chuẩn:", itemsError);
+      return;
+    }
+
+    // Lấy phần trăm đánh giá của sinh viên
+    const { data: evaluations, error: evaluationsError } = await supabase
+      .from("sv5t_student_criterion_evaluations")
+      .select("criterion_item_id, completion_percent")
+      .eq("user_id", user.id)
+      .eq("academic_year_id", currentAcademicYearId);
+
+    if (evaluationsError) {
+      console.error("Lỗi tải đánh giá tiêu chí:", evaluationsError);
+      return;
+    }
+
+    if (!active) return;
+
+    const criteria = [
+      "dao-duc",
+      "hoc-tap",
+      "the-luc",
+      "tinh-nguyen",
+      "hoi-nhap",
+    ];
+
+    let totalScore = 0;
+
+    criteria.forEach((criterion) => {
+      const items = (criterionItems || []).filter(
+        (item) => item.criterion === criterion
+      );
+
+      const requiredItems = items.filter(
+        (item) => item.item_type === "required"
+      );
+
+      const additionalItems = items.filter(
+        (item) => item.item_type === "additional"
+      );
+
+      // Bắt buộc: tối đa 50%, chia đều cho các ý
+      const requiredScore =
+        requiredItems.length > 0
+          ? requiredItems.reduce((sum, item) => {
+              const evaluation = (evaluations || []).find(
+                (e) => e.criterion_item_id === item.id
+              );
+
+              return sum + Number(evaluation?.completion_percent || 0);
+            }, 0) / requiredItems.length * 0.5
+          : 0;
+
+      // Bổ sung: tối đa 50%, chỉ lấy ý có phần trăm cao nhất
+      const additionalScore =
+        additionalItems.length > 0
+          ? Math.max(
+              ...additionalItems.map((item) => {
+                const evaluation = (evaluations || []).find(
+                  (e) => e.criterion_item_id === item.id
+                );
+
+                return Number(evaluation?.completion_percent || 0);
+              })
+            ) * 0.5
+          : 0;
+
+      totalScore += requiredScore + additionalScore;
+    });
+
+    // Trung bình 5 tiêu chí chính
+    setTotalProfilePercent(totalScore / 5);
+  }
+
+  void loadTotalProfilePercent();
+
+  return () => {
+    active = false;
+  };
+}, [currentAcademicYearId]);
+useEffect(() => {
+  if (!currentAcademicYearId) return;
+
+  const channel = supabase
+    .channel(`student-total-evaluation-${currentAcademicYearId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "sv5t_student_criterion_evaluations",
+        filter: `academic_year_id=eq.${currentAcademicYearId}`,
+      },
+      async () => {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) return;
+
+        const { data: items } = await supabase
+          .from("sv5t_criterion_items")
+          .select("id, criterion, item_type")
+          .eq("academic_year_id", currentAcademicYearId);
+
+        const { data: evaluations } = await supabase
+          .from("sv5t_student_criterion_evaluations")
+          .select("criterion_item_id, completion_percent")
+          .eq("user_id", user.id)
+          .eq("academic_year_id", currentAcademicYearId);
+
+        if (!items || !evaluations) return;
+
+        const criteria = [
+          "dao-duc",
+          "hoc-tap",
+          "the-luc",
+          "tinh-nguyen",
+          "hoi-nhap",
+        ];
+
+        let total = 0;
+
+        criteria.forEach((criterion) => {
+          const group = items.filter(
+            (item) => item.criterion === criterion
+          );
+
+          const required = group.filter(
+            (item) => item.item_type === "required"
+          );
+
+          const additional = group.filter(
+            (item) => item.item_type === "additional"
+          );
+
+          const requiredScore =
+            required.length > 0
+              ? required.reduce((sum, item) => {
+                  const evaluation = evaluations.find(
+                    (e) => e.criterion_item_id === item.id
+                  );
+
+                  return sum + Number(evaluation?.completion_percent || 0);
+                }, 0) / required.length * 0.5
+              : 0;
+
+          const additionalScore =
+            additional.length > 0
+              ? Math.max(
+                  ...additional.map((item) => {
+                    const evaluation = evaluations.find(
+                      (e) => e.criterion_item_id === item.id
+                    );
+
+                    return Number(evaluation?.completion_percent || 0);
+                  })
+                ) * 0.5
+              : 0;
+
+          total += requiredScore + additionalScore;
+        });
+
+        setTotalProfilePercent(total / 5);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    void supabase.removeChannel(channel);
+  };
+}, [currentAcademicYearId]);
 useEffect(() => {
   let channel: ReturnType<typeof supabase.channel> | null = null;
   let active = true;
@@ -689,20 +881,8 @@ const handleExport = async (academicYearId: number) => {
   }
 };
 
-const achievedCriteria = [
-  criteriaResults?.dao_duc,
-  criteriaResults?.hoc_tap,
-  criteriaResults?.the_luc,
-  criteriaResults?.tinh_nguyen,
-  criteriaResults?.hoi_nhap,
-].filter(Boolean).length;
-
 const circleRadius = 54;
 const circleCircumference = 2 * Math.PI * circleRadius;
-
-const circleProgress =
-  circleCircumference * (1 - achievedCriteria / 5);
-
 return (
 <div
   style={{
@@ -1057,8 +1237,8 @@ style={{
             strokeLinecap="round"
             strokeDasharray={circleCircumference}
             strokeDashoffset={
-  circleCircumference -
-  (achievedCriteria / 5) * circleCircumference
+circleCircumference -
+  (totalProfilePercent / 100) * circleCircumference
 }
             filter="url(#glow)"
             style={{
@@ -1107,19 +1287,7 @@ style={{
               lineHeight: 1,
             }}
           >
-            {achievedCriteria}/5
-          </div>
-
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: "#000000",
-              lineHeight: 1,
-              marginTop: 5,
-            }}
-          >
-            Tiêu chí
+            {Math.round(totalProfilePercent)}%
           </div>
         </div>
       </div>
@@ -1148,7 +1316,7 @@ style={{
       >
         <div
           style={{
-            width: `${(achievedCriteria / 5) * 100}%`,
+            width: `${totalProfilePercent}%`,
             height: "100%",
             borderRadius: 999,
             background:
@@ -1170,7 +1338,7 @@ style={{
           whiteSpace: "nowrap",
         }}
       >
-        {achievedCriteria}/5
+        {Math.round(totalProfilePercent)}%
       </div>
     </div>
   )}

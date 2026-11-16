@@ -9,7 +9,65 @@ import BellUserTemp from "../components/BellUserTemp";
 import Spinner from "../components/Spinner";
 import CriteriaModal from "../components/CriteriaModal";
 import Image from "next/image";
+const MAIN_CRITERIA = [
+  "dao-duc",
+  "hoc-tap",
+  "the-luc",
+  "tinh-nguyen",
+  "hoi-nhap",
+];
 
+function calculateCriterionPercentages(
+  items: any[],
+  evaluations: any[]
+) {
+  const result: Record<string, number> = {};
+
+  for (const criterion of MAIN_CRITERIA) {
+    const criterionItems = items.filter(
+      (item) => item.criterion === criterion
+    );
+
+    const requiredItems = criterionItems.filter(
+      (item) => item.item_type === "required"
+    );
+
+    const additionalItems = criterionItems.filter(
+      (item) => item.item_type === "additional"
+    );
+
+    const getPercent = (itemId: number) => {
+      const evaluation = evaluations.find(
+        (e) => e.criterion_item_id === itemId
+      );
+
+      return Number(evaluation?.completion_percent || 0);
+    };
+
+    const requiredScore =
+      requiredItems.length > 0
+        ? (
+            requiredItems.reduce(
+              (sum, item) => sum + getPercent(item.id),
+              0
+            ) / requiredItems.length
+          ) * 0.5
+        : 0;
+
+    const additionalScore =
+      additionalItems.length > 0
+        ? Math.max(
+            ...additionalItems.map((item) =>
+              getPercent(item.id)
+            )
+          ) * 0.5
+        : 0;
+
+    result[criterion] = requiredScore + additionalScore;
+  }
+
+  return result;
+}
 export default function TieuChiPage() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +80,8 @@ export default function TieuChiPage() {
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null); 
   const [criteriaResults, setCriteriaResults] = useState<any>(null);
-
+  const [criterionPercentages, setCriterionPercentages] = useState<Record<string, number>>({});
+  const [totalProfilePercent, setTotalProfilePercent] = useState(0);
 useEffect(() => {
   loadProfile();
   loadAcademicYears();
@@ -76,6 +135,69 @@ useEffect(() => {
   };
 }, [currentAcademicYear?.id]);
 
+
+useEffect(() => {
+  let active = true;
+
+  async function loadCriterionPercentages() {
+    if (!currentAcademicYear?.id) {
+      setCriterionPercentages({});
+      setTotalProfilePercent(0);
+      return;
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!active || !user) return;
+
+    const { data: items, error: itemsError } = await supabase
+      .from("sv5t_criterion_items")
+      .select("id, criterion, item_type")
+      .eq("academic_year_id", currentAcademicYear.id);
+
+    if (itemsError) {
+      console.error("Lỗi tải nội dung tiêu chí:", itemsError);
+      return;
+    }
+
+    const { data: evaluations, error: evaluationsError } =
+      await supabase
+        .from("sv5t_student_criterion_evaluations")
+        .select("criterion_item_id, completion_percent")
+        .eq("user_id", user.id)
+        .eq("academic_year_id", currentAcademicYear.id);
+
+    if (evaluationsError) {
+      console.error("Lỗi tải kết quả đánh giá:", evaluationsError);
+      return;
+    }
+
+    if (!active) return;
+
+    const percentages = calculateCriterionPercentages(
+      items || [],
+      evaluations || []
+    );
+
+    const total =
+      MAIN_CRITERIA.reduce(
+        (sum, criterion) => sum + (percentages[criterion] || 0),
+        0
+      ) / 5;
+
+    setCriterionPercentages(percentages);
+    setTotalProfilePercent(total);
+  }
+
+  void loadCriterionPercentages();
+
+  return () => {
+    active = false;
+  };
+}, [currentAcademicYear?.id]);
+
 function hasPassedCriterion(field: string) {
   const resultField: Record<string, string> = {
     "dao-duc": "dao_duc",
@@ -87,6 +209,7 @@ function hasPassedCriterion(field: string) {
 
   return criteriaResults?.[resultField[field]] === true;
 }
+
 
 async function loadAcademicYears() {
   const { data, error } = await supabase
@@ -156,6 +279,12 @@ async function loadProfile() {
 }
 async function submitProfile() {
   if (!profile?.id) return;
+
+  // Kiểm tra ảnh thẻ 3x4 trước khi nộp hồ sơ
+  if (!profile.avatar || !profile.avatar.trim()) {
+    alert("Vui lòng tải ảnh thẻ tại mục báo cáo trước khi nộp hồ sơ");
+    return;
+  }
 
 // KIỂM TRA TRẠNG THÁI NHẬN HỒ SƠ THEO NĂM HỌC
 if (!currentAcademicYear?.id) {
@@ -285,15 +414,7 @@ setProfile((prev: any) => ({
       </div>
     );
   }
-const completed = [
-  criteriaResults?.dao_duc,
-  criteriaResults?.hoc_tap,
-  criteriaResults?.the_luc,
-  criteriaResults?.tinh_nguyen,
-  criteriaResults?.hoi_nhap,
-].filter(Boolean).length;
-
-const percent = (completed / 5) * 100;
+const percent = totalProfilePercent;
   return (
     <div
       style={{
@@ -390,7 +511,7 @@ const percent = (completed / 5) * 100;
         color: "#64748b",
       }}
     >
-      Bạn đã hoàn thành <b>{completed}/5</b> tiêu chí.
+      Bạn đã hoàn thành <b>{Math.round(totalProfilePercent)}%</b> tổng hồ sơ.
     </p>
 
     <div
@@ -704,15 +825,62 @@ const percent = (completed / 5) * 100;
     )}
   </div>
 </div>
-                  <p
-                    style={{
-                      color: "#666",
-                      marginTop: "8px",
-                      fontSize: "14px",
-                    }}
-                  >
-                    Nhấn để xem và quản lý minh chứng
-                  </p>
+                  {folder.field !== "uu-tien" && (
+  <div style={{ marginTop: "12px" }}>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "6px",
+        fontSize: "13px",
+        color: "#475569",
+        fontWeight: 600,
+      }}
+    >
+      <span>Mức độ hoàn thành</span>
+      <span>
+        {Math.round(
+          criterionPercentages[folder.field] || 0
+        )}%
+      </span>
+    </div>
+
+    <div
+      style={{
+        width: "100%",
+        height: "8px",
+        background: "rgba(255,255,255,0.8)",
+        borderRadius: "999px",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          width: `${
+            criterionPercentages[folder.field] || 0
+          }%`,
+          height: "100%",
+          background: "linear-gradient(90deg, #2563eb, #60a5fa)",
+          borderRadius: "999px",
+          transition: "width .4s ease",
+        }}
+      />
+    </div>
+  </div>
+)}
+
+{folder.field === "uu-tien" && (
+  <p
+    style={{
+      color: "#666",
+      marginTop: "8px",
+      fontSize: "14px",
+    }}
+  >
+    Nhấn để xem và quản lý minh chứng
+  </p>
+)}
                 </a>
               ))}
             </div>

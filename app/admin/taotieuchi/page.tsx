@@ -2,18 +2,20 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import CriteriaModal from "../../components/CriteriaModal";
 
 const CRITERIA = [
-  { id: "dao-duc", name: "Đạo đức tốt", icon: "🌱", color: "#16a34a", bg: "#dcfce7" },
-  { id: "hoc-tap", name: "Học tập tốt", icon: "📚", color: "#2563eb", bg: "#dbeafe" },
-  { id: "the-luc", name: "Thể lực tốt", icon: "💪", color: "#ea580c", bg: "#ffedd5" },
-  { id: "tinh-nguyen", name: "Tình nguyện tốt", icon: "❤️", color: "#e11d48", bg: "#ffe4e6" },
-  { id: "hoi-nhap", name: "Hội nhập tốt", icon: "🌏", color: "#0891b2", bg: "#cffafe" },
-  { id: "uu-tien", name: "Ưu tiên", icon: "⭐", color: "#9333ea", bg: "#f3e8ff" },
+  { id: "dao-duc", name: "Đạo đức tốt", icon: "/icondaoduc.png", color: "#16a34a", bg: "#dcfce7" },
+  { id: "hoc-tap", name: "Học tập tốt", icon: "/iconhoctap.png", color: "#2563eb", bg: "#dbeafe" },
+  { id: "the-luc", name: "Thể lực tốt", icon: "/icontheluc.png", color: "#ea580c", bg: "#ffedd5" },
+  { id: "tinh-nguyen", name: "Tình nguyện tốt", icon: "/icontinhnguyen.png", color: "#e11d48", bg: "#ffe4e6" },
+  { id: "hoi-nhap", name: "Hội nhập tốt", icon: "/iconhoinhap.png", color: "#0891b2", bg: "#cffafe" },
+  { id: "uu-tien", name: "Ưu tiên", icon: "/iconuutien.png", color: "#9333ea", bg: "#f3e8ff" },
 ];
 
 type AcademicYear = {
@@ -404,7 +406,7 @@ const totalItems = items.length;
 
       <main className="sv5t-admin-page">
         <div className="sv5t-container">
-
+        
           {/* HERO */}
 <section
   className="sv5t-hero"
@@ -417,14 +419,16 @@ const totalItems = items.length;
 >
   <div className="sv5t-hero-content">
     <div className="sv5t-eyebrow">
+    <Link href="/admin" style = {{ fontSize: "14px"}}>
+            ← Trang chủ
+          </Link>
       <span className="sv5t-eyebrow-dot" />
-      QUẢN TRỊ HỆ THỐNG SV5T
     </div>
-
+    
     <h1 style={{ fontSize: "28px", lineHeight: 1.3, fontWeight: 700 }}>
       Quản lý tiêu chuẩn
     </h1>
-
+  
     <div
       className="sv5t-hero-bottom"
       style={{
@@ -447,7 +451,13 @@ const totalItems = items.length;
     <div className="sv5t-art-circle circle-one" />
     <div className="sv5t-art-circle circle-two" />
     <div className="sv5t-art-card">
-      <div className="sv5t-art-icon">🏆</div>
+      <Image
+        src="/bonghoa5tot.png"
+        width={48}
+        height={48}
+        alt="Bông hoa Sinh viên 5 tốt"
+        className="sv5t-art-icon"
+      />
       <div className="sv5t-art-title">SINH VIÊN</div>
       <div className="sv5t-art-title">5 TỐT</div>
       <div className="sv5t-art-stars">✦ ✦ ✦ ✦ ✦</div>
@@ -499,8 +509,7 @@ const totalItems = items.length;
               <div>
                 <span className="sv5t-overline">PHÂN LOẠI NỘI DUNG</span>
                 <h2>Các tiêu chí Sinh viên 5 tốt</h2>
-                <p>Chọn một tiêu chí để quản lý các gạch đầu dòng.</p>
-              </div>
+               </div>
 
               <div className="sv5t-section-count">
                 <strong>05</strong>
@@ -526,7 +535,7 @@ const totalItems = items.length;
                   >
                     <div className="sv5t-criterion-top">
                       <div className="sv5t-criterion-icon">
-                        {item.icon}
+                        <Image src={item.icon} width={32} height={32} alt={item.name} />
                       </div>
 
                       <span className="sv5t-criterion-check">
@@ -558,7 +567,14 @@ const totalItems = items.length;
                     color: currentCriterion?.color,
                   }}
                 >
-                  {currentCriterion?.icon}
+                  {currentCriterion && (
+                    <Image
+                      src={currentCriterion.icon}
+                      width={42}
+                      height={42}
+                      alt={currentCriterion.name}
+                    />
+                  )}
                 </div>
 
                 <div>
@@ -592,7 +608,7 @@ const totalItems = items.length;
       onChange={() => setItemType("required")}
       disabled={saving}
     />
-    <span>🔴 Tiêu chuẩn bắt buộc</span>
+    <span>🔴 Tiêu chuẩn bắt buộc {" "}</span>
   </label>
 
   <label className="sv5t-type-option additional">
@@ -814,6 +830,26 @@ const totalItems = items.length;
           margin: 0 auto;
         }
 
+        .sv5t-home-link {
+          display: inline-flex;
+          align-items: center;
+          margin-bottom: 16px;
+          padding: 10px 16px;
+          border: 1px solid #dbe3ee;
+          border-radius: 10px;
+          background: white;
+          color: #334155;
+          font-size: 13px;
+          font-weight: 600;
+          text-decoration: none;
+          transition: background .2s ease, border-color .2s ease;
+        }
+
+        .sv5t-home-link:hover {
+          border-color: #93c5fd;
+          background: #eff6ff;
+        }
+
         .sv5t-hero {
           position: relative;
           min-height: 235px;
@@ -843,7 +879,7 @@ const totalItems = items.length;
           border: 1px solid rgba(255,255,255,.22);
           border-radius: 30px;
           background: rgba(255,255,255,.11);
-          font-size: 10px;
+          font-size: 13px;
           letter-spacing: 1.4px;
           font-weight: 800;
         }
@@ -877,7 +913,7 @@ const totalItems = items.length;
           flex-wrap: wrap;
           gap: 20px;
           margin-top: 23px;
-          font-size: 12px;
+          font-size: 13px;
           color: rgba(255,255,255,.92);
         }
 
@@ -926,9 +962,9 @@ const totalItems = items.length;
           transform: rotate(5deg);
         }
 
-        .sv5t-art-icon { font-size: 36px; margin-bottom: 7px; }
+        .sv5t-art-icon { object-fit: contain; margin-bottom: 7px; }
         .sv5t-art-title { font-size: 15px; font-weight: 900; letter-spacing: 2px; }
-        .sv5t-art-stars { font-size: 10px; margin-top: 7px; color: #fde68a; letter-spacing: 2px; }
+        .sv5t-art-stars { font-size: 13px; margin-top: 7px; color: #fde68a; letter-spacing: 2px; }
 
         .sv5t-year-card {
           display: flex;
@@ -958,7 +994,7 @@ const totalItems = items.length;
         .sv5t-overline {
           display: block;
           color: #8b9ab0;
-          font-size: 10px;
+          font-size: 13px;
           letter-spacing: 1.3px;
           font-weight: 800;
           margin-bottom: 5px;
@@ -972,7 +1008,7 @@ const totalItems = items.length;
 
         .sv5t-year-info p {
           color: #8491a5;
-          font-size: 12px;
+          font-size: 13px;
           margin: 0;
         }
 
@@ -1003,7 +1039,7 @@ const totalItems = items.length;
 
         .sv5t-current-badge {
           color: #16a34a;
-          font-size: 10px;
+          font-size: 13px;
           font-weight: 700;
         }
 
@@ -1038,7 +1074,7 @@ const totalItems = items.length;
           border-radius: 10px;
           background: white;
           color: #8b9ab0;
-          font-size: 10px;
+          font-size: 13px;
           font-weight: 800;
           letter-spacing: .5px;
         }
@@ -1097,7 +1133,6 @@ const totalItems = items.length;
           place-items: center;
           border-radius: 12px;
           background: var(--item-bg);
-          font-size: 23px;
           transition: transform .25s ease;
         }
 
@@ -1113,7 +1148,7 @@ const totalItems = items.length;
           border-radius: 50%;
           background: var(--item-bg);
           color: var(--item-color);
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 900;
         }
 
@@ -1124,7 +1159,7 @@ const totalItems = items.length;
         }
 
         .sv5t-criterion-caption {
-          font-size: 11px;
+          font-size: 13px;
           color: #9aa6b7;
         }
 
@@ -1173,7 +1208,6 @@ const totalItems = items.length;
           display: grid;
           place-items: center;
           border-radius: 15px;
-          font-size: 27px;
         }
 
         .sv5t-content-title h2 {
@@ -1185,7 +1219,7 @@ const totalItems = items.length;
         .sv5t-content-title p {
           margin: 0;
           color: #8b99ac;
-          font-size: 12px;
+          font-size: 13px;
         }
 
         .sv5t-total-badge {
@@ -1196,7 +1230,7 @@ const totalItems = items.length;
           border-radius: 10px;
           background: #eff6ff;
           color: #2563eb;
-          font-size: 11px;
+          font-size: 13px;
           font-weight: 700;
         }
 
@@ -1238,7 +1272,7 @@ const totalItems = items.length;
         .sv5t-add-heading p {
           margin: 0;
           color: #8493a9;
-          font-size: 11px;
+          font-size: 13px;
         }
 
         .sv5t-textarea {
@@ -1276,7 +1310,7 @@ const totalItems = items.length;
 
         .sv5t-add-footer > span {
           color: #8391a5;
-          font-size: 11px;
+          font-size: 13px;
           line-height: 1.5;
         }
 
@@ -1290,7 +1324,7 @@ const totalItems = items.length;
           border-radius: 9px;
           background: linear-gradient(120deg, #2563eb, #3985ef);
           color: white;
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 750;
           cursor: pointer;
           box-shadow: 0 4px 12px rgba(37,99,235,.2);
@@ -1334,7 +1368,7 @@ const totalItems = items.length;
         .sv5t-list-heading p {
           margin: 0;
           color: #94a0b1;
-          font-size: 11px;
+          font-size: 13px;
         }
 
         .sv5t-list-number {
@@ -1342,7 +1376,7 @@ const totalItems = items.length;
           border: 1px solid #e6ebf3;
           border-radius: 7px;
           color: #74839a;
-          font-size: 10px;
+          font-size: 13px;
           font-weight: 800;
         }
 
@@ -1379,7 +1413,7 @@ const totalItems = items.length;
           border-radius: 9px;
           background: #eff6ff;
           color: #2563eb;
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 850;
         }
 
@@ -1411,7 +1445,7 @@ const totalItems = items.length;
           border-radius: 7px;
           background: white;
           color: #60718a;
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 700;
           cursor: pointer;
           transition: .2s;
@@ -1482,7 +1516,7 @@ const totalItems = items.length;
           max-width: 390px;
           margin: 0 auto;
           color: #9aa6b6;
-          font-size: 12px;
+          font-size: 13px;
           line-height: 1.7;
         }
 
@@ -1495,7 +1529,7 @@ const totalItems = items.length;
           padding-top: 14px;
           border-top: 1px solid #edf0f5;
           color: #a0aabc;
-          font-size: 10px;
+          font-size: 13px;
         }
 
         .sv5t-inline-error {
@@ -1504,7 +1538,7 @@ const totalItems = items.length;
           border-radius: 8px;
           background: #fef2f2;
           color: #b91c1c;
-          font-size: 12px;
+          font-size: 13px;
         }
 
         .sv5t-list-loading,
@@ -1563,8 +1597,8 @@ const totalItems = items.length;
           }
 
           .sv5t-hero-art { width: 120px; transform: scale(.8); }
-          .sv5t-hero p { font-size: 12px; }
-          .sv5t-hero-bottom { gap: 10px; font-size: 10px; }
+          .sv5t-hero p { font-size: 13px; }
+          .sv5t-hero-bottom { gap: 10px; font-size: 13px; }
 
           .sv5t-year-card { padding: 15px; gap: 11px; flex-wrap: wrap; }
           .sv5t-year-icon { width: 43px; height: 43px; }

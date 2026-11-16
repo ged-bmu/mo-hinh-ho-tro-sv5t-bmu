@@ -13,6 +13,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Header from "../../../components/Header";
 import CriteriaModal from "../../../components/CriteriaModal";
+import BangDanhGia from "../../../components/bangdanhgia";
 
 export default function StudentsDetailPage() {
   const [reports, setReports] = useState<any[]>([]);
@@ -45,14 +46,6 @@ export default function StudentsDetailPage() {
   const [currentAcademicYearId, setCurrentAcademicYearId] = useState<number | null>(null);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [currentAcademicYearName, setCurrentAcademicYearName] = useState("");
-  const [criteriaResults, setCriteriaResults] = useState<any>(null);
-  const criteriaFieldMap: Record<string, string> = {
-    "dao-duc": "dao_duc",
-    "hoc-tap": "hoc_tap",
-    "the-luc": "the_luc",
-    "tinh-nguyen": "tinh_nguyen",
-    "hoi-nhap": "hoi_nhap",
-  };
   const criteriaList = [
   { key: "dao-duc", title: "Đạo đức tốt", icon: "/icondaoduc.png" },
   { key: "hoc-tap", title: "Học tập tốt", icon: "/iconhoctap.png" },
@@ -117,7 +110,6 @@ useEffect(() => {
   if (!id || !currentAcademicYearId) return;
   loadFiles();
   loadReports();
-  loadCriteriaResults();
 }, [id, currentAcademicYearId]);
 async function loadCurrentAcademicYear() {
   const { data, error } = await supabase
@@ -154,7 +146,6 @@ function selectAcademicYear(yearId: number) {
     `${window.location.pathname}?year=${selectedYear.id}`
   );
   setReports([]);
-  setCriteriaResults(null);
   setBaoCaoFiles([]);
   setDaoDucFiles([]);
   setHocTapFiles([]);
@@ -162,20 +153,6 @@ function selectAcademicYear(yearId: number) {
   setTinhNguyenFiles([]);
   setHoiNhapFiles([]);
   setUuTienFiles([]);
-}
-async function loadCriteriaResults() {
-  if (!currentAcademicYearId) return;
-  const { data, error } = await supabase
-    .from("student_criteria_results")
-    .select("*")
-    .eq("user_id", id)
-    .eq("academic_year_id", currentAcademicYearId)
-    .maybeSingle();
-  if (error) {
-    console.error("Lỗi tải kết quả tiêu chí:", error);
-    return;
-  }
-  setCriteriaResults(data);
 }
 async function loadReports() {
   const { data, error } = await supabase
@@ -249,64 +226,6 @@ async function loadStudent() {
   setGhiChu(data.ghi_chu || "");
 }
 
-async function updateCriteria(
-  field: string,
-  value: boolean
-) {
-  if (!currentAcademicYearId) {
-    alert("Chưa xác định được năm học hiện tại.");
-    return;
-  }
-
-  const dbField = criteriaFieldMap[field];
-  if (!dbField) return;
-
-  const { data, error } = await supabase
-    .from("student_criteria_results")
-    .upsert(
-      {
-        user_id: id,
-        academic_year_id: currentAcademicYearId,
-        dao_duc: criteriaResults?.dao_duc ?? false,
-        hoc_tap: criteriaResults?.hoc_tap ?? false,
-        the_luc: criteriaResults?.the_luc ?? false,
-        tinh_nguyen: criteriaResults?.tinh_nguyen ?? false,
-        hoi_nhap: criteriaResults?.hoi_nhap ?? false,
-        [dbField]: value,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,academic_year_id" }
-    )
-    .select()
-    .single();
-
-  if (error) {
-    alert("Cập nhật thất bại");
-    return;
-  }
-
-  setCriteriaResults(data);
-
-  const titleMap: Record<string, string> = {
-    "dao-duc": "Đạo đức tốt",
-    "hoc-tap": "Học tập tốt",
-    "the-luc": "Thể lực tốt",
-    "tinh-nguyen": "Tình nguyện tốt",
-    "hoi-nhap": "Hội nhập tốt",
-  };
-
-  await sendNotification(
-    id,
-    "criteria",
-    value
-      ? "Bạn vừa Đạt tiêu chí mới 🎉"
-      : "Tiêu chí của bạn vừa được cập nhật",
-    value
-      ? `Tiêu chí ${titleMap[field]} đã được xác nhận đạt.`
-      : `Tiêu chí ${titleMap[field]} không còn được đánh dấu đạt.`,
-    "/"
-  );
-}
 async function loadFiles() {
   const { data, error } = await supabase
     .from("uploaded_files")
@@ -750,7 +669,7 @@ return (
           style={{
             width: "100%",
             maxWidth: "1120px",
-            minHeight: "420mm",
+            minHeight: "auto",
             margin: "0 auto",
             background: "#fff",
             padding: "30px",
@@ -958,7 +877,6 @@ return (
         </div>
       </div>
 
-      {/* KHU VỰC ĐÁNH GIÁ / NHẬN XÉT / GHI CHÚ */}
 {/* KHU VỰC ĐÁNH GIÁ / NHẬN XÉT / GHI CHÚ */}
 <div
   style={{
@@ -1291,7 +1209,7 @@ return (
                     {criterion.icon && <Image src={criterion.icon} width={24} height={24} alt={criterion.title} style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} />}
                     {criterion.title}
                   </span>
-                  <input type="checkbox" checked={criteriaResults?.[criteriaFieldMap[criterion.key]] === true} onChange={(e) => updateCriteria(criterion.key, e.target.checked)} style={{ width: "18px", height: "18px", cursor: "pointer", flexShrink: 0 }} />
+                  
                 </div>
               </th>
             ))}
@@ -1324,7 +1242,7 @@ return (
               <strong style={{ fontSize: "16px", whiteSpace: "nowrap" }}>
                 Minh chứng {criterion.title.replace(" tốt", "").toLowerCase()}
               </strong>
-              <input type="checkbox" checked={criteriaResults?.[criteriaFieldMap[previewFolder]] === true} onChange={(e) => updateCriteria(previewFolder, e.target.checked)} style={{ width: "18px", height: "18px", cursor: "pointer", flexShrink: 0 }} />
+              
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "7px", marginLeft: "auto" }}>
@@ -1400,7 +1318,7 @@ return (
   />
 )}
     </div>
-    
+    <BangDanhGia studentId={id} academicYearId={currentAcademicYearId} />
   </div>
   );
 }

@@ -3,22 +3,43 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import Link from "next/link";
+import Header from "../../components/Header";
+import AdminSidebar from "../../components/AdminSidebar";
+import Footer from "../../components/Footer";
+
+type CriterionKey =
+  | "dao-duc"
+  | "hoc-tap"
+  | "the-luc"
+  | "tinh-nguyen"
+  | "hoi-nhap";
 
 type Student = {
   id: string;
-  ho_ten: string | null;
-  mssv: string | null;
-  lop: string | null;
+  ho_ten: string;
+  mssv: string;
+  lop: string;
   hasYearProfile: boolean;
   is_submitted: boolean;
-  hasCriteria: boolean;
-  criteriaSubmitted: boolean;
-  "dao-duc": boolean;
-  "hoc-tap": boolean;
-  "the-luc": boolean;
-  "tinh-nguyen": boolean;
-  "hoi-nhap": boolean;
+  criteria: Record<CriterionKey, number | null>;
+  overall: number | null;
+  evaluatedCount: number;
+  totalItems: number;
+};
+
+type CriterionItem = {
+  id: string;
+  criterion: string;
+  content: string;
+  item_type: string;
+  sort_order: number;
+};
+
+type Evaluation = {
+  user_id: string;
+  criterion_item_id: string;
+  completion_percent: number | null;
+  comment: string | null;
 };
 
 type FilterType =
@@ -26,38 +47,112 @@ type FilterType =
   | "submitted"
   | "pending"
   | "no-profile"
-  | "no-criteria";
+  | "not-evaluated"
+  | "in-progress"
+  | "achieved";
 
-const CRITERIA = [
-  { key: "dao-duc", label: "Đạo đức", icon: "◆" },
-  { key: "hoc-tap", label: "Học tập", icon: "▤" },
-  { key: "the-luc", label: "Thể lực", icon: "♡" },
-  { key: "tinh-nguyen", label: "Tình nguyện", icon: "✦" },
-  { key: "hoi-nhap", label: "Hội nhập", icon: "◎" },
-] as const;
+const CRITERIA: {
+  key: CriterionKey;
+  label: string;
+  icon: string;
+  color: string;
+}[] = [
+  {
+    key: "dao-duc",
+    label: "Đạo đức tốt",
+    icon: "✦",
+    color: "#8b5cf6",
+  },
+  {
+    key: "hoc-tap",
+    label: "Học tập tốt",
+    icon: "▤",
+    color: "#2563eb",
+  },
+  {
+    key: "the-luc",
+    label: "Thể lực tốt",
+    icon: "♡",
+    color: "#10b981",
+  },
+  {
+    key: "tinh-nguyen",
+    label: "Tình nguyện tốt",
+    icon: "♥",
+    color: "#f97316",
+  },
+  {
+    key: "hoi-nhap",
+    label: "Hội nhập tốt",
+    icon: "◎",
+    color: "#06b6d4",
+  },
+];
 
 const numberFormat = (value: number) =>
   new Intl.NumberFormat("vi-VN").format(value);
 
+const percentFormat = (value: number | null) =>
+  value === null ? "—" : `${value.toFixed(1)}%`;
+
+function getItemType(value: string | null | undefined) {
+  const type = (value || "").trim().toLowerCase();
+
+  if (
+    type.includes("required") ||
+    type.includes("bat-buoc") ||
+    type.includes("bắt buộc")
+  ) {
+    return "required";
+  }
+
+  if (
+    type.includes("additional") ||
+    type.includes("optional") ||
+    type.includes("khuyen-khich") ||
+    type.includes("khuyến khích")
+  ) {
+    return "additional";
+  }
+
+  return "unknown";
+}
+
+function clampPercent(value: number) {
+  return Math.max(0, Math.min(100, value));
+}
+
+function escapeCsv(value: unknown) {
+  const text = String(value ?? "");
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
 export default function StatisticsPage() {
+  const [tab, setTab] = useState("Thống kê");
+
   const [students, setStudents] = useState<Student[]>([]);
-  const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
+  const [items, setItems] = useState<CriterionItem[]>([]);
+  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [academicYear, setAcademicYear] = useState<any>(null);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
-  const [filter, setFilter] = useState<FilterType>("all");
   const [search, setSearch] = useState("");
   const [classFilter, setClassFilter] = useState("all");
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [sortBy, setSortBy] = useState("progress");
+  const [page, setPage] = useState(1);
+  const pageSize = 12;
 
-  const [selectedTitle, setSelectedTitle] = useState("");
-  const [selectedStudents, setSelectedStudents] = useState<Student[] | null>(
-    null
-  );
-  const [detailSearch, setDetailSearch] = useState("");
+  const [selectedStudent, setSelectedStudent] =
+    useState<Student | null>(null);
 
-  const loadData = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
+  const [showAllClasses, setShowAllClasses] = useState(false);
+
+  const loadData = useCallback(async (refresh = false) => {
+    if (refresh) setRefreshing(true);
     else setLoading(true);
 
     setError("");
@@ -72,79 +167,187 @@ export default function StatisticsPage() {
       if (yearError) throw yearError;
 
       if (!year) {
-        setCurrentAcademicYear(null);
+        setAcademicYear(null);
         setStudents([]);
+        setItems([]);
+        setEvaluations([]);
         setError("Chưa thiết lập năm học hiện tại.");
         return;
       }
 
-      setCurrentAcademicYear(year);
+      setAcademicYear(year);
 
-      const [profilesResult, yearProfilesResult, criteriaResult] =
-        await Promise.all([
-          supabase
-            .from("profiles")
-            .select("id, ho_ten, mssv, lop, role")
-            .eq("role", "student"),
+      const [
+        profilesResult,
+        yearProfilesResult,
+        itemsResult,
+        evaluationsResult,
+      ] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, ho_ten, mssv, lop, role")
+          .eq("role", "student"),
 
-          supabase
-            .from("student_year_profiles")
-            .select("user_id, is_submitted")
-            .eq("academic_year_id", year.id),
+        supabase
+          .from("student_year_profiles")
+          .select("user_id, is_submitted")
+          .eq("academic_year_id", year.id),
 
-          supabase
-            .from("student_criteria_results")
-            .select(
-              "user_id, is_submitted, dao_duc, hoc_tap, the_luc, tinh_nguyen, hoi_nhap"
-            )
-            .eq("academic_year_id", year.id),
-        ]);
+        supabase
+          .from("sv5t_criterion_items")
+          .select(
+            "id, criterion, content, item_type, sort_order"
+          )
+          .eq("academic_year_id", year.id)
+          .order("sort_order", { ascending: true }),
+
+        supabase
+          .from("sv5t_student_criterion_evaluations")
+          .select(
+            "user_id, criterion_item_id, completion_percent, comment"
+          )
+          .eq("academic_year_id", year.id),
+      ]);
 
       if (profilesResult.error) throw profilesResult.error;
       if (yearProfilesResult.error) throw yearProfilesResult.error;
-      if (criteriaResult.error) throw criteriaResult.error;
+      if (itemsResult.error) throw itemsResult.error;
+      if (evaluationsResult.error) throw evaluationsResult.error;
 
-      const yearProfileMap = new Map<string, any>();
-      (yearProfilesResult.data || []).forEach((item) => {
-        yearProfileMap.set(item.user_id, item);
+      const profileMap = new Map<string, any>();
+      (yearProfilesResult.data || []).forEach((row: any) => {
+        profileMap.set(row.user_id, row);
       });
 
-      const criteriaMap = new Map<string, any>();
-      (criteriaResult.data || []).forEach((item) => {
-        criteriaMap.set(item.user_id, item);
+      const itemList = (itemsResult.data || []) as CriterionItem[];
+      const evaluationList =
+        (evaluationsResult.data || []) as Evaluation[];
+
+      const itemMap = new Map<string, CriterionItem>();
+      itemList.forEach((item) => itemMap.set(item.id, item));
+
+      const evaluationMap = new Map<string, Evaluation>();
+      evaluationList.forEach((evaluation) => {
+        evaluationMap.set(
+          `${evaluation.user_id}_${evaluation.criterion_item_id}`,
+          evaluation
+        );
       });
 
       const result: Student[] = (profilesResult.data || []).map(
-        (student: any) => {
-          const yearProfile = yearProfileMap.get(student.id);
-          const criteria = criteriaMap.get(student.id);
+        (profile: any) => {
+          const yearProfile = profileMap.get(profile.id);
+
+          const criterionScores = {} as Record<
+            CriterionKey,
+            number | null
+          >;
+
+          let evaluatedCount = 0;
+          let totalItems = 0;
+
+          CRITERIA.forEach((criterion) => {
+            const criterionItems = itemList.filter(
+              (item) => item.criterion === criterion.key
+            );
+
+            const requiredItems = criterionItems.filter(
+              (item) => getItemType(item.item_type) === "required"
+            );
+
+            const additionalItems = criterionItems.filter(
+              (item) => getItemType(item.item_type) === "additional"
+            );
+
+            const validItems = [
+              ...requiredItems,
+              ...additionalItems,
+            ];
+
+            totalItems += validItems.length;
+
+            if (validItems.length === 0) {
+              criterionScores[criterion.key] = null;
+              return;
+            }
+
+            const getCompletion = (item: CriterionItem) => {
+              const evaluation = evaluationMap.get(
+                `${profile.id}_${item.id}`
+              );
+
+              if (
+                evaluation &&
+                evaluation.completion_percent !== null
+              ) {
+                evaluatedCount++;
+                return clampPercent(
+                  Number(evaluation.completion_percent) || 0
+                );
+              }
+
+              return 0;
+            };
+
+            let requiredScore = 100;
+            let additionalScore = 100;
+
+            if (requiredItems.length > 0) {
+              const total = requiredItems.reduce(
+                (sum, item) => sum + getCompletion(item),
+                0
+              );
+
+              requiredScore = total / requiredItems.length;
+            }
+
+            if (additionalItems.length > 0) {
+              additionalScore = Math.max(
+                ...additionalItems.map(getCompletion)
+              );
+            }
+
+            criterionScores[criterion.key] =
+              requiredItems.length > 0 &&
+              additionalItems.length > 0
+                ? requiredScore * 0.5 + additionalScore * 0.5
+                : requiredItems.length > 0
+                  ? requiredScore
+                  : additionalScore;
+          });
+
+          const availableScores = CRITERIA.map(
+            (criterion) => criterionScores[criterion.key]
+          ).filter((value): value is number => value !== null);
+
+          const overall =
+            availableScores.length === 5
+              ? availableScores.reduce((sum, value) => sum + value, 0) /
+                5
+              : null;
 
           return {
-            id: student.id,
-            ho_ten: student.ho_ten,
-            mssv: student.mssv,
-            lop: student.lop,
-
+            id: profile.id,
+            ho_ten: profile.ho_ten || "",
+            mssv: profile.mssv || "",
+            lop: profile.lop || "",
             hasYearProfile: !!yearProfile,
             is_submitted: yearProfile?.is_submitted === true,
-
-            hasCriteria: !!criteria,
-            criteriaSubmitted: criteria?.is_submitted === true,
-
-            "dao-duc": criteria?.dao_duc === true,
-            "hoc-tap": criteria?.hoc_tap === true,
-            "the-luc": criteria?.the_luc === true,
-            "tinh-nguyen": criteria?.tinh_nguyen === true,
-            "hoi-nhap": criteria?.hoi_nhap === true,
+            criteria: criterionScores,
+            overall,
+            evaluatedCount,
+            totalItems,
           };
         }
       );
 
+      setItems(itemList);
+      setEvaluations(evaluationList);
       setStudents(result);
+      setPage(1);
     } catch (err: any) {
       console.error("Lỗi tải thống kê:", err);
       setError(err?.message || "Không thể tải dữ liệu thống kê.");
-      setStudents([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -155,91 +358,215 @@ export default function StatisticsPage() {
     loadData();
   }, [loadData]);
 
-  // =====================================================
-  // TỔNG QUAN DỮ LIỆU
-  // =====================================================
-
-  const overview = useMemo(() => {
-    const total = students.length;
-    const submitted = students.filter((s) => s.is_submitted);
-    const pending = students.filter(
-      (s) => s.hasYearProfile && !s.is_submitted
-    );
-    const noProfile = students.filter((s) => !s.hasYearProfile);
-    const hasCriteria = students.filter((s) => s.hasCriteria);
-
-    const submittedWithCriteria = students.filter(
-      (s) => s.is_submitted && s.hasCriteria && s.criteriaSubmitted
-    );
-
-    const submittedWithoutCriteria = students.filter(
-      (s) => s.is_submitted && !s.hasCriteria
-    );
-
-    const criteriaNotSubmitted = students.filter(
-      (s) => s.is_submitted && s.hasCriteria && !s.criteriaSubmitted
-    );
-
-    return {
-      total,
-      submitted: submitted.length,
-      pending: pending.length,
-      noProfile: noProfile.length,
-      hasCriteria: hasCriteria.length,
-      submittedWithCriteria: submittedWithCriteria.length,
-      submittedWithoutCriteria: submittedWithoutCriteria.length,
-      criteriaNotSubmitted: criteriaNotSubmitted.length,
-      completion:
-        total === 0 ? 0 : (submitted.length / total) * 100,
-      profileRate:
-        total === 0
-          ? 0
-          : ((submitted.length + pending.length) / total) * 100,
-    };
-  }, [students]);
-
-  // =====================================================
-  // LỌC SINH VIÊN
-  // =====================================================
-
   const classes = useMemo(() => {
     return Array.from(
-      new Set(students.map((s) => s.lop?.trim()).filter(Boolean))
+      new Set(
+        students
+          .map((student) => student.lop.trim())
+          .filter(Boolean)
+      )
     ).sort((a, b) =>
-      String(a).localeCompare(String(b), "vi", {
+      a.localeCompare(b, "vi", {
         numeric: true,
         sensitivity: "base",
       })
-    ) as string[];
+    );
+  }, [students]);
+
+  const overview = useMemo(() => {
+    const total = students.length;
+    const submitted = students.filter((s) => s.is_submitted).length;
+    const pending = students.filter(
+      (s) => s.hasYearProfile && !s.is_submitted
+    ).length;
+    const noProfile = students.filter(
+      (s) => !s.hasYearProfile
+    ).length;
+
+    const evaluated = students.filter(
+      (s) => s.evaluatedCount > 0
+    ).length;
+
+    const fullyEvaluated = students.filter(
+      (s) => s.overall !== null
+    ).length;
+
+    const achieved = students.filter(
+      (s) =>
+        s.overall !== null &&
+        s.criteria &&
+        CRITERIA.every(
+          (criterion) => s.criteria[criterion.key] === 100
+        )
+    ).length;
+
+    const averageProgress =
+      fullyEvaluated === 0
+        ? 0
+        : students
+            .filter((s) => s.overall !== null)
+            .reduce((sum, s) => sum + (s.overall || 0), 0) /
+          fullyEvaluated;
+
+    return {
+      total,
+      submitted,
+      pending,
+      noProfile,
+      evaluated,
+      fullyEvaluated,
+      achieved,
+      averageProgress,
+      submissionRate:
+        total === 0 ? 0 : (submitted / total) * 100,
+      evaluationRate:
+        total === 0 ? 0 : (fullyEvaluated / total) * 100,
+    };
+  }, [students]);
+
+  const criterionStats = useMemo(() => {
+    return CRITERIA.map((criterion) => {
+      const available = students.filter(
+        (student) => student.criteria[criterion.key] !== null
+      );
+
+      const achieved = available.filter(
+        (student) => student.criteria[criterion.key] === 100
+      );
+
+      const average =
+        available.length === 0
+          ? 0
+          : available.reduce(
+              (sum, student) =>
+                sum + (student.criteria[criterion.key] || 0),
+              0
+            ) / available.length;
+
+      return {
+        ...criterion,
+        total: available.length,
+        achieved: achieved.length,
+        average,
+        rate:
+          available.length === 0
+            ? 0
+            : (achieved.length / available.length) * 100,
+      };
+    });
+  }, [students]);
+
+  const classStats = useMemo(() => {
+    return classes
+      .map((name) => {
+        const list = students.filter(
+          (student) => student.lop.trim() === name
+        );
+
+        const submitted = list.filter(
+          (student) => student.is_submitted
+        ).length;
+
+        const evaluated = list.filter(
+          (student) => student.overall !== null
+        );
+
+        const average =
+          evaluated.length === 0
+            ? 0
+            : evaluated.reduce(
+                (sum, student) => sum + (student.overall || 0),
+                0
+              ) / evaluated.length;
+
+        return {
+          name,
+          total: list.length,
+          submitted,
+          pending: list.filter(
+            (student) =>
+              student.hasYearProfile && !student.is_submitted
+          ).length,
+          noProfile: list.filter(
+            (student) => !student.hasYearProfile
+          ).length,
+          average,
+          submissionRate:
+            list.length === 0
+              ? 0
+              : (submitted / list.length) * 100,
+          list,
+        };
+      })
+      .sort((a, b) => a.submissionRate - b.submissionRate);
+  }, [students, classes]);
+
+  const taskLists = useMemo(() => {
+    return {
+      notSubmitted: students.filter(
+        (s) => !s.is_submitted
+      ),
+      notEvaluated: students.filter(
+        (s) => s.is_submitted && s.evaluatedCount === 0
+      ),
+      inProgress: students.filter(
+        (s) =>
+          s.overall !== null &&
+          s.overall < 100 &&
+          s.evaluatedCount > 0
+      ),
+      achieved: students.filter(
+        (s) =>
+          s.overall !== null &&
+          CRITERIA.every(
+            (criterion) => s.criteria[criterion.key] === 100
+          )
+      ),
+    };
   }, [students]);
 
   const filteredStudents = useMemo(() => {
     const keyword = search.trim().toLowerCase();
 
-    return students.filter((s) => {
+    let result = students.filter((student) => {
       const matchesSearch =
         !keyword ||
-        `${s.ho_ten || ""} ${s.mssv || ""} ${s.lop || ""}`
+        `${student.ho_ten} ${student.mssv} ${student.lop}`
           .toLowerCase()
           .includes(keyword);
 
       const matchesClass =
-        classFilter === "all" || s.lop?.trim() === classFilter;
+        classFilter === "all" || student.lop === classFilter;
 
       let matchesFilter = true;
 
       switch (filter) {
         case "submitted":
-          matchesFilter = s.is_submitted;
+          matchesFilter = student.is_submitted;
           break;
         case "pending":
-          matchesFilter = s.hasYearProfile && !s.is_submitted;
+          matchesFilter =
+            student.hasYearProfile && !student.is_submitted;
           break;
         case "no-profile":
-          matchesFilter = !s.hasYearProfile;
+          matchesFilter = !student.hasYearProfile;
           break;
-        case "no-criteria":
-          matchesFilter = s.is_submitted && !s.hasCriteria;
+        case "not-evaluated":
+          matchesFilter =
+            student.is_submitted && student.evaluatedCount === 0;
+          break;
+        case "in-progress":
+          matchesFilter =
+            student.overall !== null &&
+            student.overall < 100 &&
+            student.evaluatedCount > 0;
+          break;
+        case "achieved":
+          matchesFilter =
+            student.overall !== null &&
+            CRITERIA.every(
+              (criterion) => student.criteria[criterion.key] === 100
+            );
           break;
         default:
           matchesFilter = true;
@@ -247,1980 +574,1618 @@ export default function StatisticsPage() {
 
       return matchesSearch && matchesClass && matchesFilter;
     });
-  }, [students, search, classFilter, filter]);
 
-  // =====================================================
-  // THỐNG KÊ THEO LỚP
-  // =====================================================
+    result = [...result].sort((a, b) => {
+      if (sortBy === "name") {
+        return a.ho_ten.localeCompare(b.ho_ten, "vi");
+      }
 
-  const classStats = useMemo(() => {
-    return classes
-      .map((className) => {
-        const list = students.filter(
-          (s) => s.lop?.trim() === className
-        );
-
-        const submitted = list.filter((s) => s.is_submitted).length;
-        const pending = list.filter(
-          (s) => s.hasYearProfile && !s.is_submitted
-        ).length;
-        const noProfile = list.filter(
-          (s) => !s.hasYearProfile
-        ).length;
-
-        return {
-          name: className,
-          total: list.length,
-          submitted,
-          pending,
-          noProfile,
-          rate:
-            list.length === 0
-              ? 0
-              : Math.round((submitted / list.length) * 100),
-          list,
-        };
-      })
-      .sort((a, b) => {
-        if (a.rate !== b.rate) return a.rate - b.rate;
-        return b.total - a.total;
-      });
-  }, [students, classes]);
-
-  // =====================================================
-  // PHÂN TÍCH TIÊU CHÍ
-  // Chỉ đánh giá khi hồ sơ năm học và bản ghi tiêu chí
-  // đều được xác nhận đã nộp.
-  // =====================================================
-
-  const eligibleCriteriaStudents = useMemo(
-    () =>
-      students.filter(
-        (s) => s.is_submitted && s.hasCriteria && s.criteriaSubmitted
-      ),
-    [students]
-  );
-
-  const criteriaStats = useMemo(() => {
-    return CRITERIA.map((item) => {
-      const passed = eligibleCriteriaStudents.filter(
-        (s) => s[item.key]
-      );
-
-      const notPassed = eligibleCriteriaStudents.filter(
-        (s) => !s[item.key]
-      );
-
-      const total = eligibleCriteriaStudents.length;
-
-      return {
-        ...item,
-        passed,
-        notPassed,
-        total,
-        rate:
-          total === 0 ? 0 : Math.round((passed.length / total) * 100),
-      };
-    });
-  }, [eligibleCriteriaStudents]);
-
-  // =====================================================
-  // DANH SÁCH CHI TIẾT
-  // =====================================================
-
-  const showStudents = (title: string, list: Student[]) => {
-    setSelectedTitle(title);
-    setSelectedStudents(list);
-    setDetailSearch("");
-  };
-
-  const closeStudents = () => {
-    setSelectedStudents(null);
-    setDetailSearch("");
-  };
-
-  const sortedSelectedStudents = useMemo(() => {
-    if (!selectedStudents) return [];
-
-    const keyword = detailSearch.trim().toLowerCase();
-
-    return selectedStudents
-      .filter((s) =>
-        `${s.ho_ten || ""} ${s.mssv || ""} ${s.lop || ""}`
-          .toLowerCase()
-          .includes(keyword)
-      )
-      .sort((a, b) => {
-        const classCompare = (a.lop || "").localeCompare(
-          b.lop || "",
-          "vi",
-          { numeric: true, sensitivity: "base" }
-        );
-
-        if (classCompare !== 0) return classCompare;
-
-        return (a.mssv || "").localeCompare(b.mssv || "", "vi", {
+      if (sortBy === "class") {
+        return a.lop.localeCompare(b.lop, "vi", {
           numeric: true,
         });
-      });
-  }, [selectedStudents, detailSearch]);
-
-  // =====================================================
-  // CẢNH BÁO DỮ LIỆU
-  // =====================================================
-
-  const dataWarnings = useMemo(() => {
-    const submittedWithoutCriteria = students.filter(
-      (s) => s.is_submitted && !s.hasCriteria
-    );
-
-    const mismatch = students.filter(
-      (s) => s.is_submitted && s.hasCriteria && !s.criteriaSubmitted
-    );
-
-    const classNames = students
-      .map((s) => s.lop?.trim())
-      .filter(Boolean) as string[];
-
-    const normalizedClasses = new Map<string, Set<string>>();
-
-    classNames.forEach((name) => {
-      const key = name.toLowerCase();
-      if (!normalizedClasses.has(key)) {
-        normalizedClasses.set(key, new Set());
       }
-      normalizedClasses.get(key)!.add(name);
+
+      if (sortBy === "submitted") {
+        return Number(b.is_submitted) - Number(a.is_submitted);
+      }
+
+      return (b.overall ?? -1) - (a.overall ?? -1);
     });
 
-    const possibleClassDuplicates = Array.from(
-      normalizedClasses.values()
-    ).filter((set) => set.size > 1);
+    return result;
+  }, [students, search, classFilter, filter, sortBy]);
 
-    return {
-      submittedWithoutCriteria,
-      mismatch,
-      possibleClassDuplicates,
-    };
-  }, [students]);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredStudents.length / pageSize)
+  );
 
-  const percent = (value: number, total: number) =>
-    total === 0 ? 0 : Math.round((value / total) * 100);
+  const pageStudents = filteredStudents.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, classFilter, filter, sortBy]);
 
   const filterLabels: Record<FilterType, string> = {
-    all: "Tất cả sinh viên",
+    all: "Tất cả",
     submitted: "Đã nộp hồ sơ",
     pending: "Có hồ sơ - chưa nộp",
     "no-profile": "Chưa tạo hồ sơ",
-    "no-criteria": "Thiếu dữ liệu tiêu chí",
+    "not-evaluated": "Chưa đánh giá",
+    "in-progress": "Đang hoàn thiện",
+    achieved: "Đạt đủ 5 tiêu chí",
   };
 
-  // =====================================================
-  // RENDER
-  // =====================================================
+  const applyFilter = (nextFilter: FilterType) => {
+    setFilter(nextFilter);
+    setClassFilter("all");
+    setSearch("");
+  };
+
+  const exportCsv = () => {
+    const headers = [
+      "STT",
+      "Họ và tên",
+      "MSSV",
+      "Lớp",
+      "Trạng thái hồ sơ",
+      ...CRITERIA.map((criterion) => criterion.label),
+      "Tiến độ tổng",
+      "Số mục đã đánh giá",
+      "Tổng số mục",
+    ];
+
+    const rows = filteredStudents.map((student, index) => [
+      index + 1,
+      student.ho_ten,
+      student.mssv,
+      student.lop,
+      student.is_submitted
+        ? "Đã nộp"
+        : student.hasYearProfile
+          ? "Chưa nộp"
+          : "Chưa tạo hồ sơ",
+      ...CRITERIA.map((criterion) =>
+        student.criteria[criterion.key] === null
+          ? "Chưa có tiêu chí"
+          : `${student.criteria[criterion.key]}%`
+      ),
+      student.overall === null
+        ? "Chưa đủ dữ liệu"
+        : `${student.overall.toFixed(1)}%`,
+      student.evaluatedCount,
+      student.totalItems,
+    ]);
+
+    const csv = [
+      headers.map(escapeCsv).join(","),
+      ...rows.map((row) => row.map(escapeCsv).join(",")),
+    ].join("\r\n");
+
+    const blob = new Blob(
+      ["\uFEFF" + csv],
+      { type: "text/csv;charset=utf-8;" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `ThongKeSV5T_${academicYear?.name || "NamHoc"}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const getStatus = (student: Student) => {
+    if (!student.hasYearProfile) {
+      return { label: "Chưa tạo hồ sơ", type: "red" };
+    }
+
+    if (!student.is_submitted) {
+      return { label: "Chưa nộp hồ sơ", type: "orange" };
+    }
+
+    if (student.evaluatedCount === 0) {
+      return { label: "Chờ đánh giá", type: "blue" };
+    }
+
+    if (student.overall === null) {
+      return { label: "Đang cập nhật", type: "gray" };
+    }
+
+    if (
+      CRITERIA.every(
+        (criterion) => student.criteria[criterion.key] === 100
+      )
+    ) {
+      return { label: "Đạt 5 tiêu chí", type: "green" };
+    }
+
+    return { label: "Đang hoàn thiện", type: "purple" };
+  };
+
+  const formatProgress = (value: number | null) =>
+    value === null ? "Chưa có dữ liệu" : `${value.toFixed(1)}%`;
 
   return (
-    <main className="statistics-page">
-      <style jsx>{`
-        .statistics-page {
-          min-height: 100vh;
-          padding: 28px 32px 60px;
-          background: #f5f7fb;
-          color: #172033;
-        }
-
-        .container {
-          max-width: 1500px;
-          margin: 0 auto;
-        }
-
-        .topbar {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-          margin-bottom: 26px;
-        }
-
-        .back-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 9px;
-          padding: 10px 15px;
-          border: 1px solid #e2e8f0;
-          border-radius: 10px;
-          background: white;
-          color: #475569;
-          text-decoration: none;
-          font-size: 13px;
-          font-weight: 650;
-          transition: 0.2s;
-        }
-
-        .back-link:hover {
-          border-color: #93c5fd;
-          color: #2563eb;
-          transform: translateY(-1px);
-        }
-
-        .refresh-button {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          padding: 10px 15px;
-          border: 1px solid #dbeafe;
-          border-radius: 10px;
-          background: #eff6ff;
-          color: #1d4ed8;
-          font-size: 13px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: 0.2s;
-        }
-
-        .refresh-button:hover {
-          background: #dbeafe;
-        }
-
-        .refresh-button:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .page-heading {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-          gap: 20px;
-          margin-bottom: 25px;
-        }
-
-        .eyebrow {
-          color: #2563eb;
-          font-size: 14px;
-          font-weight: 800;
-          letter-spacing: 1.3px;
-          text-transform: uppercase;
-          margin-bottom: 8px;
-        }
-
-        .page-heading h1 {
-          margin: 0;
-          font-size: 27px;
-          font-weight: 800;
-          letter-spacing: -0.8px;
-          color: #172033;
-        }
-
-        .page-description {
-          color: #64748b;
-          font-size: 13px;
-          margin-top: 8px;
-        }
-
-        .year-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 14px;
-          background: white;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          color: #334155;
-          font-size: 13px;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        .year-dot {
-          width: 8px;
-          height: 8px;
-          background: #22c55e;
-          border-radius: 50%;
-          box-shadow: 0 0 0 4px #dcfce7;
-        }
-
-        .loading-box,
-        .error-box {
-          padding: 35px;
-          text-align: center;
-          border-radius: 16px;
-          background: white;
-          color: #64748b;
-          border: 1px solid #e2e8f0;
-        }
-
-        .error-box {
-          color: #b91c1c;
-          background: #fef2f2;
-          border-color: #fecaca;
-        }
-
-        .section {
-          margin-top: 28px;
-        }
-
-        .section-heading {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 15px;
-        }
-
-        .section-heading h2 {
-          margin: 0;
-          font-size: 17px;
-          font-weight: 800;
-          color: #1e293b;
-        }
-
-        .section-subtitle {
-          color: #94a3b8;
-          font-size: 14px;
-          margin-top: 5px;
-        }
-
-        .overview-grid {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 15px;
-        }
-
-        .metric-card {
-          position: relative;
-          overflow: hidden;
-          padding: 18px;
-          border: 1px solid #e8edf5;
-          border-radius: 16px;
-          background: white;
-          text-align: left;
-          cursor: pointer;
-          transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-          min-width: 0;
-        }
-
-        .metric-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 10px 25px rgba(15, 23, 42, 0.07);
-          border-color: #bfdbfe;
-        }
-
-        .metric-top {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 10px;
-        }
-
-        .metric-label {
-          color: #64748b;
-          font-size: 13px;
-          font-weight: 650;
-        }
-
-        .metric-icon {
-          width: 36px;
-          height: 36px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 11px;
-          font-size: 17px;
-          font-weight: 800;
-        }
-
-        .metric-value {
-          font-size: 28px;
-          line-height: 1.2;
-          font-weight: 850;
-          letter-spacing: -1px;
-          margin-top: 17px;
-          color: #172033;
-        }
-
-        .metric-foot {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          color: #94a3b8;
-          font-size: 14px;
-          margin-top: 8px;
-        }
-
-        .metric-blue .metric-icon {
-          background: #eff6ff;
-          color: #2563eb;
-        }
-
-        .metric-green .metric-icon {
-          background: #ecfdf5;
-          color: #059669;
-        }
-
-        .metric-orange .metric-icon {
-          background: #fff7ed;
-          color: #ea580c;
-        }
-
-        .metric-red .metric-icon {
-          background: #fef2f2;
-          color: #dc2626;
-        }
-
-        .progress-panel {
-          display: grid;
-          grid-template-columns: 1.1fr 1fr;
-          gap: 20px;
-          padding: 20px;
-          background: white;
-          border: 1px solid #e8edf5;
-          border-radius: 17px;
-        }
-
-        .progress-main {
-          min-width: 0;
-        }
-
-        .progress-title {
-          font-size: 13px;
-          color: #64748b;
-          font-weight: 650;
-        }
-
-        .progress-number {
-          display: flex;
-          align-items: baseline;
-          gap: 9px;
-          margin-top: 13px;
-        }
-
-        .progress-number strong {
-          font-size: 32px;
-          letter-spacing: -1.5px;
-          color: #172033;
-        }
-
-        .progress-number span {
-          color: #94a3b8;
-          font-size: 14px;
-        }
-
-        .progress-track {
-          height: 11px;
-          overflow: hidden;
-          background: #edf2f7;
-          border-radius: 20px;
-          margin-top: 15px;
-        }
-
-        .progress-fill {
-          height: 100%;
-          border-radius: inherit;
-          background: linear-gradient(90deg, #2563eb, #60a5fa);
-          transition: width 0.7s ease;
-        }
-
-        .progress-note {
-          margin-top: 11px;
-          color: #94a3b8;
-          font-size: 14px;
-        }
-
-        .progress-breakdown {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          gap: 15px;
-          border-left: 1px solid #edf0f5;
-          padding-left: 24px;
-        }
-
-        .breakdown-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 10px;
-          font-size: 14px;
-        }
-
-        .breakdown-label {
-          display: flex;
-          align-items: center;
-          gap: 9px;
-          color: #64748b;
-        }
-
-        .legend-dot {
-          width: 9px;
-          height: 9px;
-          border-radius: 50%;
-          flex-shrink: 0;
-        }
-
-        .breakdown-value {
-          color: #1e293b;
-          font-weight: 800;
-          white-space: nowrap;
-        }
-
-        .content-grid {
-          display: grid;
-          grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.85fr);
-          gap: 18px;
-          align-items: start;
-        }
-
-        .panel {
-          min-width: 0;
-          padding: 19px;
-          background: white;
-          border: 1px solid #e8edf5;
-          border-radius: 16px;
-        }
-
-        .panel-title {
-          font-size: 14px;
-          font-weight: 800;
-          color: #1e293b;
-          margin: 0;
-        }
-
-        .panel-description {
-          color: #94a3b8;
-          font-size: 14px;
-          margin-top: 5px;
-        }
-
-        .class-list {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          margin-top: 21px;
-        }
-
-        .class-row {
-          display: grid;
-          grid-template-columns: minmax(75px, 0.7fr) minmax(100px, 1.5fr) 42px;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .class-name {
-          color: #475569;
-          font-size: 14px;
-          font-weight: 700;
-          overflow-wrap: anywhere;
-        }
-
-        .class-track {
-          height: 9px;
-          background: #f1f5f9;
-          border-radius: 20px;
-          overflow: hidden;
-        }
-
-        .class-fill {
-          height: 100%;
-          border-radius: 20px;
-          background: linear-gradient(90deg, #2563eb, #60a5fa);
-          transition: width 0.5s ease;
-        }
-
-        .class-rate {
-          text-align: right;
-          font-size: 14px;
-          color: #334155;
-          font-weight: 800;
-        }
-
-        .class-meta {
-          grid-column: 2 / 4;
-          margin-top: -9px;
-          color: #94a3b8;
-          font-size: 14px;
-        }
-
-        .empty-state {
-          padding: 28px 12px;
-          text-align: center;
-          color: #94a3b8;
-          font-size: 14px;
-        }
-
-        .insight-card {
-          padding: 14px;
-          border-radius: 13px;
-          background: #f8fafc;
-          border: 1px solid #edf2f7;
-          margin-top: 15px;
-        }
-
-        .insight-card.warning {
-          background: #fff7ed;
-          border-color: #fed7aa;
-        }
-
-        .insight-card.info {
-          background: #eff6ff;
-          border-color: #dbeafe;
-        }
-
-        .insight-heading {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: #334155;
-          font-size: 13px;
-          font-weight: 800;
-        }
-
-        .insight-text {
-          color: #64748b;
-          font-size: 14px;
-          line-height: 1.65;
-          margin-top: 8px;
-        }
-
-        .insight-number {
-          font-size: 20px;
-          font-weight: 850;
-          color: #1e293b;
-          margin-top: 8px;
-        }
-
-        .criteria-grid {
-          display: grid;
-          grid-template-columns: repeat(5, minmax(0, 1fr));
-          gap: 12px;
-          margin-top: 17px;
-        }
-
-        .criteria-card {
-          padding: 14px 12px;
-          border: 1px solid #e8edf5;
-          border-radius: 13px;
-          background: #fbfdff;
-          min-width: 0;
-        }
-
-        .criteria-icon {
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 10px;
-          background: #eff6ff;
-          color: #2563eb;
-          font-size: 15px;
-          font-weight: 800;
-        }
-
-        .criteria-name {
-          margin-top: 11px;
-          color: #475569;
-          font-size: 14px;
-          font-weight: 750;
-        }
-
-        .criteria-value {
-          margin-top: 8px;
-          color: #172033;
-          font-size: 22px;
-          font-weight: 850;
-        }
-
-        .criteria-sub {
-          color: #94a3b8;
-          font-size: 14px;
-          margin-top: 3px;
-        }
-
-        .criteria-track {
-          height: 5px;
-          border-radius: 10px;
-          background: #e9eef5;
-          overflow: hidden;
-          margin-top: 12px;
-        }
-
-        .criteria-fill {
-          height: 100%;
-          background: #10b981;
-          border-radius: inherit;
-        }
-
-        .criteria-empty {
-          padding: 24px;
-          background: #f8fafc;
-          border: 1px dashed #cbd5e1;
-          border-radius: 13px;
-          color: #64748b;
-          text-align: center;
-          font-size: 14px;
-          line-height: 1.7;
-          margin-top: 17px;
-        }
-
-        .toolbar {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          flex-wrap: wrap;
-          margin: 18px 0;
-        }
-
-        .toolbar-left,
-        .toolbar-right {
-          display: flex;
-          align-items: center;
-          gap: 9px;
-          flex-wrap: wrap;
-        }
-
-        .search-input,
-        .select-input {
-          height: 40px;
-          border: 1px solid #dbe2ea;
-          border-radius: 9px;
-          padding: 0 12px;
-          background: white;
-          color: #334155;
-          font-size: 14px;
-          outline: none;
-          transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .search-input {
-          width: 260px;
-        }
-
-        .select-input {
-          min-width: 165px;
-        }
-
-        .search-input:focus,
-        .select-input:focus {
-          border-color: #60a5fa;
-          box-shadow: 0 0 0 3px #dbeafe;
-        }
-
-        .filter-tabs {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          flex-wrap: wrap;
-        }
-
-        .filter-tab {
-          padding: 8px 11px;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          background: white;
-          color: #64748b;
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: 0.2s;
-        }
-
-        .filter-tab:hover {
-          border-color: #93c5fd;
-          color: #2563eb;
-        }
-
-        .filter-tab.active {
-          color: white;
-          background: #2563eb;
-          border-color: #2563eb;
-        }
-
-        .table-panel {
-          padding: 20px;
-          background: white;
-          border: 1px solid #e8edf5;
-          border-radius: 16px;
-        }
-
-        .table-wrap {
-          width: 100%;
-          overflow-x: auto;
-        }
-
-        .data-table {
-          width: 100%;
-          border-collapse: collapse;
-          min-width: 650px;
-        }
-
-        .data-table th {
-          padding: 13px 12px;
-          background: #f8fafc;
-          color: #64748b;
-          font-size: 14px;
-          font-weight: 800;
-          text-align: left;
-          white-space: nowrap;
-          border-bottom: 1px solid #e8edf5;
-        }
-
-        .data-table td {
-          padding: 13px 12px;
-          color: #475569;
-          font-size: 14px;
-          border-bottom: 1px solid #f1f5f9;
-        }
-
-        .data-table tbody tr {
-          transition: background 0.15s;
-        }
-
-        .data-table tbody tr:hover {
-          background: #f8fbff;
-        }
-
-        .data-table tbody tr:last-child td {
-          border-bottom: none;
-        }
-
-        .student-name {
-          color: #1e293b;
-          font-weight: 750;
-        }
-
-        .student-code {
-          color: #64748b;
-          font-variant-numeric: tabular-nums;
-        }
-
-        .status {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          padding: 5px 8px;
-          border-radius: 20px;
-          font-size: 14px;
-          font-weight: 750;
-          white-space: nowrap;
-        }
-
-        .status-green {
-          color: #047857;
-          background: #d1fae5;
-        }
-
-        .status-orange {
-          color: #c2410c;
-          background: #ffedd5;
-        }
-
-        .status-red {
-          color: #b91c1c;
-          background: #fee2e2;
-        }
-
-        .status-gray {
-          color: #64748b;
-          background: #f1f5f9;
-        }
-
-        .detail-button {
-          border: none;
-          background: transparent;
-          color: #2563eb;
-          font-size: 14px;
-          font-weight: 750;
-          cursor: pointer;
-        }
-
-        .detail-button:hover {
-          text-decoration: underline;
-        }
-
-        .table-footer {
-          display: flex;
-          justify-content: space-between;
-          gap: 12px;
-          align-items: center;
-          padding-top: 15px;
-          color: #94a3b8;
-          font-size: 14px;
-        }
-
-        .warning-list {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          margin-top: 16px;
-        }
-
-        .warning-row {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          padding: 13px;
-          background: #fffaf3;
-          border: 1px solid #ffedd5;
-          border-radius: 11px;
-        }
-
-        .warning-icon {
-          color: #ea580c;
-          font-size: 15px;
-          flex-shrink: 0;
-        }
-
-        .warning-content {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .warning-title {
-          color: #9a3412;
-          font-size: 14px;
-          font-weight: 800;
-        }
-
-        .warning-description {
-          color: #9a6b4c;
-          font-size: 14px;
-          line-height: 1.6;
-          margin-top: 4px;
-        }
-
-        .warning-action {
-          border: none;
-          background: transparent;
-          color: #c2410c;
-          font-size: 14px;
-          font-weight: 800;
-          cursor: pointer;
-          white-space: nowrap;
-        }
-
-        .modal-backdrop {
-          position: fixed;
-          inset: 0;
-          z-index: 100;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          padding: 22px;
-          background: rgba(15, 23, 42, 0.48);
-          backdrop-filter: blur(4px);
-          animation: fadeIn 0.18s ease;
-        }
-
-        .modal {
-          width: 100%;
-          max-width: 900px;
-          max-height: 85vh;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          background: white;
-          border-radius: 18px;
-          box-shadow: 0 25px 70px rgba(15, 23, 42, 0.2);
-          animation: slideUp 0.22s ease;
-        }
-
-        .modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 15px;
-          padding: 20px 23px;
-          border-bottom: 1px solid #edf0f5;
-        }
-
-        .modal-title {
-          color: #172033;
-          font-size: 16px;
-          font-weight: 850;
-        }
-
-        .modal-subtitle {
-          color: #94a3b8;
-          font-size: 14px;
-          margin-top: 5px;
-        }
-
-        .close-button {
-          width: 34px;
-          height: 34px;
-          border: 1px solid #e2e8f0;
-          border-radius: 9px;
-          background: white;
-          color: #64748b;
-          font-size: 18px;
-          cursor: pointer;
-        }
-
-        .modal-toolbar {
-          padding: 13px 22px;
-          border-bottom: 1px solid #edf0f5;
-        }
-
-        .modal-body {
-          padding: 0 22px 18px;
-          overflow: auto;
-        }
-
-        .modal-body .data-table {
-          min-width: 570px;
-        }
-
-        .modal-body .data-table th {
-          position: sticky;
-          top: 0;
-          z-index: 1;
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(12px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        @media (max-width: 1050px) {
-          .overview-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+    <>
+      <Header
+        tab={tab}
+        setTab={setTab}
+        openCriteria={() => {
+          window.location.href = "/admin/criteria";
+        }}
+        openProfile={() => {
+          window.location.href = "/admin/users";
+        }}
+      />
+
+      <AdminSidebar />
+
+      <main className="sv5t-stat">
+        <style jsx>{`
+          .sv5t-stat {
+            min-height: 100vh;
+            padding: 30px 32px 55px;
+            background:
+              radial-gradient(circle at 90% 0%, #dbeafe 0, transparent 28%),
+              #f4f7fc;
+            color: #172033;
           }
 
-          .content-grid {
-            grid-template-columns: 1fr;
+          .container {
+            max-width: 1550px;
+            margin: 0 auto;
           }
 
-          .criteria-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-          }
-        }
-
-        @media (max-width: 650px) {
-          .statistics-page {
-            padding: 16px 13px 40px;
-          }
-
-          .topbar {
-            margin-bottom: 22px;
+          .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 30px;
+            border-radius: 24px;
+            color: white;
+            background: linear-gradient(120deg, #172554, #1d4ed8 65%, #0891b2);
+            box-shadow: 0 18px 45px rgba(30, 64, 175, 0.18);
+            animation: rise 0.45s ease both;
           }
 
-          .page-heading {
+          .hero::after {
+            content: "";
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            right: -65px;
+            top: -125px;
+            border: 35px solid rgba(255,255,255,.08);
+            border-radius: 50%;
+          }
+
+          .hero-top {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
             align-items: flex-start;
-            flex-direction: column;
-            gap: 13px;
-          }
-
-          .page-heading h1 {
-            font-size: 22px;
-          }
-
-          .year-badge {
-            font-size: 14px;
-          }
-
-          .overview-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 9px;
-          }
-
-          .metric-card {
-            padding: 12px;
-            border-radius: 13px;
-          }
-
-          .metric-label {
-            font-size: 14px;
-            line-height: 1.4;
-          }
-
-          .metric-icon {
-            width: 30px;
-            height: 30px;
-            font-size: 14px;
-          }
-
-          .metric-value {
-            font-size: 23px;
-            margin-top: 12px;
-          }
-
-          .metric-foot {
-            font-size: 10px;
-          }
-
-          .progress-panel {
-            grid-template-columns: 1fr;
             gap: 20px;
-            padding: 17px;
           }
 
-          .progress-number strong {
-            font-size: 28px;
+          .eyebrow {
+            color: #bfdbfe;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
           }
 
-          .progress-breakdown {
-            border-left: none;
-            border-top: 1px solid #edf0f5;
-            padding: 16px 0 0;
+          .hero h1 {
+            margin: 10px 0 8px;
+            font-size: clamp(23px, 3vw, 34px);
+            font-weight: 900;
+            letter-spacing: -.8px;
+          }
+
+          .hero p {
+            margin: 0;
+            color: #dbeafe;
+            font-size: 13px;
+            line-height: 1.7;
+          }
+
+          .year-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border: 1px solid rgba(255,255,255,.25);
+            border-radius: 12px;
+            background: rgba(255,255,255,.12);
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
+          }
+
+          .hero-actions {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 9px;
+            flex-wrap: wrap;
+            margin-top: 22px;
+          }
+
+          .hero-button {
+            padding: 10px 14px;
+            border: 1px solid rgba(255,255,255,.25);
+            border-radius: 10px;
+            color: white;
+            background: rgba(255,255,255,.13);
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: .2s;
+          }
+
+          .hero-button:hover {
+            background: rgba(255,255,255,.24);
+            transform: translateY(-2px);
+          }
+
+          .hero-button:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+            transform: none;
           }
 
           .section {
-            margin-top: 23px;
+            margin-top: 26px;
+            animation: rise .45s ease both;
           }
 
-          .section-heading h2 {
-            font-size: 15px;
+          .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 14px;
+            margin-bottom: 14px;
           }
 
-          .panel,
-          .table-panel {
-            padding: 15px;
-            border-radius: 13px;
+          .section-head h2 {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 900;
+            color: #172554;
           }
 
-          .class-row {
-            grid-template-columns: minmax(70px, 0.8fr) minmax(70px, 1fr) 38px;
+          .section-head p {
+            margin: 5px 0 0;
+            color: #8491a7;
+            font-size: 12px;
+          }
+
+          .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+          }
+
+          .metric {
+            position: relative;
+            overflow: hidden;
+            min-width: 0;
+            padding: 19px;
+            border: 1px solid #e7edf6;
+            border-radius: 17px;
+            background: white;
+            text-align: left;
+            cursor: pointer;
+            transition: .22s;
+            box-shadow: 0 4px 15px rgba(15,23,42,.025);
+          }
+
+          .metric:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 13px 28px rgba(15,23,42,.08);
+          }
+
+          .metric::after {
+            content: "";
+            position: absolute;
+            width: 75px;
+            height: 75px;
+            right: -25px;
+            bottom: -30px;
+            border-radius: 50%;
+            background: var(--soft);
+          }
+
+          .metric-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             gap: 8px;
           }
 
-          .class-name {
-            font-size: 14px;
+          .metric-label {
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 750;
           }
 
-          .class-meta {
+          .metric-icon {
+            display: grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 11px;
+            color: var(--accent);
+            background: var(--soft);
+            font-size: 17px;
+            font-weight: 900;
+          }
+
+          .metric-value {
+            margin-top: 14px;
+            color: #172033;
+            font-size: 30px;
+            font-weight: 950;
+            letter-spacing: -1px;
+          }
+
+          .metric-note {
+            margin-top: 5px;
+            color: #94a3b8;
+            font-size: 11px;
+          }
+
+          .dashboard-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr);
+            gap: 16px;
+          }
+
+          .panel {
+            min-width: 0;
+            padding: 21px;
+            border: 1px solid #e7edf6;
+            border-radius: 17px;
+            background: white;
+            box-shadow: 0 4px 15px rgba(15,23,42,.025);
+          }
+
+          .panel-title {
+            margin: 0;
+            color: #1e293b;
+            font-size: 14px;
+            font-weight: 900;
+          }
+
+          .panel-subtitle {
+            margin-top: 5px;
+            color: #94a3b8;
+            font-size: 11px;
+          }
+
+          .progress-large {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+          }
+
+          .progress-large strong {
+            color: #1d4ed8;
+            font-size: 35px;
+            font-weight: 950;
+          }
+
+          .progress-large span {
+            color: #94a3b8;
+            font-size: 11px;
+          }
+
+          .track {
+            overflow: hidden;
+            height: 12px;
+            margin-top: 12px;
+            border-radius: 20px;
+            background: #edf2f8;
+          }
+
+          .fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #2563eb, #06b6d4);
+            transition: width .7s ease;
+          }
+
+          .breakdown {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 19px;
+          }
+
+          .breakdown-item {
+            padding: 11px;
+            border-radius: 11px;
+            background: #f8fafc;
+          }
+
+          .breakdown-item strong {
+            display: block;
+            color: #1e293b;
+            font-size: 19px;
+            font-weight: 900;
+          }
+
+          .breakdown-item span {
+            display: block;
+            margin-top: 4px;
+            color: #8491a7;
             font-size: 10px;
           }
 
+          .insight {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 13px;
+            padding: 13px;
+            border: 1px solid #e8edf6;
+            border-radius: 12px;
+            background: #f8fafc;
+          }
+
+          .insight-icon {
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            width: 37px;
+            height: 37px;
+            border-radius: 11px;
+            color: var(--accent);
+            background: var(--soft);
+            font-size: 17px;
+          }
+
+          .insight strong {
+            display: block;
+            color: #334155;
+            font-size: 12px;
+          }
+
+          .insight span {
+            display: block;
+            margin-top: 4px;
+            color: #94a3b8;
+            font-size: 10px;
+            line-height: 1.5;
+          }
+
+          .task-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+          }
+
+          .task {
+            padding: 16px;
+            border: 1px solid #e7edf6;
+            border-radius: 15px;
+            background: white;
+            text-align: left;
+            cursor: pointer;
+            transition: .2s;
+          }
+
+          .task:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(15,23,42,.07);
+          }
+
+          .task-label {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 750;
+          }
+
+          .task-value {
+            margin-top: 10px;
+            color: #172033;
+            font-size: 27px;
+            font-weight: 950;
+          }
+
+          .task-action {
+            margin-top: 6px;
+            color: #2563eb;
+            font-size: 10px;
+            font-weight: 800;
+          }
+
           .criteria-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 9px;
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 11px;
           }
 
-          .criteria-card {
-            padding: 12px;
+          .criterion {
+            padding: 15px;
+            border: 1px solid #e7edf6;
+            border-radius: 14px;
+            background: white;
+            min-width: 0;
           }
 
-          .criteria-value {
-            font-size: 20px;
+          .criterion-icon {
+            display: grid;
+            place-items: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            color: white;
+            background: var(--accent);
+            font-weight: 900;
+          }
+
+          .criterion-name {
+            min-height: 30px;
+            margin-top: 10px;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 850;
+          }
+
+          .criterion-value {
+            margin-top: 8px;
+            color: #172033;
+            font-size: 23px;
+            font-weight: 950;
+          }
+
+          .criterion-sub {
+            margin-top: 4px;
+            color: #94a3b8;
+            font-size: 10px;
+          }
+
+          .class-list {
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+            margin-top: 18px;
+          }
+
+          .class-row {
+            display: grid;
+            grid-template-columns: minmax(85px, .7fr) minmax(80px, 1.5fr) 43px;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            text-align: left;
+            cursor: pointer;
+          }
+
+          .class-name {
+            color: #475569;
+            font-size: 11px;
+            font-weight: 850;
+            overflow-wrap: anywhere;
+          }
+
+          .class-track {
+            height: 9px;
+            overflow: hidden;
+            border-radius: 20px;
+            background: #edf2f8;
+          }
+
+          .class-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #0ea5e9, #2563eb);
+          }
+
+          .class-rate {
+            color: #1e293b;
+            text-align: right;
+            font-size: 11px;
+            font-weight: 900;
+          }
+
+          .class-meta {
+            grid-column: 2 / 4;
+            margin-top: -8px;
+            color: #94a3b8;
+            font-size: 10px;
           }
 
           .toolbar {
-            align-items: stretch;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
           }
 
           .toolbar-left,
           .toolbar-right {
-            width: 100%;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
           }
 
-          .search-input,
-          .select-input {
-            width: 100%;
-            flex: 1;
+          .input,
+          .select {
+            height: 40px;
+            min-width: 145px;
+            padding: 0 12px;
+            border: 1px solid #dbe3ef;
+            border-radius: 10px;
+            outline: none;
+            color: #334155;
+            background: white;
+            font-size: 12px;
           }
 
-          .filter-tabs {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            width: 100%;
+          .input {
+            width: 270px;
           }
 
-          .filter-tab {
+          .input:focus,
+          .select:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px #dbeafe;
+          }
+
+          .filter-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+          }
+
+          .filter-button {
+            padding: 8px 11px;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            color: #64748b;
+            background: white;
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: .2s;
+          }
+
+          .filter-button.active {
+            border-color: #2563eb;
+            color: white;
+            background: #2563eb;
+          }
+
+          .export-button {
+            height: 40px;
+            padding: 0 14px;
+            border: 0;
+            border-radius: 10px;
+            color: white;
+            background: #059669;
+            font-size: 11px;
+            font-weight: 850;
+            cursor: pointer;
+          }
+
+          .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #edf1f6;
+            border-radius: 12px;
+          }
+
+          table {
+            width: 100%;
+            min-width: 850px;
+            border-collapse: collapse;
+          }
+
+          th {
+            padding: 13px 12px;
+            color: #64748b;
+            background: #f8fafc;
+            text-align: left;
+            font-size: 10px;
+            white-space: nowrap;
+          }
+
+          td {
+            padding: 13px 12px;
+            border-top: 1px solid #f0f3f7;
+            color: #475569;
+            font-size: 11px;
+          }
+
+          tbody tr:hover {
+            background: #f8fbff;
+          }
+
+          .student-name {
+            color: #1e293b;
+            font-weight: 850;
+          }
+
+          .student-code {
+            color: #64748b;
+            font-variant-numeric: tabular-nums;
+          }
+
+          .status {
+            display: inline-flex;
+            padding: 5px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 850;
+            white-space: nowrap;
+          }
+
+          .green { color: #047857; background: #d1fae5; }
+          .orange { color: #c2410c; background: #ffedd5; }
+          .red { color: #b91c1c; background: #fee2e2; }
+          .blue { color: #1d4ed8; background: #dbeafe; }
+          .purple { color: #7e22ce; background: #f3e8ff; }
+          .gray { color: #64748b; background: #f1f5f9; }
+
+          .detail-button {
+            border: 0;
+            color: #2563eb;
+            background: transparent;
+            font-size: 11px;
+            font-weight: 850;
+            cursor: pointer;
+          }
+
+          .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-top: 14px;
+            color: #94a3b8;
+            font-size: 11px;
+          }
+
+          .page-buttons {
+            display: flex;
+            gap: 6px;
+          }
+
+          .page-button {
+            min-width: 34px;
+            height: 34px;
+            padding: 0 9px;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            color: #475569;
+            background: white;
+            cursor: pointer;
+          }
+
+          .page-button:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+          }
+
+          .page-button.active {
+            border-color: #2563eb;
+            color: white;
+            background: #2563eb;
+          }
+
+          .empty {
+            padding: 35px 12px;
+            color: #94a3b8;
             text-align: center;
-            padding: 9px 5px;
-            font-size: 14px;
-          }
-
-          .table-footer {
-            align-items: flex-start;
-            flex-direction: column;
+            font-size: 12px;
           }
 
           .modal-backdrop {
-            padding: 8px;
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: grid;
+            place-items: center;
+            padding: 16px;
+            background: rgba(15,23,42,.55);
+            backdrop-filter: blur(5px);
+            animation: fade .2s ease;
           }
 
           .modal {
-            max-height: 90vh;
+            width: 100%;
+            max-width: 760px;
+            max-height: 88vh;
+            overflow: auto;
+            padding: 23px;
+            border-radius: 19px;
+            background: white;
+            box-shadow: 0 25px 80px rgba(0,0,0,.2);
+            animation: rise .25s ease;
+          }
+
+          .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+          }
+
+          .modal-head h2 {
+            margin: 0;
+            color: #172033;
+            font-size: 19px;
+          }
+
+          .modal-close {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            color: #64748b;
+            background: white;
+            font-size: 19px;
+            cursor: pointer;
+          }
+
+          .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 18px;
+          }
+
+          .detail-box {
+            padding: 13px;
+            border: 1px solid #edf1f6;
+            border-radius: 11px;
+            background: #f8fafc;
+          }
+
+          .detail-box span {
+            display: block;
+            color: #94a3b8;
+            font-size: 10px;
+          }
+
+          .detail-box strong {
+            display: block;
+            margin-top: 6px;
+            color: #1e293b;
+            font-size: 13px;
+          }
+
+          .detail-criterion {
+            display: grid;
+            grid-template-columns: minmax(100px, 1fr) 2fr 50px;
+            align-items: center;
+            gap: 10px;
+            margin-top: 14px;
+          }
+
+          .detail-criterion span {
+            color: #475569;
+            font-size: 11px;
+            font-weight: 750;
+          }
+
+          .detail-track {
+            height: 8px;
+            overflow: hidden;
+            border-radius: 20px;
+            background: #edf2f8;
+          }
+
+          .detail-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #2563eb, #06b6d4);
+          }
+
+          .error-box {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #fecaca;
             border-radius: 14px;
+            color: #b91c1c;
+            background: #fef2f2;
           }
 
-          .modal-header {
-            padding: 15px;
+          @keyframes rise {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
           }
 
-          .modal-toolbar {
-            padding: 10px 15px;
+          @keyframes fade {
+            from { opacity: 0; }
+            to { opacity: 1; }
           }
 
-          .modal-body {
-            padding: 0 12px 14px;
+          @media (max-width: 1100px) {
+            .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .criteria-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .task-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .dashboard-grid { grid-template-columns: 1fr; }
           }
-        }
-      `}</style>
 
-      <div className="container">
-        {/* HEADER */}
-        <div className="topbar">
-          <Link href="/admin" className="back-link">
-            <span>←</span>
-            Trang chủ
-          </Link>
+          @media (max-width: 650px) {
+            .sv5t-stat { padding: 15px 12px 35px; }
+            .hero { padding: 21px 17px; border-radius: 17px; }
+            .hero-top { flex-direction: column; }
+            .year-pill { white-space: normal; }
+            .metrics { gap: 9px; }
+            .metric { padding: 13px; border-radius: 13px; }
+            .metric-value { font-size: 25px; }
+            .metric-label { font-size: 10px; }
+            .metric-note { font-size: 9px; }
+            .panel { padding: 15px; }
+            .breakdown { gap: 6px; }
+            .breakdown-item { padding: 9px; }
+            .breakdown-item strong { font-size: 16px; }
+            .task-grid { gap: 8px; }
+            .task { padding: 12px; }
+            .task-value { font-size: 23px; }
+            .criteria-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .criterion { padding: 12px; }
+            .toolbar { align-items: stretch; }
+            .toolbar-left, .toolbar-right { width: 100%; }
+            .input, .select { width: 100%; min-width: 0; }
+            .filter-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .filter-button { min-height: 36px; }
+            .export-button { width: 100%; }
+            .pagination { align-items: flex-start; flex-direction: column; }
+            .detail-grid { grid-template-columns: 1fr; }
+            .modal { padding: 17px; }
+            .detail-criterion { grid-template-columns: 95px minmax(40px, 1fr) 42px; }
+          }
 
-          <button
-            className="refresh-button"
-            onClick={() => loadData(true)}
-            disabled={loading || refreshing}
-          >
-            <span>{refreshing ? "◌" : "↻"}</span>
-            {refreshing ? "Đang cập nhật..." : "Làm mới dữ liệu"}
-          </button>
-        </div>
+          @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+              animation-duration: .01ms !important;
+              transition-duration: .01ms !important;
+            }
+          }
+        `}</style>
 
-        <div className="page-heading">
-          <div>
-            <h1>Thống kê và quản lý hồ sơ</h1>
-          </div>
+        <div className="container">
+          <section className="hero">
+            <div className="hero-top">
+              <div>
+                <div className="eyebrow">
+                  BMU · STUDENT FIVE-GOOD TRACKING
+                </div>
+                <h1>Trung tâm điều hành SV5T</h1>
+                <p>
+                  Theo dõi tiến độ hồ sơ, phân tích kết quả tiêu chí
+                  và xác định những nội dung cần ưu tiên xử lý.
+                </p>
+              </div>
 
-          {currentAcademicYear && (
-            <div className="year-badge">
-              <span className="year-dot" />
-              Năm học {currentAcademicYear.name}
+              {academicYear && (
+                <div className="year-pill">
+                  <span>●</span>
+                  Năm học {academicYear.name}
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {loading ? (
-          <div className="loading-box">Đang tải dữ liệu thống kê...</div>
-        ) : error ? (
-          <div className="error-box">
-            <strong>Không thể tải dữ liệu</strong>
-            <div style={{ marginTop: 8 }}>{error}</div>
-            <button
-              className="refresh-button"
-              style={{ marginTop: 16 }}
-              onClick={() => loadData()}
-            >
-              Thử tải lại
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* TỔNG QUAN */}
-            <section className="section">
-              <div className="section-heading">
-                <div>
-                  <h2>Tổng quan năm học</h2>
-                  
-                </div>
-              </div>
+            <div className="hero-actions">
+              <button
+                className="hero-button"
+                onClick={() => loadData(true)}
+                disabled={loading || refreshing}
+              >
+                {refreshing ? "◌ Đang cập nhật..." : "↻ Làm mới dữ liệu"}
+              </button>
 
-              <div className="overview-grid">
-                <button
-                  className="metric-card metric-blue"
-                  onClick={() =>
-                    showStudents("Toàn bộ sinh viên", students)
-                  }
-                >
-                  <div className="metric-top">
-                    <span className="metric-label">Tổng sinh viên</span>
-                    <span className="metric-icon">♙</span>
-                  </div>
-                  <div className="metric-value">
-                    {numberFormat(overview.total)}
-                  </div>
-                  <div className="metric-foot">
-                    <span>Quy mô dữ liệu hiện tại</span>
-                    <span>Chi tiết →</span>
-                  </div>
-                </button>
+              <button
+                className="hero-button"
+                onClick={exportCsv}
+                disabled={loading || filteredStudents.length === 0}
+              >
+                ↓ Xuất danh sách đang lọc
+              </button>
+            </div>
+          </section>
 
-                <button
-                  className="metric-card metric-green"
-                  onClick={() =>
-                    showStudents(
-                      "Sinh viên đã nộp hồ sơ",
-                      students.filter((s) => s.is_submitted)
-                    )
-                  }
-                >
-                  <div className="metric-top">
-                    <span className="metric-label">Đã nộp hồ sơ</span>
-                    <span className="metric-icon">✓</span>
-                  </div>
-                  <div className="metric-value">
-                    {numberFormat(overview.submitted)}
-                  </div>
-                  <div className="metric-foot">
-                    <span>
-                      {percent(overview.submitted, overview.total)}% tổng sinh viên
-                    </span>
-                    <span>Chi tiết →</span>
-                  </div>
-                </button>
-
-                <button
-                  className="metric-card metric-orange"
-                  onClick={() =>
-                    showStudents(
-                      "Sinh viên có hồ sơ nhưng chưa nộp",
-                      students.filter(
-                        (s) => s.hasYearProfile && !s.is_submitted
-                      )
-                    )
-                  }
-                >
-                  <div className="metric-top">
-                    <span className="metric-label">Có hồ sơ - chưa nộp</span>
-                    <span className="metric-icon">◷</span>
-                  </div>
-                  <div className="metric-value">
-                    {numberFormat(overview.pending)}
-                  </div>
-                  <div className="metric-foot">
-                    <span>Cần tiếp tục hoàn thiện</span>
-                    <span>Chi tiết →</span>
-                  </div>
-                </button>
-
-                <button
-                  className="metric-card metric-red"
-                  onClick={() =>
-                    showStudents(
-                      "Sinh viên chưa tạo hồ sơ năm học",
-                      students.filter((s) => !s.hasYearProfile)
-                    )
-                  }
-                >
-                  <div className="metric-top">
-                    <span className="metric-label">Chưa tạo hồ sơ</span>
-                    <span className="metric-icon">!</span>
-                  </div>
-                  <div className="metric-value">
-                    {numberFormat(overview.noProfile)}
-                  </div>
-                  <div className="metric-foot">
-                    <span>Cần hướng dẫn đăng ký</span>
-                    <span>Chi tiết →</span>
-                  </div>
-                </button>
-              </div>
-            </section>
-
-            {/* TIẾN ĐỘ */}
-            <section className="section">
-              <div className="section-heading">
-                <div>
-                  <h2>Tiến độ thực hiện</h2>
-                  <div className="section-subtitle">
-                    Tỷ lệ hồ sơ đã nộp trên tổng số sinh viên
+          {loading ? (
+            <div className="panel section" style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 25 }}>◌</div>
+              <strong>Đang tổng hợp dữ liệu SV5T...</strong>
+            </div>
+          ) : error ? (
+            <div className="error-box">
+              <strong>Không thể tải dữ liệu thống kê</strong>
+              <p>{error}</p>
+              <button
+                className="hero-button"
+                style={{
+                  color: "#1d4ed8",
+                  background: "white",
+                  borderColor: "#bfdbfe",
+                }}
+                onClick={() => loadData()}
+              >
+                Thử tải lại
+              </button>
+            </div>
+          ) : (
+            <>
+              <section className="section">
+                <div className="section-head">
+                  <div>
+                    <h2>Bức tranh tổng thể</h2>
+                    <p>Các chỉ số trọng tâm của năm học hiện tại</p>
                   </div>
                 </div>
-              </div>
 
-              <div className="progress-panel">
-                <div className="progress-main">
-                  <div className="progress-title">
-                    Tỷ lệ sinh viên hoàn thành nộp hồ sơ
+                <div className="metrics">
+                  <button
+                    className="metric"
+                    style={{ "--accent": "#2563eb", "--soft": "#dbeafe" } as React.CSSProperties}
+                    onClick={() => applyFilter("all")}
+                  >
+                    <div className="metric-top">
+                      <span className="metric-label">Tổng sinh viên</span>
+                      <span className="metric-icon">♙</span>
+                    </div>
+                    <div className="metric-value">
+                      {numberFormat(overview.total)}
+                    </div>
+                    <div className="metric-note">Quy mô sinh viên trong hệ thống</div>
+                  </button>
+
+                  <button
+                    className="metric"
+                    style={{ "--accent": "#059669", "--soft": "#d1fae5" } as React.CSSProperties}
+                    onClick={() => applyFilter("submitted")}
+                  >
+                    <div className="metric-top">
+                      <span className="metric-label">Đã nộp hồ sơ</span>
+                      <span className="metric-icon">✓</span>
+                    </div>
+                    <div className="metric-value">
+                      {numberFormat(overview.submitted)}
+                    </div>
+                    <div className="metric-note">
+                      {overview.submissionRate.toFixed(1)}% tổng sinh viên
+                    </div>
+                  </button>
+
+                  <button
+                    className="metric"
+                    style={{ "--accent": "#d97706", "--soft": "#fef3c7" } as React.CSSProperties}
+                    onClick={() => applyFilter("pending")}
+                  >
+                    <div className="metric-top">
+                      <span className="metric-label">Có hồ sơ - chưa nộp</span>
+                      <span className="metric-icon">◷</span>
+                    </div>
+                    <div className="metric-value">
+                      {numberFormat(overview.pending)}
+                    </div>
+                    <div className="metric-note">Cần nhắc nhở hoàn thiện</div>
+                  </button>
+
+                  <button
+                    className="metric"
+                    style={{ "--accent": "#dc2626", "--soft": "#fee2e2" } as React.CSSProperties}
+                    onClick={() => applyFilter("no-profile")}
+                  >
+                    <div className="metric-top">
+                      <span className="metric-label">Chưa tạo hồ sơ</span>
+                      <span className="metric-icon">!</span>
+                    </div>
+                    <div className="metric-value">
+                      {numberFormat(overview.noProfile)}
+                    </div>
+                    <div className="metric-note">Cần hướng dẫn đăng ký</div>
+                  </button>
+                </div>
+              </section>
+
+              <section className="section dashboard-grid">
+                <div className="panel">
+                  <h3 className="panel-title">Tiến độ nộp hồ sơ</h3>
+                  <div className="panel-subtitle">
+                    Tỷ lệ sinh viên đã nộp trên tổng số sinh viên
                   </div>
 
-                  <div className="progress-number">
-                    <strong>{overview.completion.toFixed(1)}%</strong>
+                  <div className="progress-large">
+                    <strong>{overview.submissionRate.toFixed(1)}%</strong>
                     <span>
-                      {numberFormat(overview.submitted)} /{" "}
-                      {numberFormat(overview.total)} sinh viên
+                      {numberFormat(overview.submitted)} / {numberFormat(overview.total)}
                     </span>
                   </div>
 
-                  <div className="progress-track">
+                  <div className="track">
                     <div
-                      className="progress-fill"
+                      className="fill"
                       style={{
-                        width: `${Math.min(overview.completion, 100)}%`,
+                        width: `${Math.min(overview.submissionRate, 100)}%`,
                       }}
                     />
                   </div>
 
-                  <div className="progress-note">
-                    Tỷ lệ được tính trên toàn bộ sinh viên có vai trò student
-                    trong hệ thống.
-                  </div>
-                </div>
-
-                <div className="progress-breakdown">
-                  <div className="breakdown-row">
-                    <div className="breakdown-label">
-                      <span
-                        className="legend-dot"
-                        style={{ background: "#10b981" }}
-                      />
-                      Đã nộp hồ sơ
+                  <div className="breakdown">
+                    <div className="breakdown-item">
+                      <strong>{numberFormat(overview.submitted)}</strong>
+                      <span>Đã nộp</span>
                     </div>
-                    <span className="breakdown-value">
-                      {numberFormat(overview.submitted)}
-                    </span>
-                  </div>
-
-                  <div className="breakdown-row">
-                    <div className="breakdown-label">
-                      <span
-                        className="legend-dot"
-                        style={{ background: "#f59e0b" }}
-                      />
-                      Có hồ sơ nhưng chưa nộp
+                    <div className="breakdown-item">
+                      <strong>{numberFormat(overview.pending)}</strong>
+                      <span>Chưa nộp</span>
                     </div>
-                    <span className="breakdown-value">
-                      {numberFormat(overview.pending)}
-                    </span>
-                  </div>
-
-                  <div className="breakdown-row">
-                    <div className="breakdown-label">
-                      <span
-                        className="legend-dot"
-                        style={{ background: "#ef4444" }}
-                      />
-                      Chưa tạo hồ sơ
+                    <div className="breakdown-item">
+                      <strong>{numberFormat(overview.noProfile)}</strong>
+                      <span>Chưa tạo</span>
                     </div>
-                    <span className="breakdown-value">
-                      {numberFormat(overview.noProfile)}
-                    </span>
                   </div>
-                </div>
-              </div>
-            </section>
-
-            {/* PHÂN TÍCH THEO LỚP */}
-            <section className="section">
-              <div className="section-heading">
-                <div>
-                  <h2>Tiến độ theo lớp</h2>
-                  <div className="section-subtitle">
-                    Ưu tiên những lớp có tỷ lệ nộp thấp để triển khai đôn đốc
-                  </div>
-                </div>
-              </div>
-
-              <div className="content-grid">
-                <div className="panel">
-                  <h3 className="panel-title">Tỷ lệ nộp hồ sơ theo lớp</h3>
-                  <div className="panel-description">
-                    Sắp xếp từ tỷ lệ hoàn thành thấp đến cao
-                  </div>
-
-                  {classStats.length === 0 ? (
-                    <div className="empty-state">
-                      Chưa có dữ liệu lớp học.
-                    </div>
-                  ) : (
-                    <div className="class-list">
-                      {classStats.slice(0, 12).map((item) => (
-                        <button
-                          key={item.name}
-                          className="class-row"
-                          style={{
-                            width: "100%",
-                            border: "none",
-                            background: "transparent",
-                            padding: 0,
-                            textAlign: "left",
-                            cursor: "pointer",
-                          }}
-                          onClick={() => {
-                            setClassFilter(item.name);
-                            setFilter("all");
-                            setSelectedStudents(null);
-                          }}
-                        >
-                          <span className="class-name">{item.name}</span>
-
-                          <span className="class-track">
-                            <span
-                              className="class-fill"
-                              style={{ width: `${item.rate}%` }}
-                            />
-                          </span>
-
-                          <span className="class-rate">{item.rate}%</span>
-
-                          <span className="class-meta">
-                            {item.submitted}/{item.total} đã nộp ·{" "}
-                            {item.pending} chưa nộp · {item.noProfile} chưa tạo
-                            hồ sơ
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {classStats.length > 12 && (
-                    <div className="progress-note">
-                      Đang hiển thị 12 lớp có tỷ lệ nộp thấp nhất. Xem đầy đủ
-                      trong bảng quản lý bên dưới.
-                    </div>
-                  )}
                 </div>
 
                 <div className="panel">
-                  <h3 className="panel-title">Nhận định điều hành</h3>
-                  <div className="panel-description">
-                    Các chỉ số cần Ban Chủ nhiệm quan tâm
+                  <h3 className="panel-title">Chỉ số đánh giá</h3>
+                  <div className="panel-subtitle">
+                    Tiến độ đánh giá dựa trên các mục tiêu chí đã cấu hình
                   </div>
 
-                  <div className="insight-card warning">
-                    <div className="insight-heading">
-                      <span>⚑</span>
-                      Khối lượng hồ sơ cần đôn đốc
-                    </div>
-                    <div className="insight-number">
-                      {numberFormat(overview.pending + overview.noProfile)}
-                    </div>
-                    <div className="insight-text">
-                      Sinh viên chưa hoàn thành nộp hồ sơ, gồm người đã tạo hồ
-                      sơ nhưng chưa nộp và người chưa tạo hồ sơ.
+                  <div className="insight" style={{ "--accent": "#2563eb", "--soft": "#dbeafe" } as React.CSSProperties}>
+                    <div className="insight-icon">◉</div>
+                    <div>
+                      <strong>{numberFormat(overview.fullyEvaluated)} sinh viên đủ dữ liệu 5 tiêu chí</strong>
+                      <span>
+                        {overview.evaluationRate.toFixed(1)}% tổng sinh viên
+                      </span>
                     </div>
                   </div>
 
-                  <div className="insight-card info">
-                    <div className="insight-heading">
-                      <span>▦</span>
-                      Mức độ tạo hồ sơ
-                    </div>
-                    <div className="insight-number">
-                      {overview.profileRate.toFixed(1)}%
-                    </div>
-                    <div className="insight-text">
-                      {numberFormat(overview.pending + overview.submitted)} sinh
-                      viên đã có hồ sơ năm học trên tổng số{" "}
-                      {numberFormat(overview.total)} sinh viên.
+                  <div className="insight" style={{ "--accent": "#059669", "--soft": "#d1fae5" } as React.CSSProperties}>
+                    <div className="insight-icon">★</div>
+                    <div>
+                      <strong>{numberFormat(overview.achieved)} sinh viên đạt đủ 5 tiêu chí</strong>
+                      <span>Đạt 100% ở cả năm tiêu chí</span>
                     </div>
                   </div>
 
-                  <div className="insight-card">
-                    <div className="insight-heading">
-                      <span>◎</span>
-                      Dữ liệu tiêu chí
-                    </div>
-                    <div className="insight-number">
-                      {numberFormat(overview.hasCriteria)}
-                    </div>
-                    <div className="insight-text">
-                      Sinh viên có bản ghi tiêu chí trong năm học hiện tại.
-                      Chưa sử dụng dữ liệu này để kết luận đạt/chưa đạt khi
-                      hồ sơ chưa được xác nhận nộp.
+                  <div className="insight" style={{ "--accent": "#d97706", "--soft": "#fef3c7" } as React.CSSProperties}>
+                    <div className="insight-icon">↗</div>
+                    <div>
+                      <strong>Tiến độ đánh giá trung bình</strong>
+                      <span>{overview.averageProgress.toFixed(1)}% trên các hồ sơ đủ dữ liệu</span>
                     </div>
                   </div>
                 </div>
-              </div>
-            </section>
+              </section>
 
-            {/* TIÊU CHÍ */}
-            <section className="section">
-              <div className="section-heading">
-                <div>
-                  <h2>Phân tích 5 tiêu chí</h2>
-                  <div className="section-subtitle">
-                    Chỉ tính trên hồ sơ năm học đã nộp và bản ghi tiêu chí đã
-                    được xác nhận nộp
+              <section className="section">
+                <div className="section-head">
+                  <div>
+                    <h2>Danh sách công việc cần ưu tiên</h2>
+                    <p>Bấm vào từng nhóm để lọc sinh viên cần theo dõi</p>
                   </div>
                 </div>
-              </div>
 
-              {eligibleCriteriaStudents.length === 0 ? (
-                <div className="criteria-empty">
-                  <strong>Chưa đủ dữ liệu để phân tích kết quả 5 tiêu chí.</strong>
-                  <br />
-                  Hiện chưa có sinh viên nào đồng thời có hồ sơ năm học đã nộp
-                  và bản ghi tiêu chí được xác nhận đã nộp.
-                  <br />
-                  Khi dữ liệu được cập nhật, hệ thống sẽ tự động hiển thị tỷ lệ
-                  đạt của từng tiêu chí tại đây.
+                <div className="task-grid">
+                  <button className="task" onClick={() => applyFilter("pending")}>
+                    <div className="task-label">Hồ sơ chưa nộp</div>
+                    <div className="task-value">{numberFormat(taskLists.notSubmitted.length)}</div>
+                    <div className="task-action">Xem danh sách →</div>
+                  </button>
+
+                  <button className="task" onClick={() => applyFilter("not-evaluated")}>
+                    <div className="task-label">Chờ đánh giá</div>
+                    <div className="task-value">{numberFormat(taskLists.notEvaluated.length)}</div>
+                    <div className="task-action">Xem danh sách →</div>
+                  </button>
+
+                  <button className="task" onClick={() => applyFilter("in-progress")}>
+                    <div className="task-label">Đang hoàn thiện tiêu chí</div>
+                    <div className="task-value">{numberFormat(taskLists.inProgress.length)}</div>
+                    <div className="task-action">Xem danh sách →</div>
+                  </button>
+
+                  <button className="task" onClick={() => applyFilter("achieved")}>
+                    <div className="task-label">Đạt đủ 5 tiêu chí</div>
+                    <div className="task-value">{numberFormat(taskLists.achieved.length)}</div>
+                    <div className="task-action">Xem danh sách →</div>
+                  </button>
                 </div>
-              ) : (
+              </section>
+
+              <section className="section">
+                <div className="section-head">
+                  <div>
+                    <h2>Phân tích 5 tiêu chí SV5T</h2>
+                    <p>Tỷ lệ sinh viên đạt 100% ở từng tiêu chí</p>
+                  </div>
+                </div>
+
                 <div className="criteria-grid">
-                  {criteriaStats.map((item) => (
-                    <div className="criteria-card" key={item.key}>
-                      <div className="criteria-icon">{item.icon}</div>
-                      <div className="criteria-name">{item.label}</div>
-                      <div className="criteria-value">{item.rate}%</div>
-                      <div className="criteria-sub">
-                        {item.passed.length}/{item.total} đạt
+                  {criterionStats.map((criterion) => (
+                    <div className="criterion" key={criterion.key}>
+                      <div
+                        className="criterion-icon"
+                        style={{ "--accent": criterion.color } as React.CSSProperties}
+                      >
+                        {criterion.icon}
                       </div>
-                      <div className="criteria-track">
+                      <div className="criterion-name">{criterion.label}</div>
+                      <div className="criterion-value">
+                        {criterion.rate.toFixed(1)}%
+                      </div>
+                      <div className="criterion-sub">
+                        {criterion.achieved}/{criterion.total} đạt
+                      </div>
+                      <div className="track" style={{ height: 6 }}>
                         <div
-                          className="criteria-fill"
-                          style={{ width: `${item.rate}%` }}
+                          className="fill"
+                          style={{
+                            width: `${criterion.rate}%`,
+                            background: criterion.color,
+                          }}
                         />
+                      </div>
+                      <div className="criterion-sub">
+                        Trung bình: {criterion.average.toFixed(1)}%
                       </div>
                     </div>
                   ))}
                 </div>
-              )}
-            </section>
+              </section>
 
-            {/* DANH SÁCH QUẢN LÝ */}
-            <section className="section">
-              <div className="section-heading">
-                <div>
-                  <h2>Quản lý danh sách sinh viên</h2>
-                  <div className="section-subtitle">
-                    Tìm kiếm, lọc và truy xuất danh sách phục vụ công tác theo
-                    dõi
+              <section className="section dashboard-grid">
+                <div className="panel">
+                  <div className="section-head">
+                    <div>
+                      <h2>Xếp hạng tiến độ theo lớp</h2>
+                      <p>Ưu tiên các lớp có tỷ lệ nộp thấp</p>
+                    </div>
+                    <button
+                      className="detail-button"
+                      onClick={() => setShowAllClasses(!showAllClasses)}
+                    >
+                      {showAllClasses ? "Thu gọn" : "Xem tất cả"}
+                    </button>
+                  </div>
+
+                  <div className="class-list">
+                    {(showAllClasses ? classStats : classStats.slice(0, 8)).map(
+                      (item) => (
+                        <button
+                          className="class-row"
+                          key={item.name}
+                          onClick={() => {
+                            setClassFilter(item.name);
+                            setFilter("all");
+                            setSearch("");
+                          }}
+                        >
+                          <span className="class-name">{item.name}</span>
+                          <span className="class-track">
+                            <span
+                              className="class-fill"
+                              style={{
+                                display: "block",
+                                width: `${item.submissionRate}%`,
+                              }}
+                            />
+                          </span>
+                          <span className="class-rate">
+                            {item.submissionRate.toFixed(0)}%
+                          </span>
+                          <span className="class-meta">
+                            {item.submitted}/{item.total} đã nộp · {item.pending} chưa nộp · {item.noProfile} chưa tạo
+                          </span>
+                        </button>
+                      )
+                    )}
+
+                    {classStats.length === 0 && (
+                      <div className="empty">Chưa có dữ liệu lớp.</div>
+                    )}
                   </div>
                 </div>
-              </div>
 
-              <div className="table-panel">
+                <div className="panel">
+                  <h3 className="panel-title">Góc nhìn điều hành</h3>
+                  <div className="panel-subtitle">
+                    Các chỉ số hỗ trợ phân công và đôn đốc
+                  </div>
+
+                  <div className="insight" style={{ "--accent": "#dc2626", "--soft": "#fee2e2" } as React.CSSProperties}>
+                    <div className="insight-icon">!</div>
+                    <div>
+                      <strong>{numberFormat(overview.pending + overview.noProfile)} sinh viên chưa nộp hồ sơ</strong>
+                      <span>Cần rà soát, nhắc nhở và hỗ trợ đăng ký</span>
+                    </div>
+                  </div>
+
+                  <div className="insight" style={{ "--accent": "#d97706", "--soft": "#fef3c7" } as React.CSSProperties}>
+                    <div className="insight-icon">◷</div>
+                    <div>
+                      <strong>{numberFormat(taskLists.notEvaluated.length)} sinh viên chờ đánh giá</strong>
+                      <span>Đã nộp hồ sơ nhưng chưa có dữ liệu đánh giá</span>
+                    </div>
+                  </div>
+
+                  <div className="insight" style={{ "--accent": "#059669", "--soft": "#d1fae5" } as React.CSSProperties}>
+                    <div className="insight-icon">★</div>
+                    <div>
+                      <strong>{numberFormat(overview.achieved)} sinh viên đạt đủ tiêu chí</strong>
+                      <span>Có thể ưu tiên rà soát, tổng hợp kết quả</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="section panel">
+                <div className="section-head">
+                  <div>
+                    <h2>Tra cứu và quản lý sinh viên</h2>
+                    <p>Tìm kiếm, lọc, xem tiến độ và xuất dữ liệu phục vụ báo cáo</p>
+                  </div>
+                </div>
+
                 <div className="toolbar">
                   <div className="toolbar-left">
                     <input
-                      className="search-input"
-                      placeholder="⌕  Tìm họ tên, MSSV, lớp..."
+                      className="input"
+                      placeholder="Tìm họ tên, MSSV, lớp..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                     />
 
                     <select
-                      className="select-input"
+                      className="select"
                       value={classFilter}
                       onChange={(e) => setClassFilter(e.target.value)}
                     >
                       <option value="all">Tất cả lớp</option>
-                      {classes.map((className) => (
-                        <option key={className} value={className}>
-                          {className}
-                        </option>
+                      {classes.map((name) => (
+                        <option value={name} key={name}>{name}</option>
                       ))}
                     </select>
+
+                    <select
+                      className="select"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                    >
+                      <option value="progress">Tiến độ cao trước</option>
+                      <option value="name">Theo họ tên</option>
+                      <option value="class">Theo lớp</option>
+                      <option value="submitted">Đã nộp trước</option>
+                    </select>
+                  </div>
+
+                  <div className="toolbar-right">
+                    <button className="export-button" onClick={exportCsv}>
+                      ↓ Xuất CSV ({filteredStudents.length})
+                    </button>
                   </div>
                 </div>
 
                 <div className="toolbar">
-                  <div className="filter-tabs">
-                    {(
-                      [
-                        "all",
-                        "submitted",
-                        "pending",
-                        "no-profile",
-                        "no-criteria",
-                      ] as FilterType[]
-                    ).map((item) => (
+                  <div className="filter-list">
+                    {(Object.keys(filterLabels) as FilterType[]).map((key) => (
                       <button
-                        key={item}
-                        className={`filter-tab ${
-                          filter === item ? "active" : ""
-                        }`}
-                        onClick={() => setFilter(item)}
+                        key={key}
+                        className={`filter-button ${filter === key ? "active" : ""}`}
+                        onClick={() => setFilter(key)}
                       >
-                        {filterLabels[item]}
+                        {filterLabels[key]}
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div className="table-wrap">
-                  <table className="data-table">
+                  <table>
                     <thead>
                       <tr>
-                        <th style={{ width: 55 }}>STT</th>
-                        <th>Họ và tên</th>
+                        <th>STT</th>
+                        <th>HỌ VÀ TÊN</th>
                         <th>MSSV</th>
-                        <th>Lớp</th>
-                        <th>Trạng thái hồ sơ</th>
-                        <th>Dữ liệu tiêu chí</th>
-                        <th style={{ textAlign: "right" }}>Chi tiết</th>
+                        <th>LỚP</th>
+                        <th>TRẠNG THÁI HỒ SƠ</th>
+                        <th>TIẾN ĐỘ TIÊU CHÍ</th>
+                        <th>KẾT QUẢ</th>
+                        <th></th>
                       </tr>
                     </thead>
-
                     <tbody>
-                      {filteredStudents.length === 0 ? (
+                      {pageStudents.length === 0 ? (
                         <tr>
-                          <td colSpan={7}>
-                            <div className="empty-state">
-                              Không tìm thấy sinh viên phù hợp.
-                            </div>
+                          <td colSpan={8}>
+                            <div className="empty">Không tìm thấy sinh viên phù hợp.</div>
                           </td>
                         </tr>
                       ) : (
-                        filteredStudents.map((s, index) => (
-                          <tr key={s.id}>
-                            <td>{index + 1}</td>
-                            <td>
-                              <span className="student-name">
-                                {s.ho_ten || "Chưa cập nhật"}
-                              </span>
-                            </td>
-                            <td>
-                              <span className="student-code">
-                                {s.mssv || "—"}
-                              </span>
-                            </td>
-                            <td>{s.lop || "Chưa phân lớp"}</td>
-                            <td>
-                              {s.is_submitted ? (
-                                <span className="status status-green">
-                                  ✓ Đã nộp
+                        pageStudents.map((student, index) => {
+                          const status = getStatus(student);
+
+                          return (
+                            <tr key={student.id}>
+                              <td>{(page - 1) * pageSize + index + 1}</td>
+                              <td>
+                                <span className="student-name">
+                                  {student.ho_ten || "Chưa cập nhật"}
                                 </span>
-                              ) : s.hasYearProfile ? (
-                                <span className="status status-orange">
-                                  ◷ Chưa nộp
+                              </td>
+                              <td>
+                                <span className="student-code">
+                                  {student.mssv || "—"}
                                 </span>
-                              ) : (
-                                <span className="status status-red">
-                                  ! Chưa tạo hồ sơ
+                              </td>
+                              <td>{student.lop || "—"}</td>
+                              <td>
+                                <span className={`status ${student.is_submitted ? "green" : student.hasYearProfile ? "orange" : "red"}`}>
+                                  {student.is_submitted
+                                    ? "Đã nộp"
+                                    : student.hasYearProfile
+                                      ? "Chưa nộp"
+                                      : "Chưa tạo"}
                                 </span>
-                              )}
-                            </td>
-                            <td>
-                              {s.hasCriteria ? (
-                                s.criteriaSubmitted ? (
-                                  <span className="status status-green">
-                                    Đã nộp tiêu chí
-                                  </span>
-                                ) : (
-                                  <span className="status status-orange">
-                                    Chưa xác nhận nộp
-                                  </span>
-                                )
-                              ) : (
-                                <span className="status status-gray">
-                                  Chưa có dữ liệu
+                              </td>
+                              <td>
+                                {student.evaluatedCount}/{student.totalItems} mục
+                              </td>
+                              <td>
+                                <span className={`status ${status.type}`}>
+                                  {status.label}
                                 </span>
-                              )}
-                            </td>
-                            <td style={{ textAlign: "right" }}>
-                              <button
-                                className="detail-button"
-                                onClick={() =>
-                                  showStudents(
-                                    `Thông tin sinh viên: ${s.ho_ten || s.mssv}`,
-                                    [s]
-                                  )
-                                }
-                              >
-                                Xem →
-                              </button>
-                            </td>
-                          </tr>
-                        ))
+                                <div style={{ marginTop: 5, fontWeight: 800 }}>
+                                  {formatProgress(student.overall)}
+                                </div>
+                              </td>
+                              <td>
+                                <button
+                                  className="detail-button"
+                                  onClick={() => setSelectedStudent(student)}
+                                >
+                                  Chi tiết →
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
                 </div>
 
-                <div className="table-footer">
+                <div className="pagination">
                   <span>
-                    Hiển thị {numberFormat(filteredStudents.length)} /{" "}
-                    {numberFormat(students.length)} sinh viên
+                    Hiển thị {pageStudents.length} / {filteredStudents.length} sinh viên
                   </span>
-                  <span>
-                    Bộ lọc: {filterLabels[filter]}
-                    {classFilter !== "all" ? ` · Lớp ${classFilter}` : ""}
-                  </span>
+                  <div className="page-buttons">
+                    <button
+                      className="page-button"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => p - 1)}
+                    >
+                      ←
+                    </button>
+                    <button className="page-button active">
+                      {page}/{totalPages}
+                    </button>
+                    <button
+                      className="page-button"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      →
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            </>
+          )}
+        </div>
 
-            {/* KIỂM SOÁT CHẤT LƯỢNG DỮ LIỆU */}
-            <section className="section">
-              <div className="section-heading">
+        {selectedStudent && (
+          <div
+            className="modal-backdrop"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setSelectedStudent(null);
+              }
+            }}
+          >
+            <div className="modal">
+              <div className="modal-head">
                 <div>
-                  <h2>Kiểm soát chất lượng dữ liệu</h2>
-                  <div className="section-subtitle">
-                    Những vấn đề cần rà soát để bảo đảm báo cáo chính xác
+                  <h2>{selectedStudent.ho_ten || "Thông tin sinh viên"}</h2>
+                  <div className="panel-subtitle">
+                    Hồ sơ SV5T · {academicYear?.name || ""}
                   </div>
                 </div>
-              </div>
-
-              <div className="panel">
-                <div className="warning-list">
-                  <div className="warning-row">
-                    <span className="warning-icon">⚠</span>
-                    <div className="warning-content">
-                      <div className="warning-title">
-                        Hồ sơ đã nộp nhưng thiếu bản ghi tiêu chí
-                      </div>
-                      <div className="warning-description">
-                        Có {dataWarnings.submittedWithoutCriteria.length} sinh
-                        viên đã nộp hồ sơ năm học nhưng chưa có bản ghi trong
-                        student_criteria_results.
-                      </div>
-                    </div>
-                    <button
-                      className="warning-action"
-                      onClick={() =>
-                        showStudents(
-                          "Đã nộp hồ sơ nhưng thiếu dữ liệu tiêu chí",
-                          dataWarnings.submittedWithoutCriteria
-                        )
-                      }
-                    >
-                      Xem danh sách →
-                    </button>
-                  </div>
-
-                  <div className="warning-row">
-                    <span className="warning-icon">⚠</span>
-                    <div className="warning-content">
-                      <div className="warning-title">
-                        Trạng thái nộp giữa hai bảng chưa đồng nhất
-                      </div>
-                      <div className="warning-description">
-                        Có {dataWarnings.mismatch.length} sinh viên đã nộp hồ
-                        sơ năm học nhưng bản ghi tiêu chí chưa được xác nhận
-                        nộp. Cần kiểm tra quy trình cập nhật dữ liệu.
-                      </div>
-                    </div>
-                    <button
-                      className="warning-action"
-                      onClick={() =>
-                        showStudents(
-                          "Trạng thái nộp giữa hai bảng chưa đồng nhất",
-                          dataWarnings.mismatch
-                        )
-                      }
-                    >
-                      Xem danh sách →
-                    </button>
-                  </div>
-
-                  <div className="warning-row">
-                    <span className="warning-icon">ⓘ</span>
-                    <div className="warning-content">
-                      <div className="warning-title">
-                        Tên lớp có thể chưa được chuẩn hóa
-                      </div>
-                      <div className="warning-description">
-                        Phát hiện{" "}
-                        {dataWarnings.possibleClassDuplicates.length} nhóm tên
-                        lớp có khác biệt chữ hoa/thường. Cần rà soát trước khi
-                        sử dụng báo cáo tổng hợp theo lớp.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </>
-        )}
-      </div>
-
-      {/* MODAL DANH SÁCH SINH VIÊN */}
-      {selectedStudents !== null && (
-        <div
-          className="modal-backdrop"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) closeStudents();
-          }}
-        >
-          <div className="modal">
-            <div className="modal-header">
-              <div>
-                <div className="modal-title">{selectedTitle}</div>
-                <div className="modal-subtitle">
-                  {numberFormat(selectedStudents.length)} sinh viên trong danh
-                  sách
-                </div>
-              </div>
-
-              <button
-                className="close-button"
-                onClick={closeStudents}
-                aria-label="Đóng"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="modal-toolbar">
-              <input
-                className="search-input"
-                style={{ width: "100%" }}
-                placeholder="⌕  Tìm theo họ tên, MSSV hoặc lớp..."
-                value={detailSearch}
-                onChange={(e) => setDetailSearch(e.target.value)}
-              />
-            </div>
-
-            <div className="modal-body">
-              <div className="table-wrap">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>STT</th>
-                      <th>Họ tên</th>
-                      <th>MSSV</th>
-                      <th>Lớp</th>
-                      <th>Trạng thái hồ sơ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedSelectedStudents.length === 0 ? (
-                      <tr>
-                        <td colSpan={5}>
-                          <div className="empty-state">
-                            Không tìm thấy sinh viên.
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      sortedSelectedStudents.map((s, index) => (
-                        <tr key={s.id}>
-                          <td>{index + 1}</td>
-                          <td>
-                            <span className="student-name">
-                              {s.ho_ten || "Chưa cập nhật"}
-                            </span>
-                          </td>
-                          <td>{s.mssv || "—"}</td>
-                          <td>{s.lop || "—"}</td>
-                          <td>
-                            {s.is_submitted ? (
-                              <span className="status status-green">
-                                Đã nộp
-                              </span>
-                            ) : s.hasYearProfile ? (
-                              <span className="status status-orange">
-                                Chưa nộp
-                              </span>
-                            ) : (
-                              <span className="status status-red">
-                                Chưa tạo hồ sơ
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="table-footer">
-                <span>
-                  Hiển thị {sortedSelectedStudents.length} /{" "}
-                  {selectedStudents.length} sinh viên
-                </span>
                 <button
-                  className="detail-button"
-                  onClick={closeStudents}
+                  className="modal-close"
+                  onClick={() => setSelectedStudent(null)}
                 >
-                  Đóng danh sách
+                  ×
                 </button>
+              </div>
+
+              <div className="detail-grid">
+                <div className="detail-box">
+                  <span>Mã số sinh viên</span>
+                  <strong>{selectedStudent.mssv || "Chưa cập nhật"}</strong>
+                </div>
+                <div className="detail-box">
+                  <span>Lớp</span>
+                  <strong>{selectedStudent.lop || "Chưa phân lớp"}</strong>
+                </div>
+                <div className="detail-box">
+                  <span>Trạng thái hồ sơ</span>
+                  <strong>
+                    {selectedStudent.is_submitted
+                      ? "Đã nộp"
+                      : selectedStudent.hasYearProfile
+                        ? "Chưa nộp"
+                        : "Chưa tạo hồ sơ"}
+                  </strong>
+                </div>
+                <div className="detail-box">
+                  <span>Tiến độ tổng</span>
+                  <strong>{formatProgress(selectedStudent.overall)}</strong>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 22 }}>
+                <h3 className="panel-title">Kết quả từng tiêu chí</h3>
+
+                {CRITERIA.map((criterion) => {
+                  const value = selectedStudent.criteria[criterion.key];
+
+                  return (
+                    <div className="detail-criterion" key={criterion.key}>
+                      <span>{criterion.label}</span>
+                      <div className="detail-track">
+                        <div
+                          className="detail-fill"
+                          style={{
+                            width: `${value ?? 0}%`,
+                            background: criterion.color,
+                          }}
+                        />
+                      </div>
+                      <strong style={{ fontSize: 11, textAlign: "right" }}>
+                        {value === null ? "—" : `${value.toFixed(1)}%`}
+                      </strong>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="detail-box" style={{ marginTop: 20 }}>
+                <span>Tiến độ đánh giá</span>
+                <strong>
+                  {selectedStudent.evaluatedCount} / {selectedStudent.totalItems} mục đã đánh giá
+                </strong>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </main>
+        )}
+      </main>
+
+      <Footer />
+    </>
   );
 }

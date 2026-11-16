@@ -2296,7 +2296,38 @@ return (
     <AdminIcon name="bell" size={16} />
     Nhắn tin
   </button>
-
+  {/* QUẢN LÝ TIÊU CHUẨN */}
+  <button
+    type="button"
+    onClick={() => {
+      window.location.href = "/admin/taotieuchi";
+    }}
+    style={{
+      minHeight: 42,
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      padding: "0 14px",
+      border: "1px solid #a7f3d0",
+      borderRadius: 11,
+      background: "#ecfdf5",
+      color: "#047857",
+      fontSize: 12,
+      fontWeight: 700,
+      cursor: "pointer",
+      whiteSpace: "nowrap",
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.background = "#d1fae5";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.background = "#ecfdf5";
+    }}
+  >
+    <AdminIcon name="file" size={16} />
+    Tiêu chuẩn
+  </button>
   {/* TRẠNG THÁI ĐĂNG KÝ */}
   {currentAcademicYear && (
     <div

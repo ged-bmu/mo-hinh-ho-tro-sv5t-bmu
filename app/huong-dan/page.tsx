@@ -1248,8 +1248,7 @@ const [activeSection, setActiveSection] = useState("start");
           </Step>
 
           <Note type="orange">
-            Không bỏ qua bước tải ảnh 3x4. Theo tài liệu
-            hướng dẫn, đây là nội dung bắt buộc trước khi
+            Không bỏ qua bước tải ảnh 3x4. Đây là nội dung bắt buộc trước khi
             hoàn tất việc gửi hồ sơ.
           </Note>
         </>
@@ -1517,7 +1516,7 @@ const [activeSection, setActiveSection] = useState("start");
           <SubHeading>3. Trường hợp thông báo chưa hoạt động</SubHeading>
 
           <p style={paragraphStyle}>
-            Theo tài liệu hướng dẫn, trạng thái thông báo
+            Trạng thái thông báo
             ban đầu có thể khác nhau giữa các lần cài đặt:
           </p>
 
