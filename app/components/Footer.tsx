@@ -51,7 +51,7 @@ export default function Footer() {
             </p>
 
             <p style={{ margin: "4px 0" }}>
-              📍 298 Hà Huy Tập, Phường Tân An, Tỉnh Đắk Lắk
+              📍 298 Hà Huy Tập, phường Tân An, tỉnh Đắk Lắk
             </p>
 
             <p style={{ margin: "4px 0" }}>

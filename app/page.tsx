@@ -2083,7 +2083,7 @@ circleCircumference -
             fontSize: 19,
           }}
         >
-          Hoạt động sắp diễn ra
+          Hoạt động sắp tới
         </h3>
 
         <p
