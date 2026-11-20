@@ -3,82 +3,25 @@
 
 import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{
-    outcome: "accepted" | "dismissed";
-    platform: string;
-  }>;
-}
-
-// ===============================
-// DÙNG CHUNG SỰ KIỆN CÀI PWA
-// ===============================
-let savedPrompt: BeforeInstallPromptEvent | null = null;
-let isAppInstalled = false;
-let listeners: Set<
-  (prompt: BeforeInstallPromptEvent | null, installed: boolean) => void
-> = new Set();
-
-let eventListenerInitialized = false;
-
-function notifyListeners() {
-  listeners.forEach((listener) =>
-    listener(savedPrompt, isAppInstalled)
-  );
-}
-
-function initializeInstallListener() {
-  if (eventListenerInitialized || typeof window === "undefined") return;
-
-  eventListenerInitialized = true;
-
-  window.addEventListener("beforeinstallprompt", (e: Event) => {
-    e.preventDefault();
-
-    savedPrompt = e as BeforeInstallPromptEvent;
-    notifyListeners();
-  });
-
-  window.addEventListener("appinstalled", () => {
-    isAppInstalled = true;
-    savedPrompt = null;
-    notifyListeners();
-  });
-}
-
-function subscribeInstallPrompt(
-  listener: (
-    prompt: BeforeInstallPromptEvent | null,
-    installed: boolean
-  ) => void
-) {
-  initializeInstallListener();
-
-  listeners.add(listener);
-  listener(savedPrompt, isAppInstalled);
-
-  return () => {
-    listeners.delete(listener);
-  };
-}
+import { useInstallPrompt } from "./InstallPromptContext";
 
 export default function InstallButton({
   isHeader = false,
 }: {
   isHeader?: boolean;
 }) {
-  const [deferredPrompt, setDeferredPrompt] =
-    useState<BeforeInstallPromptEvent | null>(null);
+  const {
+    deferredPrompt,
+    installed,
+    clearPrompt,
+    markInstalled,
+  } = useInstallPrompt();
 
-  const [installed, setInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showIOSGuide, setShowIOSGuide] = useState(false);
 
   useEffect(() => {
-    // Kiểm tra iPhone / iPad
     const ios =
       /iPad|iPhone|iPod/.test(navigator.userAgent) ||
       (navigator.platform === "MacIntel" &&
@@ -86,7 +29,6 @@ export default function InstallButton({
 
     setIsIOS(ios);
 
-    // Kiểm tra thiết bị mobile
     const checkMobile = () => {
       setIsMobile(
         ios ||
@@ -98,40 +40,26 @@ export default function InstallButton({
     checkMobile();
     window.addEventListener("resize", checkMobile);
 
-    // Kiểm tra đã cài PWA
-    if (window.matchMedia("(display-mode: standalone)").matches) {
-      setInstalled(true);
-      isAppInstalled = true;
-    }
-
-    // Nhận sự kiện cài đặt dùng chung
-    const unsubscribe = subscribeInstallPrompt(
-      (prompt, appInstalled) => {
-        setDeferredPrompt(prompt);
-        setInstalled(appInstalled);
-      }
-    );
-
     return () => {
       window.removeEventListener("resize", checkMobile);
-      unsubscribe();
     };
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      alert("Hiện chưa có sự kiện cài đặt PWA.");
+      return;
+    }
 
     try {
       await deferredPrompt.prompt();
 
       const { outcome } = await deferredPrompt.userChoice;
 
-      savedPrompt = null;
-      setDeferredPrompt(null);
-      notifyListeners();
+      clearPrompt();
 
       if (outcome === "accepted") {
-        setInstalled(true);
+        markInstalled();
       }
     } catch (error) {
       console.error("Lỗi cài đặt PWA:", error);
@@ -140,7 +68,6 @@ export default function InstallButton({
 
   if (installed) return null;
 
-  // Không hiển thị trên desktop nếu không có prompt
   if (!deferredPrompt && !isIOS && !isMobile) return null;
 
   return (
@@ -260,9 +187,13 @@ export default function InstallButton({
                 Chọn <b>Thêm vào Màn hình chính</b>.
               </li>
 
-              <li>Nhấn <b>Thêm</b> để hoàn tất.</li>
+              <li>
+                Nhấn <b>Thêm</b> để hoàn tất.
+              </li>
 
-              <li>Bật <b>Mở dưới dạng ứng dụng web</b>.</li>
+              <li>
+                Bật <b>Mở dưới dạng ứng dụng web</b>.
+              </li>
             </ol>
 
             <button
