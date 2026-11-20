@@ -11,6 +11,7 @@ import BellUserTemp from "./components/BellUserTemp";
 import Header from "./components/Header";
 import Spinner from "./components/Spinner";
 import NotificationCard from "./components/NotificationCard";
+import { CircleHelp } from "lucide-react";
 
 export default function Home() {
   const [profile, setProfile] = useState<any>(null);
@@ -31,6 +32,7 @@ export default function Home() {
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [registrationLoading, setRegistrationLoading] = useState(false);
+  const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
   const [totalProfilePercent, setTotalProfilePercent] = useState(0);
 
 useEffect(() => {
@@ -622,11 +624,11 @@ async function toggleRegistration() {
 
     setIsRegistered(nextStatus);
 
-    alert(
-      nextStatus
-        ? "Đăng ký phấn đấu danh hiệu Sinh viên 5 tốt thành công!"
-        : "Đã hủy đăng ký phấn đấu."
-    );
+if (nextStatus) {
+  setShowRegistrationSuccess(true);
+} else {
+  alert("Đã hủy đăng ký phấn đấu.");
+}
   } catch (error) {
     console.error("Lỗi đăng ký phấn đấu:", error);
     alert("Không thể cập nhật đăng ký. Vui lòng thử lại.");
@@ -883,6 +885,12 @@ const handleExport = async (academicYearId: number) => {
 
 const circleRadius = 54;
 const circleCircumference = 2 * Math.PI * circleRadius;
+const currentDate = new Date();
+const currentYear = currentDate.getFullYear();
+const academicYear =
+  currentDate.getMonth() >= 7
+    ? `${currentYear}-${currentYear + 1}`
+    : `${currentYear - 1}-${currentYear}`;
 return (
 <div
   style={{
@@ -1074,26 +1082,28 @@ return (
 )}
 
   <div style={{ position: "relative", width: isMobile ? "100%" : "auto" }}>
-    <button
-      type="button"
-      onClick={() => setShowExportMenu((open) => !open)}
-      disabled={exporting || academicYears.length === 0}
-      style={{
-        background: "#16a34a",
-        color: "#fff",
-        border: "none",
-        padding: "9px 16px",
-        borderRadius: "10px",
-        fontWeight: 600,
-        fontSize: "14px",
-        cursor: exporting ? "wait" : "pointer",
-        width: isMobile ? "100%" : "auto",
-        transition: "all .25s ease",
-        lineHeight: 1.2,
-      }}
-    >
-      {exporting ? "Đang xuất hồ sơ..." : "Xuất hồ sơ ▾"}
-    </button>
+    {false && (
+  <button
+    type="button"
+    onClick={() => setShowExportMenu((open) => !open)}
+    disabled={exporting || academicYears.length === 0}
+    style={{
+      background: "#16a34a",
+      color: "#fff",
+      border: "none",
+      padding: "9px 16px",
+      borderRadius: "10px",
+      fontWeight: 600,
+      fontSize: "14px",
+      cursor: exporting ? "wait" : "pointer",
+      width: isMobile ? "100%" : "auto",
+      transition: "all .25s ease",
+      lineHeight: 1.2,
+    }}
+  >
+    {exporting ? "Đang xuất hồ sơ..." : "Xuất hồ sơ ▾"}
+  </button>
+)}
 
     {showExportMenu && !exporting && (
       <div
@@ -1110,6 +1120,7 @@ return (
           borderRadius: "12px",
           background: "#fff",
           boxShadow: "0 12px 30px rgba(15, 23, 42, 0.16)",
+          display: "none",
         }}
       >
         <div style={{ padding: "8px 10px", color: "#64748b", fontSize: 12, fontWeight: 700 }}>
@@ -1151,11 +1162,10 @@ return (
     borderTop: "1px solid #e5e7eb",
     paddingTop: 18,
     display: "grid",
-    gridTemplateColumns: isMobile
-      ? "1fr"
-      : "180px 1fr 2fr",
-    gap: isMobile ? 20 : 28,
-    alignItems: "stretch",
+gridTemplateColumns: isMobile
+  ? "1fr"
+  : "170px minmax(220px, 0.9fr) minmax(0, 2.4fr)",
+gap: isMobile ? 16 : 12,
   }}
 >
 {/* ===================================================== */}
@@ -1208,6 +1218,22 @@ style={{
           height: 150,
         }}
       >
+        <img
+  src="/bonghoa5tot.png"
+  alt=""
+  style={{
+    position: "absolute",
+    width: 170,
+    height: 170,
+    objectFit: "contain",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    opacity: 0.12,
+    pointerEvents: "none",
+    zIndex: 0,
+  }}
+/>
         <svg
           width="150"
           height="150"
@@ -1345,607 +1371,275 @@ circleCircumference -
 </div>
   
 
-  {/* ===================================================== */}
-  {/* CỘT 2 — THAO TÁC NHANH */}
-  {/* ===================================================== */}
 
+{/* ===================================================== */}
+{/* CỘT 2 — THAO TÁC NHANH */}
+{/* ===================================================== */}
+{!isMobile && (
 <div
   style={{
     display: "flex",
     flexDirection: "column",
     gap: 10,
+    width: isMobile ? "100%" : "85%",
+    justifySelf: "center",
+    boxSizing: "border-box",
     background: "#ffffff",
     borderRadius: "16px",
     border: "1px solid #e5e7eb",
     overflow: "visible",
     boxShadow: "0 4px 14px rgba(15, 23, 42, 0.08)",
   }}
->
-   <div
-  style={{
-    fontWeight: 700,
-    fontSize: 15,
-    color: "#2c449b",
-    background: "linear-gradient(90deg, #63d0ff, #38bdf8)",
-    padding: "12px 14px",
-    width: "100%",
-    borderBottom: "1px solid #000000",
-    borderTopLeftRadius: "16px",
-    borderTopRightRadius: "16px",
-  }}
->
-  ⚡ Thao tác nhanh
-</div>
-
-    {/* XEM BÁO CÁO */}
-    <a
-      href="/bao-cao"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "6px 10px",
-        background: "#F0F9FF",
-        border: "1px solid #BAE6FD",
-        color: "#0369A1",
-        borderRadius: 14,
-        textDecoration: "none",
-        transition: "all .2s ease",
-        boxShadow: "0 2px 6px rgba(0,0,0,.04)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow =
-          "0 6px 14px rgba(37,99,235,.12)";
-        e.currentTarget.style.borderColor = "#93C5FD";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow =
-          "0 2px 6px rgba(0,0,0,.04)";
-        e.currentTarget.style.borderColor = "#BFDBFE";
-      }}
-    >
-      {/* ICON */}
-      <div
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 12,
-          background: "#DBEAFE",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 20,
-          flexShrink: 0,
-        }}
-      >
-        📑
-      </div>
-
-      {/* TEXT */}
-      <div
-        style={{
-          minWidth: 0,
-          flex: 1,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 800,
-            color: "#0F172A",
-          }}
-        >
-          Xem báo cáo
-        </div>
-
-        <div
-          style={{
-            fontSize: 11,
-            color: "#64748B",
-            marginTop: 2,
-          }}
-        >
-          Theo dõi kết quả hồ sơ
-        </div>
-      </div>
-
-      <span
-        style={{
-          fontSize: 18,
-          color: "#2563EB",
-          fontWeight: 700,
-        }}
-      >
-        →
-      </span>
-    </a>
-        {/* NHẮN TIN */}
-    <a
-      href="/trao-doi"
-      onClick={async () => {
-        if (!profile?.id) return;
-
-        await supabase
-          .from("conversations")
-          .update({
-            unread_user: 0,
-          })
-          .eq("user_id", profile.id);
-
-        setUnreadMessages(0);
-      }}
-      style={{
-        position: "relative",
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "6px 10px",
-        background: "#FFF7ED",
-        border: "1px solid #FED7AA",
-        borderRadius: 14,
-        textDecoration: "none",
-        color: "#0F172A",
-        transition: "all .2s ease",
-        boxShadow: "0 2px 6px rgba(0,0,0,.04)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow =
-          "0 6px 14px rgba(249,115,22,.12)";
-        e.currentTarget.style.borderColor = "#FDBA74";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow =
-          "0 2px 6px rgba(0,0,0,.04)";
-        e.currentTarget.style.borderColor = "#FED7AA";
-      }}
-    >
-      {/* ICON */}
-      <div
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 12,
-          background: "#FFEDD5",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 20,
-          flexShrink: 0,
-        }}
-      >
-        💬
-      </div>
-
-      {/* TEXT */}
-      <div
-        style={{
-          minWidth: 0,
-          flex: 1,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 800,
-            color: "#0F172A",
-          }}
-        >
-          Nhắn tin
-        </div>
-
-        <div
-          style={{
-            fontSize: 11,
-            color: "#64748B",
-            marginTop: 2,
-          }}
-        >
-          Trao đổi với Ban Chủ nhiệm
-        </div>
-      </div>
-
-      <span
-        style={{
-          fontSize: 18,
-          color: "#F97316",
-          fontWeight: 700,
-        }}
-      >
-        →
-      </span>
-
-      {/* BADGE */}
-      {unreadMessages > 0 && (
-        <span
-          style={{
-            position: "absolute",
-            top: -6,
-            right: -6,
-            minWidth: 20,
-            height: 20,
-            padding: "0 5px",
-            borderRadius: 999,
-            background: "#EF4444",
-            color: "#fff",
-            fontSize: 11,
-            fontWeight: 800,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: "2px solid #fff",
-            zIndex: 2,
-          }}
-        >
-          {unreadMessages > 9 ? "9+" : unreadMessages}
-        </span>
-      )}
-    </a>
-  {/* HƯỚNG DẪN */}
-<a
-  href="/huong-dan"
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    padding: "6px 10px",
-    background: "#F5F3FF",
-    border: "1px solid #DDD6FE",
-    borderRadius: 14,
-    textDecoration: "none",
-    color: "#0F172A",
-    transition: "all .2s ease",
-    boxShadow: "0 2px 6px rgba(0,0,0,.04)",
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.transform = "translateY(-2px)";
-    e.currentTarget.style.boxShadow =
-      "0 6px 14px rgba(124,58,237,.12)";
-    e.currentTarget.style.borderColor = "#C4B5FD";
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.transform = "translateY(0)";
-    e.currentTarget.style.boxShadow =
-      "0 2px 6px rgba(0,0,0,.04)";
-    e.currentTarget.style.borderColor = "#DDD6FE";
-  }}
->
-  {/* ICON */}
+  >
   <div
     style={{
-      width: 40,
-      height: 40,
-      borderRadius: 12,
-      background: "#EDE9FE",
+      fontWeight: 700,
+      fontSize: 15,
+      color: "#2c449b",
+      background: "linear-gradient(90deg, #63d0ff, #38bdf8)",
+      padding: "12px 14px",
+      width: "100%",
+      boxSizing: "border-box",
+      borderBottom: "1px solid #000000",
+      borderTopLeftRadius: "16px",
+      borderTopRightRadius: "16px",
+    }}
+  >
+    ⚡ Thao tác nhanh
+  </div>
+
+  {/* XEM BÁO CÁO */}
+  <a
+    href="/bao-cao"
+    style={{
       display: "flex",
       alignItems: "center",
-      justifyContent: "center",
-      fontSize: 20,
-      flexShrink: 0,
+      gap: 12,
+      padding: "6px 10px",
+      width: "85%",
+      alignSelf: "center",
+      boxSizing: "border-box",
+      background: "#F0F9FF",
+      border: "1px solid #BAE6FD",
+      color: "#0369A1",
+      borderRadius: 14,
+      textDecoration: "none",
+      transition: "all .2s ease",
+      boxShadow: "0 2px 6px rgba(0,0,0,.04)",
     }}
-  >
-    📖
-  </div>
-
-  {/* TEXT */}
-  <div
-    style={{
-      minWidth: 0,
-      flex: 1,
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = "translateY(-2px)";
+      e.currentTarget.style.boxShadow = "0 6px 14px rgba(37,99,235,.12)";
+      e.currentTarget.style.borderColor = "#93C5FD";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = "translateY(0)";
+      e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,.04)";
+      e.currentTarget.style.borderColor = "#BFDBFE";
     }}
   >
     <div
       style={{
-        fontSize: 14,
-        fontWeight: 800,
-        color: "#0F172A",
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        background: "#DBEAFE",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 20,
+        flexShrink: 0,
       }}
     >
-      Hướng dẫn
+      📑
     </div>
 
-    <div
-      style={{
-        fontSize: 11,
-        color: "#64748B",
-        marginTop: 2,
-      }}
-    >
-      Hướng dẫn gửi minh chứng và báo cáo hồ sơ
+    <div style={{ minWidth: 0, flex: 1 }}>
+      <div style={{ fontSize: 14, fontWeight: 800, color: "#0F172A" }}>
+        Xem báo cáo
+      </div>
     </div>
-  </div>
 
-  <span
-    style={{
-      fontSize: 18,
-      color: "#7C3AED",
-      fontWeight: 700,
-    }}
-  >
-    →
-  </span>
-</a>
-  </div>
-
-
-  {/* ===================================================== */}
-  {/* CỘT 3 — HOẠT ĐỘNG SẮP TỚI */}
-  {/* ===================================================== */}
-
-  <div
-  style={{
-    minWidth: 0,
-    background: "#ffffff",
-    borderRadius: "16px",
-    border: "1px solid #e5e7eb",
-    overflow: "hidden",
-    boxShadow: "0 4px 14px rgba(15, 23, 42, 0.08)",
-  }}
->
-<div
-  onClick={() => {
-    if (isMobile) {
-      setShowActivities((prev) => !prev);
-    }
-  }}
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    fontWeight: 700,
-    fontSize: 15,
-    color: "#2c449b",
-    background: "linear-gradient(90deg, #63d0ff, #38bdf8)",
-    padding: "12px 14px",
-    width: "100%",
-    borderBottom: "1px solid #000000",
-    cursor: isMobile ? "pointer" : "default",
-    userSelect: "none",
-  }}
->
-  <span>📅 Hoạt động sắp tới</span>
-
-  <span
-    style={{
-      width: 24,
-      height: 24,
-      borderRadius: "50%",
-      background: "#2563EB",
-      color: "#fff",
-      display: "inline-flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 12,
-      fontWeight: 800,
-      lineHeight: 1,
-      boxShadow: "0 2px 6px rgba(37, 99, 235, 0.25)",
-    }}
-  >
-    {nextActivities.length}
-  </span>
-
-  {/* Mũi tên chỉ hiện trên mobile */}
-  {isMobile && (
-    <span
-      style={{
-        marginLeft: "auto",
-        fontSize: 18,
-        color: "#2563EB",
-        transition: "transform 0.25s ease",
-        transform: showActivities
-          ? "rotate(180deg)"
-          : "rotate(0deg)",
-      }}
-    >
-      ▼
+    <span style={{ fontSize: 18, color: "#2563EB", fontWeight: 700 }}>
+      →
     </span>
-  )}
-</div>
-{(!isMobile || showActivities) && (
-  <>
-    {nextActivities.length > 0 ? (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 10,
-          maxHeight: "190px",
-          overflowY: "auto",
-          paddingRight: 4,
-        }}
-      >
-        {nextActivities.map((activity) => (
-          <div
-            key={activity.id}
-            style={{
-              background: "#F8FAFC",
-              borderRadius: 12,
-              padding: "12px 15px",
-              border: "1px solid #E5E7EB",
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              flexWrap: "nowrap",
-              minWidth: 0,
-            }}
-          >
-            {/* Tên hoạt động và trạng thái */}
-<div
-  style={{
-    flex: "1 1 40%",
-    minWidth: 0,
-    display: "flex",
-    flexDirection: "column",
-    gap: 5,
-  }}
->
-  <div
-    style={{
-      fontWeight: 700,
-      fontSize: 14,
-      color: "#0F172A",
-      whiteSpace: "nowrap",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-    }}
-  >
-    {activity.title}
-  </div>
+  </a>
 
-  <span
+  {/* NHẮN TIN */}
+  <a
+    href="/trao-doi"
+    onClick={async () => {
+      if (!profile?.id) return;
+
+      await supabase
+        .from("conversations")
+        .update({ unread_user: 0 })
+        .eq("user_id", profile.id);
+
+      setUnreadMessages(0);
+    }}
     style={{
-      display: "inline-flex",
+      position: "relative",
+      display: "flex",
       alignItems: "center",
-      width: "fit-content",
-      padding: "3px 9px",
-      borderRadius: 999,
-      fontSize: 11,
-      fontWeight: 800,
-      background:
-        activity.displayStatus === "ongoing"
-          ? "#DCFCE7"
-          : "#DBEAFE",
-      color:
-        activity.displayStatus === "ongoing"
-          ? "#15803D"
-          : "#1D4ED8",
+      gap: 12,
+      padding: "6px 10px",
+      width: "85%",
+      alignSelf: "center",
+      boxSizing: "border-box",
+      background: "#FFF7ED",
+      border: "1px solid #FED7AA",
+      borderRadius: 14,
+      textDecoration: "none",
+      color: "#0F172A",
+      transition: "all .2s ease",
+      boxShadow: "0 2px 6px rgba(0,0,0,.04)",
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = "translateY(-2px)";
+      e.currentTarget.style.boxShadow = "0 6px 14px rgba(249,115,22,.12)";
+      e.currentTarget.style.borderColor = "#FDBA74";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = "translateY(0)";
+      e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,.04)";
+      e.currentTarget.style.borderColor = "#FED7AA";
     }}
   >
-    {activity.displayStatus === "ongoing"
-      ? "● Đang diễn ra"
-      : "◷ Sắp diễn ra"}
-  </span>
-</div>
+    <div
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        background: "#FFEDD5",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 20,
+        flexShrink: 0,
+      }}
+    >
+      💬
+    </div>
 
-            {/* Tiêu chí */}
-            <div
-              style={{
-                flex: "0 0 150px",
-                fontSize: 13,
-                whiteSpace: "nowrap",
-                fontWeight: 600,
-                display: isMobile ? "none" : "block",
-              }}
-            >
-              <span
-                style={{
-                  display: "inline-block",
-                  padding: "5px 10px",
-                  borderRadius: 999,
-
-                  background:
-                    activity.criterion === "dao_duc"
-                      ? "#FEE2E2"
-                      : activity.criterion === "hoc_tap"
-                      ? "#DBEAFE"
-                      : activity.criterion === "the_luc"
-                      ? "#FFEDD5"
-                      : activity.criterion === "tinh_nguyen"
-                      ? "#DCFCE7"
-                      : activity.criterion === "hoi_nhap"
-                      ? "#F3E8FF"
-                      : "#F1F5F9",
-
-                  color:
-                    activity.criterion === "dao_duc"
-                      ? "#B91C1C"
-                      : activity.criterion === "hoc_tap"
-                      ? "#1D4ED8"
-                      : activity.criterion === "the_luc"
-                      ? "#C2410C"
-                      : activity.criterion === "tinh_nguyen"
-                      ? "#15803D"
-                      : activity.criterion === "hoi_nhap"
-                      ? "#7E22CE"
-                      : "#475569",
-                }}
-              >
-                {criterionLabel[activity.criterion] ?? "Khác"}
-              </span>
-            </div>
-
-            {/* Thời gian */}
-            <div
-              style={{
-                flex: "0 0 155px",
-                color: "#64748B",
-                fontSize: 13,
-                whiteSpace: "nowrap",
-                display: isMobile ? "none" : "block",
-              }}
-            >
-              🕒 {formatEventTime(activity.event_time, activity.end_time)}
-            </div>
-
-            {/* Xem chi tiết */}
-            <a
-              href="/hoat-dong"
-              style={{
-                flex: "0 0 auto",
-                color: "#2563EB",
-                textDecoration: "none",
-                fontWeight: 600,
-                fontSize: 13,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {isMobile ? "Xem →" : "Xem chi tiết →"}
-            </a>
-          </div>
-        ))}
+    <div style={{ minWidth: 0, flex: 1 }}>
+      <div style={{ fontSize: 14, fontWeight: 800, color: "#0F172A" }}>
+        Nhắn tin
       </div>
-    ) : (
-      <div
+    </div>
+
+    <span style={{ fontSize: 18, color: "#F97316", fontWeight: 700 }}>
+      →
+    </span>
+
+    {unreadMessages > 0 && (
+      <span
         style={{
-          color: "#64748B",
-          fontSize: 14,
-          padding: "10px 0",
-          marginLeft: "12px",
+          position: "absolute",
+          top: -6,
+          right: -6,
+          minWidth: 20,
+          height: 20,
+          padding: "0 5px",
+          borderRadius: 999,
+          background: "#EF4444",
+          color: "#fff",
+          fontSize: 11,
+          fontWeight: 800,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          border: "2px solid #fff",
+          zIndex: 2,
         }}
       >
-        Chưa có hoạt động diễn ra trong thời gian sắp tới.
-      </div>
+        {unreadMessages > 9 ? "9+" : unreadMessages}
+      </span>
     )}
-     </>
+  </a>
+
+  {/* HƯỚNG DẪN */}
+  <a
+    href="/huong-dan"
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      padding: "6px 10px",
+      width: "85%",
+      alignSelf: "center",
+      boxSizing: "border-box",
+      background: "#F5F3FF",
+      border: "1px solid #DDD6FE",
+      borderRadius: 14,
+      textDecoration: "none",
+      color: "#0F172A",
+      transition: "all .2s ease",
+      boxShadow: "0 2px 6px rgba(0,0,0,.04)",
+      marginBottom: 10,
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = "translateY(-2px)";
+      e.currentTarget.style.boxShadow = "0 6px 14px rgba(124,58,237,.12)";
+      e.currentTarget.style.borderColor = "#C4B5FD";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = "translateY(0)";
+      e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,.04)";
+      e.currentTarget.style.borderColor = "#DDD6FE";
+    }}
+  >
+    <div
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        background: "#EDE9FE",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 20,
+        flexShrink: 0,
+      }}
+    >
+      <CircleHelp size={22} color="#2563eb" fill="#2563eb" stroke="white" />
+    </div>
+
+    <div style={{ minWidth: 0, flex: 1 }}>
+      <div style={{ fontSize: 14, fontWeight: 800, color: "#0F172A" }}>
+        Hướng dẫn
+      </div>
+    </div>
+
+    <span style={{ fontSize: 18, color: "#7C3AED", fontWeight: 700 }}>
+      →
+    </span>
+  </a>
+</div>
 )}
-  </div>
-</div>
-</div>
 
-<div
-  style={{
-    display: "grid",
-    gridTemplateColumns: isMobile
-      ? "1fr"
-      : "1fr 2fr",
-    gap: "20px",
-    marginBottom: "20px",
-    alignItems: "stretch",
-  }}
->
-{/* ================= THÔNG BÁO BÊN TRÁI ================= */}
-{!isMobile && <NotificationCard isMobile={isMobile} />}
-
-  {/* ================= CARD CHỨC NĂNG BÊN PHẢI ================= */}
+    {/* ================= CARD CHỨC NĂNG BÊN PHẢI ================= */}
   <div
     style={{
-      background: "#fff",
-      borderRadius: "20px",
-      padding: "20px",
-      boxShadow: "0 4px 12px rgba(0,0,0,.08)",
-    }}
+  background: "transparent",
+  borderRadius: 0,
+  padding: 0,
+  boxShadow: "none",
+}}
   >
     {/* Tiêu đề */}
     <div
       style={{
-        fontSize: 18,
-        fontWeight: 800,
-        color: "#0F172A",
-        marginBottom: 14,
-      }}
+  fontSize: 15,
+  fontWeight: 700,
+  color: "#2c449b",
+  background: "linear-gradient(90deg, #63d0ff, #38bdf8)",
+  padding: "12px 14px",
+  marginBottom: 14,
+  borderBottom: "1px solid #000000",
+  borderTopLeftRadius: "16px",
+  borderTopRightRadius: "16px",
+}}
     >
       Chức năng
     </div>
@@ -1960,7 +1654,7 @@ circleCircumference -
         gap: "14px",
       }}
     >
-      {/* Quản lý hồ sơ */}
+      {/* Hồ sơ Sinh viên 5 tốt */}
       <a
         href="/tieuchi"
         style={{
@@ -1983,7 +1677,15 @@ circleCircumference -
           (e.currentTarget.style.transform = "translateY(0)")
         }
       >
-        <div style={{ fontSize: 34 }}>📋</div>
+        <img
+  src="/bonghoa5tot.png"
+  alt="Biểu tượng Sinh viên 5 tốt"
+  style={{
+    width: 38,
+    height: 38,
+    objectFit: "contain",
+  }}
+/>
 
         <h3
           style={{
@@ -1991,7 +1693,7 @@ circleCircumference -
             fontSize: 19,
           }}
         >
-          Quản lý hồ sơ
+          Hồ sơ Sinh viên 5 tốt
         </h3>
 
         <p
@@ -2048,7 +1750,7 @@ circleCircumference -
             lineHeight: 1.4,
           }}
         >
-          Theo dõi kết quả học tập của bạn.
+          Theo dõi kết quả học tập và đề ra mục tiêu của bạn.
         </p>
       </a>
 
@@ -2098,99 +1800,606 @@ circleCircumference -
         </p>
       </a>
     </div>
+
+</div>
+</div>
+</div>
+
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns: isMobile
+      ? "1fr"
+      : "1fr 2fr",
+    gap: "20px",
+    marginBottom: "20px",
+    alignItems: "stretch",
+  }}
+>
+{/* ================= THÔNG BÁO BÊN TRÁI ================= */}
+{!isMobile && <NotificationCard isMobile={isMobile} />}
+ 
 {/* ===================================================== */}
-{/* THÔNG TIN CHUNG */}
+{/* CỘT PHẢI — HOẠT ĐỘNG SẮP TỚI + THÔNG TIN CHUNG */}
 {/* ===================================================== */}
 
 <div
   style={{
-    marginTop: 16,
-    width: "100%",
-    boxSizing: "border-box",
-    background:
-      "linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)",
-    borderRadius: "14px",
-    padding: "18px 22px",
-    border: "1px solid #FED7AA",
-    boxShadow: "0 3px 8px rgba(0,0,0,.05)",
     display: "flex",
-    alignItems: "center",
-    gap: 14,
+    flexDirection: "column",
+    gap: 12,
+    height: "100%",
+    minWidth: 0,
+    minHeight: 0,
   }}
 >
-  {/* Icon */}
-  <div
-    style={{
-      width: 46,
-      height: 46,
-      borderRadius: 12,
-      background: "#FFEDD5",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 25,
-      flexShrink: 0,
-    }}
-  >
-    📢
-  </div>
+  {/* ===================================================== */}
+  {/* HOẠT ĐỘNG SẮP TỚI */}
+  {/* ===================================================== */}
 
-  {/* Nội dung */}
   <div
     style={{
       minWidth: 0,
-      flex: 1,
+      flex: "1 1 0",
+      minHeight: 0,
+      background: "#ffffff",
+      borderRadius: "16px",
+      border: "1px solid #e5e7eb",
+      overflow: "hidden",
+      boxShadow: "0 4px 14px rgba(15, 23, 42, 0.08)",
+      display: "flex",
+      flexDirection: "column",
     }}
   >
-{/* Tiêu đề cố định */} 
-<div 
-  style={{ 
-    fontSize: 16, 
-    fontWeight: 800, 
-    color: "#9A3412", 
-  }} 
-> 
-  Thông tin chung
-</div>
-
-    {/* Nội dung thông báo */}
+    {/* Tiêu đề */}
     <div
+      onClick={() => {
+        if (isMobile) {
+          setShowActivities((prev) => !prev);
+        }
+      }}
       style={{
-        fontSize: 14,
-        color: "#C2410C",
-        marginTop: 5,
-        lineHeight: 1.5,
-        wordBreak: "break-word",
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        fontWeight: 700,
+        fontSize: 15,
+        color: "#2c449b",
+        background: "linear-gradient(90deg, #63d0ff, #38bdf8)",
+        padding: "12px 14px",
+        width: "100%",
+        boxSizing: "border-box",
+        borderBottom: "1px solid #000000",
+        cursor: isMobile ? "pointer" : "default",
+        userSelect: "none",
+        flexShrink: 0,
       }}
     >
-      {generalNotification?.content ||
-        "Sẽ sớm có thông báo từ Ban chủ nhiệm Câu lạc bộ Sinh viên 5 tốt BMU"}
-    </div>
+      <span>📅 Hoạt động sắp tới</span>
 
-    {/* Thời gian */}
-    {generalNotification?.created_at && (
-      <div
+      <span
         style={{
+          width: 24,
+          height: 24,
+          borderRadius: "50%",
+          background: "#2563EB",
+          color: "#fff",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
           fontSize: 12,
-          color: "#9A3412",
-          marginTop: 7,
+          fontWeight: 800,
+          lineHeight: 1,
+          boxShadow: "0 2px 6px rgba(37, 99, 235, 0.25)",
         }}
       >
-        Cập nhật:{" "}
-        {new Date(
-          generalNotification.created_at
-        ).toLocaleString("vi-VN")}
+        {nextActivities.length}
+      </span>
+
+      {/* Mũi tên chỉ hiện trên mobile */}
+      {isMobile && (
+        <span
+          style={{
+            marginLeft: "auto",
+            fontSize: 18,
+            color: "#2563EB",
+            transition: "transform 0.25s ease",
+            transform: showActivities
+              ? "rotate(180deg)"
+              : "rotate(0deg)",
+          }}
+        >
+          ▼
+        </span>
+      )}
+    </div>
+
+    {/* Danh sách hoạt động */}
+    {(!isMobile || showActivities) && (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+          flex: "1 1 auto",
+          minHeight: 0,
+          maxHeight: isMobile ? "260px" : "none",
+          overflowY: "auto",
+          padding: "10px 10px 10px 10px",
+          boxSizing: "border-box",
+        }}
+      >
+        {nextActivities.length > 0 ? (
+          nextActivities.map((activity) => (
+            <div
+              key={activity.id}
+              style={{
+                background: "#F8FAFC",
+                borderRadius: 12,
+                padding: "12px 15px",
+                border: "1px solid #E5E7EB",
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                flexWrap: "nowrap",
+                minWidth: 0,
+                flexShrink: 0,
+              }}
+            >
+              {/* Tên hoạt động và trạng thái */}
+              <div
+                style={{
+                  flex: "1 1 40%",
+                  minWidth: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 5,
+                }}
+              >
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: 14,
+                    color: "#0F172A",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {activity.title}
+                </div>
+
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    width: "fit-content",
+                    padding: "3px 9px",
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 800,
+                    background:
+                      activity.displayStatus === "ongoing"
+                        ? "#DCFCE7"
+                        : "#DBEAFE",
+                    color:
+                      activity.displayStatus === "ongoing"
+                        ? "#15803D"
+                        : "#1D4ED8",
+                  }}
+                >
+                  {activity.displayStatus === "ongoing"
+                    ? "● Đang diễn ra"
+                    : "◷ Sắp diễn ra"}
+                </span>
+              </div>
+
+              {/* Tiêu chí */}
+              <div
+                style={{
+                  flex: "0 0 150px",
+                  fontSize: 13,
+                  whiteSpace: "nowrap",
+                  fontWeight: 600,
+                  display: isMobile ? "none" : "block",
+                }}
+              >
+                <span
+                  style={{
+                    display: "inline-block",
+                    padding: "5px 10px",
+                    borderRadius: 999,
+                    background:
+                      activity.criterion === "dao_duc"
+                        ? "#FEE2E2"
+                        : activity.criterion === "hoc_tap"
+                        ? "#DBEAFE"
+                        : activity.criterion === "the_luc"
+                        ? "#FFEDD5"
+                        : activity.criterion === "tinh_nguyen"
+                        ? "#DCFCE7"
+                        : activity.criterion === "hoi_nhap"
+                        ? "#F3E8FF"
+                        : "#F1F5F9",
+                    color:
+                      activity.criterion === "dao_duc"
+                        ? "#B91C1C"
+                        : activity.criterion === "hoc_tap"
+                        ? "#1D4ED8"
+                        : activity.criterion === "the_luc"
+                        ? "#C2410C"
+                        : activity.criterion === "tinh_nguyen"
+                        ? "#15803D"
+                        : activity.criterion === "hoi_nhap"
+                        ? "#7E22CE"
+                        : "#475569",
+                  }}
+                >
+                  {criterionLabel[activity.criterion] ?? "Khác"}
+                </span>
+              </div>
+
+              {/* Thời gian */}
+              <div
+                style={{
+                  flex: "0 0 155px",
+                  color: "#64748B",
+                  fontSize: 13,
+                  whiteSpace: "nowrap",
+                  display: isMobile ? "none" : "block",
+                }}
+              >
+                🕒 {formatEventTime(activity.event_time, activity.end_time)}
+              </div>
+
+              {/* Xem chi tiết */}
+              <a
+                href="/hoat-dong"
+                style={{
+                  flex: "0 0 auto",
+                  color: "#2563EB",
+                  textDecoration: "none",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {isMobile ? "Xem →" : "Xem chi tiết →"}
+              </a>
+            </div>
+          ))
+        ) : (
+          <div
+            style={{
+              color: "#64748B",
+              fontSize: 14,
+              padding: "14px 12px",
+              margin: 0,
+            }}
+          >
+            Chưa có hoạt động diễn ra trong thời gian sắp tới.
+          </div>
+        )}
       </div>
     )}
   </div>
+
+  {/* ===================================================== */}
+  {/* THÔNG TIN CHUNG */}
+  {/* ===================================================== */}
+
+  <div
+    style={{
+      flex: "0 0 auto",
+      width: "100%",
+      boxSizing: "border-box",
+      background:
+        "linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)",
+      borderRadius: "14px",
+      padding: "18px 22px",
+      border: "1px solid #FED7AA",
+      boxShadow: "0 3px 8px rgba(0,0,0,.05)",
+      display: "flex",
+      alignItems: "center",
+      gap: 14,
+    }}
+  >
+    {/* Icon */}
+    <div
+      style={{
+        width: 46,
+        height: 46,
+        borderRadius: 12,
+        background: "#FFEDD5",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 25,
+        flexShrink: 0,
+      }}
+    >
+      📢
+    </div>
+
+    {/* Nội dung */}
+    <div
+      style={{
+        minWidth: 0,
+        flex: 1,
+      }}
+    >
+      {/* Tiêu đề */}
+      <div
+        style={{
+          fontSize: 16,
+          fontWeight: 800,
+          color: "#9A3412",
+        }}
+      >
+        Thông tin chung
+      </div>
+
+      {/* Nội dung thông báo */}
+      <div
+        style={{
+          fontSize: 14,
+          color: "#C2410C",
+          marginTop: 5,
+          lineHeight: 1.5,
+          wordBreak: "break-word",
+        }}
+      >
+        {generalNotification?.content ||
+          "Sẽ sớm có thông báo từ Ban chủ nhiệm Câu lạc bộ Sinh viên 5 tốt BMU"}
+      </div>
+
+      {/* Thời gian */}
+      {generalNotification?.created_at && (
+        <div
+          style={{
+            fontSize: 12,
+            color: "#9A3412",
+            marginTop: 7,
+          }}
+        >
+          Cập nhật:{" "}
+          {new Date(
+            generalNotification.created_at
+          ).toLocaleString("vi-VN")}
+        </div>
+      )}
+    </div>
+  </div>
 </div>
-</div>
+
 </div>
 
        </div>
        </main>
 
   </div>
+
+{showRegistrationSuccess && (
+  <div
+    onClick={() => setShowRegistrationSuccess(false)}
+    style={{
+      position: "fixed",
+      inset: 0,
+      zIndex: 10000,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 20,
+      background: "rgba(15, 23, 42, 0.68)",
+      backdropFilter: "blur(7px)",
+      WebkitBackdropFilter: "blur(7px)",
+      animation: "fadeIn 0.3s ease",
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        position: "relative",
+        width: "100%",
+        maxWidth: 460,
+        overflow: "hidden",
+        borderRadius: 26,
+        background: "linear-gradient(145deg, #ffffff 0%, #eff6ff 55%, #dbeafe 100%)",
+        boxShadow: "0 25px 80px rgba(0,0,0,0.3)",
+        textAlign: "center",
+        padding: "34px 26px 28px",
+        animation: "popIn 0.45s cubic-bezier(.2,.8,.2,1)",
+      }}
+    >
+      {/* Ánh sáng trang trí */}
+      <div
+        style={{
+          position: "absolute",
+          width: 220,
+          height: 220,
+          borderRadius: "50%",
+          background: "rgba(96, 165, 250, 0.16)",
+          filter: "blur(35px)",
+          top: -100,
+          left: -80,
+          pointerEvents: "none",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          width: 180,
+          height: 180,
+          borderRadius: "50%",
+          background: "rgba(250, 204, 21, 0.16)",
+          filter: "blur(35px)",
+          bottom: -90,
+          right: -60,
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Họa tiết */}
+      <div
+        style={{
+          position: "relative",
+          fontSize: 25,
+          letterSpacing: 12,
+          marginBottom: 12,
+        }}
+      >
+        ✨ 🎉 ✨
+      </div>
+
+      {/* Huy hiệu */}
+      <div
+        style={{
+          position: "relative",
+          width: 126,
+          height: 126,
+          margin: "0 auto 18px",
+          borderRadius: "50%",
+          background: "linear-gradient(145deg, #dbeafe, #bfdbfe)",
+          border: "5px solid #ffffff",
+          boxShadow: "0 8px 25px rgba(37, 99, 235, 0.2)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <img
+          src="/bonghoa5tot.png"
+          alt="Biểu tượng Sinh viên 5 tốt"
+          style={{
+            width: 94,
+            height: 94,
+            objectFit: "contain",
+          }}
+        />
+      </div>
+
+      {/* Tiêu đề */}
+      <div
+        style={{
+          position: "relative",
+          color: "#1D4ED8",
+          fontSize: 13,
+          fontWeight: 800,
+          letterSpacing: 2,
+          textTransform: "uppercase",
+          marginBottom: 9,
+        }}
+      >
+        Chúc mừng bạn!
+      </div>
+
+      <h2
+        style={{
+          position: "relative",
+          margin: "0 0 12px",
+          color: "#1E3A8A",
+          fontSize: 25,
+          lineHeight: 1.3,
+          fontWeight: 900,
+        }}
+      >
+        ĐĂNG KÝ THÀNH CÔNG
+      </h2>
+
+      <p
+        style={{
+          position: "relative",
+          margin: "0 auto 20px",
+          maxWidth: 340,
+          color: "#475569",
+          fontSize: 14,
+          lineHeight: 1.7,
+        }}
+      >
+        Bạn đã chính thức đăng ký rèn luyện phong trào
+        <strong style={{ color: "#1D4ED8" }}>
+          {" "}Sinh viên 5 tốt năm học {academicYear} 
+        </strong>.
+        <br />
+        Hãy bắt đầu hành trình rèn luyện, hoàn thiện bản thân
+        và chinh phục những mục tiêu phía trước!
+      </p>
+
+      {/* Thông điệp */}
+      <div
+        style={{
+          position: "relative",
+          padding: "13px 14px",
+          marginBottom: 22,
+          borderRadius: 14,
+          background: "rgba(219, 234, 254, 0.75)",
+          border: "1px solid #BFDBFE",
+          color: "#1E40AF",
+          fontSize: 13,
+          fontWeight: 700,
+          lineHeight: 1.5,
+        }}
+      >
+        ⭐ Đạo đức – Năng lực – Tâm huyết ⭐
+        <br />
+        Mỗi ngày một bước tiến, mỗi tiêu chí một thành quả!
+      </div>
+
+      {/* Nút đóng */}
+      <button
+        type="button"
+        onClick={() => setShowRegistrationSuccess(false)}
+        style={{
+          position: "relative",
+          width: "100%",
+          border: "none",
+          borderRadius: 13,
+          padding: "14px 20px",
+          background: "linear-gradient(90deg, #2563EB, #1D4ED8)",
+          color: "#ffffff",
+          fontSize: 15,
+          fontWeight: 800,
+          cursor: "pointer",
+          boxShadow: "0 5px 14px rgba(37, 99, 235, 0.25)",
+        }}
+      >
+        BẮT ĐẦU HÀNH TRÌNH 🚀
+      </button>
+
+      <div
+        style={{
+          position: "relative",
+          marginTop: 14,
+          color: "#94A3B8",
+          fontSize: 11,
+          fontWeight: 600,
+        }}
+      >
+        CÂU LẠC BỘ SINH VIÊN 5 TỐT BMU
+      </div>
+    </div>
+
+    <style>{`
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes popIn {
+        from {
+          opacity: 0;
+          transform: scale(0.82) translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+    `}</style>
+  </div>
+)}
+
   {showCriteria && (
   <CriteriaModal
     onClose={() => setShowCriteria(false)}

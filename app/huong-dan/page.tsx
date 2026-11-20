@@ -449,7 +449,7 @@ const [activeSection, setActiveSection] = useState("start");
           {[
             {
               icon: "📋",
-              title: "Quản lý hồ sơ",
+              title: "Hồ sơ Sinh viên 5 tốt",
               desc: "Nơi sinh viên kê khai thành tích, viết báo cáo và tải lên minh chứng tương ứng với từng tiêu chí Sinh viên 5 tốt.",
             },
             {
@@ -458,7 +458,7 @@ const [activeSection, setActiveSection] = useState("start");
               desc: "Theo dõi thông tin báo cáo, tình trạng hồ sơ và các nội dung đã được cập nhật.",
             },
             {
-              icon: "📖",
+              icon: "❓",
               title: "Xem tiêu chuẩn Sinh viên 5 tốt",
               desc: "Tra cứu các tiêu chuẩn thuộc danh hiệu Sinh viên 5 tốt để chủ động xác định nội dung cần phấn đấu.",
             },
@@ -540,11 +540,11 @@ const [activeSection, setActiveSection] = useState("start");
       id: "profile",
       number: "04",
       icon: "📂",
-      title: "Quản lý hồ sơ Sinh viên 5 tốt",
+      title: "Hồ sơ Sinh viên 5 tốt Sinh viên 5 tốt",
       subtitle: "Lựa chọn tiêu chí và kê khai thành tích",
       content: (
         <>
-          <SubHeading>1. Truy cập chức năng Quản lý hồ sơ</SubHeading>
+          <SubHeading>1. Truy cập chức năng Hồ sơ Sinh viên 5 tốt</SubHeading>
 
           <Step number="1">
             Đăng nhập vào tài khoản cá nhân.
@@ -552,7 +552,7 @@ const [activeSection, setActiveSection] = useState("start");
 
           <Step number="2">
             Tại giao diện chính, tìm và chọn mục{" "}
-            <Tag>Quản lý hồ sơ</Tag>.
+            <Tag>Hồ sơ Sinh viên 5 tốt</Tag>.
           </Step>
 
           <Step number="3">
@@ -1318,7 +1318,7 @@ const [activeSection, setActiveSection] = useState("start");
           <SubHeading>2. Các bước gửi hồ sơ</SubHeading>
 
           <Step number="1">
-            Truy cập lại giao diện <Tag>Quản lý hồ sơ</Tag>.
+            Truy cập lại giao diện <Tag>Hồ sơ Sinh viên 5 tốt</Tag>.
           </Step>
 
           <Step number="2">

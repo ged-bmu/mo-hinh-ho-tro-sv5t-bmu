@@ -491,19 +491,40 @@ const percent = totalProfilePercent;
       minWidth: 0,
     }}
   >
-   <h2
+   <div
   style={{
-    margin: 0,
-    fontSize: isMobile ? "16px" : "20px",
-    lineHeight: "1.25",
-    fontWeight: 700,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    minWidth: 0,
   }}
 >
-  Tiến độ Sinh viên 5 Tốt Cấp Trường
-</h2>
+  <img
+    src="/bonghoa5tot.png"
+    alt="Biểu tượng Sinh viên 5 tốt"
+    style={{
+      width: isMobile ? 24 : 30,
+      height: isMobile ? 24 : 30,
+      objectFit: "contain",
+      flexShrink: 0,
+    }}
+  />
+
+  <h2
+    style={{
+      margin: 0,
+      fontSize: isMobile ? "16px" : "20px",
+      lineHeight: "1.25",
+      fontWeight: 700,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      minWidth: 0,
+    }}
+  >
+    Tiến độ Sinh viên 5 Tốt Cấp Trường
+  </h2>
+</div>
 
     <p
       style={{

@@ -1038,7 +1038,7 @@ return (
             id,
             "review",
             "Bạn vừa có nhận xét mới",
-            "Hội Sinh viên vừa nhận xét hồ sơ của bạn. Hãy kiểm tra trong mục Quản lí hồ sơ",
+            "Hội Sinh viên vừa nhận xét hồ sơ của bạn. Hãy kiểm tra trong mục Hồ sơ Sinh viên 5 tốt",
             "/"
           );
 
@@ -1053,7 +1053,7 @@ return (
                 type: "review",
                 title: "Bạn vừa có nhận xét mới",
                 message:
-                  "Hội Sinh viên vừa nhận xét hồ sơ của bạn. Hãy kiểm tra trong mục Quản lí hồ sơ.",
+                  "Hội Sinh viên vừa nhận xét hồ sơ của bạn. Hãy kiểm tra trong mục Hồ sơ Sinh viên 5 tốt.",
                 url: "/",
               }),
             });

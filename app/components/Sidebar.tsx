@@ -18,6 +18,7 @@ export default function Sidebar() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
+  const [activeActivityCount, setActiveActivityCount] = useState(0);
 
   // submenu minh chứng
   const [showProofMenu, setShowProofMenu] = useState(false);
@@ -58,6 +59,53 @@ useEffect(() => {
   }
 
   loadAcademicYear();
+}, []);
+useEffect(() => {
+  async function loadActiveActivityCount() {
+    const { data, error } = await supabase
+      .from("activities")
+      .select("event_time, end_time, status");
+
+    if (error) {
+      console.error("Lỗi lấy số lượng hoạt động:", error);
+      return;
+    }
+
+    const now = new Date();
+
+    const count = (data || []).filter((activity) => {
+      const startTime = activity.event_time
+        ? new Date(activity.event_time)
+        : null;
+
+      const endTime = activity.end_time
+        ? new Date(activity.end_time)
+        : null;
+
+      let displayStatus = activity.status;
+
+      // Ưu tiên xác định trạng thái theo thời gian
+      if (startTime && endTime) {
+        if (now < startTime) {
+          displayStatus = "scheduled";
+        } else if (now <= endTime) {
+          displayStatus = "ongoing";
+        } else {
+          displayStatus = "ended";
+        }
+      }
+
+      return (
+        displayStatus === "upcoming" ||
+        displayStatus === "scheduled" ||
+        displayStatus === "ongoing"
+      );
+    }).length;
+
+    setActiveActivityCount(count);
+  }
+
+  loadActiveActivityCount();
 }, []);
   async function checkRole() {
     const {
@@ -123,7 +171,7 @@ const proofPaths = [
       href: "/",
     },
     {
-      name: "Quản lí hồ sơ",
+      name: "Hồ sơ Sinh viên 5 tốt",
       icon: "🗂️",
       href: "/tieuchi",
     },
@@ -139,17 +187,17 @@ const proofPaths = [
     },
     {
       name: "Hoạt động sắp tới",
-      icon: "🎯",
+      icon: "📅",
       href: "/hoat-dong",
     },
     {
-      name: "Thông báo",
-      icon: "🔔",
-      href: "/thongbaouser",
+      name: "Nhắn tin",
+      icon: "💬",
+      href: "/trao-doi",
     },
     {
       name: "Hướng dẫn",
-      icon: "📖",
+      icon: "❓",
       href: "/huong-dan",
     },
 
@@ -567,13 +615,46 @@ const renderNotificationPrompt = () => {
           </Link>
 
           <Link
-            href="/hoat-dong"
-            className={
-              pathname === "/hoat-dong" ? "active" : ""
-            }
-          >
-            <div>🎯</div>
-          </Link>
+  href="/hoat-dong"
+  className={
+    pathname === "/hoat-dong" ? "active" : ""
+  }
+>
+  <div
+    style={{
+      position: "relative",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+  >
+    📅
+
+    {activeActivityCount > 0 && (
+      <span
+        style={{
+          position: "absolute",
+          top: -9,
+          right: -12,
+          minWidth: 17,
+          height: 17,
+          padding: "0 4px",
+          borderRadius: 20,
+          background: "#ef4444",
+          color: "#fff",
+          fontSize: 10,
+          fontWeight: 700,
+          lineHeight: "17px",
+          textAlign: "center",
+          border: "1.5px solid #fff",
+          boxSizing: "border-box",
+        }}
+      >
+        {activeActivityCount > 99 ? "99+" : activeActivityCount}
+      </span>
+    )}
+  </div>
+</Link>
 
           <Link
             href="/thongbaouser"
@@ -652,7 +733,7 @@ return (
         const proofActive = proofPaths.includes(pathname);
 
         // ===== MENU MINH CHỨNG =====
-        if (item.name === "Quản lí hồ sơ") {
+        if (item.name === "Hồ sơ Sinh viên 5 tốt") {
           return (
             <div
               key={item.href}
@@ -682,7 +763,7 @@ return (
                 }}
               >
                 <span>
-                  {collapsed ? "🗂️" : "🗂️ Quản lí hồ sơ"}
+                  {collapsed ? "🗂️" : "🗂️ Hồ sơ Sinh viên 5 tốt"}
                 </span>
 
                 {!collapsed && <span>▶</span>}

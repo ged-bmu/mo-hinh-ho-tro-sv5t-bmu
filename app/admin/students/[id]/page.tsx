@@ -1371,7 +1371,7 @@ const { error } = await supabase
                     id,
                     "review",
                     "Bạn vừa có nhận xét mới",
-                    "Ban Chủ nhiệm CLB SV5T vừa nhận xét hồ sơ của bạn. Hãy kiểm tra trong mục Quản lí hồ sơ",
+                    "Ban Chủ nhiệm CLB SV5T vừa nhận xét hồ sơ của bạn. Hãy kiểm tra trong mục Hồ sơ Sinh viên 5 tốt",
                     "/"
                   );
 
@@ -1392,7 +1392,7 @@ const { error } = await supabase
                             title:
                               "Bạn vừa có nhận xét mới",
                             message:
-                              "Ban chủ nhiệm CLB SV5T vừa nhận xét hồ sơ của bạn. Hãy kiểm tra trong mục Quản lí hồ sơ.",
+                              "Ban chủ nhiệm CLB SV5T vừa nhận xét hồ sơ của bạn. Hãy kiểm tra trong mục Hồ sơ Sinh viên 5 tốt.",
                             url: "/",
                           }
                         ),

@@ -98,13 +98,17 @@ export default function NotificationCard({ isMobile }: { isMobile: boolean }) {
     >
       {/* HEADER */}
       <div
-        style={{
-          padding: "18px 20px",
-          borderBottom: "1px solid #eee",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
+          style={{
+  fontSize: 15,
+  fontWeight: 700,
+  color: "#2c449b",
+  background: "linear-gradient(90deg, #63d0ff, #38bdf8)",
+  padding: "12px 14px",
+  marginBottom: 14,
+  borderBottom: "1px solid #000000",
+  borderTopLeftRadius: "16px",
+  borderTopRightRadius: "16px",
+}}
       >
         <span style={{ fontSize: 20 }}>
           🔔

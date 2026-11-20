@@ -1108,7 +1108,7 @@ async function handleLogin() {
         color: "#334155",
       }}
     >
-      <li>Quản lý hồ sơ sinh viên tập trung.</li>
+      <li>Hồ sơ Sinh viên 5 tốt sinh viên tập trung.</li>
       <li>Kiểm tra và đánh giá minh chứng trực tuyến.</li>
       <li>Gửi nhận xét, yêu cầu chỉnh sửa.</li>
       <li>
