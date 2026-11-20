@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -161,7 +162,7 @@ export default function CriteriaModal({
             borderBottom: "1px solid #eee",
           }}
         >
-          {/* Tiêu đề + nút đóng */}
+          {/* TIÊU ĐỀ + NÚT ĐÓNG */}
 
           <div
             style={{
@@ -173,35 +174,33 @@ export default function CriteriaModal({
           >
             <div style={{ flex: 1 }}>
               <h1
-  style={{
-    margin: 0,
-    fontSize: isMobile ? 19 : 28,
-    lineHeight: 1.4,
-    color: "#2563eb",
-    display: "flex",
-    alignItems: "center",
-    gap: 7,
-    flexWrap: "wrap",
-  }}
->
-  <img
-    src="/bonghoa5tot.png"
-    alt=""
-    style={{
-      width: 35,
-      height: 35,
-      objectFit: "contain",
-      flexShrink: 0,
-    }}
-  />
-  <span>
-    Tiêu chuẩn Sinh viên 5 tốt {levelLabel}
-  </span>
-</h1>
+                style={{
+                  margin: 0,
+                  fontSize: isMobile ? 19 : 28,
+                  lineHeight: 1.4,
+                  color: "#2563eb",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 7,
+                  flexWrap: "wrap",
+                }}
+              >
+                <img
+                  src="/bonghoa5tot.png"
+                  alt=""
+                  style={{
+                    width: 35,
+                    height: 35,
+                    objectFit: "contain",
+                    flexShrink: 0,
+                  }}
+                />
+                <span>
+                  Tiêu chuẩn Sinh viên 5 tốt {levelLabel}
+                </span>
+              </h1>
 
-              {/* =========================
-                  THÔNG TIN TIÊU CHUẨN
-              ========================= */}
+              {/* THÔNG TIN TIÊU CHUẨN */}
 
               {header && tab !== "update" && (
                 <div
@@ -210,8 +209,7 @@ export default function CriteriaModal({
                     paddingRight: 10,
                   }}
                 >
-
-                  {/* Năm học / giai đoạn */}
+                  {/* NĂM HỌC / GIAI ĐOẠN */}
 
                   {header.period && (
                     <div
@@ -226,7 +224,7 @@ export default function CriteriaModal({
                     </div>
                   )}
 
-                  {/* Quyết định */}
+                  {/* QUYẾT ĐỊNH */}
 
                   {header.decision && (
                     <div
@@ -247,7 +245,7 @@ export default function CriteriaModal({
                     </div>
                   )}
 
-                  {/* Mô tả */}
+                  {/* MÔ TẢ */}
 
                   {header.description && (
                     <div
@@ -264,6 +262,8 @@ export default function CriteriaModal({
                 </div>
               )}
             </div>
+
+            {/* NÚT ĐÓNG */}
 
             <button
               onClick={onClose}
@@ -282,9 +282,7 @@ export default function CriteriaModal({
             </button>
           </div>
 
-          {/* =========================
-              TABS
-          ========================= */}
+          {/* TABS */}
 
           <div
             style={{
@@ -334,6 +332,8 @@ export default function CriteriaModal({
             gap: 22,
           }}
         >
+          {/* TAB CẬP NHẬT MỚI */}
+
           {tab === "update" ? (
             <div
               style={{
@@ -383,6 +383,8 @@ export default function CriteriaModal({
               )}
             </div>
           ) : currentData.length === 0 ? (
+            /* KHÔNG CÓ NỘI DUNG */
+
             <div
               style={{
                 textAlign: "center",
@@ -396,93 +398,112 @@ export default function CriteriaModal({
               Chưa có nội dung.
             </div>
           ) : (
+            /* DANH SÁCH TIÊU CHÍ DẠNG MENU XỔ */
+
             currentData.map((item) => {
-  const isExpanded = expandedItems[item.id] ?? false;
+              const isExpanded = expandedItems[item.id] ?? false;
 
-  return (
-    <div
-      key={item.id}
-      style={{
-        borderRadius: 18,
-        padding: isMobile ? 16 : 25,
-        background: "#fafafa",
-        boxShadow: "0 6px 20px rgba(0,0,0,.08)",
-      }}
-    >
-      <h2
-        style={{
-          margin: 0,
-          fontSize: isMobile ? 18 : 22,
-          color: "#d61f69",
-        }}
-      >
-        {item.title}
-      </h2>
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    borderRadius: 16,
+                    background: "#fff",
+                    border: "1px solid #e2e8f0",
+                    overflow: "hidden",
+                    boxShadow: "0 4px 14px rgba(15,23,42,.06)",
+                  }}
+                >
+                  {/* TÊN TIÊU CHÍ - BẤM ĐỂ XỔ NỘI DUNG */}
 
-      <div
-        style={{
-          marginTop: 12,
-          lineHeight: 1.8,
-          whiteSpace: "pre-wrap",
-          fontSize: isMobile ? 15 : 16,
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedItems((prev) => ({
+                        ...prev,
+                        [item.id]: !isExpanded,
+                      }))
+                    }
+                    aria-expanded={isExpanded}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      width: "100%",
+                      padding: isMobile ? "15px 16px" : "18px 22px",
+                      border: "none",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      background: isExpanded ? "#eff6ff" : "#f8fafc",
+                      color: "#d61f69",
+                      fontSize: isMobile ? 16 : 18,
+                      fontWeight: 700,
+                      lineHeight: 1.5,
+                      transition: "background .2s ease",
+                    }}
+                  >
+                    <span style={{ flex: 1 }}>
+                      {item.title}
+                    </span>
 
-          // Chỉ thu gọn trên điện thoại
-          ...(isMobile && !isExpanded
-            ? {
-                maxHeight: "9em",
-                overflow: "hidden",
-                position: "relative",
-              }
-            : {}),
-        }}
-      >
-        {item.content?.trim()
-          ? item.content
-          : "Chưa cập nhật."}
-      </div>
+                    <span
+                      style={{
+                        flexShrink: 0,
+                        fontSize: 18,
+                        color: "#2563eb",
+                        transform: isExpanded
+                          ? "rotate(180deg)"
+                          : "rotate(0deg)",
+                        transition: "transform .25s ease",
+                      }}
+                    >
+                      ▼
+                    </span>
+                  </button>
 
-      {/* Nút Xem thêm / Thu gọn - chỉ hiện trên điện thoại */}
+                  {/* NỘI DUNG ĐẦY ĐỦ */}
 
-      {isMobile && item.content?.trim() && (
-        <button
-          onClick={() =>
-            setExpandedItems((prev) => ({
-              ...prev,
-              [item.id]: !isExpanded,
-            }))
-          }
-          style={{
-            marginTop: 10,
-            padding: "7px 14px",
-            border: "none",
-            borderRadius: 9,
-            background: "#eff6ff",
-            color: "#2563eb",
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          {isExpanded ? "Thu gọn ↑" : "Xem thêm ↓"}
-        </button>
-      )}
+                  {isExpanded && (
+                    <div
+                      style={{
+                        padding: isMobile ? 16 : 25,
+                        borderTop: "1px solid #e2e8f0",
+                      }}
+                    >
+                      <div
+                        style={{
+                          lineHeight: 1.8,
+                          whiteSpace: "pre-wrap",
+                          fontSize: isMobile ? 15 : 16,
+                          color: "#334155",
+                        }}
+                      >
+                        {item.content?.trim()
+                          ? item.content
+                          : "Chưa cập nhật."}
+                      </div>
 
-      <div
-        style={{
-          marginTop: 20,
-          color: "#888",
-          fontSize: isMobile ? 12 : 14,
-        }}
-      >
-        {item.updated_at
-          ? `Cập nhật: ${new Date(
-              item.updated_at
-            ).toLocaleString("vi-VN")}`
-          : ""}
-      </div>
-    </div>
-  );
-})
+                      {/* NGÀY CẬP NHẬT */}
+
+                      <div
+                        style={{
+                          marginTop: 20,
+                          color: "#888",
+                          fontSize: isMobile ? 12 : 14,
+                        }}
+                      >
+                        {item.updated_at
+                          ? `Cập nhật: ${new Date(
+                              item.updated_at
+                            ).toLocaleString("vi-VN")}`
+                          : ""}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </div>

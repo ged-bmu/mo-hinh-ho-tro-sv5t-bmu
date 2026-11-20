@@ -11,12 +11,17 @@ interface BeforeInstallPromptEvent extends Event {
   }>;
 }
 
-export default function InstallButton() {
+export default function InstallButton({
+  isHeader = false,
+}: {
+  isHeader?: boolean;
+}) {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
 
   const [installed, setInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [showIOSGuide, setShowIOSGuide] = useState(false);
 
   useEffect(() => {
@@ -27,6 +32,17 @@ export default function InstallButton() {
         navigator.maxTouchPoints > 1);
 
     setIsIOS(ios);
+    
+    const checkMobile = () => {
+  setIsMobile(
+    ios ||
+      /Android|Mobile/i.test(navigator.userAgent) ||
+      window.matchMedia("(max-width: 768px)").matches
+  );
+};
+
+checkMobile();
+window.addEventListener("resize", checkMobile);
 
     // Nếu đã cài PWA thì ẩn nút
     if (window.matchMedia("(display-mode: standalone)").matches) {
@@ -82,55 +98,52 @@ export default function InstallButton() {
   if (installed) return null;
 
   // Android/PC chưa có prompt và cũng không phải iPhone
-  if (!deferredPrompt && !isIOS) return null;
+  if (!deferredPrompt && !isIOS && !isMobile) return null;
 
   return (
     <>
-<button 
-  onClick={() => { 
-    if (isIOS) { 
-      setShowIOSGuide(true); 
-    } else { 
-      handleInstall(); 
-    } 
-  }} 
-  onMouseEnter={(e) => { 
-    e.currentTarget.style.background = "#2563eb"; 
-    e.currentTarget.style.color = "#fff"; 
-    e.currentTarget.style.transform = "translateY(-2px)"; 
-    e.currentTarget.style.boxShadow = 
-      "0 8px 20px rgba(37,99,235,.25)"; 
-  }} 
-  onMouseLeave={(e) => { 
-    e.currentTarget.style.background = "#fff"; 
-    e.currentTarget.style.color = "#2563eb"; 
-    e.currentTarget.style.transform = "translateY(0)"; 
-    e.currentTarget.style.boxShadow = "none"; 
-  }} 
-  style={{ 
-    background: "#fff", 
-    color: "#2563eb", 
-    border: "2px solid #2563eb", 
-    borderRadius: "10px", 
-    padding: "13px 20px", 
-    fontWeight: 400, 
-    fontSize: "18px", 
-    cursor: "pointer", 
-    transition: "all 0.25s ease", 
-    minWidth: "80px", 
-    height: "52px", 
-    display: "flex", 
-    alignItems: "center", 
-    justifyContent: "center", 
-    gap: "10px", 
-    boxSizing: "border-box", 
-  }} 
-> 
-  {isIOS ? <Smartphone size={22} /> : <Download size={22} />} 
-
-  {isIOS 
-    ? "Tải" 
-    : ""} 
+      <button
+  onClick={() => {
+    if (isIOS) {
+      setShowIOSGuide(true);
+    } else {
+      handleInstall();
+    }
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.background = "#2563eb";
+    e.currentTarget.style.color = "#fff";
+    e.currentTarget.style.transform = "translateY(-2px)";
+    e.currentTarget.style.boxShadow =
+      "0 8px 20px rgba(37,99,235,.25)";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.background = "#fff";
+    e.currentTarget.style.color = "#2563eb";
+    e.currentTarget.style.transform = "translateY(0)";
+    e.currentTarget.style.boxShadow = "none";
+  }}
+  style={{
+    background: "#fff",
+    color: "#2563eb",
+    border: "2px solid #2563eb",
+    borderRadius: "10px",
+    padding: "13px 20px",
+    fontWeight: 400,
+    fontSize: "18px",
+    cursor: "pointer",
+    transition: "all 0.25s ease",
+    width: "100%",
+    height: "52px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "10px",
+    boxSizing: "border-box",
+  }}
+>
+  <Download size={22} />
+  {isHeader ? "Tải" : isMobile ? "Tải ứng dụng" : ""}
 </button>
 
       {showIOSGuide && (

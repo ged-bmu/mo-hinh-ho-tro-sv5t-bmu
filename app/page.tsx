@@ -627,10 +627,10 @@ async function toggleRegistration() {
 if (nextStatus) {
   setShowRegistrationSuccess(true);
 } else {
-  alert("Đã hủy đăng ký phấn đấu.");
+  alert("Đã hủy đăng ký rèn luyện.");
 }
   } catch (error) {
-    console.error("Lỗi đăng ký phấn đấu:", error);
+    console.error("Lỗi đăng ký rèn luyện:", error);
     alert("Không thể cập nhật đăng ký. Vui lòng thử lại.");
   } finally {
     setRegistrationLoading(false);
@@ -944,49 +944,38 @@ return (
     margin: "0 auto",
   }}
 >
-
-      <h1
+{!isMobile && (
+  <h1
     style={{
       marginBottom: "5px",
-      fontSize: isMobile ? "16px" : "20px",
-      lineHeight: isMobile ? "1.4" : "1.5",
+      fontSize: "20px",
+      lineHeight: "1.5",
       fontWeight: 500,
       textAlign: "center",
       color: "#0f172a",
     }}
   >
-   <b>
-  {isMobile ? (
-    <>
-      CÂU LẠC BỘ SINH VIÊN 5 TỐT BMU
-    </>
-  ) : (
-    "CÂU LẠC BỘ SINH VIÊN 5 TỐT TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT"
-  )}
-</b>
+    <b>
+      CÂU LẠC BỘ SINH VIÊN 5 TỐT TRƯỜNG ĐẠI HỌC Y DƯỢC BUÔN MA THUỘT
+    </b>
   </h1>
+)}
 
+{!isMobile && (
   <p
-  style={{
-    textAlign: "center",
-    fontSize: isMobile ? "18px" : "24px",
-    fontWeight: "700",
-    lineHeight: 1.4,
-    color: "#0f65de",
-    maxWidth: isMobile ? "320px" : "900px",
-    margin: "5px auto 30px",
-  }}
->
-  {isMobile ? (
-    <>
-      Mô hình hỗ trợ sinh viên phấn đấu
-      <br />
-      đạt danh hiệu Sinh viên 5 tốt các cấp
-    </>
-  ) : (
-    "Mô hình hỗ trợ sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt các cấp"
-  )}
-</p>
+    style={{
+      textAlign: "center",
+      fontSize: "24px",
+      fontWeight: "700",
+      lineHeight: 1.4,
+      color: "#0f65de",
+      maxWidth: "900px",
+      margin: "5px auto 30px",
+    }}
+  >
+    Mô hình hỗ trợ sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt các cấp
+  </p>
+)}
 <div
   style={{
     background: "linear-gradient(135deg, #ffffff 0%, #f8fbff 100%)",
@@ -1076,8 +1065,8 @@ return (
     {registrationLoading
       ? "Đang cập nhật..."
       : isRegistered
-      ? "↩ Hủy đăng ký"
-      : "Đăng ký phấn đấu"}
+      ? "↩ Hủy đăng ký rèn luyện"
+      : "Đăng ký rèn luyện"}
   </button>
 )}
 
@@ -1158,9 +1147,9 @@ return (
 </div>
 <div
   style={{
-    marginTop: 22,
+    marginTop: isMobile ? 0 : 22,
     borderTop: "1px solid #e5e7eb",
-    paddingTop: 18,
+    paddingTop: isMobile ? 10 : 18,
     display: "grid",
 gridTemplateColumns: isMobile
   ? "1fr"
@@ -1196,7 +1185,7 @@ style={{
     borderBottom: "1px solid #000000",
   }}
 >
-  🏅 Bạn đã đạt
+  🏅Tiến độ
 </div>
 
   {!isMobile ? (
@@ -1641,7 +1630,7 @@ circleCircumference -
   borderTopRightRadius: "16px",
 }}
     >
-      Chức năng
+      ⚙️ Chức năng
     </div>
 
     {/* 3 nút */}
@@ -2240,18 +2229,6 @@ circleCircumference -
         }}
       />
 
-      {/* Họa tiết */}
-      <div
-        style={{
-          position: "relative",
-          fontSize: 25,
-          letterSpacing: 12,
-          marginBottom: 12,
-        }}
-      >
-        ✨ 🎉 ✨
-      </div>
-
       {/* Huy hiệu */}
       <div
         style={{
@@ -2280,20 +2257,6 @@ circleCircumference -
       </div>
 
       {/* Tiêu đề */}
-      <div
-        style={{
-          position: "relative",
-          color: "#1D4ED8",
-          fontSize: 13,
-          fontWeight: 800,
-          letterSpacing: 2,
-          textTransform: "uppercase",
-          marginBottom: 9,
-        }}
-      >
-        Chúc mừng bạn!
-      </div>
-
       <h2
         style={{
           position: "relative",
@@ -2343,7 +2306,7 @@ circleCircumference -
       >
         ⭐ Đạo đức – Năng lực – Tâm huyết ⭐
         <br />
-        Mỗi ngày một bước tiến, mỗi tiêu chí một thành quả!
+        Sinh viên 5 tốt, hành trình hơn cả một danh hiệu!
       </div>
 
       {/* Nút đóng */}
@@ -2364,20 +2327,8 @@ circleCircumference -
           boxShadow: "0 5px 14px rgba(37, 99, 235, 0.25)",
         }}
       >
-        BẮT ĐẦU HÀNH TRÌNH 🚀
+        BẮT ĐẦU HÀNH TRÌNH
       </button>
-
-      <div
-        style={{
-          position: "relative",
-          marginTop: 14,
-          color: "#94A3B8",
-          fontSize: 11,
-          fontWeight: 600,
-        }}
-      >
-        CÂU LẠC BỘ SINH VIÊN 5 TỐT BMU
-      </div>
     </div>
 
     <style>{`

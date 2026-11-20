@@ -691,18 +691,19 @@ async function handleLogin() {
       >
         {/* Khu vực nút */}
         <div
-          style={{
-            position: isMobile ? "relative" : "absolute",
-            left: isMobile ? "auto" : "18.4%",
-            top: isMobile ? "auto" : "91.5%",
-            width: isMobile ? "100%" : "400px",
-            height: isMobile ? "auto" : "60px",
-            display: isMobile ? "flex" : "block",
-            alignItems: isMobile ? "center" : undefined,
-            justifyContent: isMobile ? "center" : undefined,
-            gap: isMobile ? "10px" : undefined,
-          }}
-        >
+  style={{
+    position: isMobile ? "relative" : "absolute",
+    left: isMobile ? "auto" : "18.4%",
+    top: isMobile ? "auto" : "91.5%",
+    width: isMobile ? "100%" : "400px",
+    height: isMobile ? "auto" : "60px",
+    display: isMobile ? "flex" : "block",
+    flexDirection: isMobile ? "column" : undefined,
+    alignItems: isMobile ? "center" : undefined,
+    justifyContent: isMobile ? "center" : undefined,
+    gap: isMobile ? "12px" : undefined,
+  }}
+>
           {/* ===== NÚT ĐĂNG NHẬP ===== */}
          <button
   type="button"
@@ -743,17 +744,18 @@ async function handleLogin() {
 </button>
           {/* ===== NÚT CÀI ỨNG DỤNG ===== */}
           <div
-            style={{
-              position: isMobile ? "relative" : "absolute",
-              left: isMobile ? "auto" : "-17%",
-              top: isMobile ? "auto" : "-90%",
-              display: isMobile ? "flex" : undefined,
-              alignItems: isMobile ? "center" : undefined,
-              justifyContent: isMobile ? "center" : undefined,
-            }}
-          >
-            <InstallButton />
-          </div>
+  style={{
+    position: isMobile ? "relative" : "absolute",
+    left: isMobile ? "auto" : "-17%",
+    top: isMobile ? "auto" : "-90%",
+    display: isMobile ? "flex" : undefined,
+    alignItems: isMobile ? "center" : undefined,
+    justifyContent: isMobile ? "center" : undefined,
+    width: isMobile ? "100%" : undefined,
+  }}
+>
+  <InstallButton />
+</div>
         </div>
       </div>
 
@@ -827,39 +829,47 @@ async function handleLogin() {
           marginBottom: "30px",
         }}
       >
-        <p
-          style={{
-            fontSize: isMobile ? "15px" : "18px",
-            lineHeight: 1.8,
-            textAlign: "justify",
-            margin: 0,
-          }}
-        >
-          <p>
-          <b>Hệ thống hỗ trợ Sinh viên 5 tốt BMU</b> là nền tảng trực tuyến
-          được phát triển bởi{" "}
-          <b>
-            Câu lạc bộ Sinh viên 5 tốt Trường Đại học Y Dược Buôn Ma Thuột
-          </b>
-          , thuộc{" "}
-          <b>
-            Mô hình hỗ trợ Sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt
-            các cấp
-          </b>
-          </p>
-          <p>
-          Hệ thống được xây dựng nhằm đồng hành cùng sinh viên trong quá trình phấn đấu,
-           rèn luyện và hoàn thiện hồ sơ Sinh viên 5 tốt cấp Trường. Thông qua nền
-          tảng, sinh viên có thể theo dõi các tiêu chí, quản lý minh chứng, cập nhật kết
-          quả học tập, theo dõi tiến độ và nhận hướng dẫn từ Câu lạc bộ Sinh viên 5 tốt. 
-          Đồng thời, hệ thống hỗ trợ cán bộ quản lý tập trung hồ sơ, kiểm tra minh chứng
-          và phản hồi kết quả xử lý.
-        </p>
-        <p>Với phương thức quản lý trực tuyến, hệ thống giúp quá trình chuẩn bị
-          hồ sơ trở nên thuận tiện, khoa học và minh bạch hơn, góp phần hỗ trợ sinh viên
-          chủ động trong hành trình chinh phục danh hiệu Sinh viên 5 tốt.
-        </p>
-        </p>
+      <section
+  style={{
+    marginBottom: "30px",
+  }}
+>
+  <div
+    style={{
+      fontSize: isMobile ? "15px" : "18px",
+      lineHeight: 1.8,
+      textAlign: "justify",
+    }}
+  >
+    <p>
+      <b>Hệ thống hỗ trợ Sinh viên 5 tốt BMU</b> là nền tảng trực tuyến
+      được phát triển bởi{" "}
+      <b>
+        Câu lạc bộ Sinh viên 5 tốt Trường Đại học Y Dược Buôn Ma Thuột
+      </b>
+      , thuộc{" "}
+      <b>
+        Mô hình hỗ trợ Sinh viên phấn đấu đạt danh hiệu Sinh viên 5 tốt
+        các cấp
+      </b>
+    </p>
+
+    <p>
+      Hệ thống được xây dựng nhằm đồng hành cùng sinh viên trong quá trình phấn đấu,
+      rèn luyện và hoàn thiện hồ sơ Sinh viên 5 tốt cấp Trường. Thông qua nền
+      tảng, sinh viên có thể theo dõi các tiêu chí, quản lý minh chứng, cập nhật kết
+      quả học tập, theo dõi tiến độ và nhận hướng dẫn từ Câu lạc bộ Sinh viên 5 tốt.
+      Đồng thời, hệ thống hỗ trợ cán bộ quản lý tập trung hồ sơ, kiểm tra minh chứng
+      và phản hồi kết quả xử lý.
+    </p>
+
+    <p>
+      Với phương thức quản lý trực tuyến, hệ thống giúp quá trình chuẩn bị
+      hồ sơ trở nên thuận tiện, khoa học và minh bạch hơn, góp phần hỗ trợ sinh viên
+      chủ động trong hành trình chinh phục danh hiệu Sinh viên 5 tốt.
+    </p>
+  </div>
+</section>
       </section>
 
       {/* ĐƯỜNG PHÂN CÁCH */}
@@ -1726,35 +1736,6 @@ async function handleLogin() {
         height: "28px",
       }}
     >
-      <label
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "7px",
-          fontSize: "14px",
-          color: "#7a7c80",
-          cursor: "pointer",
-          lineHeight: 1,
-          margin: 0,
-        }}
-      >
-        <input
-          type="checkbox"
-          checked={rememberLogin}
-          onChange={(e) =>
-            setRememberLogin(e.target.checked)
-          }
-          style={{
-            width: "18px",
-            height: "18px",
-            margin: 0,
-            cursor: "pointer",
-            accentColor: "#2563eb",
-          }}
-        />
-
-        <span>Lưu đăng nhập</span>
-      </label>
     </div>
   )}
 
@@ -1763,7 +1744,7 @@ async function handleLogin() {
     type="submit"
     style={{
       width: "100%",
-      marginTop: "20px",
+      marginTop: "0px",
       padding: "12px",
       border: "none",
       background: "#2563eb",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import InstallButton from "./InstallButton";
 
 type HeaderProps = {
   tab: string;
@@ -74,23 +75,40 @@ borderImage:
               />
 
               <div style={{ position: "relative" }}>
-                <button
-                  onClick={() => setShowMenu((prev) => !prev)}
-                  style={{
-                    width: 42,
-                    height: 42,
-                    border: "none",
-                    borderRadius: 10,
-                    cursor: "pointer",
-                    fontSize: 22,
-                    background: "transparent",
-                    color: "#333",
-                  }}
-                  aria-label="Mở menu"
-                >
-                  ☰
-                </button>
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+    }}
+  >
+    <div
+  style={{
+    transform: "scale(0.75)",
+    transformOrigin: "right",
+  }}
+>
+  <InstallButton isHeader={true} />
+</div>
 
+    <button
+      onClick={() => setShowMenu((prev) => !prev)}
+      style={{
+        width: 42,
+        height: 42,
+        border: "none",
+        borderRadius: 10,
+        cursor: "pointer",
+        fontSize: 22,
+        background: "transparent",
+        color: "#333",
+        flexShrink: 0,
+      }}
+      aria-label="Mở menu"
+    >
+      ☰
+    </button>
+  </div>
                 {showMenu && (
                   <div
                     style={{
@@ -107,31 +125,45 @@ borderImage:
                     }}
                   >
                     <button
-                      onClick={() => {
-                        setShowMenu(false);
-                        openCriteria();
-                      }}
-                      onMouseEnter={(e) => {
-  e.currentTarget.style.background = "#eff6ff";
-  e.currentTarget.style.color = "#2563eb";
-}}
-onMouseLeave={(e) => {
-  e.currentTarget.style.background = "#fff";
-  e.currentTarget.style.color = "#111";
-}}
-                      style={{
-                        width: "100%",
-                        padding: "13px 15px",
-                        border: "none",
-                        background: "#fff",
-                        textAlign: "left",
-                        cursor: "pointer",
-                        fontSize: 14,
-                        fontWeight: 600,
-                      }}
-                    >
-                      📑 Xem tiêu chuẩn
-                    </button>
+  onClick={() => {
+    setShowMenu(false);
+    openCriteria();
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.background = "#dbeafe";
+    e.currentTarget.style.color = "#1d4ed8";
+    e.currentTarget.style.transform = "translateX(3px)";
+    e.currentTarget.style.boxShadow =
+      "0 4px 12px rgba(37,99,235,0.12)";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.background =
+      "linear-gradient(135deg, #eff6ff, #ffffff)";
+    e.currentTarget.style.color = "#1e40af";
+    e.currentTarget.style.transform = "translateX(0)";
+    e.currentTarget.style.boxShadow = "none";
+  }}
+  style={{
+    width: "100%",
+    padding: "14px 15px",
+    border: "1px solid #bfdbfe",
+    borderLeft: "4px solid #2563eb",
+    borderRadius: "10px",
+    background: "linear-gradient(135deg, #eff6ff, #ffffff)",
+    color: "#1e40af",
+    textAlign: "left",
+    cursor: "pointer",
+    fontSize: isMobile ? 12 : 14,
+    fontWeight: 700,
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    transition: "all .25s ease",
+    boxShadow: "0 2px 6px rgba(37,99,235,0.08)",
+  }}
+>
+  <span>Xem tiêu chuẩn SV5T</span>
+</button>
                   </div>
                 )}
               </div>
