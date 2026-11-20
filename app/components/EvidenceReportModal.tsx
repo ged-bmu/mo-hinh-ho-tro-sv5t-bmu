@@ -216,9 +216,20 @@ useEffect(() => {
     const trimmedName = fileName.trim();
 
     if (!trimmedName) {
-      alert("Vui lòng nhập tên file.");
-      return;
-    }
+  alert("Vui lòng nhập tên file.");
+  return;
+}
+
+if (selectedItemIds.filter((itemId) =>
+  criterionItems.some(
+    (item) =>
+      item.id === itemId &&
+      item.criterion === currentCriterion
+  )
+).length === 0) {
+  alert("Vui lòng chọn ít nhất một nội dung đáp ứng trong tiêu chuẩn SV5T.");
+  return;
+}
 
     setSaving(true);
 
@@ -701,15 +712,44 @@ const rows = validSelectedIds.map((itemId) => ({
 
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={
+  saving ||
+  !selectedItemIds.some((itemId) =>
+    criterionItems.some(
+      (item) =>
+        item.id === itemId &&
+        item.criterion === currentCriterion
+    )
+  )
+}
             style={{
               padding: "9px 18px",
               border: "none",
               borderRadius: "8px",
               background: "#2563eb",
               color: "white",
-              cursor: saving ? "not-allowed" : "pointer",
-              opacity: saving ? 0.7 : 1,
+              cursor:
+  saving ||
+  !selectedItemIds.some((itemId) =>
+    criterionItems.some(
+      (item) =>
+        item.id === itemId &&
+        item.criterion === currentCriterion
+    )
+  )
+    ? "not-allowed"
+    : "pointer",
+opacity:
+  saving ||
+  !selectedItemIds.some((itemId) =>
+    criterionItems.some(
+      (item) =>
+        item.id === itemId &&
+        item.criterion === currentCriterion
+    )
+  )
+    ? 0.5
+    : 1,
             }}
           >
             {saving ? "Đang lưu..." : "💾 Lưu thay đổi"}
