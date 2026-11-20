@@ -478,8 +478,27 @@ const rows = validSelectedIds.map((itemId) => ({
             }}
           >
             <span>
-              {criterion.icon} {criterion.name}
-            </span>
+  {criterion.icon} {criterion.name}
+  <span
+    style={{
+      fontSize: "14px",
+      fontWeight: 400,
+      color: "#64748b",
+      marginLeft: "6px",
+    }}
+  >
+    (bấm để chọn)
+  </span>
+  <span
+    style={{
+      color: "#dc2626",
+      fontWeight: 700,
+      marginLeft: "3px",
+    }}
+  >
+    *
+  </span>
+</span>
 
             <span
               style={{
