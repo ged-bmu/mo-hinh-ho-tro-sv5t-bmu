@@ -200,11 +200,6 @@ const proofPaths = [
       icon: "⚙️",
       href: "/caidat",
     },
-    {
-      name: "Hướng dẫn",
-      icon: "📖",
-      href: "/huong-dan",
-    },
   ];
 
   const renderMenuIcon = (icon: string, alt: string) =>
