@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { registerFCMToken } from "@/lib/firebase-messaging";
+import { registerFCMToken } from "@/lib/firebase-messaging";;
 import Spinner from "@/app/components/Spinner";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -161,66 +161,62 @@ export default function CaiDatPage() {
   }
 
   async function handleToggleNotification() {
-    if (notificationLoading) return;
+  if (notificationLoading) return;
 
-    setNotificationLoading(true);
+  setNotificationLoading(true);
 
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      if (!user) {
-        alert("Bạn chưa đăng nhập.");
-        return;
-      }
-
-      // ĐANG BẬT → TẮT
-      if (notificationEnabled) {
-        const { error } = await supabase
-          .from("notification_tokens")
-          .delete()
-          .eq("user_id", user.id);
-
-        if (error) {
-          console.error("Lỗi xóa token:", error);
-          alert("Không thể tắt thông báo.");
-          return;
-        }
-
-        setNotificationEnabled(false);
-        alert("Đã tắt thông báo.");
-        return;
-      }
-
-      // ĐANG TẮT → BẬT
-      const token = await registerFCMToken();
-
-      if (!token) {
-        setNotificationEnabled(false);
-
-        alert(
-          "Không thể bật thông báo.\n\n" +
-            "Vui lòng kiểm tra quyền thông báo trên thiết bị."
-        );
-
-        return;
-      }
-
-      setNotificationEnabled(true);
-      alert("Đã bật thông báo!");
-    } catch (error) {
-      console.error("Lỗi bật/tắt thông báo:", error);
-
-      alert(
-        `Lỗi: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
-    } finally {
-      setNotificationLoading(false);
+    if (!user) {
+      alert("Bạn chưa đăng nhập.");
+      return;
     }
+
+    // ĐANG BẬT → TẮT
+    if (notificationEnabled) {
+  const { error } = await supabase
+    .from("notification_tokens")
+    .delete()
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Lỗi xóa token:", error);
+    alert("Không thể tắt thông báo.");
+    return;
   }
+
+  setNotificationEnabled(false);
+  alert("Đã tắt thông báo.");
+  return;
+}
+
+    // ĐANG TẮT → BẬT
+    const token = await registerFCMToken();
+
+    if (!token) {
+      setNotificationEnabled(false);
+      alert("Không thể bật thông báo.");
+      return;
+    }
+
+    setNotificationEnabled(true);
+    alert("Đã bật thông báo!");
+
+  } catch (error) {
+    console.error("Lỗi bật/tắt thông báo:", error);
+
+    alert(
+      `Lỗi: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  } finally {
+    setNotificationLoading(false);
+  }
+}
 
   async function handleChangePassword() {
     if (passwordSaving) return;
