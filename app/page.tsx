@@ -1364,7 +1364,6 @@ circleCircumference -
 {/* ===================================================== */}
 {/* CỘT 2 — THAO TÁC NHANH */}
 {/* ===================================================== */}
-{!isMobile && (
 <div
   style={{
     display: "flex",
@@ -1445,7 +1444,7 @@ circleCircumference -
 
     <div style={{ minWidth: 0, flex: 1 }}>
       <div style={{ fontSize: 14, fontWeight: 800, color: "#0F172A" }}>
-        Xem báo cáo
+        Báo cáo điện tử
       </div>
     </div>
 
@@ -1547,65 +1546,64 @@ circleCircumference -
     )}
   </a>
 
-  {/* HƯỚNG DẪN */}
-  <a
-    href="/huong-dan"
+{/* CÀI ĐẶT */}
+<a
+  href="/caidat"
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "6px 10px",
+    width: "85%",
+    alignSelf: "center",
+    boxSizing: "border-box",
+    background: "#F5F3FF",
+    border: "1px solid #DDD6FE",
+    borderRadius: 14,
+    textDecoration: "none",
+    color: "#0F172A",
+    transition: "all .2s ease",
+    boxShadow: "0 2px 6px rgba(0,0,0,.04)",
+    marginBottom: 10,
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.transform = "translateY(-2px)";
+    e.currentTarget.style.boxShadow = "0 6px 14px rgba(124,58,237,.12)";
+    e.currentTarget.style.borderColor = "#C4B5FD";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = "translateY(0)";
+    e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,.04)";
+    e.currentTarget.style.borderColor = "#DDD6FE";
+  }}
+>
+  <div
     style={{
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      background: "#EDE9FE",
       display: "flex",
       alignItems: "center",
-      gap: 12,
-      padding: "6px 10px",
-      width: "85%",
-      alignSelf: "center",
-      boxSizing: "border-box",
-      background: "#F5F3FF",
-      border: "1px solid #DDD6FE",
-      borderRadius: 14,
-      textDecoration: "none",
-      color: "#0F172A",
-      transition: "all .2s ease",
-      boxShadow: "0 2px 6px rgba(0,0,0,.04)",
-      marginBottom: 10,
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = "translateY(-2px)";
-      e.currentTarget.style.boxShadow = "0 6px 14px rgba(124,58,237,.12)";
-      e.currentTarget.style.borderColor = "#C4B5FD";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = "translateY(0)";
-      e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,.04)";
-      e.currentTarget.style.borderColor = "#DDD6FE";
+      justifyContent: "center",
+      fontSize: 20,
+      flexShrink: 0,
     }}
   >
-    <div
-      style={{
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        background: "#EDE9FE",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 20,
-        flexShrink: 0,
-      }}
-    >
-      <CircleHelp size={22} color="#2563eb" fill="#2563eb" stroke="white" />
-    </div>
+    ⚙️
+  </div>
 
-    <div style={{ minWidth: 0, flex: 1 }}>
-      <div style={{ fontSize: 14, fontWeight: 800, color: "#0F172A" }}>
-        Hướng dẫn
-      </div>
+  <div style={{ minWidth: 0, flex: 1 }}>
+    <div style={{ fontSize: 14, fontWeight: 800, color: "#0F172A" }}>
+      Cài đặt
     </div>
+  </div>
 
-    <span style={{ fontSize: 18, color: "#7C3AED", fontWeight: 700 }}>
-      →
-    </span>
-  </a>
+  <span style={{ fontSize: 18, color: "#7C3AED", fontWeight: 700 }}>
+    →
+  </span>
+</a>
 </div>
-)}
 
     {/* ================= CARD CHỨC NĂNG BÊN PHẢI ================= */}
   <div
@@ -1630,7 +1628,7 @@ circleCircumference -
   borderTopRightRadius: "16px",
 }}
     >
-      ⚙️ Chức năng
+      Chức năng
     </div>
 
     {/* 3 nút */}

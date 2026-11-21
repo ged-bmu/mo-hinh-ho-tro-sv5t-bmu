@@ -1650,9 +1650,9 @@ const [activeSection, setActiveSection] = useState("start");
 
             <aside className="guide-sidebar">
 
-              <a href="/" className="guide-home">
+              <a href="/caidat" className="guide-home">
                 <span className="guide-home-icon">⌂</span>
-                <span>Về trang chủ</span>
+                <span>Quay lại</span>
                 <span className="guide-home-arrow">→</span>
               </a>
 
@@ -1731,9 +1731,9 @@ const [activeSection, setActiveSection] = useState("start");
               {/* MOBILE HOME */}
 
               <div className="guide-mobile-top">
-                <a href="/" className="guide-mobile-home">
+                <a href="/caidat" className="guide-mobile-home">
                   <span>←</span>
-                  Trang chủ
+                  Quay lại
                 </a>
 
                 <span className="guide-mobile-count">

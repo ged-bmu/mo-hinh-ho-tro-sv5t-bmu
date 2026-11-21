@@ -79,30 +79,36 @@ a{
   }
 
   .mobile-menu-overlay{
-    position:fixed;
-    inset:0;
+  position:fixed;
+  top:134px; /* chiều cao header */
+  left:0;
+  right:0;
+  bottom:68px; /* chừa thanh điều hướng dưới */
 
-    background:rgba(0,0,0,.35);
+  background:rgba(0,0,0,.35);
 
-    display:flex;
+  display:flex;
 
-    z-index:1000;
-  }
+  z-index:1000;
+}
 
-  .mobile-menu{
-    width:260px;
-    height:100%;
+.mobile-menu{
+  width:260px;
+  max-width:85vw;
+  height:100%;
 
-    background:#fff;
+  background:#fff;
 
-    display:flex;
-    flex-direction:column;
+  display:flex;
+  flex-direction:column;
 
-    padding:20px;
-    gap:10px;
+  padding:20px;
+  gap: 0px;
 
-    box-shadow:4px 0 15px rgba(0,0,0,.15);
-  }
+  overflow-y:auto;
+
+  box-shadow:4px 0 15px rgba(0,0,0,.15);
+}
 
   .mobile-menu a,
   .mobile-menu button{
