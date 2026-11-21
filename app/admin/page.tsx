@@ -57,6 +57,9 @@ const toolbarDangerStyle: React.CSSProperties = {
   const [profile, setProfile] = useState<any>(null);
   const [exporting, setExporting] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
+  const [lastActivities, setLastActivities] = useState<Record<string, any>>({});
+  const [checkDate, setCheckDate] = useState("");
+  const [showCheckDatePicker, setShowCheckDatePicker] = useState(false);
   const [search, setSearch] = useState("");
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
@@ -93,7 +96,25 @@ const toolbarDangerStyle: React.CSSProperties = {
       result?.tinh_nguyen &&
       result?.hoi_nhap;
 
-   const matchFilter =
+   const checkTime = checkDate
+  ? new Date(checkDate).getTime()
+  : null;
+
+const activityTime = lastActivities[sv.id]
+  ? new Date(lastActivities[sv.id].created_at).getTime()
+  : null;
+
+const hasChangedAfterCheck =
+  checkTime !== null &&
+  activityTime !== null &&
+  activityTime > checkTime;
+
+const hasNotChangedAfterCheck =
+  checkTime !== null &&
+  activityTime !== null &&
+  activityTime <= checkTime;
+
+const matchFilter =
   filterResult === "all"
     ? true
     : filterResult === "passed"
@@ -102,6 +123,10 @@ const toolbarDangerStyle: React.CSSProperties = {
     ? !isPassed
     : filterResult === "submitted"
     ? result?.is_submitted === true
+    : filterResult === "changed_after_check"
+    ? hasChangedAfterCheck
+    : filterResult === "unchanged_after_check"
+    ? hasNotChangedAfterCheck
     : true;
 
 const isRegistered = registrationStatuses[sv.id] === true;
@@ -117,40 +142,76 @@ return matchSearch && matchFilter && matchRegistration;
   });
 
   useEffect(() => {
-    checkAdmin();
-    loadAcademicYears();
+  checkAdmin();
+  loadAcademicYears();
+  loadCheckDate();
 
-    const channel = supabase
-      .channel("admin-student-profile-status")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "profiles",
-          filter: "role=eq.student",
-        },
-        (payload) => {
-          const updatedStudent = payload.new as any;
+  // REALTIME CẬP NHẬT PROFILE SINH VIÊN
+  const profileChannel = supabase
+    .channel("admin-student-profile-status")
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "profiles",
+        filter: "role=eq.student",
+      },
+      (payload) => {
+        const updatedStudent = payload.new as any;
 
-          setStudents((prev) =>
-            prev.map((sv) =>
-              sv.id === updatedStudent.id
-                ? {
-                    ...sv,
-                    ...updatedStudent,
-                  }
-                : sv
-            )
-          );
-        }
-      )
-      .subscribe();
+        setStudents((prev) =>
+          prev.map((sv) =>
+            sv.id === updatedStudent.id
+              ? {
+                  ...sv,
+                  ...updatedStudent,
+                }
+              : sv
+          )
+        );
+      }
+    )
+    .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  // REALTIME LỊCH SỬ THAO TÁC
+  const activityChannel = supabase
+    .channel("admin-activity-logs-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "activity_logs",
+      },
+      (payload) => {
+        const newActivity = payload.new as any;
+
+        setLastActivities((prev) => {
+          const current = prev[newActivity.user_id];
+
+          if (
+            current &&
+            new Date(current.created_at).getTime() >
+              new Date(newActivity.created_at).getTime()
+          ) {
+            return prev;
+          }
+
+          return {
+            ...prev,
+            [newActivity.user_id]: newActivity,
+          };
+        });
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(profileChannel);
+    supabase.removeChannel(activityChannel);
+  };
+}, []);
 
  
 async function sendGeneralNotification() {
@@ -376,6 +437,33 @@ if (current?.id) {
   setRegistrationStatuses(mapped);
 }  
 
+async function loadLastActivities(studentIds: string[]) {
+  if (!studentIds.length) {
+    setLastActivities({});
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("activity_logs")
+    .select("user_id, action_type, created_at")
+    .in("user_id", studentIds)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Lỗi lấy lịch sử hoạt động:", error);
+    return;
+  }
+
+  const mapped: Record<string, any> = {};
+
+  (data || []).forEach((item) => {
+    if (!mapped[item.user_id]) {
+      mapped[item.user_id] = item;
+    }
+  });
+
+  setLastActivities(mapped);
+}
 
 async function toggleStudentRegistration(sv: any) {
   const yearId = currentAcademicYear?.id;
@@ -532,8 +620,9 @@ async function toggleStudentRegistration(sv: any) {
           { numeric: true }
         );
       });
-
+      
       setStudents(sorted);
+      await loadLastActivities(sorted.map((sv) => sv.id));
     }
   }
 
@@ -650,6 +739,86 @@ async function toggleStudentRegistration(sv: any) {
     );
   };
 
+  function getRelativeTime(date: string) {
+  const diff = Date.now() - new Date(date).getTime();
+
+  if (diff < 0) return "Vừa thao tác";
+
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (minutes < 1) return "Vừa thao tác";
+  if (minutes < 60) return `${minutes} phút trước`;
+  if (hours < 24) return `${hours} giờ trước`;
+  if (days === 1) return "Hôm qua";
+  if (days < 30) return `${days} ngày trước`;
+  if (days < 365) return `${Math.floor(days / 30)} tháng trước`;
+
+  return `${Math.floor(days / 365)} năm trước`;
+}
+
+function getExactTime(date: string) {
+  const d = new Date(date);
+
+  return d.toLocaleString("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+  }).replace(",", " ·");
+}
+ const loadCheckDate = async () => {
+  const { data, error } = await supabase
+    .from("admin_check_schedule")
+    .select("scheduled_at")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Lỗi tải lịch kiểm tra:", error);
+    return;
+  }
+
+  if (data?.scheduled_at) {
+    const date = new Date(data.scheduled_at);
+
+    const localDate = new Date(
+      date.getTime() - date.getTimezoneOffset() * 60000
+    )
+      .toISOString()
+      .slice(0, 16);
+
+    setCheckDate(localDate);
+  }
+};
+const saveCheckDate = async (date: string) => {
+  if (!date) return;
+
+  const scheduledAt = new Date(date).toISOString();
+
+  const { error } = await supabase
+    .from("admin_check_schedule")
+    .upsert(
+      {
+        id: 1,
+        scheduled_at: scheduledAt,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" }
+    );
+
+  if (error) {
+    alert("Lưu ngày kiểm tra thất bại!");
+    console.error(error);
+    return;
+  }
+
+  setCheckDate(date);
+  setShowCheckDatePicker(false);
+  alert("Đã lưu ngày kiểm tra!");
+};
 return (
   <>
     <div className="admin-page">
@@ -799,12 +968,12 @@ return (
   width: 100%;
   min-width: 0;
   height: 46px;
-  padding: 12px 14px;
+  padding: 12px 13px;
   border: 1px solid #dbe2ea;
   border-right: none;
   border-radius: 12px 0 0 12px;
   outline: none;
-  font-size: 14px;
+  font-size: 13px;
   background: #fff;
   color: #0f172a;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -825,7 +994,7 @@ return (
   background: #fff;
   color: #0f172a;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   outline: none;
 }
 
@@ -848,7 +1017,7 @@ return (
   height: 44px;
   border-radius: 10px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   transition:
     background 0.2s ease,
@@ -862,7 +1031,7 @@ return (
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 14px;
+  padding: 10px 13px;
   white-space: nowrap;
 }
 
@@ -895,7 +1064,7 @@ return (
 
 .admin-year-select {
   min-width: 190px;
-  padding: 10px 14px;
+  padding: 10px 13px;
   border: 1px solid #2563eb;
   background: #fff;
   color: #2563eb;
@@ -980,7 +1149,7 @@ return (
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 13px;
   color: #334155;
   transition: background 0.2s ease;
 }
@@ -1151,7 +1320,7 @@ return (
   padding: 6px 12px;
   border-radius: 999px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
@@ -1190,14 +1359,14 @@ return (
 .admin-view-button {
   background: #2563eb;
   color: #fff;
-  padding: 8px 14px;
+  padding: 8px 13px;
   border: 1px solid #2563eb;
   border-radius: 8px;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
   transition: background 0.2s ease;
@@ -1228,7 +1397,7 @@ return (
   max-height: 85vh;
   overflow-y: auto;
   background: #fff;
-  border-radius: 14px;
+  border-radius: 13px;
   padding: 20px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
@@ -1272,13 +1441,13 @@ return (
   border-radius: 8px;
   background: #f0fdf4;
   color: #166534;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
 }
 
 .admin-empty {
   color: #64748b;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 /* =========================
@@ -1339,7 +1508,7 @@ return (
 .notification-label {
   display: block;
   margin-bottom: 7px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #374151;
 }
@@ -1348,11 +1517,11 @@ return (
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 12px 14px;
+  padding: 12px 13px;
   border: 1px solid #d1d5db;
   border-radius: 10px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13px;
   color: #111827;
   background: #fff;
   outline: none;
@@ -1448,7 +1617,7 @@ return (
   }
 
   .admin-logo-wrap {
-    margin-bottom: 14px;
+    margin-bottom: 13px;
     padding-bottom: 10px;
   }
 
@@ -1457,7 +1626,7 @@ return (
   }
 
   .admin-title {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .admin-subtitle {
@@ -1545,7 +1714,7 @@ return (
   .admin-table th,
   .admin-table td {
     padding: 12px 10px;
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .admin-status,
@@ -1560,7 +1729,7 @@ return (
 
   .notification-modal {
     padding: 18px;
-    border-radius: 14px;
+    border-radius: 13px;
   }
 
   .notification-modal-title {
@@ -1809,6 +1978,8 @@ return (
         <option value="passed">Đạt 5 tiêu chí</option>
         <option value="failed">Chưa đạt</option>
         <option value="submitted">Đã nộp hồ sơ</option>
+        <option value="changed_after_check">Thay đổi sau kiểm tra</option>
+        <option value="unchanged_after_check">Không thay đổi sau kiểm tra</option>
       </select>
     </div>
     
@@ -2096,7 +2267,7 @@ return (
     flexWrap: "wrap",
     gap: 12,
     marginTop: 16,
-    padding: 14,
+    padding: 13,
     border: "1px solid #e5edf5",
     borderRadius: 15,
     background: "linear-gradient(110deg, #f8fafc 0%, #f0f9ff 100%)",
@@ -2243,7 +2414,7 @@ return (
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
-      padding: "0 14px",
+      padding: "0 13px",
       border: "1px solid #bae6fd",
       borderRadius: 11,
       background: "#fff",
@@ -2276,7 +2447,7 @@ return (
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
-      padding: "0 14px",
+      padding: "0 13px",
       border: "1px solid #c7d2fe",
       borderRadius: 11,
       background: "#eef2ff",
@@ -2293,7 +2464,7 @@ return (
       e.currentTarget.style.background = "#eef2ff";
     }}
   >
-    <AdminIcon name="bell" size={16} />
+    <AdminIcon name="message" size={16} />
     Nhắn tin
   </button>
   {/* QUẢN LÝ TIÊU CHUẨN */}
@@ -2308,7 +2479,7 @@ return (
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
-      padding: "0 14px",
+      padding: "0 13px",
       border: "1px solid #a7f3d0",
       borderRadius: 11,
       background: "#ecfdf5",
@@ -2328,6 +2499,38 @@ return (
     <AdminIcon name="file" size={16} />
     Tiêu chuẩn
   </button>
+  {/* ĐẶT LỊCH KIỂM TRA */}
+<button
+  type="button"
+  onClick={() => setShowCheckDatePicker(true)}
+  style={{
+    minHeight: 42,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    padding: "0 13px",
+    border: "1px solid #bfdbfe",
+    borderRadius: 11,
+    background: "#eff6ff",
+    color: "#1d4ed8",
+    fontSize: 12,
+    fontWeight: 700,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.background = "#dbeafe";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.background = "#eff6ff";
+  }}
+>
+  <AdminIcon name="calendar" size={16} />
+  {checkDate
+    ? `Kiểm tra: ${new Date(checkDate).toLocaleDateString("vi-VN")}`
+    : "Đặt lịch kiểm tra"}
+</button>
   {/* TRẠNG THÁI ĐĂNG KÝ */}
   {currentAcademicYear && (
     <div
@@ -2335,7 +2538,7 @@ return (
         display: "flex",
         alignItems: "center",
         gap: 10,
-        paddingLeft: 14,
+        paddingLeft: 13,
         borderLeft: "1px solid #dbe5ef",
         marginLeft: "auto",
       }}
@@ -2454,7 +2657,7 @@ return (
                         </th>
 
                         <th className="admin-table-status">
-                          Trạng thái hồ sơ
+                          Lịch sử
                         </th>
 
                         <th className="admin-table-view">
@@ -2589,7 +2792,7 @@ return (
         registrationStatuses[sv.id] === true
           ? "#166534"
           : "#92400e",
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: 700,
       whiteSpace: "nowrap",
       cursor:
@@ -2671,20 +2874,73 @@ return (
                                 </span>
                               </td>
 
-                              {/* TRẠNG THÁI */}
-                              <td className="admin-table-status">
-                                {criteriaResults[
-                                  sv.id
-                                ]?.is_submitted ? (
-                                  <span className="admin-status admin-status-submitted">
-                                    Đã nộp
-                                  </span>
-                                ) : (
-                                  <span className="admin-status admin-status-not-submitted">
-                                    Chưa nộp
-                                  </span>
-                                )}
-                              </td>
+                              {/* LỊCH SỬ THAO TÁC */}
+                              
+{/* LỊCH SỬ THAO TÁC */}
+<td className="admin-table-status">
+  {lastActivities[sv.id] ? (
+    (() => {
+      const activityTime = new Date(
+        lastActivities[sv.id].created_at
+      ).getTime();
+
+      const checkTime = checkDate
+        ? new Date(checkDate).getTime()
+        : null;
+
+      const hasChangedAfterCheck =
+        checkTime !== null && activityTime > checkTime;
+
+      const statusColor = checkTime === null
+        ? "#0e7490"
+        : hasChangedAfterCheck
+          ? "#dc2626"
+          : "#16a34a";
+
+      return (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+            alignItems: "center",
+            minWidth: 110,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: statusColor,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {getRelativeTime(
+              lastActivities[sv.id].created_at
+            )}
+          </span>
+
+          <span
+            style={{
+              fontSize: 13,
+              color: statusColor,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {getExactTime(
+              lastActivities[sv.id].created_at
+            )}
+          </span>
+        </div>
+      );
+    })()
+  ) : (
+    <span style={{ color: "#94a3b8", fontSize: 13 }}>
+      Chưa có
+    </span>
+  )}
+</td>
+
 
                               {/* XEM */}
                               <td className="admin-table-view">
@@ -2826,7 +3082,7 @@ return (
       borderRadius: 10,
       background: "#fff",
       color: "#111827",
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: 600,
       outline: "none",
     }}
@@ -2914,7 +3170,7 @@ return (
     border: "none",
     borderRadius: "10px",
     fontWeight: 600,
-    fontSize: "14px",
+    fontSize: "13px",
     cursor: sending ? "not-allowed" : "pointer",
     opacity: sending ? 0.7 : 1,
     transition: "all 0.2s ease",
@@ -2930,6 +3186,131 @@ return (
               </div>
                 </div>
       </main>
+      
+            {/* MODAL ĐẶT LỊCH KIỂM TRA */}
+      {showCheckDatePicker && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 10000,
+            background: "rgba(15,23,42,0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+          }}
+          onClick={() => setShowCheckDatePicker(false)}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 420,
+              padding: 24,
+              borderRadius: 18,
+              background: "#fff",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                fontSize: 19,
+                fontWeight: 750,
+                color: "#0f172a",
+                marginBottom: 8,
+              }}
+            >
+              Đặt lịch kiểm tra
+            </div>
+
+            <p
+              style={{
+                margin: "0 0 18px",
+                fontSize: 13,
+                color: "#64748b",
+                lineHeight: 1.6,
+              }}
+            >
+              Chọn thời điểm làm mốc so sánh lịch sử thao tác
+              của sinh viên.
+            </p>
+
+            <label
+              style={{
+                display: "block",
+                marginBottom: 8,
+                fontSize: 13,
+                fontWeight: 650,
+                color: "#334155",
+              }}
+            >
+              Ngày kiểm tra
+            </label>
+
+            <input
+              type="datetime-local"
+              value={checkDate}
+              onChange={(e) => setCheckDate(e.target.value)}
+              style={{
+                width: "100%",
+                height: 46,
+                padding: "0 12px",
+                border: "1px solid #cbd5e1",
+                borderRadius: 10,
+                background: "#fff",
+                color: "#0f172a",
+                fontSize: 14,
+                boxSizing: "border-box",
+                outline: "none",
+              }}
+            />
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 10,
+                marginTop: 22,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setShowCheckDatePicker(false)}
+                style={{
+                  padding: "11px 16px",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: 10,
+                  background: "#fff",
+                  color: "#475569",
+                  fontWeight: 650,
+                  cursor: "pointer",
+                }}
+              >
+                Hủy
+              </button>
+
+              <button
+                type="button"
+                disabled={!checkDate}
+                onClick={() => saveCheckDate(checkDate)}
+                style={{
+                  padding: "11px 18px",
+                  border: "1px solid #2563eb",
+                  borderRadius: 10,
+                  background: "#2563eb",
+                  color: "#fff",
+                  fontWeight: 700,
+                  cursor: checkDate ? "pointer" : "not-allowed",
+                  opacity: checkDate ? 1 : 0.5,
+                }}
+              >
+                Lưu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCriteria && (
         <CriteriaModal
@@ -2995,7 +3376,8 @@ function AdminIcon({
     | "file"
     | "archive"
     | "check"
-    | "close";
+    | "close"
+    | "message";
   size?: number;
 }) {
   const common = {
@@ -3062,6 +3444,12 @@ function AdminIcon({
       </>
     ),
     check: <path d="m5 12 4 4L19 6" />,
+    message: (
+  <>
+    <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.5 8.5 0 0 1-4.2-1.1L3 21l1.8-4.3A8.5 8.5 0 1 1 21 11.5Z" />
+    <path d="M8 10h8M8 14h5" />
+  </>
+),
     close: <path d="m18 6-12 12M6 6l12 12" />,
   };
 

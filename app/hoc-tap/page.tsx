@@ -536,7 +536,7 @@ async function uploadFile(file: File) {
     // ================================
     // 4. CHIA FILE THÀNH CHUNK
     // ================================
-    const CHUNK_SIZE = 3 * 1024 * 1024; // 3 MB
+    const CHUNK_SIZE = 16 * 1024 * 1024; // 16 MB
 
     let start = 0;
     let driveFile: any = null;
