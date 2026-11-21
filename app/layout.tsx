@@ -9,6 +9,7 @@ import "./mobile-chat.css";
 import "./mobile-profile.css";
 import "./mobile-admin.css";
 import InstallPromptProvider from "./components/InstallPromptContext";
+import NotificationPrompt from "./components/NotificationPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -83,6 +84,7 @@ export default function RootLayout({
 
         <InstallPromptProvider>
            {children}
+           <NotificationPrompt />
         </InstallPromptProvider>
       </body>
     </html>
