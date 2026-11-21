@@ -186,6 +186,16 @@ const proofPaths = [
       href: "/hoat-dong",
     },
     {
+      name: "Thông báo",
+      icon: "🔔",
+      href: "/thongbaouser",
+    },
+    {
+      name: "Hướng dẫn",
+      icon: "📖",
+      href: "/huong-dan",
+    },
+    {
       name: "Cài đặt",
       icon: "⚙️",
       href: "/caidat",
