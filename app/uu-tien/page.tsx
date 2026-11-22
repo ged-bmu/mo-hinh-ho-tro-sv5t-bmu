@@ -34,7 +34,7 @@ function buildReportWithEvidence(
     "text/html"
   );
 
-  // Láº¥y ná»™i dung bÃ¡o cÃ¡o cá»§a cáº£ danh sÃ¡ch cÅ© vÃ  má»›i
+  // Lấy nội dung báo cáo của cả danh sách cũ và mới
   const evidenceContents = [
     ...previousFiles,
     ...evidenceFiles,
@@ -42,7 +42,7 @@ function buildReportWithEvidence(
     .map((file) => getPlainText(file.report_content || ""))
     .filter(Boolean);
 
-  // XÃ³a cÃ¡c Ä‘oáº¡n minh chá»©ng Ä‘Ã£ Ä‘Æ°á»£c ghÃ©p trÆ°á»›c Ä‘Ã³
+  // Xóa các đoạn minh chứng đã được ghép trước đó
   doc.body.querySelectorAll("p").forEach((paragraph) => {
     const paragraphText = (paragraph.textContent || "")
       .replace(/^\s*\d+\.\s*/, "")
@@ -58,7 +58,7 @@ function buildReportWithEvidence(
     }
   });
 
-  // XÃ³a cÃ¡c Ä‘oáº¡n chá»‰ cÃ²n sá»‘ thá»© tá»±
+  // Xóa các đoạn chỉ còn số thứ tự
   doc.body.querySelectorAll("p").forEach((paragraph) => {
     if (/^\s*\d+\.\s*$/.test(paragraph.textContent || "")) {
       paragraph.remove();
@@ -67,14 +67,14 @@ function buildReportWithEvidence(
 
   const manualContent = doc.body.innerHTML.trim();
 
-  // Sáº¯p xáº¿p minh chá»©ng theo thá»© tá»± file
+  // Sắp xếp minh chứng theo thứ tự file
   const sortedFiles = [...evidenceFiles].sort(
     (a, b) =>
       (a.sort_order ?? 999999) -
       (b.sort_order ?? 999999)
   );
 
-  // Táº¡o láº¡i bÃ¡o cÃ¡o minh chá»©ng
+  // Tạo lại báo cáo minh chứng
   const numberedReports = sortedFiles
     .filter((file) => file.report_content?.trim())
     .map((file, index) => {
@@ -133,7 +133,7 @@ async function loadAcademicYear() {
     .single();
 
   if (error) {
-    console.error("Lá»—i láº¥y nÄƒm há»c:", error);
+    console.error("Lỗi lấy năm học:", error);
     return null;
   }
 
@@ -157,7 +157,7 @@ async function checkAccess() {
   const academicYear = await loadAcademicYear();
 
   if (!academicYear) {
-    alert("KhÃ´ng xÃ¡c Ä‘á»‹nh Ä‘Æ°á»£c nÄƒm há»c.");
+    alert("Không xác định được năm học.");
     return;
   }
 
@@ -173,7 +173,7 @@ async function loadFiles(academicYearName?: string) {
 
   setUserId(user.id);
 
-  // Láº¥y file tá»« uploaded_files
+  // Lấy file từ uploaded_files
   const { data: uploadedFiles, error } = await supabase
     .from("uploaded_files")
     .select(
@@ -210,7 +210,7 @@ async function loadFiles(academicYearName?: string) {
   }
 
   // ================================
-  // Láº¥y bÃ¡o cÃ¡o
+  // Lấy báo cáo
   // ================================
 const { data: reportData } = await supabase
   .from("reports")
@@ -249,13 +249,13 @@ async function syncEvidenceReports(
 
   if (error) {
     throw new Error(
-      "KhÃ´ng thá»ƒ Ä‘á»“ng bá»™ bÃ¡o cÃ¡o minh chá»©ng: " + error.message
+      "Không thể đồng bộ báo cáo minh chứng: " + error.message
     );
   }
 
   setLastSaved(new Date());
 }
-// LÆ°u Ä‘á»“ng thá»i tÃªn file vÃ  bÃ¡o cÃ¡o minh chá»©ng
+// Lưu đồng thời tên file và báo cáo minh chứng
 const saveEvidenceChanges = async (
   file: any,
   inputName: string,
@@ -264,11 +264,11 @@ const saveEvidenceChanges = async (
   const trimmedName = inputName.trim();
 
   if (!trimmedName) {
-    throw new Error("TÃªn file khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+    throw new Error("Tên file không được để trống.");
   }
 
   try {
-    // 1. Láº¥y thÃ´ng tin file chÃ­nh xÃ¡c trong nÄƒm há»c
+    // 1. Lấy thông tin file chính xác trong năm học
     const { data: fileRecord, error: findError } =
       await supabase
         .from("uploaded_files")
@@ -280,10 +280,10 @@ const saveEvidenceChanges = async (
         .single();
 
     if (findError || !fileRecord) {
-      throw new Error("KhÃ´ng tÃ¬m tháº¥y file minh chá»©ng.");
+      throw new Error("Không tìm thấy file minh chứng.");
     }
 
-    // 2. Giá»¯ nguyÃªn pháº§n má»Ÿ rá»™ng cá»§a file
+    // 2. Giữ nguyên phần mở rộng của file
     const oldName =
       fileRecord.display_name || fileRecord.storage_name;
 
@@ -299,7 +299,7 @@ const saveEvidenceChanges = async (
 
     const nameChanged = newName !== oldName;
 
-    // 3. Náº¿u Ä‘á»•i tÃªn thÃ¬ cáº­p nháº­t Google Drive
+    // 3. Nếu đổi tên thì cập nhật Google Drive
     if (nameChanged && fileRecord.drive_file_id) {
       const response = await fetch("/api/rename-drive", {
         method: "POST",
@@ -316,12 +316,12 @@ const saveEvidenceChanges = async (
 
       if (!response.ok || !result.success) {
         throw new Error(
-          result.error || "KhÃ´ng thá»ƒ Ä‘á»•i tÃªn file trÃªn Google Drive."
+          result.error || "Không thể đổi tên file trên Google Drive."
         );
       }
     }
 
-    // 4. Cáº­p nháº­t tÃªn vÃ  bÃ¡o cÃ¡o trong Supabase
+    // 4. Cập nhật tên và báo cáo trong Supabase
     const { error: updateError } = await supabase
       .from("uploaded_files")
       .update({
@@ -334,11 +334,11 @@ const saveEvidenceChanges = async (
 
     if (updateError) {
       throw new Error(
-        "KhÃ´ng thá»ƒ lÆ°u thay Ä‘á»•i: " + updateError.message
+        "Không thể lưu thay đổi: " + updateError.message
       );
     }
 
-    // 5. Cáº­p nháº­t giao diá»‡n, giá»¯ nguyÃªn thá»© tá»± minh chá»©ng
+    // 5. Cập nhật giao diện, giữ nguyên thứ tự minh chứng
 const nextFiles = files.map((item) =>
   item.id === fileRecord.id
     ? {
@@ -361,7 +361,7 @@ setReport(
       [fileRecord.storage_name]: newName,
     }));
 
-    // 6. Ghi nháº­t kÃ½ náº¿u cÃ³ Ä‘á»•i tÃªn
+    // 6. Ghi nhật ký nếu có đổi tên
     if (nameChanged) {
       const { data: profile } = await supabase
         .from("profiles")
@@ -379,7 +379,7 @@ setReport(
       });
     }
 
-    // 7. ÄÃ³ng modal
+    // 7. Đóng modal
     setSelectedEvidence(null);
 
   } catch (error) {
@@ -389,7 +389,7 @@ setReport(
 };
 
 
-// Äá»•i thá»© tá»± minh chá»©ng
+// Đổi thứ tự minh chứng
 const moveEvidence = async (
   fileId: string,
   direction: "up" | "down"
@@ -429,7 +429,7 @@ const moveEvidence = async (
     .eq("user_id", userId);
 
   if (error1) {
-    alert("KhÃ´ng thá»ƒ Ä‘á»•i thá»© tá»±: " + error1.message);
+    alert("Không thể đổi thứ tự: " + error1.message);
     return;
   }
 
@@ -440,7 +440,7 @@ const moveEvidence = async (
     .eq("user_id", userId);
 
   if (error2) {
-    alert("KhÃ´ng thá»ƒ Ä‘á»•i thá»© tá»±: " + error2.message);
+    alert("Không thể đổi thứ tự: " + error2.message);
     await loadFiles();
     return;
   }
@@ -471,7 +471,7 @@ try {
     alert(
       error instanceof Error
         ? error.message
-        : "KhÃ´ng thá»ƒ cáº­p nháº­t bÃ¡o cÃ¡o."
+        : "Không thể cập nhật báo cáo."
     );
   }
 };
@@ -484,20 +484,20 @@ async function uploadFile(file: File) {
 
   try {
     // ================================
-    // 1. GIá»šI Háº N FILE
+    // 1. GIỚI HẠN FILE
     // ================================
     const MAX_FILE_SIZE = 25 * 1024 * 1024;
 
     if (file.size <= 0) {
-      throw new Error("File khÃ´ng há»£p lá»‡");
+      throw new Error("File không hợp lệ");
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      throw new Error("File khÃ´ng Ä‘Æ°á»£c vÆ°á»£t quÃ¡ 25 MB");
+      throw new Error("File không được vượt quá 25 MB");
     }
 
     // ================================
-    // 2. Láº¤Y THÃ”NG TIN SINH VIÃŠN
+    // 2. LẤY THÔNG TIN SINH VIÊN
     // ================================
     const { data: profile, error: profileError } =
       await supabase
@@ -508,11 +508,11 @@ async function uploadFile(file: File) {
 
     if (profileError || !profile) {
       console.error("Profile error:", profileError);
-      throw new Error("KhÃ´ng láº¥y Ä‘Æ°á»£c thÃ´ng tin sinh viÃªn");
+      throw new Error("Không lấy được thông tin sinh viên");
     }
 
     // ================================
-    // 3. KHá»žI Táº O GOOGLE DRIVE SESSION
+    // 3. KHỞI TẠO GOOGLE DRIVE SESSION
     // ================================
     const initResponse = await fetch(
       "/api/upload-drive/init",
@@ -539,7 +539,7 @@ async function uploadFile(file: File) {
     if (!initResponse.ok || !initResult.success) {
       throw new Error(
         initResult.error ||
-          "KhÃ´ng thá»ƒ khá»Ÿi táº¡o upload Google Drive"
+          "Không thể khởi tạo upload Google Drive"
       );
     }
 
@@ -547,12 +547,12 @@ async function uploadFile(file: File) {
 
     if (!uploadUrl) {
       throw new Error(
-        "KhÃ´ng nháº­n Ä‘Æ°á»£c upload URL tá»« Google Drive"
+        "Không nhận được upload URL từ Google Drive"
       );
     }
 
     // ================================
-    // 4. CHIA FILE THÃ€NH CHUNK
+    // 4. CHIA FILE THÀNH CHUNK
     // ================================
     const CHUNK_SIZE = 16 * 1024 * 1024; // 16 MB
 
@@ -575,7 +575,7 @@ async function uploadFile(file: File) {
       );
 
       // ================================
-      // 5. Gá»¬I CHUNK QUA VERCEL API
+      // 5. GỬI CHUNK QUA VERCEL API
       // ================================
       const chunkResponse = await fetch(
         "/api/upload-drive/chunk",
@@ -606,35 +606,35 @@ async function uploadFile(file: File) {
       ) {
         throw new Error(
           chunkResult.error ||
-            `Upload chunk tháº¥t báº¡i (${chunkResponse.status})`
+            `Upload chunk thất bại (${chunkResponse.status})`
         );
       }
 
       // ================================
-      // 6. KIá»‚M TRA HOÃ€N THÃ€NH
+      // 6. KIỂM TRA HOÀN THÀNH
       // ================================
       if (chunkResult.completed) {
         driveFile = chunkResult.file;
         break;
       }
 
-      // Chunk tiáº¿p theo
+      // Chunk tiếp theo
       start = end;
     }
 
     if (!driveFile?.id) {
       throw new Error(
-        "Google Drive khÃ´ng tráº£ vá» thÃ´ng tin file sau khi upload"
+        "Google Drive không trả về thông tin file sau khi upload"
       );
     }
 
     console.log(
-      "Google Drive upload thÃ nh cÃ´ng:",
+      "Google Drive upload thành công:",
       driveFile
     );
 
     // ================================
-    // 7. Táº O TÃŠN LÆ¯U TRONG SUPABASE
+    // 7. TẠO TÊN LƯU TRONG SUPABASE
     // ================================
     const safeName = file.name
       .normalize("NFD")
@@ -648,7 +648,7 @@ async function uploadFile(file: File) {
       `${Date.now()}-${safeName}`;
 
     // ================================
-    // 8. LÆ¯U FILE VÃ€O SUPABASE
+    // 8. LƯU FILE VÀO SUPABASE
     // ================================
     const nextOrder = files.length > 0 ? Math.max(...files.map((item) => item.sort_order ?? 0)) + 1 : 1;
 
@@ -676,12 +676,12 @@ async function uploadFile(file: File) {
 
     if (insertError) {
       throw new Error(
-        `LÆ°u file vÃ o Supabase tháº¥t báº¡i: ${insertError.message}`
+        `Lưu file vào Supabase thất bại: ${insertError.message}`
       );
     }
 
     console.log(
-      "ÄÃ£ lÆ°u uploaded_files:",
+      "Đã lưu uploaded_files:",
       insertedFile
     );
 
@@ -700,7 +700,7 @@ async function uploadFile(file: File) {
       });
 
     // ================================
-    // 10. LOAD Láº I DANH SÃCH
+    // 10. LOAD LẠI DANH SÁCH
     // ================================
     await loadFiles();
     setSelectedEvidence(insertedFile);
@@ -714,7 +714,7 @@ async function uploadFile(file: File) {
     alert(
       error instanceof Error
         ? error.message
-        : "KhÃ´ng thá»ƒ upload file"
+        : "Không thể upload file"
     );
   }
 }
@@ -838,7 +838,7 @@ async function deleteFile(storageName: string) {
               cursor: "pointer",
             }}
           >
-            â† Quay láº¡i
+            ← Quay lại
           </button>
 
           <h1
@@ -848,7 +848,7 @@ async function deleteFile(storageName: string) {
               marginBottom: "20px",
             }}
           >
-             <Image src="/iconuutien.png" width={32} height={32} alt="ThÃ nh tÃ­ch khÃ¡c tá»‘t" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} /> ThÃ nh tÃ­ch khÃ¡c tá»‘t
+             <Image src="/iconuutien.png" width={32} height={32} alt="Thành tích khác" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} /> Thành tích khác
           </h1>
 <div
   style={{
@@ -859,7 +859,7 @@ async function deleteFile(storageName: string) {
     boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
   }}
 >
-  <h3 style={{ marginTop: 0 }}>ðŸ“ Nháº­p BÃ¡o cÃ¡o TiÃªu chÃ­ ThÃ nh tÃ­ch khÃ¡c tá»‘t</h3>
+  <h3 style={{ marginTop: 0 }}>Tiêu chí Thành tích khác</h3>
  {lastSaved && (
     <span
       style={{
@@ -867,7 +867,7 @@ async function deleteFile(storageName: string) {
         color: "#6e6c6c",
       }}
     >
-      Cáº­p nháº­t:{" "}
+      Cập nhật:{" "}
 {lastSaved.toLocaleString("vi-VN", {
   day: "2-digit",
   month: "2-digit",
@@ -960,7 +960,7 @@ async function deleteFile(storageName: string) {
         marginBottom: "10px",
       }}
     >
-      ðŸ“¤
+      📤
     </div>
 
     <div
@@ -969,7 +969,7 @@ async function deleteFile(storageName: string) {
         fontWeight: "600",
       }}
     >
-      KÃ©o tháº£ file vÃ o Ä‘Ã¢y
+      Kéo thả file vào đây
     </div>
 
     <div
@@ -978,7 +978,7 @@ async function deleteFile(storageName: string) {
         color: "#64748b",
       }}
     >
-      hoáº·c báº¥m Ä‘á»ƒ chá»n file
+      hoặc bấm để chọn file
     </div>
   </>
 )}
@@ -994,7 +994,7 @@ async function deleteFile(storageName: string) {
 </div>
           </div>
 
-          <h3>Danh sÃ¡ch minh chá»©ng</h3>
+          <h3>Danh sách minh chứng</h3>
 
           {files.length === 0 && (
             <div
@@ -1005,7 +1005,7 @@ async function deleteFile(storageName: string) {
                 marginTop: "12px",
               }}
             >
-              ChÆ°a cÃ³ minh chá»©ng nÃ o.
+              Chưa có minh chứng nào.
             </div>
           )}
 
