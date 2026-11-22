@@ -192,6 +192,7 @@ function Tag({ children }: { children: React.ReactNode }) {
 
 export default function HuongDanPage() {
 const [activeSection, setActiveSection] = useState("start");
+const [showReminder, setShowReminder] = useState(false);
 
   const sections: Section[] = [
     // =====================================================
@@ -1097,6 +1098,15 @@ const [activeSection, setActiveSection] = useState("start");
             và các tiêu chí khác.
           </Step>
 
+          <SubHeading>5. Xem trước, chỉnh sửa báo cáo và gắn tiêu chí minh chứng</SubHeading>
+          <p style={paragraphStyle}>Khi chọn tệp để tải lên hoặc mở một minh chứng đã tải, hệ thống hiển thị cửa sổ quản lý minh chứng để xem trước và cập nhật thông tin.</p>
+          <Step number="1">Xem trước tệp ngay trong cửa sổ minh chứng. Hình ảnh và PDF có thể hiển thị trực tiếp; một số định dạng văn bản được hiển thị nội dung, các định dạng khác có thể tải xuống để xem.</Step>
+          <Step number="2">Chỉnh sửa tên hiển thị của tệp nếu cần để dễ nhận biết và đối chiếu với báo cáo.</Step>
+          <Step number="3">Nhập hoặc chỉnh sửa nội dung báo cáo thành tích trong phần báo cáo. Hệ thống hỗ trợ nội dung báo cáo được đánh số để đối chiếu.</Step>
+          <Step number="4">Chọn các nội dung tiêu chí Sinh viên 5 tốt phù hợp với minh chứng bằng các ô lựa chọn. Cần chọn ít nhất một nội dung tiêu chí phù hợp trước khi lưu.</Step>
+          <Step number="5">Kiểm tra tên tệp, nội dung báo cáo và tiêu chí đã chọn, sau đó nhấn <Tag>Lưu thay đổi</Tag> để lưu hoặc hoàn tất thao tác tải tệp mới.</Step>
+          <Note type="orange">Với tệp đang chờ tải lên, thao tác lưu mới gửi tệp và thông tin đã khai báo theo quy trình của hệ thống. Với tệp đã tải lên, chỉnh sửa sẽ cập nhật thông tin tệp và các tiêu chí đã liên kết. Nút hủy trong cửa sổ tệp chờ dùng để đóng/bỏ thao tác tải đang thực hiện.</Note>
+
           <Note type="orange" title="Đặc biệt quan trọng">
             Số thứ tự trên báo cáo và số thứ tự trên tên
             tệp minh chứng phải tương ứng với nhau. Ví dụ:
@@ -1590,6 +1600,97 @@ const [activeSection, setActiveSection] = useState("start");
         </>
       ),
     },
+
+    // =====================================================
+    // 10. BẢNG ĐIỂM
+    // =====================================================
+    {
+      id: "bangdiem",
+      number: "10",
+      icon: "📊",
+      title: "Sử dụng chức năng Bảng điểm",
+      subtitle: "Theo dõi điểm học tập và tính điểm các học phần",
+      content: (
+        <>
+          <SubHeading>1. Truy cập và chọn năm học</SubHeading>
+          <Step number="1">Tại giao diện hệ thống, mở chức năng <Tag>Bảng điểm</Tag>.</Step>
+          <Step number="2">Chọn năm học muốn theo dõi tại khu vực lựa chọn năm học.</Step>
+          <Step number="3">Theo dõi phần tổng quan để xem số tín chỉ và điểm trung bình GPA10, GPA4 được hệ thống tổng hợp.</Step>
+          <SubHeading>2. Theo dõi từng học kỳ</SubHeading>
+          <p style={paragraphStyle}>Bảng điểm được chia theo học kỳ 1, học kỳ 2 và học kỳ hè (nếu có). Chọn hoặc xem khu vực học kỳ tương ứng để theo dõi các học phần.</p>
+          <SubHeading>3. Thêm học phần và nhập điểm</SubHeading>
+          <Step number="1">Tại học kỳ cần cập nhật, chọn chức năng thêm môn học.</Step>
+          <Step number="2">Nhập tên học phần, số tín chỉ và loại học phần theo lựa chọn hiển thị (LT, TH, LTTH hoặc LS nếu được hỗ trợ).</Step>
+          <Step number="3">Nhập các thành phần điểm và tỷ trọng tương ứng theo đề cương môn học.</Step>
+          <Step number="4">Kiểm tra dữ liệu đã nhập. Hệ thống sử dụng thông tin này để tính điểm học phần và điểm trung bình học kỳ.</Step>
+          <SubHeading>4. Tính điểm mục tiêu</SubHeading>
+          <p style={paragraphStyle}>Nếu muốn xác định điểm thi cần đạt để đạt mức điểm chữ mong muốn, sử dụng chức năng điểm mục tiêu trong phần học phần, chọn mức điểm chữ và xem kết quả tính toán.</p>
+          <SubHeading>5. Cập nhật điểm thi và xem kết quả</SubHeading>
+          <Step number="1">Nhập điểm thi thực tế khi đã có kết quả.</Step>
+          <Step number="2">Xem điểm tổng kết và điểm chữ được tính theo các thành phần đã khai báo.</Step>
+          <Step number="3">Theo dõi GPA học kỳ và tổng hợp năm học.</Step>
+          <Note type="orange">Bảng điểm là công cụ hỗ trợ theo dõi và tính toán. Hãy kiểm tra lại số tín chỉ, tỷ trọng và điểm thành phần đã nhập để tránh sai lệch.</Note>
+        </>
+      ),
+    },
+    // =====================================================
+    // 11. HOẠT ĐỘNG
+    // =====================================================
+    {
+      id: "activities",
+      number: "11",
+      icon: "📅",
+      title: "Theo dõi hoạt động",
+      subtitle: "Tìm kiếm, lọc và xem thông tin các hoạt động",
+      content: (
+        <>
+          <SubHeading>1. Mở chức năng Hoạt động</SubHeading>
+          <Step number="1">Chọn mục <Tag>Hoạt động</Tag> trên hệ thống.</Step>
+          <Step number="2">Theo dõi phần tổng quan số lượng hoạt động, hoạt động đang diễn ra, sắp diễn ra và đã kết thúc.</Step>
+          <SubHeading>2. Lọc hoạt động</SubHeading>
+          <p style={paragraphStyle}>Sử dụng bộ lọc tiêu chí hoặc trạng thái để tìm hoạt động phù hợp. Có thể thay đổi bộ lọc để xem danh sách theo nhu cầu.</p>
+          <SubHeading>3. Xem danh sách và thông tin chi tiết</SubHeading>
+          <Step number="1">Chọn hoạt động trong danh sách để mở phần chi tiết.</Step>
+          <Step number="2">Theo dõi đơn vị tổ chức, thời gian, hạn đăng ký hoặc hạn liên quan, mô tả và thông tin bổ sung.</Step>
+          <Step number="3">Mở đường dẫn được cung cấp nếu hoạt động có liên kết đăng ký hoặc thông tin bên ngoài.</Step>
+          <SubHeading>4. Xem tài liệu đính kèm</SubHeading>
+          <Step number="1">Trong phần chi tiết hoạt động, chọn tài liệu cần xem.</Step>
+          <Step number="2">Sử dụng cửa sổ xem trước để đọc tài liệu; chuyển tài liệu nếu có nhiều tệp.</Step>
+          <Step number="3">Tải tài liệu xuống thiết bị nếu cần lưu hoặc xem ngoại tuyến.</Step>
+          <Note>Chú ý thời gian và hạn đăng ký được thông tin trong chi tiết hoạt động. Hệ thống hỗ trợ theo dõi thông tin; sinh viên cần thực hiện đăng ký theo hướng dẫn của từng chương trình.</Note>
+        </>
+      ),
+    },
+    // =====================================================
+    // 12. CÀI ĐẶT
+    // =====================================================
+    {
+      id: "settings",
+      number: "12",
+      icon: "⚙️",
+      title: "Cài đặt tài khoản",
+      subtitle: "Cập nhật thông tin, thông báo và mật khẩu",
+      content: (
+        <>
+          <SubHeading>1. Truy cập Cài đặt</SubHeading>
+          <Step number="1">Mở menu hệ thống và chọn <Tag>Cài đặt</Tag>.</Step>
+          <Step number="2">Mở từng khu vực cài đặt để xem hoặc cập nhật nội dung.</Step>
+          <SubHeading>2. Cập nhật thông tin cá nhân</SubHeading>
+          <Step number="1">Mở phần thông tin cá nhân và chỉnh sửa các trường được phép thay đổi, như họ tên, lớp, giới tính, năm sinh, dân tộc hoặc chức vụ Đoàn - Hội.</Step>
+          <Step number="2">MSSV và email được hiển thị để đối chiếu và không chỉnh sửa trực tiếp tại đây.</Step>
+          <Step number="3">Kiểm tra thông tin rồi chọn lưu để cập nhật.</Step>
+          <SubHeading>3. Bật hoặc tắt thông báo</SubHeading>
+          <p style={paragraphStyle}>Tại phần cài đặt thông báo, sử dụng công tắc để bật hoặc tắt nhận thông báo. Nếu bật, hãy đảm bảo thiết bị cũng đã cấp quyền nhận thông báo.</p>
+          <SubHeading>4. Đổi mật khẩu</SubHeading>
+          <Step number="1">Mở phần đổi mật khẩu.</Step>
+          <Step number="2">Nhập mật khẩu mới và nhập lại để xác nhận.</Step>
+          <Step number="3">Mật khẩu mới cần đáp ứng yêu cầu tối thiểu hiển thị trên hệ thống (ít nhất 6 ký tự), sau đó thực hiện đổi mật khẩu.</Step>
+          <SubHeading>5. Mở hướng dẫn sử dụng</SubHeading>
+          <p style={paragraphStyle}>Tại Cài đặt, có thể truy cập liên kết Hướng dẫn để xem lại cách sử dụng các chức năng của hệ thống.</p>
+          <Note type="orange">Không chia sẻ mật khẩu cho người khác. Sau khi cập nhật thông tin hoặc mật khẩu, hãy kiểm tra thông báo kết quả trên màn hình.</Note>
+        </>
+      ),
+    },
   ];
 
 
@@ -1650,9 +1751,9 @@ const [activeSection, setActiveSection] = useState("start");
 
             <aside className="guide-sidebar">
 
-              <a href="/caidat" className="guide-home">
+              <a href="/" className="guide-home">
                 <span className="guide-home-icon">⌂</span>
-                <span>Quay lại</span>
+                <span>Về trang chủ</span>
                 <span className="guide-home-arrow">→</span>
               </a>
 
@@ -1731,9 +1832,9 @@ const [activeSection, setActiveSection] = useState("start");
               {/* MOBILE HOME */}
 
               <div className="guide-mobile-top">
-                <a href="/caidat" className="guide-mobile-home">
+                <a href="/" className="guide-mobile-home">
                   <span>←</span>
-                  Quay lại
+                  Trang chủ
                 </a>
 
                 <span className="guide-mobile-count">
@@ -1781,30 +1882,39 @@ const [activeSection, setActiveSection] = useState("start");
 
               {/* LƯU Ý QUAN TRỌNG */}
 
-              <div className="guide-reminder">
-                <div className="guide-reminder-icon">⚠️</div>
+<div className="guide-reminder">
+  <button
+    type="button"
+    className="guide-reminder-toggle"
+    onClick={() => setShowReminder((prev) => !prev)}
+  >
+    <span>⚠️ Những điều cần lưu ý</span>
+    <span className={`guide-reminder-arrow ${showReminder ? "open" : ""}`}>
+      ▼
+    </span>
+  </button>
 
-                <div className="guide-reminder-content">
-                  <div className="guide-reminder-title">
-                    Những điều cần lưu ý
-                  </div>
-
-                  <div className="guide-reminder-grid">
-                    {[
-                      "Sử dụng tài khoản cá nhân để kê khai và quản lý hồ sơ.",
-                      "Ghi thành tích theo đúng tiêu chí và đánh số thứ tự rõ ràng.",
-                      "Tên minh chứng phải tương ứng với số thứ tự trong báo cáo.",
-                      "Bắt buộc tải ảnh chân dung 3x4 tại mục kiểm tra báo cáo.",
-                      "Kiểm tra kỹ toàn bộ hồ sơ trước khi thực hiện gửi.",
-                    ].map((item, index) => (
-                      <div key={index} className="guide-reminder-item">
-                        <span>{String(index + 1).padStart(2, "0")}</span>
-                        <p>{item}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+  <div
+    className={`guide-reminder-content ${
+      showReminder ? "show" : ""
+    }`}
+  >
+    <div className="guide-reminder-grid">
+      {[
+        "Sử dụng tài khoản cá nhân để kê khai và quản lý hồ sơ.",
+        "Ghi thành tích theo đúng tiêu chí và đánh số thứ tự rõ ràng.",
+        "Tên minh chứng phải tương ứng với số thứ tự trong báo cáo.",
+        "Bắt buộc tải ảnh chân dung 3x4 tại mục kiểm tra báo cáo.",
+        "Kiểm tra kỹ toàn bộ hồ sơ trước khi thực hiện gửi.",
+      ].map((item, index) => (
+        <div key={index} className="guide-reminder-item">
+          <span>{String(index + 1).padStart(2, "0")}</span>
+          <p>{item}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
 
               {/* THẺ NỘI DUNG */}
 
@@ -2942,6 +3052,62 @@ const [activeSection, setActiveSection] = useState("start");
             padding-right: 11px;
           }
         }
+          .guide-reminder-toggle {
+  display: none;
+}
+
+.guide-reminder-arrow {
+  transition: transform 0.25s ease;
+}
+
+.guide-reminder-arrow.open {
+  transform: rotate(180deg);
+}
+
+@media (max-width: 768px) {
+  .guide-reminder {
+    display: block;
+  }
+
+  .guide-reminder-toggle {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border: none;
+    background: transparent;
+    padding: 12px 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .guide-reminder-icon {
+    display: none;
+  }
+
+  .guide-reminder-title {
+    display: none;
+  }
+
+  .guide-reminder-content {
+    display: none;
+  }
+
+  .guide-reminder-content.show {
+    display: block;
+  }
+
+  .guide-reminder-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 8px;
+  }
+}
       `}</style>
     </div>
   );
