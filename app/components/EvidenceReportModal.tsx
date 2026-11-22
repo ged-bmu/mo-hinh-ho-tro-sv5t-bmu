@@ -12,7 +12,11 @@ type Props = {
   url: string;
   orderNumber: number;
   reportContent: string;
-  onSave: (newName: string, content: string) => Promise<void>;
+  onSave: (
+  newName: string,
+  content: string,
+  selectedItemIds?: number[]
+) => Promise<void>;
   onClose: () => void;
 };
 
@@ -41,9 +45,8 @@ export default function EvidenceReportModal({
   onSave,
   onClose,
 }: Props) {
-  const originalName =
-    file.display_name || file.storage_name || file.name || "";
-
+  const originalName = file.display_name || file.storage_name || file.name || "";
+  const isPending = file.storage_type === "pending";
   const [fileName, setFileName] = useState(originalName);
   const [content, setContent] = useState(reportContent || "");
   const [previewUrl, setPreviewUrl] = useState("");
@@ -52,15 +55,13 @@ export default function EvidenceReportModal({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-const currentCriterion = String(file.folder || "").toLowerCase();
-console.log("Thư mục minh chứng:", file.folder);
-const [showCriterionItems, setShowCriterionItems] = useState(false);
-const [criterionItems, setCriterionItems] = useState<CriterionItem[]>([]);
-const [additionalTitles, setAdditionalTitles] = useState<Record<string, string>>({});
-const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
-const [loadingCriteria, setLoadingCriteria] = useState(true);
-useEffect(() => {
+  const currentCriterion = String(file.folder || "").toLowerCase(); console.log("Thư mục minh chứng:", file.folder);
+  const [showCriterionItems, setShowCriterionItems] = useState(false);
+  const [criterionItems, setCriterionItems] = useState<CriterionItem[]>([]);
+  const [additionalTitles, setAdditionalTitles] = useState<Record<string, string>>({});
+  const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
+  const [loadingCriteria, setLoadingCriteria] = useState(true);
+  useEffect(() => {
   let cancelled = false;
 
   async function loadCriterionData() {
@@ -108,11 +109,14 @@ useEffect(() => {
             .eq("academic_year_id", year.id)
             .in("criterion", CRITERIA.map((item) => item.id)),
 
-          supabase
-            .from("sv5t_evidence_criteria")
-            .select("criterion_item_id")
-            .eq("user_id", user.id)
-            .eq("storage_name", storageName),
+          // File mới chưa có bản ghi tiêu chí.
+          file.storage_type === "pending"
+            ? Promise.resolve({ data: [], error: null })
+            : supabase
+                .from("sv5t_evidence_criteria")
+                .select("criterion_item_id")
+                .eq("user_id", user.id)
+                .eq("storage_name", storageName),
         ]);
 
       if (itemsResult.error) throw itemsResult.error;
@@ -158,26 +162,23 @@ useEffect(() => {
     cancelled = true;
   };
 }, [file]);
+
   useEffect(() => {
-    let objectUrl = "";
-    let cancelled = false;
+  let objectUrl = "";
+  let cancelled = false;
 
-    async function loadPreview() {
-      try {
-        setLoading(true);
-        setError("");
-        setPreviewUrl("");
-        setPreviewText("");
+  async function loadPreview() {
+    try {
+      setLoading(true);
+      setError("");
+      setPreviewUrl("");
+      setPreviewText("");
 
-        const response = await authFetch(url);
-
-        if (!response.ok) {
-          throw new Error("Không thể tải file minh chứng.");
-        }
-
-        const blob = await response.blob();
+      // FILE MỚI: Xem trực tiếp từ bộ nhớ, chưa tải lên
+      if (file.storage_type === "pending" && file.file instanceof File) {
+        const localFile: File = file.file;
         const type =
-          blob.type ||
+          localFile.type ||
           file.mime_type ||
           "application/octet-stream";
 
@@ -185,91 +186,120 @@ useEffect(() => {
 
         setMimeType(type);
 
-        if (type.startsWith("text/")) {
-          setPreviewText(await blob.text());
+        if (
+          type.startsWith("text/") ||
+          /\.(txt|json|csv|xml)$/i.test(localFile.name)
+        ) {
+          setPreviewText(await localFile.text());
         } else {
-          objectUrl = URL.createObjectURL(blob);
+          objectUrl = URL.createObjectURL(localFile);
           setPreviewUrl(objectUrl);
         }
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Không thể xem file."
-          );
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+
+        return;
       }
+
+      // FILE ĐÃ UPLOAD: Giữ cơ chế tải xem trước cũ
+      const response = await authFetch(url);
+
+      if (!response.ok) {
+        throw new Error("Không thể tải file minh chứng.");
+      }
+
+      const blob = await response.blob();
+      const type =
+        blob.type ||
+        file.mime_type ||
+        "application/octet-stream";
+
+      if (cancelled) return;
+
+      setMimeType(type);
+
+      if (type.startsWith("text/")) {
+        setPreviewText(await blob.text());
+      } else {
+        objectUrl = URL.createObjectURL(blob);
+        setPreviewUrl(objectUrl);
+      }
+    } catch (err) {
+      if (!cancelled) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Không thể xem file."
+        );
+      }
+    } finally {
+      if (!cancelled) setLoading(false);
     }
-
-    loadPreview();
-
-    return () => {
-      cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [url, file]);
-
-  async function handleSave() {
-    const trimmedName = fileName.trim();
-
-    if (!trimmedName) {
-  alert("Vui lòng nhập tên file.");
-  return;
-}
-
-if (selectedItemIds.filter((itemId) =>
-  criterionItems.some(
-    (item) =>
-      item.id === itemId &&
-      item.criterion === currentCriterion
-  )
-).length === 0) {
-  alert("Vui lòng chọn ít nhất một nội dung đáp ứng trong tiêu chuẩn SV5T.");
-  return;
-}
-
-    setSaving(true);
-
-   try {
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError) throw userError;
-  if (!user) throw new Error("Bạn chưa đăng nhập.");
-
-  const storageName = String(
-    file.storage_name || file.name || ""
-  );
-
-  if (!storageName) {
-    throw new Error("Không xác định được file minh chứng.");
   }
 
-  // Xóa các lựa chọn cũ của file
-  const { error: deleteError } = await supabase
-    .from("sv5t_evidence_criteria")
-    .delete()
-    .eq("user_id", user.id)
-    .eq("storage_name", storageName);
+  loadPreview();
 
-  if (deleteError) throw deleteError;
+  return () => {
+    cancelled = true;
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+  };
+}, [url, file]);
 
-  // Lưu lại các nội dung đã tích
-  if (selectedItemIds.length > 0) {
-   const validSelectedIds = selectedItemIds.filter((itemId) =>
-  criterionItems.some(
-    (item) =>
-      item.id === itemId &&
-      item.criterion === currentCriterion
-  )
-);
+  async function handleSave() {
+  const trimmedName = fileName.trim();
 
-const rows = validSelectedIds.map((itemId) => ({
+  if (!trimmedName) {
+    alert("Vui lòng nhập tên file.");
+    return;
+  }
+
+  const validSelectedIds = selectedItemIds.filter((itemId) =>
+    criterionItems.some(
+      (item) =>
+        item.id === itemId &&
+        item.criterion === currentCriterion
+    )
+  );
+
+  if (validSelectedIds.length === 0) {
+    alert("Vui lòng chọn ít nhất một nội dung đáp ứng trong tiêu chuẩn SV5T.");
+    return;
+  }
+
+  setSaving(true);
+
+  try {
+    // FILE MỚI: Chưa lưu tiêu chí vào database.
+    // Chuyển các lựa chọn cho trang cha xử lý upload và lưu dữ liệu.
+    if (file.storage_type === "pending") {
+      await onSave(trimmedName, content, validSelectedIds);
+      return;
+    }
+
+    // FILE CŨ: Giữ nguyên cơ chế lưu tiêu chí hiện tại.
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError) throw userError;
+    if (!user) throw new Error("Bạn chưa đăng nhập.");
+
+    const storageName = String(
+      file.storage_name || file.name || ""
+    );
+
+    if (!storageName) {
+      throw new Error("Không xác định được file minh chứng.");
+    }
+
+    const { error: deleteError } = await supabase
+      .from("sv5t_evidence_criteria")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("storage_name", storageName);
+
+    if (deleteError) throw deleteError;
+
+    const rows = validSelectedIds.map((itemId) => ({
       user_id: user.id,
       storage_name: storageName,
       criterion_item_id: itemId,
@@ -280,24 +310,22 @@ const rows = validSelectedIds.map((itemId) => ({
       .insert(rows);
 
     if (insertError) throw insertError;
-  }
 
-  // Lưu tên file và nội dung báo cáo
-  await onSave(trimmedName, content);
-    } catch (err) {
-      alert(
-        err instanceof Error
-          ? err.message
-          : "Không thể lưu thay đổi."
-      );
-    } finally {
-      setSaving(false);
-    }
+    await onSave(trimmedName, content, validSelectedIds);
+  } catch (err) {
+    alert(
+      err instanceof Error
+        ? err.message
+        : "Không thể lưu thay đổi."
+    );
+  } finally {
+    setSaving(false);
   }
+}
 
   return (
     <div
-      onClick={onClose}
+      onClick={isPending ? undefined : onClose}
       style={{
         position: "fixed",
         inset: 0,
@@ -338,7 +366,7 @@ const rows = validSelectedIds.map((itemId) => ({
 
           <button
             onClick={onClose}
-            disabled={saving}
+            disabled={saving || isPending}
             style={{
               border: "none",
               background: "#f1f5f9",
@@ -717,7 +745,7 @@ const rows = validSelectedIds.map((itemId) => ({
         >
           <button
             onClick={onClose}
-            disabled={saving}
+            disabled={saving || isPending}
             style={{
               padding: "9px 16px",
               border: "1px solid #d1d5db",

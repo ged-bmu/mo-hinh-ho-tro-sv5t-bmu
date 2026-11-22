@@ -124,6 +124,7 @@ function DaoDucPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [selectedEvidence, setSelectedEvidence] = useState<any>(null);
+  const [pendingUploadFile, setPendingUploadFile] = useState<File | null>(null);
   const filesRef = useRef<any[]>([]);
   const reportRef = useRef("");
   const deletingRef = useRef<Set<string>>(new Set());
@@ -288,7 +289,8 @@ async function syncEvidenceReports(
 const saveEvidenceChanges = async (
   file: any,
   inputName: string,
-  content: string
+  content: string,
+  selectedItemIds?: number[]
 ) => {
   const trimmedName = inputName.trim();
 
@@ -297,7 +299,206 @@ const saveEvidenceChanges = async (
   }
 
   try {
-    // 1. Lấy thông tin file chính xác trong năm học
+    // ==========================================
+    // NHÁNH 1: FILE MỚI - CHƯA UPLOAD
+    // ==========================================
+    if (file.storage_type === "pending") {
+      const pendingFile: File | null =
+        file.file instanceof File
+          ? file.file
+          : pendingUploadFile;
+
+      if (!pendingFile) {
+        throw new Error("Không tìm thấy file đang chờ tải lên.");
+      }
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) throw userError;
+      if (!user) throw new Error("Bạn chưa đăng nhập.");
+
+      // Lấy thông tin sinh viên
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("ho_ten, mssv, lop")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // 1. Khởi tạo upload Google Drive
+      const initResponse = await fetch("/api/upload-drive/init", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileName: pendingFile.name,
+          fileSize: pendingFile.size,
+          mimeType: pendingFile.type || "application/octet-stream",
+          mssv: profile?.mssv,
+          ho_ten: profile?.ho_ten,
+          criteria: "dao-duc",
+          academic_year_id: Number(yearId),
+        }),
+      });
+
+      const initResult = await initResponse.json();
+
+      if (!initResponse.ok || !initResult.uploadUrl) {
+        throw new Error(
+          initResult.error || "Không thể khởi tạo tải file."
+        );
+      }
+
+      // 2. Upload file theo chunk 16 MiB
+      const CHUNK_SIZE = 16 * 1024 * 1024;
+      let start = 0;
+      let chunkResult: any = null;
+
+      while (start < pendingFile.size) {
+        const end = Math.min(start + CHUNK_SIZE, pendingFile.size);
+        const chunk = pendingFile.slice(start, end);
+
+        const chunkResponse = await fetch("/api/upload-drive/chunk", {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              pendingFile.type || "application/octet-stream",
+            "Content-Length": String(chunk.size),
+            "Content-Range": `bytes ${start}-${end - 1}/${pendingFile.size}`,
+            "X-Upload-Url": initResult.uploadUrl,
+          },
+          body: chunk,
+        });
+
+        chunkResult = await chunkResponse.json();
+
+        if (!chunkResponse.ok) {
+          throw new Error(
+            chunkResult.error || "Lỗi tải chunk lên Google Drive."
+          );
+        }
+
+        start = end;
+
+        if (chunkResult.completed) {
+          break;
+        }
+      }
+
+      if (!chunkResult?.completed || !chunkResult.file) {
+        throw new Error("Google Drive chưa hoàn tất tải file.");
+      }
+
+      const driveFile = chunkResult.file;
+
+      // 3. Ghi thông tin file vào uploaded_files
+      const { data: insertedFile, error: insertFileError } =
+        await supabase
+          .from("uploaded_files")
+          .insert({
+            user_id: user.id,
+            folder: "dao-duc",
+            storage_name: driveFile.name || pendingFile.name,
+            display_name: trimmedName,
+            storage_type: "google_drive",
+            drive_file_id: driveFile.id,
+            drive_url: driveFile.webViewLink || null,
+            sort_order: file.sort_order,
+            report_content: content,
+            academic_year_id: Number(yearId),
+          })
+          .select()
+          .single();
+
+      if (insertFileError) {
+        throw new Error(
+          "Upload thành công nhưng không thể lưu dữ liệu file: " +
+            insertFileError.message
+        );
+      }
+
+      // 4. Ghi nội dung đáp ứng tiêu chuẩn
+      const validSelectedIds = (selectedItemIds || []).filter(
+        (itemId) =>
+          Number.isFinite(itemId) &&
+          itemId > 0
+      );
+
+      if (validSelectedIds.length === 0) {
+        throw new Error("Chưa chọn nội dung đáp ứng tiêu chuẩn.");
+      }
+
+      const criterionRows = validSelectedIds.map((itemId) => ({
+        user_id: user.id,
+        storage_name: insertedFile.storage_name,
+        criterion_item_id: itemId,
+      }));
+
+      const { error: criterionError } = await supabase
+        .from("sv5t_evidence_criteria")
+        .insert(criterionRows);
+
+      if (criterionError) {
+        throw new Error(
+          "File đã được lưu nhưng chưa lưu nội dung đáp ứng: " +
+            criterionError.message
+        );
+      }
+
+      // 5. Cập nhật danh sách file trên giao diện
+      const nextFiles = [...files, insertedFile].sort(
+        (a, b) =>
+          (a.sort_order ?? 999999) -
+          (b.sort_order ?? 999999)
+      );
+
+      setFiles(nextFiles);
+      filesRef.current = nextFiles;
+
+      setDisplayNames((prev) => ({
+        ...prev,
+        [insertedFile.storage_name]: insertedFile.display_name,
+      }));
+
+      // 6. Đồng bộ báo cáo
+      await syncEvidenceReports(nextFiles, files);
+
+      setReport(
+        buildReportWithEvidence(report, nextFiles, files)
+      );
+
+      reportRef.current = buildReportWithEvidence(
+        report,
+        nextFiles,
+        files
+      );
+
+      // 7. Ghi nhật ký
+      await supabase.from("activity_logs").insert({
+        user_id: user.id,
+        ho_ten: profile?.ho_ten,
+        lop: profile?.lop,
+        action_type: "upload",
+        target_folder: "dao-duc",
+        target_file: trimmedName,
+      });
+
+      // 8. Hoàn tất
+      setPendingUploadFile(null);
+      setSelectedEvidence(null);
+
+      return;
+    }
+
+    // ==========================================
+    // NHÁNH 2: FILE CŨ - GIỮ NGUYÊN CƠ CHẾ
+    // ==========================================
+
     const { data: fileRecord, error: findError } =
       await supabase
         .from("uploaded_files")
@@ -312,7 +513,6 @@ const saveEvidenceChanges = async (
       throw new Error("Không tìm thấy file minh chứng.");
     }
 
-    // 2. Giữ nguyên phần mở rộng của file
     const oldName =
       fileRecord.display_name || fileRecord.storage_name;
 
@@ -328,7 +528,6 @@ const saveEvidenceChanges = async (
 
     const nameChanged = newName !== oldName;
 
-    // 3. Nếu đổi tên thì cập nhật Google Drive
     if (nameChanged && fileRecord.drive_file_id) {
       const response = await fetch("/api/rename-drive", {
         method: "POST",
@@ -350,7 +549,6 @@ const saveEvidenceChanges = async (
       }
     }
 
-    // 4. Cập nhật tên và báo cáo trong Supabase
     const { error: updateError } = await supabase
       .from("uploaded_files")
       .update({
@@ -367,30 +565,29 @@ const saveEvidenceChanges = async (
       );
     }
 
-    // 5. Cập nhật giao diện, giữ nguyên thứ tự minh chứng
-const nextFiles = files.map((item) =>
-  item.id === fileRecord.id
-    ? {
-        ...item,
-        display_name: newName,
-        report_content: content,
-      }
-    : item
-);
+    const nextFiles = files.map((item) =>
+      item.id === fileRecord.id
+        ? {
+            ...item,
+            display_name: newName,
+            report_content: content,
+          }
+        : item
+    );
 
-setFiles(nextFiles);
+    setFiles(nextFiles);
 
-await syncEvidenceReports(nextFiles, files);
+    await syncEvidenceReports(nextFiles, files);
 
-setReport(
-  buildReportWithEvidence(report, nextFiles, files)
-);
+    setReport(
+      buildReportWithEvidence(report, nextFiles, files)
+    );
+
     setDisplayNames((prev) => ({
       ...prev,
       [fileRecord.storage_name]: newName,
     }));
 
-    // 6. Ghi nhật ký nếu có đổi tên
     if (nameChanged) {
       const { data: profile } = await supabase
         .from("profiles")
@@ -408,15 +605,12 @@ setReport(
       });
     }
 
-    // 7. Đóng modal
     setSelectedEvidence(null);
-
   } catch (error) {
     console.error("Save evidence changes error:", error);
     throw error;
   }
 };
-
 
 // Đổi thứ tự minh chứng
 const moveEvidence = async (
@@ -504,253 +698,39 @@ try {
     );
   }
 };
+
 async function uploadFile(file: File) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const MAX_FILE_SIZE = 25 * 1024 * 1024;
 
-  if (!user) return;
-
-  try {
-    // ================================
-    // 1. GIỚI HẠN FILE
-    // ================================
-    const MAX_FILE_SIZE = 25 * 1024 * 1024;
-
-    if (file.size <= 0) {
-      throw new Error("File không hợp lệ");
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      throw new Error("File không được vượt quá 25 MB");
-    }
-
-    // ================================
-    // 2. LẤY THÔNG TIN SINH VIÊN
-    // ================================
-    const { data: profile, error: profileError } =
-      await supabase
-        .from("profiles")
-        .select("ho_ten, mssv, lop")
-        .eq("id", user.id)
-        .single();
-
-    if (profileError || !profile) {
-      console.error("Profile error:", profileError);
-      throw new Error("Không lấy được thông tin sinh viên");
-    }
-
-    // ================================
-    // 3. KHỞI TẠO GOOGLE DRIVE SESSION
-    // ================================
-    const initResponse = await fetch(
-      "/api/upload-drive/init",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fileName: file.name,
-          fileSize: file.size,
-          mimeType:
-            file.type || "application/octet-stream",
-          mssv: profile.mssv,
-          ho_ten: profile.ho_ten,
-          criteria: "dao-duc",
-          academic_year_id: Number(yearId),
-        }),
-      }
-    );
-
-    const initResult = await initResponse.json();
-
-    if (!initResponse.ok || !initResult.success) {
-      throw new Error(
-        initResult.error ||
-          "Không thể khởi tạo upload Google Drive"
-      );
-    }
-
-    const uploadUrl = initResult.uploadUrl;
-
-    if (!uploadUrl) {
-      throw new Error(
-        "Không nhận được upload URL từ Google Drive"
-      );
-    }
-
-    // ================================
-    // 4. CHIA FILE THÀNH CHUNK
-    // ================================
-    const CHUNK_SIZE = 16 * 1024 * 1024; // 16 MB
-
-    let start = 0;
-    let driveFile: any = null;
-
-    while (start < file.size) {
-      const end = Math.min(
-        start + CHUNK_SIZE,
-        file.size
-      );
-
-      const chunk = file.slice(start, end);
-
-      const contentRange =
-        `bytes ${start}-${end - 1}/${file.size}`;
-
-      console.log(
-        `Upload chunk: ${start}-${end - 1}/${file.size}`
-      );
-
-      // ================================
-      // 5. GỬI CHUNK QUA VERCEL API
-      // ================================
-      const chunkResponse = await fetch(
-        "/api/upload-drive/chunk",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              file.type || "application/octet-stream",
-
-            "Content-Length": String(
-              chunk.size
-            ),
-
-            "Content-Range": contentRange,
-
-            "X-Upload-Url": uploadUrl,
-          },
-          body: chunk,
-        }
-      );
-
-      const chunkResult =
-        await chunkResponse.json();
-
-      if (
-        !chunkResponse.ok ||
-        !chunkResult.success
-      ) {
-        throw new Error(
-          chunkResult.error ||
-            `Upload chunk thất bại (${chunkResponse.status})`
-        );
-      }
-
-      // ================================
-      // 6. KIỂM TRA HOÀN THÀNH
-      // ================================
-      if (chunkResult.completed) {
-        driveFile = chunkResult.file;
-        break;
-      }
-
-      // Chunk tiếp theo
-      start = end;
-    }
-
-    if (!driveFile?.id) {
-      throw new Error(
-        "Google Drive không trả về thông tin file sau khi upload"
-      );
-    }
-
-    console.log(
-      "Google Drive upload thành công:",
-      driveFile
-    );
-
-    // ================================
-    // 7. TẠO TÊN LƯU TRONG SUPABASE
-    // ================================
-    const safeName = file.name
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(
-        /[^a-zA-Z0-9._-]/g,
-        "_"
-      );
-
-    const fileName =
-      `${Date.now()}-${safeName}`;
-
-    // ================================
-    // 8. LƯU FILE VÀO SUPABASE
-    // ================================
-    const nextOrder =
-  files.length > 0
-    ? Math.max(
-        ...files.map((item) => item.sort_order ?? 0)
-      ) + 1
-    : 1;
-
-const {
-  data: insertedFile,
-  error: insertError,
-} = await supabase
-  .from("uploaded_files")
-  .insert({
-    user_id: user.id,
-    folder: "dao-duc",
-    academic_year_id: Number(yearId),
-    storage_name: fileName,
-    display_name: file.name,
-    storage_type: "google_drive",
-    drive_file_id: driveFile.id,
-    drive_url:
-      driveFile.webViewLink ||
-      `https://drive.google.com/file/d/${driveFile.id}/view`,
-    sort_order: nextOrder,
-    report_content: "",
-  })
-  .select()
-  .single();
-
-if (insertError) {
-  throw new Error(
-    `Lưu file vào Supabase thất bại: ${insertError.message}`
-  );
-} 
-    console.log(
-      "Đã lưu uploaded_files:",
-      insertedFile
-    );
-
-    // ================================
-    // 9. GHI LOG
-    // ================================
-    await supabase
-      .from("activity_logs")
-      .insert({
-        user_id: user.id,
-        ho_ten: profile.ho_ten,
-        lop: profile.lop,
-        action_type: "upload",
-        target_folder: "dao-duc",
-        target_file: file.name,
-      });
-
-    // ================================
-    // 10. LOAD LẠI DANH SÁCH
-    // ================================
-    await loadFiles();
-    setSelectedEvidence(insertedFile);
-
-  } catch (error) {
-    console.error(
-      "Upload error:",
-      error
-    );
-
-    alert(
-      error instanceof Error
-        ? error.message
-        : "Không thể upload file"
-    );
+  if (file.size <= 0) {
+    alert("File không hợp lệ");
+    return;
   }
+
+  if (file.size > MAX_FILE_SIZE) {
+    alert("File không được vượt quá 25 MB");
+    return;
+  }
+
+  // Giữ file trong bộ nhớ, chưa upload
+  const pendingFile = {
+    id: `pending-${Date.now()}`,
+    name: file.name,
+    display_name: file.name,
+    storage_name: file.name,
+    storage_type: "pending",
+    report_content: "",
+    sort_order:
+      files.length > 0
+        ? Math.max(...files.map((item) => item.sort_order ?? 0)) + 1
+        : 1,
+    file,
+  };
+
+  setPendingUploadFile(file);
+  setSelectedEvidence(pendingFile);
 }
+
 async function handleUpload(
   event: React.ChangeEvent<HTMLInputElement>
 ) {
@@ -758,13 +738,10 @@ async function handleUpload(
 
   if (!file) return;
 
-  setUploading(true);
+  await uploadFile(file);
 
-  try {
-    await uploadFile(file);
-  } finally {
-    setUploading(false);
-  }
+  // Cho phép chọn lại cùng một file
+  event.target.value = "";
 }
 
 async function deleteFile(storageName: string) {
@@ -956,9 +933,10 @@ async function deleteFile(storageName: string) {
 
     const file = e.dataTransfer.files?.[0];
 
-    if (file) {
-      uploadFile(file);
-    }
+  if (file) {
+  uploadFile(file);
+}
+
   }}
   style={{
     border: dragging
@@ -1107,11 +1085,20 @@ isFirst={index === 0}
             ).data.publicUrl
     }
     orderNumber={
-      files.findIndex((item) => item.id === selectedEvidence.id) + 2
-    }
+  selectedEvidence.storage_type === "pending"
+    ? (selectedEvidence.sort_order ?? files.length + 1) + 1
+    : files.findIndex(
+        (item) => item.id === selectedEvidence.id
+      ) + 2
+}
     reportContent={selectedEvidence.report_content || ""}
-    onSave={(newName, content) =>
-  saveEvidenceChanges(selectedEvidence, newName, content)
+    onSave={(newName, content, selectedItemIds) =>
+  saveEvidenceChanges(
+    selectedEvidence,
+    newName,
+    content,
+    selectedItemIds
+  )
 }
     onClose={() => setSelectedEvidence(null)}
   />
