@@ -55,7 +55,7 @@ export default function EvidenceReportModal({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const currentCriterion = String(file.folder || "").toLowerCase(); console.log("Thư mục minh chứng:", file.folder);
+  const currentCriterion = String(file.folder || "").toLowerCase();
   const [showCriterionItems, setShowCriterionItems] = useState(false);
   const [criterionItems, setCriterionItems] = useState<CriterionItem[]>([]);
   const [additionalTitles, setAdditionalTitles] = useState<Record<string, string>>({});
@@ -90,6 +90,7 @@ export default function EvidenceReportModal({
 
       if (!year) {
         setCriterionItems([]);
+        setAdditionalTitles({});
         setSelectedItemIds([]);
         return;
       }
@@ -325,7 +326,9 @@ export default function EvidenceReportModal({
 
   return (
     <div
-      onClick={isPending ? undefined : onClose}
+        onClick={() => {
+    if (!saving) onClose();
+  }}
       style={{
         position: "fixed",
         inset: 0,
@@ -366,7 +369,7 @@ export default function EvidenceReportModal({
 
           <button
             onClick={onClose}
-            disabled={saving || isPending}
+            disabled={saving}
             style={{
               border: "none",
               background: "#f1f5f9",
@@ -744,18 +747,20 @@ export default function EvidenceReportModal({
           }}
         >
           <button
-            onClick={onClose}
-            disabled={saving || isPending}
-            style={{
-              padding: "9px 16px",
-              border: "1px solid #d1d5db",
-              borderRadius: "8px",
-              background: "white",
-              cursor: "pointer",
-            }}
-          >
-            Đóng
-          </button>
+  type="button"
+  onClick={onClose}
+  disabled={saving}
+  style={{
+    padding: "9px 16px",
+    border: "1px solid #d1d5db",
+    borderRadius: "8px",
+    background: "white",
+    cursor: saving ? "not-allowed" : "pointer",
+    opacity: saving ? 0.5 : 1,
+  }}
+>
+  {isPending ? "Hủy tải lên" : "Đóng"}
+</button>
 
           <button
             onClick={handleSave}

@@ -714,11 +714,12 @@ async function uploadFile(file: File) {
 
   // Giữ file trong bộ nhớ, chưa upload
   const pendingFile = {
-    id: `pending-${Date.now()}`,
-    name: file.name,
-    display_name: file.name,
-    storage_name: file.name,
-    storage_type: "pending",
+  id: `pending-${Date.now()}`,
+  name: file.name,
+  display_name: file.name,
+  storage_name: file.name,
+  folder: "dao-duc",
+  storage_type: "pending",
     report_content: "",
     sort_order:
       files.length > 0
@@ -1100,7 +1101,10 @@ isFirst={index === 0}
     selectedItemIds
   )
 }
-    onClose={() => setSelectedEvidence(null)}
+    onClose={() => {
+  setSelectedEvidence(null);
+  setPendingUploadFile(null);
+}}
   />
 )}
     </div>
