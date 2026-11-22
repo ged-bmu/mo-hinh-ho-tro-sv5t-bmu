@@ -212,7 +212,7 @@ export default function InstallButton({
           },
           {
             img: "6.jpg",
-            title: "Bước 6. Chọn Thêm vào Mành hình chính",
+            title: "Bước 6. Chọn Thêm vào Màn hình chính",
           },
           {
             img: "7.jpg",
