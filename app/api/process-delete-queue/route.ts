@@ -21,7 +21,8 @@ function getPlainText(html: string) {
 function buildReport(
   originalReport: string,
   remainingFiles: any[],
-  deletedReportContent: string
+  deletedReportContent: string,
+  folder: string
 ) {
   const $ = cheerio.load(originalReport || "");
 
@@ -73,7 +74,9 @@ function buildReport(
         .replace(/(<br>\s*)+$/gi, "")
         .trim();
 
-      return `<p>${index + 2}. ${content}</p>`;
+      const order = index + (folder === "dao-duc" ? 2 : 1);
+
+      return `<p>${order}. ${content}</p>`;
     });
 
   return [manualContent, ...numberedReports]
@@ -193,7 +196,8 @@ async function processJob(job: any) {
     const newContent = buildReport(
       report.content || "",
       files,
-      job.report_content || ""
+      job.report_content || "",
+      job.folder
     );
 
     const { error: saveReportError } = await supabaseAdmin
