@@ -195,7 +195,7 @@ export default function InstallButton({
           },
           {
             img: "2.jpg",
-            title: "Bước 2.Tìm kiếm",
+            title: "Bước 2. Tìm kiếm",
             desc: "tìm kiếm từ khóa [Mô hình hỗ trợ SV5T BMU].",
           },
           {
@@ -212,7 +212,7 @@ export default function InstallButton({
           },
           {
             img: "6.jpg",
-            title: "Bước 6. Nhấm Thêm vào Mành hình chính",
+            title: "Bước 6. Chọn Thêm vào Mành hình chính",
           },
           {
             img: "7.jpg",

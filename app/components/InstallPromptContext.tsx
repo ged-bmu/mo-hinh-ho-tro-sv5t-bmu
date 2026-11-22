@@ -19,6 +19,8 @@ interface BeforeInstallPromptEvent extends Event {
 type InstallContextType = {
   deferredPrompt: BeforeInstallPromptEvent | null;
   installed: boolean;
+  showIOSGuide: boolean;
+  setShowIOSGuide: (show: boolean) => void;
   clearPrompt: () => void;
   markInstalled: () => void;
 };
@@ -26,10 +28,11 @@ type InstallContextType = {
 const InstallContext = createContext<InstallContextType>({
   deferredPrompt: null,
   installed: false,
+  showIOSGuide: false,
+  setShowIOSGuide: () => {},
   clearPrompt: () => {},
   markInstalled: () => {},
 });
-
 export function useInstallPrompt() {
   return useContext(InstallContext);
 }
@@ -43,6 +46,7 @@ export default function InstallPromptProvider({
     useState<BeforeInstallPromptEvent | null>(null);
 
   const [installed, setInstalled] = useState(false);
+  const [showIOSGuide, setShowIOSGuide] = useState(false);
 
   useEffect(() => {
     if (
@@ -91,13 +95,15 @@ export default function InstallPromptProvider({
 
   return (
     <InstallContext.Provider
-      value={{
-        deferredPrompt,
-        installed,
-        clearPrompt,
-        markInstalled,
-      }}
-    >
+  value={{
+    deferredPrompt,
+    installed,
+    showIOSGuide,
+    setShowIOSGuide,
+    clearPrompt,
+    markInstalled,
+  }}
+>
       {children}
     </InstallContext.Provider>
   );
