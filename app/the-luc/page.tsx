@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { authFetch as fetch } from "../../lib/auth-fetch";
@@ -34,7 +34,7 @@ function buildReportWithEvidence(
     "text/html"
   );
 
-  // Lấy nội dung báo cáo của cả danh sách cũ và mới
+  // Láº¥y ná»™i dung bÃ¡o cÃ¡o cá»§a cáº£ danh sÃ¡ch cÅ© vÃ  má»›i
   const evidenceContents = [
     ...previousFiles,
     ...evidenceFiles,
@@ -42,7 +42,7 @@ function buildReportWithEvidence(
     .map((file) => getPlainText(file.report_content || ""))
     .filter(Boolean);
 
-  // Xóa các đoạn minh chứng đã được ghép trước đó
+  // XÃ³a cÃ¡c Ä‘oáº¡n minh chá»©ng Ä‘Ã£ Ä‘Æ°á»£c ghÃ©p trÆ°á»›c Ä‘Ã³
   doc.body.querySelectorAll("p").forEach((paragraph) => {
     const paragraphText = (paragraph.textContent || "")
       .replace(/^\s*\d+\.\s*/, "")
@@ -58,7 +58,7 @@ function buildReportWithEvidence(
     }
   });
 
-  // Xóa các đoạn chỉ còn số thứ tự
+  // XÃ³a cÃ¡c Ä‘oáº¡n chá»‰ cÃ²n sá»‘ thá»© tá»±
   doc.body.querySelectorAll("p").forEach((paragraph) => {
     if (/^\s*\d+\.\s*$/.test(paragraph.textContent || "")) {
       paragraph.remove();
@@ -67,14 +67,14 @@ function buildReportWithEvidence(
 
   const manualContent = doc.body.innerHTML.trim();
 
-  // Sắp xếp minh chứng theo thứ tự file
+  // Sáº¯p xáº¿p minh chá»©ng theo thá»© tá»± file
   const sortedFiles = [...evidenceFiles].sort(
     (a, b) =>
       (a.sort_order ?? 999999) -
       (b.sort_order ?? 999999)
   );
 
-  // Tạo lại báo cáo minh chứng
+  // Táº¡o láº¡i bÃ¡o cÃ¡o minh chá»©ng
   const numberedReports = sortedFiles
     .filter((file) => file.report_content?.trim())
     .map((file, index) => {
@@ -116,6 +116,14 @@ function TheLucPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [selectedEvidence, setSelectedEvidence] = useState<any>(null);
+  const filesRef = useRef<any[]>([]);
+  const deletingRef = useRef<Set<string>>(new Set());
+  const [deletingFiles, setDeletingFiles] = useState<string[]>([]);
+
+  useEffect(() => {
+    filesRef.current = files;
+  }, [files]);
+
 
 async function loadAcademicYear() {
   const { data, error } = await supabase
@@ -125,7 +133,7 @@ async function loadAcademicYear() {
     .single();
 
   if (error) {
-    console.error("Lỗi lấy năm học:", error);
+    console.error("Lá»—i láº¥y nÄƒm há»c:", error);
     return null;
   }
 
@@ -149,7 +157,7 @@ async function checkAccess() {
   const academicYear = await loadAcademicYear();
 
   if (!academicYear) {
-    alert("Không xác định được năm học.");
+    alert("KhÃ´ng xÃ¡c Ä‘á»‹nh Ä‘Æ°á»£c nÄƒm há»c.");
     return;
   }
 
@@ -165,7 +173,7 @@ async function loadFiles(academicYearName?: string) {
 
   setUserId(user.id);
 
-  // Lấy file từ uploaded_files
+  // Láº¥y file tá»« uploaded_files
   const { data: uploadedFiles, error } = await supabase
     .from("uploaded_files")
     .select(
@@ -183,7 +191,14 @@ async function loadFiles(academicYearName?: string) {
   }
 
   if (uploadedFiles) {
-    setFiles([...(uploadedFiles || [])].sort((a, b) => (a.sort_order ?? 999999) - (b.sort_order ?? 999999)));
+    const sortedFiles = [...uploadedFiles].sort(
+      (a, b) =>
+        (a.sort_order ?? 999999) -
+        (b.sort_order ?? 999999)
+    );
+
+    setFiles(sortedFiles);
+    filesRef.current = sortedFiles;
 
     const map: Record<string, string> = {};
 
@@ -195,7 +210,7 @@ async function loadFiles(academicYearName?: string) {
   }
 
   // ================================
-  // Lấy báo cáo
+  // Láº¥y bÃ¡o cÃ¡o
   // ================================
 const { data: reportData } = await supabase
   .from("reports")
@@ -234,13 +249,13 @@ async function syncEvidenceReports(
 
   if (error) {
     throw new Error(
-      "Không thể đồng bộ báo cáo minh chứng: " + error.message
+      "KhÃ´ng thá»ƒ Ä‘á»“ng bá»™ bÃ¡o cÃ¡o minh chá»©ng: " + error.message
     );
   }
 
   setLastSaved(new Date());
 }
-// Lưu đồng thời tên file và báo cáo minh chứng
+// LÆ°u Ä‘á»“ng thá»i tÃªn file vÃ  bÃ¡o cÃ¡o minh chá»©ng
 const saveEvidenceChanges = async (
   file: any,
   inputName: string,
@@ -249,11 +264,11 @@ const saveEvidenceChanges = async (
   const trimmedName = inputName.trim();
 
   if (!trimmedName) {
-    throw new Error("Tên file không được để trống.");
+    throw new Error("TÃªn file khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
   }
 
   try {
-    // 1. Lấy thông tin file chính xác trong năm học
+    // 1. Láº¥y thÃ´ng tin file chÃ­nh xÃ¡c trong nÄƒm há»c
     const { data: fileRecord, error: findError } =
       await supabase
         .from("uploaded_files")
@@ -265,10 +280,10 @@ const saveEvidenceChanges = async (
         .single();
 
     if (findError || !fileRecord) {
-      throw new Error("Không tìm thấy file minh chứng.");
+      throw new Error("KhÃ´ng tÃ¬m tháº¥y file minh chá»©ng.");
     }
 
-    // 2. Giữ nguyên phần mở rộng của file
+    // 2. Giá»¯ nguyÃªn pháº§n má»Ÿ rá»™ng cá»§a file
     const oldName =
       fileRecord.display_name || fileRecord.storage_name;
 
@@ -284,7 +299,7 @@ const saveEvidenceChanges = async (
 
     const nameChanged = newName !== oldName;
 
-    // 3. Nếu đổi tên thì cập nhật Google Drive
+    // 3. Náº¿u Ä‘á»•i tÃªn thÃ¬ cáº­p nháº­t Google Drive
     if (nameChanged && fileRecord.drive_file_id) {
       const response = await fetch("/api/rename-drive", {
         method: "POST",
@@ -301,12 +316,12 @@ const saveEvidenceChanges = async (
 
       if (!response.ok || !result.success) {
         throw new Error(
-          result.error || "Không thể đổi tên file trên Google Drive."
+          result.error || "KhÃ´ng thá»ƒ Ä‘á»•i tÃªn file trÃªn Google Drive."
         );
       }
     }
 
-    // 4. Cập nhật tên và báo cáo trong Supabase
+    // 4. Cáº­p nháº­t tÃªn vÃ  bÃ¡o cÃ¡o trong Supabase
     const { error: updateError } = await supabase
       .from("uploaded_files")
       .update({
@@ -319,11 +334,11 @@ const saveEvidenceChanges = async (
 
     if (updateError) {
       throw new Error(
-        "Không thể lưu thay đổi: " + updateError.message
+        "KhÃ´ng thá»ƒ lÆ°u thay Ä‘á»•i: " + updateError.message
       );
     }
 
-    // 5. Cập nhật giao diện, giữ nguyên thứ tự minh chứng
+    // 5. Cáº­p nháº­t giao diá»‡n, giá»¯ nguyÃªn thá»© tá»± minh chá»©ng
 const nextFiles = files.map((item) =>
   item.id === fileRecord.id
     ? {
@@ -346,7 +361,7 @@ setReport(
       [fileRecord.storage_name]: newName,
     }));
 
-    // 6. Ghi nhật ký nếu có đổi tên
+    // 6. Ghi nháº­t kÃ½ náº¿u cÃ³ Ä‘á»•i tÃªn
     if (nameChanged) {
       const { data: profile } = await supabase
         .from("profiles")
@@ -364,7 +379,7 @@ setReport(
       });
     }
 
-    // 7. Đóng modal
+    // 7. ÄÃ³ng modal
     setSelectedEvidence(null);
 
   } catch (error) {
@@ -374,7 +389,7 @@ setReport(
 };
 
 
-// Đổi thứ tự minh chứng
+// Äá»•i thá»© tá»± minh chá»©ng
 const moveEvidence = async (
   fileId: string,
   direction: "up" | "down"
@@ -414,7 +429,7 @@ const moveEvidence = async (
     .eq("user_id", userId);
 
   if (error1) {
-    alert("Không thể đổi thứ tự: " + error1.message);
+    alert("KhÃ´ng thá»ƒ Ä‘á»•i thá»© tá»±: " + error1.message);
     return;
   }
 
@@ -425,7 +440,7 @@ const moveEvidence = async (
     .eq("user_id", userId);
 
   if (error2) {
-    alert("Không thể đổi thứ tự: " + error2.message);
+    alert("KhÃ´ng thá»ƒ Ä‘á»•i thá»© tá»±: " + error2.message);
     await loadFiles();
     return;
   }
@@ -456,7 +471,7 @@ try {
     alert(
       error instanceof Error
         ? error.message
-        : "Không thể cập nhật báo cáo."
+        : "KhÃ´ng thá»ƒ cáº­p nháº­t bÃ¡o cÃ¡o."
     );
   }
 };
@@ -469,20 +484,20 @@ async function uploadFile(file: File) {
 
   try {
     // ================================
-    // 1. GIỚI HẠN FILE
+    // 1. GIá»šI Háº N FILE
     // ================================
     const MAX_FILE_SIZE = 25 * 1024 * 1024;
 
     if (file.size <= 0) {
-      throw new Error("File không hợp lệ");
+      throw new Error("File khÃ´ng há»£p lá»‡");
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      throw new Error("File không được vượt quá 25 MB");
+      throw new Error("File khÃ´ng Ä‘Æ°á»£c vÆ°á»£t quÃ¡ 25 MB");
     }
 
     // ================================
-    // 2. LẤY THÔNG TIN SINH VIÊN
+    // 2. Láº¤Y THÃ”NG TIN SINH VIÃŠN
     // ================================
     const { data: profile, error: profileError } =
       await supabase
@@ -493,11 +508,11 @@ async function uploadFile(file: File) {
 
     if (profileError || !profile) {
       console.error("Profile error:", profileError);
-      throw new Error("Không lấy được thông tin sinh viên");
+      throw new Error("KhÃ´ng láº¥y Ä‘Æ°á»£c thÃ´ng tin sinh viÃªn");
     }
 
     // ================================
-    // 3. KHỞI TẠO GOOGLE DRIVE SESSION
+    // 3. KHá»žI Táº O GOOGLE DRIVE SESSION
     // ================================
     const initResponse = await fetch(
       "/api/upload-drive/init",
@@ -524,7 +539,7 @@ async function uploadFile(file: File) {
     if (!initResponse.ok || !initResult.success) {
       throw new Error(
         initResult.error ||
-          "Không thể khởi tạo upload Google Drive"
+          "KhÃ´ng thá»ƒ khá»Ÿi táº¡o upload Google Drive"
       );
     }
 
@@ -532,12 +547,12 @@ async function uploadFile(file: File) {
 
     if (!uploadUrl) {
       throw new Error(
-        "Không nhận được upload URL từ Google Drive"
+        "KhÃ´ng nháº­n Ä‘Æ°á»£c upload URL tá»« Google Drive"
       );
     }
 
     // ================================
-    // 4. CHIA FILE THÀNH CHUNK
+    // 4. CHIA FILE THÃ€NH CHUNK
     // ================================
     const CHUNK_SIZE = 16 * 1024 * 1024; // 16 MB
 
@@ -560,7 +575,7 @@ async function uploadFile(file: File) {
       );
 
       // ================================
-      // 5. GỬI CHUNK QUA VERCEL API
+      // 5. Gá»¬I CHUNK QUA VERCEL API
       // ================================
       const chunkResponse = await fetch(
         "/api/upload-drive/chunk",
@@ -591,35 +606,35 @@ async function uploadFile(file: File) {
       ) {
         throw new Error(
           chunkResult.error ||
-            `Upload chunk thất bại (${chunkResponse.status})`
+            `Upload chunk tháº¥t báº¡i (${chunkResponse.status})`
         );
       }
 
       // ================================
-      // 6. KIỂM TRA HOÀN THÀNH
+      // 6. KIá»‚M TRA HOÃ€N THÃ€NH
       // ================================
       if (chunkResult.completed) {
         driveFile = chunkResult.file;
         break;
       }
 
-      // Chunk tiếp theo
+      // Chunk tiáº¿p theo
       start = end;
     }
 
     if (!driveFile?.id) {
       throw new Error(
-        "Google Drive không trả về thông tin file sau khi upload"
+        "Google Drive khÃ´ng tráº£ vá» thÃ´ng tin file sau khi upload"
       );
     }
 
     console.log(
-      "Google Drive upload thành công:",
+      "Google Drive upload thÃ nh cÃ´ng:",
       driveFile
     );
 
     // ================================
-    // 7. TẠO TÊN LƯU TRONG SUPABASE
+    // 7. Táº O TÃŠN LÆ¯U TRONG SUPABASE
     // ================================
     const safeName = file.name
       .normalize("NFD")
@@ -633,7 +648,7 @@ async function uploadFile(file: File) {
       `${Date.now()}-${safeName}`;
 
     // ================================
-    // 8. LƯU FILE VÀO SUPABASE
+    // 8. LÆ¯U FILE VÃ€O SUPABASE
     // ================================
     const nextOrder = files.length > 0 ? Math.max(...files.map((item) => item.sort_order ?? 0)) + 1 : 1;
 
@@ -661,12 +676,12 @@ async function uploadFile(file: File) {
 
     if (insertError) {
       throw new Error(
-        `Lưu file vào Supabase thất bại: ${insertError.message}`
+        `LÆ°u file vÃ o Supabase tháº¥t báº¡i: ${insertError.message}`
       );
     }
 
     console.log(
-      "Đã lưu uploaded_files:",
+      "ÄÃ£ lÆ°u uploaded_files:",
       insertedFile
     );
 
@@ -685,7 +700,7 @@ async function uploadFile(file: File) {
       });
 
     // ================================
-    // 10. LOAD LẠI DANH SÁCH
+    // 10. LOAD Láº I DANH SÃCH
     // ================================
     await loadFiles();
     setSelectedEvidence(insertedFile);
@@ -699,7 +714,7 @@ async function uploadFile(file: File) {
     alert(
       error instanceof Error
         ? error.message
-        : "Không thể upload file"
+        : "KhÃ´ng thá»ƒ upload file"
     );
   }
 }
@@ -720,156 +735,61 @@ async function handleUpload(
 }
 
 async function deleteFile(storageName: string) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (deletingRef.current.has(storageName)) return;
 
-  if (!user) return;
+  const currentFiles = [...filesRef.current];
+  const targetFile = currentFiles.find(
+    (file) => file.storage_name === storageName
+  );
+
+  if (!targetFile) return;
+
+  deletingRef.current.add(storageName);
+  setDeletingFiles((prev) => [...prev, storageName]);
 
   try {
-    // ================================
-    // 1. Lấy đúng file của đúng năm học
-    // ================================
-    const { data: fileRecord, error: findError } =
-      await supabase
-        .from("uploaded_files")
-        .select(
-          "id, storage_name, display_name, drive_file_id"
-        )
-        .eq("user_id", user.id)
-        .eq("folder", "the-luc")
-        .eq("academic_year_id", Number(yearId))
-        .eq("storage_name", storageName)
-        .single();
+    const response = await fetch("/api/queue-delete-file", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        storageName,
+        folder: "the-luc",
+        academicYearId: Number(yearId),
+      }),
+    });
 
-    if (findError || !fileRecord) {
-      throw new Error("Không tìm thấy thông tin file");
-    }
+    const result = await response.json();
 
-    // ================================
-    // 2. Xóa trên Google Drive trước
-    // ================================
-    if (fileRecord.drive_file_id) {
-      const response = await fetch("/api/delete-drive", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fileId: fileRecord.drive_file_id,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.error ||
-            "Không thể xóa file trên Google Drive"
-        );
-      }
-    }
-
-    // ================================
-    // 3. Xóa bản ghi trong Supabase
-    // ================================
-    const { error: dbError } = await supabase
-      .from("uploaded_files")
-      .delete()
-      .eq("id", fileRecord.id)
-      .eq("user_id", user.id)
-      .eq("academic_year_id", Number(yearId));
-
-    if (dbError) {
+    if (!response.ok || !result.success) {
       throw new Error(
-        "Đã xóa file trên Google Drive nhưng không thể xóa dữ liệu hệ thống: " +
-          dbError.message
+        result.error || "Không thể gửi yêu cầu xóa."
       );
     }
 
-    // ================================
-    // 4. Cập nhật UI
-    // ================================
-    const remainingFiles = files
-  .filter((item) => item.id !== fileRecord.id)
-  .sort(
-    (a, b) =>
-      (a.sort_order ?? 999999) -
-      (b.sort_order ?? 999999)
-  );
-
-const normalizedFiles = remainingFiles.map(
-  (item, index) => ({
-    ...item,
-    sort_order: index + 1,
-  })
-);
-
-setFiles(normalizedFiles);
-
-// Đánh số lại trong cơ sở dữ liệu
-for (const item of normalizedFiles) {
-  const { error } = await supabase
-    .from("uploaded_files")
-    .update({ sort_order: item.sort_order })
-    .eq("id", item.id)
-    .eq("user_id", user.id);
-
-  if (error) {
-    throw new Error(
-      "Không thể cập nhật thứ tự sau khi xóa: " +
-        error.message
+    const optimisticFiles = currentFiles.filter(
+      (file) => file.storage_name !== storageName
     );
-  }
-}
 
-await syncEvidenceReports(normalizedFiles);
+    setFiles(optimisticFiles);
+    filesRef.current = optimisticFiles;
 
-    setDisplayNames((prev) => {
-      const updated = { ...prev };
-      delete updated[fileRecord.storage_name];
-      return updated;
-    });
-
-    // ================================
-    // 5. Lấy thông tin sinh viên để ghi log
-    // ================================
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("ho_ten, lop")
-      .eq("id", user.id)
-      .single();
-
-    // ================================
-    // 6. Ghi log
-    // ================================
-    await supabase.from("activity_logs").insert({
-      user_id: user.id,
-      ho_ten: profile?.ho_ten,
-      lop: profile?.lop,
-      action_type: "delete",
-      target_folder: "the-luc",
-      target_file:
-        fileRecord.display_name ||
-        fileRecord.storage_name,
-    });
-
-    // ================================
-    // 7. Load lại danh sách
-    // ================================
-    await loadFiles();
-
+    alert("Đã đưa file vào hàng đợi xóa. Hệ thống sẽ xử lý tự động.");
   } catch (error) {
-    console.error("Delete error:", error);
-
+    console.error("Queue delete error:", error);
     alert(
       error instanceof Error
         ? error.message
-        : "Không thể xóa file"
+        : "Không thể gửi yêu cầu xóa file."
+    );
+  } finally {
+    deletingRef.current.delete(storageName);
+    setDeletingFiles((prev) =>
+      prev.filter((item) => item !== storageName)
     );
   }
 }
-
   return (
   <div
     style={{
@@ -918,7 +838,7 @@ await syncEvidenceReports(normalizedFiles);
               cursor: "pointer",
             }}
           >
-            ← Quay lại
+            â† Quay láº¡i
           </button>
 
           <h1
@@ -928,7 +848,7 @@ await syncEvidenceReports(normalizedFiles);
               marginBottom: "20px",
             }}
           >
-             <Image src="/icontheluc.png" width={32} height={32} alt="Thể lực tốt" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} /> Thể lực tốt
+             <Image src="/icontheluc.png" width={32} height={32} alt="Thá»ƒ lá»±c tá»‘t" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }} /> Thá»ƒ lá»±c tá»‘t
           </h1>
 <div
   style={{
@@ -939,7 +859,7 @@ await syncEvidenceReports(normalizedFiles);
     boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
   }}
 >
-  <h3 style={{ marginTop: 0 }}>📝 Nhập Báo cáo Tiêu chí Thể lực tốt</h3>
+  <h3 style={{ marginTop: 0 }}>ðŸ“ Nháº­p BÃ¡o cÃ¡o TiÃªu chÃ­ Thá»ƒ lá»±c tá»‘t</h3>
  {lastSaved && (
     <span
       style={{
@@ -947,7 +867,7 @@ await syncEvidenceReports(normalizedFiles);
         color: "#6e6c6c",
       }}
     >
-      Cập nhật:{" "}
+      Cáº­p nháº­t:{" "}
 {lastSaved.toLocaleString("vi-VN", {
   day: "2-digit",
   month: "2-digit",
@@ -1040,7 +960,7 @@ await syncEvidenceReports(normalizedFiles);
         marginBottom: "10px",
       }}
     >
-      📤
+      ðŸ“¤
     </div>
 
     <div
@@ -1049,7 +969,7 @@ await syncEvidenceReports(normalizedFiles);
         fontWeight: "600",
       }}
     >
-      Kéo thả file vào đây
+      KÃ©o tháº£ file vÃ o Ä‘Ã¢y
     </div>
 
     <div
@@ -1058,7 +978,7 @@ await syncEvidenceReports(normalizedFiles);
         color: "#64748b",
       }}
     >
-      hoặc bấm để chọn file
+      hoáº·c báº¥m Ä‘á»ƒ chá»n file
     </div>
   </>
 )}
@@ -1074,7 +994,7 @@ await syncEvidenceReports(normalizedFiles);
 </div>
           </div>
 
-          <h3>Danh sách minh chứng</h3>
+          <h3>Danh sÃ¡ch minh chá»©ng</h3>
 
           {files.length === 0 && (
             <div
@@ -1085,11 +1005,13 @@ await syncEvidenceReports(normalizedFiles);
                 marginTop: "12px",
               }}
             >
-              Chưa có minh chứng nào.
+              ChÆ°a cÃ³ minh chá»©ng nÃ o.
             </div>
           )}
 
-{files.map((file, index) => {
+{files
+  .filter((file) => !deletingFiles.includes(file.storage_name))
+  .map((file, index) => {
   const fileUrl =
     file.storage_type === "google_drive"
       ? `/api/view-drive?fileId=${encodeURIComponent(
