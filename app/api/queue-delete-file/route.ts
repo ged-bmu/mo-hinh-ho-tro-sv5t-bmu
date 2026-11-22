@@ -1,7 +1,34 @@
-
 import { NextResponse } from "next/server";
 import { requireAdminOrSelf } from "@/lib/auth-admin";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+
+async function triggerGitHubWorkflow() {
+  const token = process.env.GITHUB_ACTIONS_TOKEN;
+
+  if (!token) {
+    throw new Error("Thiếu GITHUB_ACTIONS_TOKEN");
+  }
+
+  const response = await fetch(
+    "https://api.github.com/repos/ged-bmu/mo-hinh-ho-tro-sv5t-bmu/actions/workflows/process-delete-queue.yml/dispatches",
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${token}`,
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      body: JSON.stringify({
+        ref: "main",
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`GitHub API ${response.status}: ${errorText}`);
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -53,6 +80,15 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (existingJob) {
+      // Job pending: kích hoạt lại workflow để tránh bị chờ
+      if (existingJob.status === "pending") {
+        try {
+          await triggerGitHubWorkflow();
+        } catch (error) {
+          console.error("GitHub trigger error:", error);
+        }
+      }
+
       return NextResponse.json({
         success: true,
         queued: true,
@@ -92,11 +128,22 @@ export async function POST(request: Request) {
       throw queueError;
     }
 
+    // 5. Kích hoạt GitHub Actions ngay lập tức
+    let workflowTriggered = false;
+
+    try {
+      await triggerGitHubWorkflow();
+      workflowTriggered = true;
+    } catch (error) {
+      console.error("GitHub trigger error:", error);
+    }
+
     return NextResponse.json({
       success: true,
       queued: true,
       jobId: job.id,
       status: job.status,
+      workflowTriggered,
     });
   } catch (error) {
     console.error("Queue delete error:", error);
