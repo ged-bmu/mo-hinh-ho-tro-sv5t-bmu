@@ -8,6 +8,8 @@ import {
   useState,
 } from "react";
 
+import { createPortal } from "react-dom";
+
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{
@@ -106,7 +108,8 @@ export default function InstallPromptProvider({
   >
     {children}
 
-    {showIOSGuide && (
+    {showIOSGuide && typeof document !== "undefined" &&
+  createPortal(
       <div
         onClick={() => setShowIOSGuide(false)}
         style={{
@@ -251,8 +254,9 @@ export default function InstallPromptProvider({
             Đã hiểu
           </button>
         </div>
-      </div>
-    )}
+      </div>   
+document.body
+   )}
   </InstallContext.Provider>
 );
 }
