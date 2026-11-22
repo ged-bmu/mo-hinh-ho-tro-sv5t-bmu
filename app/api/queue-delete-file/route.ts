@@ -130,13 +130,16 @@ export async function POST(request: Request) {
 
     // 5. Kích hoạt GitHub Actions ngay lập tức
     let workflowTriggered = false;
+let workflowError = "";
 
-    try {
-      await triggerGitHubWorkflow();
-      workflowTriggered = true;
-    } catch (error) {
-      console.error("GitHub trigger error:", error);
-    }
+try {
+  await triggerGitHubWorkflow();
+  workflowTriggered = true;
+} catch (error) {
+  workflowError =
+    error instanceof Error ? error.message : String(error);
+  console.error("GitHub trigger error:", workflowError);
+}
 
     return NextResponse.json({
       success: true,
@@ -144,6 +147,7 @@ export async function POST(request: Request) {
       jobId: job.id,
       status: job.status,
       workflowTriggered,
+      workflowError,
     });
   } catch (error) {
     console.error("Queue delete error:", error);
