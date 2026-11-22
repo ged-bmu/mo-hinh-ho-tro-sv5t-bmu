@@ -77,8 +77,11 @@ export async function POST(request: Request) {
       auth: oauth2Client,
     });
 
-    await drive.files.delete({
-      fileId,
+    await drive.files.update({
+     fileId,
+     requestBody: {
+     trashed: true,
+     },
     });
 
     return NextResponse.json({

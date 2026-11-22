@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { authFetch as fetch } from "../../lib/auth-fetch";
@@ -106,7 +106,6 @@ function buildReportWithEvidence(
 function DaoDucPage() {
   const searchParams = useSearchParams();
   const yearId = searchParams.get("year");
-  console.log("DAO DUC YEAR ID:", yearId);
   const [files, setFiles] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
   const [userId, setUserId] = useState("");
@@ -118,7 +117,11 @@ function DaoDucPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [selectedEvidence, setSelectedEvidence] = useState<any>(null);
-
+  const filesRef = useRef<any[]>([]);
+  const reportRef = useRef("");
+  const deletingRef = useRef<Set<string>>(new Set());
+  const deleteQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const [deletingFiles, setDeletingFiles] = useState<string[]>([]);
 
 function sortFilesByName(fileList: any[]) {
   return [...fileList].sort((firstFile, secondFile) =>
@@ -148,6 +151,13 @@ useEffect(() => {
 
   checkAccess();
 }, [yearId]);
+useEffect(() => {
+  filesRef.current = files;
+}, [files]);
+
+useEffect(() => {
+  reportRef.current = report;
+}, [report]);
 
 async function checkAccess() {
   const result = await checkSubmissionAccess(Number(yearId));
@@ -192,11 +202,14 @@ async function loadFiles(academicYearName?: string) {
   }
 
   if (uploadedFiles) {
-    setFiles(
-  [...(uploadedFiles || [])].sort(
-    (a, b) => (a.sort_order ?? 999999) - (b.sort_order ?? 999999)
-  )
+    const sortedFiles = [...(uploadedFiles || [])].sort(
+  (a, b) =>
+    (a.sort_order ?? 999999) -
+    (b.sort_order ?? 999999)
 );
+
+setFiles(sortedFiles);
+filesRef.current = sortedFiles;
 
     const map: Record<string, string> = {};
 
@@ -226,6 +239,7 @@ const mainReport = reportData?.content?.trim()
 `;
 
 setReport(mainReport);
+reportRef.current = mainReport;
 }
 async function syncEvidenceReports(
   nextFiles: any[],
@@ -743,156 +757,348 @@ async function handleUpload(
   }
 }
 
+
 async function deleteFile(storageName: string) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (deletingRef.current.has(storageName)) return;
 
-  if (!user) return;
+  const initialFiles = [...filesRef.current];
+  const targetFile = initialFiles.find(
+    (file) => file.storage_name === storageName
+  );
 
-  try {
-    // ================================
-    // 1. Lấy đúng file của đúng năm học
-    // ================================
-    const { data: fileRecord, error: findError } =
-      await supabase
+  if (!targetFile) return;
+
+  // 1. Cập nhật giao diện ngay lập tức
+  deletingRef.current.add(storageName);
+  setDeletingFiles((prev) => [...prev, storageName]);
+
+  const optimisticFiles = initialFiles.filter(
+    (file) => file.storage_name !== storageName
+  );
+
+  const optimisticReport = buildReportWithEvidence(
+    reportRef.current,
+    optimisticFiles,
+    initialFiles
+  );
+
+  setFiles(optimisticFiles);
+  filesRef.current = optimisticFiles;
+  setReport(optimisticReport);
+  reportRef.current = optimisticReport;
+
+  // 2. Đưa thao tác vào hàng đợi
+  const deleteTask = async () => {
+    let userIdLocal = "";
+    let fileRecord: any = null;
+    let driveTrashed = false;
+    let dbDeleted = false;
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("Không xác định được người dùng.");
+      }
+
+      userIdLocal = user.id;
+
+      // 3. Lấy bản ghi file chính xác
+      const { data, error: findError } = await supabase
         .from("uploaded_files")
-        .select(
-          "id, storage_name, display_name, drive_file_id"
-        )
+        .select("*")
         .eq("user_id", user.id)
         .eq("folder", "dao-duc")
         .eq("academic_year_id", Number(yearId))
         .eq("storage_name", storageName)
         .single();
 
-    if (findError || !fileRecord) {
-      throw new Error("Không tìm thấy thông tin file");
-    }
+      if (findError || !data) {
+        throw new Error("Không tìm thấy file.");
+      }
 
-    // ================================
-    // 2. Xóa trên Google Drive trước
-    // ================================
-    if (fileRecord.drive_file_id) {
-      const response = await fetch("/api/delete-drive", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fileId: fileRecord.drive_file_id,
-        }),
+      fileRecord = data;
+
+      // 4. Chuyển file Drive vào thùng rác
+      if (fileRecord.drive_file_id) {
+        const response = await fetch("/api/delete-drive", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fileId: fileRecord.drive_file_id,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(
+            result.error || "Không thể xóa file trên Drive."
+          );
+        }
+
+        driveTrashed = true;
+      }
+
+      // 5. Xóa bản ghi Supabase
+      const { error: dbError } = await supabase
+        .from("uploaded_files")
+        .delete()
+        .eq("id", fileRecord.id)
+        .eq("user_id", user.id)
+        .eq("academic_year_id", Number(yearId));
+
+      if (dbError) {
+        throw new Error(dbError.message);
+      }
+
+      dbDeleted = true;
+
+      // 6. Lấy danh sách file thực tế còn lại
+      const { data: remainingFiles, error: loadError } =
+        await supabase
+          .from("uploaded_files")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("folder", "dao-duc")
+          .eq("academic_year_id", Number(yearId))
+          .order("sort_order", { ascending: true });
+
+      if (loadError) {
+        throw new Error(loadError.message);
+      }
+
+      const normalizedFiles = (remainingFiles || []).map(
+        (item, index) => ({
+          ...item,
+          sort_order: index + 1,
+        })
+      );
+
+      // 7. Cập nhật thứ tự file trong Supabase
+      for (const item of normalizedFiles) {
+        const { error } = await supabase
+          .from("uploaded_files")
+          .update({ sort_order: item.sort_order })
+          .eq("id", item.id)
+          .eq("user_id", user.id)
+          .eq("academic_year_id", Number(yearId));
+
+        if (error) {
+          throw new Error(error.message);
+        }
+      }
+
+      // 8. Tạo lại báo cáo từ danh sách thực tế
+      const mergedReport = buildReportWithEvidence(
+        reportRef.current,
+        normalizedFiles,
+        filesRef.current
+      );
+
+      const { error: reportError } = await supabase
+        .from("reports")
+        .upsert(
+          {
+            user_id: user.id,
+            criteria: "dao-duc",
+            academic_year_id: Number(yearId),
+            content: mergedReport,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "user_id,criteria,academic_year_id",
+          }
+        );
+
+      if (reportError) {
+        throw new Error(reportError.message);
+      }
+
+      // 9. Đồng bộ giao diện
+      setFiles(normalizedFiles);
+      filesRef.current = normalizedFiles;
+
+      setReport(mergedReport);
+      reportRef.current = mergedReport;
+
+      setLastSaved(new Date());
+
+      setDisplayNames((prev) => {
+        const updated = { ...prev };
+        delete updated[storageName];
+        return updated;
       });
 
-      const result = await response.json();
+      // 10. Ghi nhật ký
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("ho_ten, lop")
+        .eq("id", user.id)
+        .single();
 
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.error ||
-            "Không thể xóa file trên Google Drive"
-        );
+      await supabase.from("activity_logs").insert({
+        user_id: user.id,
+        ho_ten: profile?.ho_ten,
+        lop: profile?.lop,
+        action_type: "delete",
+        target_folder: "dao-duc",
+        target_file:
+          fileRecord.display_name ||
+          fileRecord.storage_name,
+      });
+
+    } catch (error) {
+      console.error("Delete error:", error);
+
+      // 11. Phục hồi bản ghi Supabase nếu đã xóa
+      if (dbDeleted && fileRecord && userIdLocal) {
+        const { error: restoreDbError } = await supabase
+          .from("uploaded_files")
+          .insert(fileRecord);
+
+        if (restoreDbError) {
+          console.error(
+            "Restore Supabase record error:",
+            restoreDbError
+          );
+        }
       }
-    }
 
-    // ================================
-    // 3. Xóa bản ghi trong Supabase
-    // ================================
-    const { error: dbError } = await supabase
-      .from("uploaded_files")
-      .delete()
-      .eq("id", fileRecord.id)
-      .eq("user_id", user.id)
-      .eq("academic_year_id", Number(yearId));
+      // 12. Phục hồi file Drive
+      if (driveTrashed && fileRecord?.drive_file_id) {
+        try {
+          const response = await fetch("/api/restore-drive", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              fileId: fileRecord.drive_file_id,
+              userId: userIdLocal,
+            }),
+          });
 
-    if (dbError) {
-      throw new Error(
-        "Đã xóa file trên Google Drive nhưng không thể xóa dữ liệu hệ thống: " +
-          dbError.message
+          const result = await response.json();
+
+          if (!response.ok || !result.success) {
+            console.error(
+              "Restore Drive error:",
+              result.error
+            );
+          }
+        } catch (restoreError) {
+          console.error(
+            "Restore Drive exception:",
+            restoreError
+          );
+        }
+      }
+
+      // 13. Lấy dữ liệu thực tế để phục hồi giao diện
+      if (userIdLocal) {
+        try {
+          const { data: restoredFiles, error: restoreLoadError } =
+            await supabase
+              .from("uploaded_files")
+              .select("*")
+              .eq("user_id", userIdLocal)
+              .eq("folder", "dao-duc")
+              .eq("academic_year_id", Number(yearId))
+              .order("sort_order", { ascending: true });
+
+          if (restoreLoadError) {
+            throw restoreLoadError;
+          }
+
+          const normalizedRestoredFiles = (
+            restoredFiles || []
+          ).map((item, index) => ({
+            ...item,
+            sort_order: index + 1,
+          }));
+
+          const restoredReport = buildReportWithEvidence(
+            reportRef.current,
+            normalizedRestoredFiles,
+            filesRef.current
+          );
+
+          const { error: restoreReportError } = await supabase
+            .from("reports")
+            .upsert(
+              {
+                user_id: userIdLocal,
+                criteria: "dao-duc",
+                academic_year_id: Number(yearId),
+                content: restoredReport,
+                updated_at: new Date().toISOString(),
+              },
+              {
+                onConflict: "user_id,criteria,academic_year_id",
+              }
+            );
+
+          if (restoreReportError) {
+            console.error(
+              "Restore report error:",
+              restoreReportError
+            );
+          }
+
+          setFiles(normalizedRestoredFiles);
+          filesRef.current = normalizedRestoredFiles;
+
+          setReport(restoredReport);
+          reportRef.current = restoredReport;
+
+          setDisplayNames((prev) => ({
+            ...prev,
+            [storageName]:
+              fileRecord?.display_name || storageName,
+          }));
+        } catch (restoreError) {
+          console.error(
+            "Restore data error:",
+            restoreError
+          );
+
+          await loadFiles();
+        }
+      } else {
+        // Không lấy được người dùng, tải lại giao diện
+        setFiles(initialFiles);
+        filesRef.current = initialFiles;
+
+        setReport(reportRef.current);
+      }
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Không thể xóa file."
+      );
+
+    } finally {
+      deletingRef.current.delete(storageName);
+
+      setDeletingFiles((prev) =>
+        prev.filter((item) => item !== storageName)
       );
     }
+  };
 
-    // ================================
-    // 4. Cập nhật UI
-    // ================================
-    const remainingFiles = files
-  .filter((item) => item.id !== fileRecord.id)
-  .sort(
-    (a, b) =>
-      (a.sort_order ?? 999999) -
-      (b.sort_order ?? 999999)
-  );
-
-const normalizedFiles = remainingFiles.map(
-  (item, index) => ({
-    ...item,
-    sort_order: index + 1,
-  })
-);
-
-setFiles(normalizedFiles);
-
-// Đánh số lại trong cơ sở dữ liệu
-for (const item of normalizedFiles) {
-  const { error } = await supabase
-    .from("uploaded_files")
-    .update({ sort_order: item.sort_order })
-    .eq("id", item.id)
-    .eq("user_id", user.id);
-
-  if (error) {
-    throw new Error(
-      "Không thể cập nhật thứ tự sau khi xóa: " +
-        error.message
-    );
-  }
+  deleteQueueRef.current = deleteQueueRef.current
+    .then(deleteTask)
+    .catch((error) => {
+      console.error("Delete queue error:", error);
+    });
 }
 
-await syncEvidenceReports(normalizedFiles);
-
-    setDisplayNames((prev) => {
-      const updated = { ...prev };
-      delete updated[fileRecord.storage_name];
-      return updated;
-    });
-
-    // ================================
-    // 5. Lấy thông tin sinh viên để ghi log
-    // ================================
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("ho_ten, lop")
-      .eq("id", user.id)
-      .single();
-
-    // ================================
-    // 6. Ghi log
-    // ================================
-    await supabase.from("activity_logs").insert({
-      user_id: user.id,
-      ho_ten: profile?.ho_ten,
-      lop: profile?.lop,
-      action_type: "delete",
-      target_folder: "dao-duc",
-      target_file:
-        fileRecord.display_name ||
-        fileRecord.storage_name,
-    });
-
-    // ================================
-    // 7. Load lại danh sách
-    // ================================
-    await loadFiles();
-
-  } catch (error) {
-    console.error("Delete error:", error);
-
-    alert(
-      error instanceof Error
-        ? error.message
-        : "Không thể xóa file"
-    );
-  }
-}
 
   return (
   <div
@@ -1113,7 +1319,9 @@ await syncEvidenceReports(normalizedFiles);
             </div>
           )}
 
-{files.map((file, index) => {
+{files
+  .filter((file) => !deletingFiles.includes(file.storage_name))
+  .map((file, index) => {
   const fileUrl =
     file.storage_type === "google_drive"
       ? `/api/view-drive?fileId=${encodeURIComponent(
