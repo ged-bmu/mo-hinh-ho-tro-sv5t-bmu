@@ -30,25 +30,32 @@ function buildReportWithEvidence(
   evidenceFiles: any[],
   previousFiles: any[] = evidenceFiles
 ) {
+  const normalizeText = (text: string) =>
+    text
+      .replace(/^\s*\d+\.\s*/, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
   const doc = new DOMParser().parseFromString(
     originalReport || "",
     "text/html"
   );
 
-  // Lấy nội dung báo cáo của cả danh sách cũ và mới
+  // Lấy nội dung báo cáo riêng của các file cũ và file mới
   const evidenceContents = [
     ...previousFiles,
     ...evidenceFiles,
   ]
-    .map((file) => getPlainText(file.report_content || ""))
+    .map((file) =>
+      normalizeText(getPlainText(file.report_content || ""))
+    )
     .filter(Boolean);
 
-  // Xóa các đoạn minh chứng đã được ghép trước đó
+  // Loại bỏ các đoạn báo cáo riêng đã được ghép vào báo cáo tổng
   doc.body.querySelectorAll("p").forEach((paragraph) => {
-    const paragraphText = (paragraph.textContent || "")
-      .replace(/^\s*\d+\.\s*/, "")
-      .replace(/\s+/g, " ")
-      .trim();
+    const paragraphText = normalizeText(
+      paragraph.textContent || ""
+    );
 
     if (
       evidenceContents.some(
@@ -59,7 +66,7 @@ function buildReportWithEvidence(
     }
   });
 
-  // Xóa các đoạn chỉ còn số thứ tự
+  // Loại bỏ đoạn chỉ chứa số thứ tự
   doc.body.querySelectorAll("p").forEach((paragraph) => {
     if (/^\s*\d+\.\s*$/.test(paragraph.textContent || "")) {
       paragraph.remove();
@@ -68,29 +75,29 @@ function buildReportWithEvidence(
 
   const manualContent = doc.body.innerHTML.trim();
 
-  // Sắp xếp minh chứng theo thứ tự file
+  // Sắp xếp file theo thứ tự hiện tại
   const sortedFiles = [...evidenceFiles].sort(
     (a, b) =>
       (a.sort_order ?? 999999) -
       (b.sort_order ?? 999999)
   );
 
-  // Tạo lại báo cáo minh chứng
+  // Dựng lại báo cáo riêng từ các file còn tồn tại
   const numberedReports = sortedFiles
     .filter((file) => file.report_content?.trim())
-    .map((file) => {
+    .map((file, index) => {
       const contentDoc = new DOMParser().parseFromString(
         file.report_content,
         "text/html"
       );
 
       const content = contentDoc.body.innerHTML
-  .replace(/<p\b[^>]*>/gi, "")
-  .replace(/<\/p>/gi, "<br>")
-  .replace(/(<br>\s*)+$/gi, "")
-  .trim();
+        .replace(/<p\b[^>]*>/gi, "")
+        .replace(/<\/p>/gi, "<br>")
+        .replace(/(<br>\s*)+$/gi, "")
+        .trim();
 
-      const order = (file.sort_order ?? 1) + 1;
+      const order = index + 2;
 
       return `<p>${order}. ${content}</p>`;
     });
@@ -770,86 +777,60 @@ async function deleteFile(storageName: string) {
 
   if (!targetFile) return;
 
-  // Khởi tạo dữ liệu gốc cho đợt xóa đầu tiên
-  if (!deleteProcessingRef.current && deleteQueueRef.current.length === 0) {
-    deleteBatchFilesRef.current = [...currentFiles];
-    deleteBatchReportRef.current = reportRef.current;
-  }
-
-  // Đánh dấu file đang chờ xóa
   deletingRef.current.add(storageName);
   setDeletingFiles((prev) => [...prev, storageName]);
 
-  // Ẩn file ngay lập tức
   const optimisticFiles = currentFiles.filter(
     (file) => file.storage_name !== storageName
   );
 
-  const optimisticReport = buildReportWithEvidence(
-    reportRef.current,
-    optimisticFiles,
-    currentFiles
-  );
-
   setFiles(optimisticFiles);
   filesRef.current = optimisticFiles;
-  setReport(optimisticReport);
-  reportRef.current = optimisticReport;
 
-  // Đưa file vào hàng đợi chung
-  deleteQueueRef.current.push({
-    storageName,
-    targetFile,
-  });
-
-  // Nếu đang có luồng xử lý thì chỉ thêm vào hàng đợi
-  if (deleteProcessingRef.current) return;
+  if (deleteProcessingRef.current) {
+    deleteQueueRef.current.push({
+      storageName,
+      targetFile,
+    });
+    return;
+  }
 
   deleteProcessingRef.current = true;
 
   try {
-    // Xử lý lần lượt tất cả file trong hàng đợi
-    while (deleteQueueRef.current.length > 0) {
-      const task = deleteQueueRef.current.shift();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      if (!task) continue;
+    if (!user) throw new Error("Không xác định được người dùng.");
 
-      const { storageName: currentStorageName, targetFile: currentTarget } =
-        task;
+    // Xóa lần lượt file đang yêu cầu
+    const queue = [
+      { storageName, targetFile },
+      ...deleteQueueRef.current,
+    ];
 
-      let userIdLocal = "";
-      let fileRecord: any = null;
-      let driveTrashed = false;
-      let dbDeleted = false;
+    deleteQueueRef.current = [];
+
+    for (const task of queue) {
+      const { storageName: name, targetFile: target } = task;
 
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        const { data: fileRecord, error: findError } =
+          await supabase
+            .from("uploaded_files")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("folder", "dao-duc")
+            .eq("academic_year_id", Number(yearId))
+            .eq("storage_name", name)
+            .single();
 
-        if (!user) {
-          throw new Error("Không xác định được người dùng.");
-        }
-
-        userIdLocal = user.id;
-
-        // Tìm bản ghi file chính xác
-        const { data, error: findError } = await supabase
-          .from("uploaded_files")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("folder", "dao-duc")
-          .eq("academic_year_id", Number(yearId))
-          .eq("storage_name", currentStorageName)
-          .single();
-
-        if (findError || !data) {
+        if (findError || !fileRecord) {
           throw new Error("Không tìm thấy file.");
         }
 
-        fileRecord = data;
-
-        // Xóa file trên Google Drive
+        // Xóa trên Drive
         if (fileRecord.drive_file_id) {
           const response = await fetch("/api/delete-drive", {
             method: "POST",
@@ -864,29 +845,27 @@ async function deleteFile(storageName: string) {
           const result = await response.json();
 
           if (!response.ok || !result.success) {
-            throw new Error(
-              result.error || "Không thể xóa file trên Drive."
-            );
+            throw new Error(result.error || "Không thể xóa file Drive.");
           }
-
-          driveTrashed = true;
         }
 
-        // Xóa bản ghi trên Supabase
-        const { error: dbError } = await supabase
-          .from("uploaded_files")
-          .delete()
-          .eq("id", fileRecord.id)
-          .eq("user_id", user.id)
-          .eq("academic_year_id", Number(yearId));
+        // Xóa bản ghi Supabase
+        const { data: deletedRows, error: deleteError } =
+          await supabase
+            .from("uploaded_files")
+            .delete()
+            .eq("id", fileRecord.id)
+            .eq("user_id", user.id)
+            .eq("academic_year_id", Number(yearId))
+            .select("id");
 
-        if (dbError) {
-          throw new Error(dbError.message);
+        if (deleteError || !deletedRows?.length) {
+          throw new Error(
+            deleteError?.message || "Không xóa được bản ghi Supabase."
+          );
         }
 
-        dbDeleted = true;
-
-        // Ghi nhật ký xóa
+        // Ghi nhật ký
         const { data: profile } = await supabase
           .from("profiles")
           .select("ho_ten, lop")
@@ -900,121 +879,74 @@ async function deleteFile(storageName: string) {
           action_type: "delete",
           target_folder: "dao-duc",
           target_file:
-            fileRecord.display_name ||
-            fileRecord.storage_name,
+            fileRecord.display_name || fileRecord.storage_name,
         });
 
       } catch (error) {
-        console.error(
-          "Delete file error:",
-          currentStorageName,
-          error
+        console.error("Lỗi xóa file:", name, error);
+        alert(
+          `Không thể xóa ${target.display_name || name}. ${
+            error instanceof Error ? error.message : ""
+          }`
         );
-
-        // Khôi phục bản ghi Supabase nếu đã xóa
-        if (dbDeleted && fileRecord && userIdLocal) {
-          const { error: restoreDbError } = await supabase
-            .from("uploaded_files")
-            .insert(fileRecord);
-
-          if (restoreDbError) {
-            console.error(
-              "Restore Supabase error:",
-              restoreDbError
-            );
-          }
-        }
-
-        // Khôi phục file Drive
-        if (driveTrashed && fileRecord?.drive_file_id) {
-          try {
-            const response = await fetch("/api/restore-drive", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                fileId: fileRecord.drive_file_id,
-                userId: userIdLocal,
-              }),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-              console.error("Restore Drive error:", result.error);
-            }
-          } catch (restoreError) {
-            console.error(
-              "Restore Drive exception:",
-              restoreError
-            );
-          }
-        }
-
-        // File thất bại được giữ lại trong đợt đối chiếu cuối
-        console.error("File được giữ lại để đối chiếu:", currentTarget);
       } finally {
-        deletingRef.current.delete(currentStorageName);
-
+        deletingRef.current.delete(name);
         setDeletingFiles((prev) =>
-          prev.filter((item) => item !== currentStorageName)
+          prev.filter((item) => item !== name)
         );
       }
     }
 
-    // =========================================
-    // ĐỢT XÓA KẾT THÚC: ĐỐI CHIẾU MỘT LẦN
-    // =========================================
+    // Lấy danh sách file thực tế sau khi xóa
+    const { data: remainingFiles, error: loadError } =
+      await supabase
+        .from("uploaded_files")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("folder", "dao-duc")
+        .eq("academic_year_id", Number(yearId))
+        .order("sort_order", { ascending: true });
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    if (loadError) throw new Error(loadError.message);
 
-    if (!user) {
-      throw new Error("Không xác định được người dùng.");
-    }
-
-    // Lấy danh sách file thực tế
-    const { data: remainingFiles, error: loadError } = await supabase
-      .from("uploaded_files")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("folder", "dao-duc")
-      .eq("academic_year_id", Number(yearId))
-      .order("sort_order", { ascending: true });
-
-    if (loadError) {
-      throw new Error(loadError.message);
-    }
-
-    // Chuẩn hóa thứ tự
+    // Đánh lại số thứ tự
     const normalizedFiles = (remainingFiles || []).map(
-      (item, index) => ({
-        ...item,
+      (file, index) => ({
+        ...file,
         sort_order: index + 1,
       })
     );
 
-    // Cập nhật thứ tự trên Supabase
-    for (const item of normalizedFiles) {
+    for (const file of normalizedFiles) {
       const { error } = await supabase
         .from("uploaded_files")
-        .update({ sort_order: item.sort_order })
-        .eq("id", item.id)
+        .update({ sort_order: file.sort_order })
+        .eq("id", file.id)
         .eq("user_id", user.id)
         .eq("academic_year_id", Number(yearId));
 
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
     }
 
-    // Dựng báo cáo từ báo cáo gốc của đợt xóa
+    // Lấy báo cáo đang lưu trong DB
+    const { data: reportData, error: reportLoadError } =
+      await supabase
+        .from("reports")
+        .select("content")
+        .eq("user_id", user.id)
+        .eq("criteria", "dao-duc")
+        .eq("academic_year_id", Number(yearId))
+        .maybeSingle();
+
+    if (reportLoadError) throw new Error(reportLoadError.message);
+
+    const currentReport = reportData?.content || reportRef.current;
+
+    // Dựng lại báo cáo từ file thực tế còn tồn tại
     const mergedReport = buildReportWithEvidence(
-      deleteBatchReportRef.current,
+      currentReport,
       normalizedFiles,
-      deleteBatchFilesRef.current
+      currentFiles
     );
 
     // Lưu báo cáo
@@ -1033,11 +965,8 @@ async function deleteFile(storageName: string) {
         }
       );
 
-    if (reportError) {
-      throw new Error(reportError.message);
-    }
+    if (reportError) throw new Error(reportError.message);
 
-    // Cập nhật giao diện một lần sau khi đối chiếu
     setFiles(normalizedFiles);
     filesRef.current = normalizedFiles;
 
@@ -1046,7 +975,6 @@ async function deleteFile(storageName: string) {
 
     setLastSaved(new Date());
 
-    // Cập nhật danh sách tên file
     setDisplayNames((prev) => {
       const updated = { ...prev };
 
@@ -1055,9 +983,7 @@ async function deleteFile(storageName: string) {
       );
 
       for (const name of Object.keys(updated)) {
-        if (!remainingNames.has(name)) {
-          delete updated[name];
-        }
+        if (!remainingNames.has(name)) delete updated[name];
       }
 
       normalizedFiles.forEach((file) => {
@@ -1071,7 +997,6 @@ async function deleteFile(storageName: string) {
   } catch (error) {
     console.error("Delete batch error:", error);
 
-    // Tải lại dữ liệu nếu đồng bộ cuối đợt thất bại
     await loadFiles();
 
     alert(
@@ -1082,14 +1007,10 @@ async function deleteFile(storageName: string) {
 
   } finally {
     deleteProcessingRef.current = false;
-
     deleteQueueRef.current = [];
-
-    deleteBatchFilesRef.current = [];
-    deleteBatchReportRef.current = "";
+    setDeletingFiles([]);
   }
 }
-
   return (
   <div
     style={{

@@ -388,7 +388,7 @@ const rows = validSelectedIds.map((itemId) => ({
             marginBottom: "8px",
           }}
         >
-          Nội dung báo cáo minh chứng
+          Nội dung báo cáo minh chứng<i>{" "}(Hệ thống tự động đánh số thứ tự)</i>
         </label>
 
         <ReportEditor
