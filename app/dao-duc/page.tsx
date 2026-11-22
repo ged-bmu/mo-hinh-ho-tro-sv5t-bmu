@@ -780,237 +780,54 @@ async function deleteFile(storageName: string) {
   deletingRef.current.add(storageName);
   setDeletingFiles((prev) => [...prev, storageName]);
 
-  const optimisticFiles = currentFiles.filter(
-    (file) => file.storage_name !== storageName
-  );
-
-  setFiles(optimisticFiles);
-  filesRef.current = optimisticFiles;
-
-  if (deleteProcessingRef.current) {
-    deleteQueueRef.current.push({
-      storageName,
-      targetFile,
-    });
-    return;
-  }
-
-  deleteProcessingRef.current = true;
-
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) throw new Error("Không xác định được người dùng.");
-
-    // Xóa lần lượt file đang yêu cầu
-    const queue = [
-      { storageName, targetFile },
-      ...deleteQueueRef.current,
-    ];
-
-    deleteQueueRef.current = [];
-
-    for (const task of queue) {
-      const { storageName: name, targetFile: target } = task;
-
-      try {
-        const { data: fileRecord, error: findError } =
-          await supabase
-            .from("uploaded_files")
-            .select("*")
-            .eq("user_id", user.id)
-            .eq("folder", "dao-duc")
-            .eq("academic_year_id", Number(yearId))
-            .eq("storage_name", name)
-            .single();
-
-        if (findError || !fileRecord) {
-          throw new Error("Không tìm thấy file.");
-        }
-
-        // Xóa trên Drive
-        if (fileRecord.drive_file_id) {
-          const response = await fetch("/api/delete-drive", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              fileId: fileRecord.drive_file_id,
-            }),
-          });
-
-          const result = await response.json();
-
-          if (!response.ok || !result.success) {
-            throw new Error(result.error || "Không thể xóa file Drive.");
-          }
-        }
-
-        // Xóa bản ghi Supabase
-        const { data: deletedRows, error: deleteError } =
-          await supabase
-            .from("uploaded_files")
-            .delete()
-            .eq("id", fileRecord.id)
-            .eq("user_id", user.id)
-            .eq("academic_year_id", Number(yearId))
-            .select("id");
-
-        if (deleteError || !deletedRows?.length) {
-          throw new Error(
-            deleteError?.message || "Không xóa được bản ghi Supabase."
-          );
-        }
-
-        // Ghi nhật ký
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("ho_ten, lop")
-          .eq("id", user.id)
-          .single();
-
-        await supabase.from("activity_logs").insert({
-          user_id: user.id,
-          ho_ten: profile?.ho_ten,
-          lop: profile?.lop,
-          action_type: "delete",
-          target_folder: "dao-duc",
-          target_file:
-            fileRecord.display_name || fileRecord.storage_name,
-        });
-
-      } catch (error) {
-        console.error("Lỗi xóa file:", name, error);
-        alert(
-          `Không thể xóa ${target.display_name || name}. ${
-            error instanceof Error ? error.message : ""
-          }`
-        );
-      } finally {
-        deletingRef.current.delete(name);
-        setDeletingFiles((prev) =>
-          prev.filter((item) => item !== name)
-        );
-      }
-    }
-
-    // Lấy danh sách file thực tế sau khi xóa
-    const { data: remainingFiles, error: loadError } =
-      await supabase
-        .from("uploaded_files")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("folder", "dao-duc")
-        .eq("academic_year_id", Number(yearId))
-        .order("sort_order", { ascending: true });
-
-    if (loadError) throw new Error(loadError.message);
-
-    // Đánh lại số thứ tự
-    const normalizedFiles = (remainingFiles || []).map(
-      (file, index) => ({
-        ...file,
-        sort_order: index + 1,
-      })
-    );
-
-    for (const file of normalizedFiles) {
-      const { error } = await supabase
-        .from("uploaded_files")
-        .update({ sort_order: file.sort_order })
-        .eq("id", file.id)
-        .eq("user_id", user.id)
-        .eq("academic_year_id", Number(yearId));
-
-      if (error) throw new Error(error.message);
-    }
-
-    // Lấy báo cáo đang lưu trong DB
-    const { data: reportData, error: reportLoadError } =
-      await supabase
-        .from("reports")
-        .select("content")
-        .eq("user_id", user.id)
-        .eq("criteria", "dao-duc")
-        .eq("academic_year_id", Number(yearId))
-        .maybeSingle();
-
-    if (reportLoadError) throw new Error(reportLoadError.message);
-
-    const currentReport = reportData?.content || reportRef.current;
-
-    // Dựng lại báo cáo từ file thực tế còn tồn tại
-    const mergedReport = buildReportWithEvidence(
-      currentReport,
-      normalizedFiles,
-      currentFiles
-    );
-
-    // Lưu báo cáo
-    const { error: reportError } = await supabase
-      .from("reports")
-      .upsert(
-        {
-          user_id: user.id,
-          criteria: "dao-duc",
-          academic_year_id: Number(yearId),
-          content: mergedReport,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "user_id,criteria,academic_year_id",
-        }
-      );
-
-    if (reportError) throw new Error(reportError.message);
-
-    setFiles(normalizedFiles);
-    filesRef.current = normalizedFiles;
-
-    setReport(mergedReport);
-    reportRef.current = mergedReport;
-
-    setLastSaved(new Date());
-
-    setDisplayNames((prev) => {
-      const updated = { ...prev };
-
-      const remainingNames = new Set(
-        normalizedFiles.map((file) => file.storage_name)
-      );
-
-      for (const name of Object.keys(updated)) {
-        if (!remainingNames.has(name)) delete updated[name];
-      }
-
-      normalizedFiles.forEach((file) => {
-        updated[file.storage_name] =
-          file.display_name || file.storage_name;
-      });
-
-      return updated;
+    const response = await fetch("/api/queue-delete-file", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        storageName,
+        folder: "dao-duc",
+        academicYearId: Number(yearId),
+      }),
     });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.error || "Không thể gửi yêu cầu xóa."
+      );
+    }
+
+    // Ẩn file khỏi giao diện sau khi đưa vào hàng đợi thành công
+    const optimisticFiles = currentFiles.filter(
+      (file) => file.storage_name !== storageName
+    );
+
+    setFiles(optimisticFiles);
+    filesRef.current = optimisticFiles;
+
+    alert("Đã đưa file vào hàng đợi xóa. Hệ thống sẽ xử lý tự động.");
 
   } catch (error) {
-    console.error("Delete batch error:", error);
-
-    await loadFiles();
+    console.error("Queue delete error:", error);
 
     alert(
       error instanceof Error
         ? error.message
-        : "Không thể đồng bộ dữ liệu sau khi xóa."
+        : "Không thể gửi yêu cầu xóa file."
     );
 
   } finally {
-    deleteProcessingRef.current = false;
-    deleteQueueRef.current = [];
-    setDeletingFiles([]);
+    deletingRef.current.delete(storageName);
+    setDeletingFiles((prev) =>
+      prev.filter((item) => item !== storageName)
+    );
   }
 }
+
   return (
   <div
     style={{

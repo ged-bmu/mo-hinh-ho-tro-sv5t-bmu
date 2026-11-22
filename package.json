@@ -16,6 +16,7 @@
     "@tiptap/extension-placeholder": "^3.27.2",
     "@tiptap/react": "^3.27.2",
     "@tiptap/starter-kit": "^3.27.2",
+    "cheerio": "^1.2.0",
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "firebase": "^12.17.0",

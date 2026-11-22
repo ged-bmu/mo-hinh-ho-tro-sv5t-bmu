@@ -1,0 +1,17 @@
+name: Process File Delete Queue
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  process-queue:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Process delete queue
+        run: |
+          curl -sS -X GET \
+            "${{ secrets.WORKER_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
