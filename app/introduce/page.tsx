@@ -2013,6 +2013,7 @@ async function handleLogin() {
           display: "block",
           objectFit: "contain",
           flexShrink: 0,
+          zIndex: 100,
         }}
       />
 
@@ -2642,13 +2643,14 @@ async function handleLogin() {
 
 
 
+
 {/* NỘI DUNG BÊN DƯỚI - DIGITAL HUD */}
 <div
   style={{
     width: "100%",
     maxWidth: "560px",
     textAlign: "center",
-    marginTop: "clamp(5px, 2vh, 24px)",
+    marginTop: "10px",
     position: "relative",
     zIndex: 2,
   }}
@@ -2656,14 +2658,33 @@ async function handleLogin() {
   {/* TIÊU ĐỀ */}
   <div
     style={{
-      fontSize: "clamp(20px, min(2.2vw, 3.2vh), 36px)",
+      position: "relative",
+      display: "inline-block",
+      fontSize: "clamp(22px, min(2.5vw, 3.5vh), 39px)",
       fontWeight: 900,
-      color: "#075985",
-      letterSpacing: "1.5px",
-      textShadow: "0 0 14px rgba(56,189,248,0.3)",
+      color: "#1239bd",
+      letterSpacing: "2px",
+      textShadow: "0 0 8px rgba(56,189,248,0.45), 0 0 20px rgba(14,165,233,0.25)",
+      padding: "0 18px 7px",
+      background: "linear-gradient(90deg, #075985, #0284c7, #075985)",
+      backgroundClip: "text",
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent",
     }}
   >
     SINH VIÊN 5 TỐT
+    <div
+      style={{
+        position: "absolute",
+        bottom: 0,
+        left: "12%",
+        right: "12%",
+        height: "2px",
+        borderRadius: "50%",
+        background: "linear-gradient(90deg, transparent, #3ad0eb, #ffffff, #0b6890, transparent)",
+        boxShadow: "0 0 9px rgba(14, 53, 226, 0.8)",
+      }}
+    />
   </div>
 
   {/* DÒNG PHỤ */}
@@ -2673,30 +2694,44 @@ async function handleLogin() {
       alignItems: "center",
       justifyContent: "center",
       gap: "10px",
-      marginTop: "8px",
-      color: "#0c4a6e",
-      fontSize: "clamp(14px, 1.2vw, 19px)",
-      fontWeight: 600,
-      letterSpacing: "0.5px",
+      marginTop: "11px",
+      color: "#075985",
+      fontSize: "clamp(13px, 1.2vw, 18px)",
+      fontWeight: 650,
+      letterSpacing: "0.6px",
     }}
   >
     <span
       style={{
-        width: "24px",
+        width: "clamp(18px, 3vw, 34px)",
         height: "1px",
         background: "linear-gradient(90deg, transparent, #0ea5e9)",
+        boxShadow: "0 0 6px rgba(14,165,233,0.7)",
       }}
     />
-    Hành trình hơn cả một danh hiệu
     <span
       style={{
-        width: "24px",
+        padding: "6px 13px",
+        borderRadius: "20px",
+        background: "rgba(224,242,254,0.55)",
+        border: "1px solid rgba(27, 46, 220, 0.67)",
+        boxShadow: "0 3px 12px rgba(14,165,233,0.10), inset 0 0 10px rgba(255,255,255,0.7)",
+        whiteSpace: "nowrap",
+      }}
+    >
+      Hành trình hơn cả một danh hiệu
+    </span>
+    <span
+      style={{
+        width: "clamp(18px, 3vw, 34px)",
         height: "1px",
         background: "linear-gradient(90deg, #0ea5e9, transparent)",
+        boxShadow: "0 0 6px rgba(14,165,233,0.7)",
       }}
     />
   </div>
 </div>
+
 
 <div
             style={{
@@ -2705,7 +2740,7 @@ async function handleLogin() {
               alignItems: "center",
               justifyContent: "center",
               gap: "clamp(10px, 1.5vw, 24px)",
-              marginTop: "2px",
+              marginTop: "0px",
               flexWrap: "wrap",
             }}
           >
@@ -2724,21 +2759,21 @@ async function handleLogin() {
                 e.currentTarget.style.boxShadow = "none";
               }}
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "#2563eb",
-                color: "white",
-                padding: "clamp(10px, 1vw, 15px) clamp(20px, 2.5vw, 38px)",
-                borderRadius: "clamp(8px, 0.8vw, 12px)",
-                fontWeight: 400,
-                fontSize: "clamp(13px, 1.2vw, 18px)",
-                transition: "all 0.25s ease",
-                minWidth: "clamp(110px, 10vw, 150px)",
-                textAlign: "center",
-                border: "none",
-                cursor: "pointer",
-              }}
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  background: "#2563eb",
+  color: "white",
+  padding: "clamp(7px, 0.8vw, 13px) clamp(14px, 2vw, 30px)",
+  borderRadius: "clamp(7px, 0.8vw, 12px)",
+  fontWeight: 400,
+  fontSize: "clamp(12px, 1vw, 16px)",
+  transition: "all 0.25s ease",
+  minWidth: "clamp(90px, 9vw, 140px)",
+  textAlign: "center",
+  border: "none",
+  cursor: "pointer",
+}}
             >
               <b>Đăng nhập</b>
             </button>
