@@ -23,6 +23,7 @@ export default function Home() {
   const [showProfile, setShowProfile] = useState(false);
   const [nextActivities, setNextActivities] = useState<any[]>([]);
   const [showActivities, setShowActivities] = useState(false);
+  const [rightCardScale, setRightCardScale] = useState(1);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [generalNotification, setGeneralNotification] = useState<any>(null);
   const [currentAcademicYearId, setCurrentAcademicYearId] = useState<number | null>(null);
@@ -34,6 +35,27 @@ export default function Home() {
   const [registrationLoading, setRegistrationLoading] = useState(false);
   const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
   const [totalProfilePercent, setTotalProfilePercent] = useState(0);
+  const cardScale = isMobile ? 1 : rightCardScale;
+
+useEffect(() => {
+  try {
+    const savedPercent = Number(window.localStorage.getItem("home-right-card-size"));
+    if (Number.isInteger(savedPercent) && savedPercent >= 90 && savedPercent <= 120 && savedPercent % 5 === 0) {
+      setRightCardScale(savedPercent / 100);
+    }
+  } catch (error) {
+    console.error("Lỗi tải kích thước thẻ trang chủ:", error);
+  }
+}, []);
+
+function updateRightCardScale(percent: number) {
+  setRightCardScale(percent / 100);
+  try {
+    window.localStorage.setItem("home-right-card-size", String(percent));
+  } catch (error) {
+    console.error("Lỗi lưu kích thước thẻ trang chủ:", error);
+  }
+}
 
 useEffect(() => {
   checkUser();
@@ -1814,7 +1836,7 @@ circleCircumference -
   style={{
     display: "flex",
     flexDirection: "column",
-    gap: 12,
+    gap: 12 * cardScale,
     height: "100%",
     minWidth: 0,
     minHeight: 0,
@@ -1847,13 +1869,14 @@ circleCircumference -
       }}
       style={{
         display: "flex",
+        flexWrap: "wrap",
         alignItems: "center",
-        gap: 8,
+        gap: 8 * cardScale,
         fontWeight: 700,
-        fontSize: 15,
+        fontSize: 15 * cardScale,
         color: "#2c449b",
         background: "linear-gradient(90deg, #63d0ff, #38bdf8)",
-        padding: "12px 14px",
+        padding: `${12 * cardScale}px ${14 * cardScale}px`,
         width: "100%",
         boxSizing: "border-box",
         borderBottom: "1px solid #000000",
@@ -1883,6 +1906,36 @@ circleCircumference -
         {nextActivities.length}
       </span>
 
+      {!isMobile && (
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            marginLeft: "auto",
+            color: "#1e3a8a",
+            fontSize: 12,
+            fontWeight: 600,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <span>Cỡ thẻ</span>
+          <input
+            type="range"
+            min={90}
+            max={120}
+            step={5}
+            value={Math.round(rightCardScale * 100)}
+            aria-label="Điều chỉnh kích thước các thẻ bên phải"
+            onChange={(event) => updateRightCardScale(Number(event.target.value))}
+            style={{ width: 90, accentColor: "#2563eb", cursor: "pointer" }}
+          />
+          <span style={{ minWidth: 36, textAlign: "right" }}>
+            {Math.round(rightCardScale * 100)}%
+          </span>
+        </label>
+      )}
+
       {/* Mũi tên chỉ hiện trên mobile */}
       {isMobile && (
         <span
@@ -1907,12 +1960,12 @@ circleCircumference -
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 10,
+          gap: 10 * cardScale,
           flex: "1 1 auto",
           minHeight: 0,
           maxHeight: isMobile ? "260px" : "none",
           overflowY: "auto",
-          padding: "10px 10px 10px 10px",
+          padding: `${10 * cardScale}px`,
           boxSizing: "border-box",
         }}
       >
@@ -1923,11 +1976,11 @@ circleCircumference -
               style={{
                 background: "#F8FAFC",
                 borderRadius: 12,
-                padding: "12px 15px",
+                padding: `${12 * cardScale}px ${15 * cardScale}px`,
                 border: "1px solid #E5E7EB",
                 display: "flex",
                 alignItems: "center",
-                gap: 16,
+                gap: 16 * cardScale,
                 flexWrap: "nowrap",
                 minWidth: 0,
                 flexShrink: 0,
@@ -1946,7 +1999,7 @@ circleCircumference -
                 <div
                   style={{
                     fontWeight: 700,
-                    fontSize: 14,
+                    fontSize: 14 * cardScale,
                     color: "#0F172A",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
@@ -1963,7 +2016,7 @@ circleCircumference -
                     width: "fit-content",
                     padding: "3px 9px",
                     borderRadius: 999,
-                    fontSize: 11,
+                    fontSize: 11 * cardScale,
                     fontWeight: 800,
                     background:
                       activity.displayStatus === "ongoing"
@@ -1985,7 +2038,7 @@ circleCircumference -
               <div
                 style={{
                   flex: "0 0 150px",
-                  fontSize: 13,
+                  fontSize: 13 * cardScale,
                   whiteSpace: "nowrap",
                   fontWeight: 600,
                   display: isMobile ? "none" : "block",
@@ -2031,7 +2084,7 @@ circleCircumference -
                 style={{
                   flex: "0 0 155px",
                   color: "#64748B",
-                  fontSize: 13,
+                  fontSize: 13 * cardScale,
                   whiteSpace: "nowrap",
                   display: isMobile ? "none" : "block",
                 }}
@@ -2047,7 +2100,7 @@ circleCircumference -
                   color: "#2563EB",
                   textDecoration: "none",
                   fontWeight: 600,
-                  fontSize: 13,
+                  fontSize: 13 * cardScale,
                   whiteSpace: "nowrap",
                 }}
               >
@@ -2059,8 +2112,8 @@ circleCircumference -
           <div
             style={{
               color: "#64748B",
-              fontSize: 14,
-              padding: "14px 12px",
+              fontSize: 14 * cardScale,
+              padding: `${14 * cardScale}px ${12 * cardScale}px`,
               margin: 0,
             }}
           >
@@ -2083,25 +2136,25 @@ circleCircumference -
       background:
         "linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)",
       borderRadius: "14px",
-      padding: "18px 22px",
+      padding: `${18 * cardScale}px ${22 * cardScale}px`,
       border: "1px solid #FED7AA",
       boxShadow: "0 3px 8px rgba(0,0,0,.05)",
       display: "flex",
       alignItems: "center",
-      gap: 14,
+      gap: 14 * cardScale,
     }}
   >
     {/* Icon */}
     <div
       style={{
-        width: 46,
-        height: 46,
+        width: 46 * cardScale,
+        height: 46 * cardScale,
         borderRadius: 12,
         background: "#FFEDD5",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: 25,
+        fontSize: 25 * cardScale,
         flexShrink: 0,
       }}
     >
@@ -2118,7 +2171,7 @@ circleCircumference -
       {/* Tiêu đề */}
       <div
         style={{
-          fontSize: 16,
+          fontSize: 16 * cardScale,
           fontWeight: 800,
           color: "#9A3412",
         }}
@@ -2129,9 +2182,9 @@ circleCircumference -
       {/* Nội dung thông báo */}
       <div
         style={{
-          fontSize: 14,
+          fontSize: 14 * cardScale,
           color: "#C2410C",
-          marginTop: 5,
+          marginTop: 5 * cardScale,
           lineHeight: 1.5,
           wordBreak: "break-word",
         }}
@@ -2144,9 +2197,9 @@ circleCircumference -
       {generalNotification?.created_at && (
         <div
           style={{
-            fontSize: 12,
+            fontSize: 12 * cardScale,
             color: "#9A3412",
-            marginTop: 7,
+            marginTop: 7 * cardScale,
           }}
         >
           Cập nhật:{" "}

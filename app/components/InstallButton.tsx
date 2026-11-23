@@ -105,7 +105,7 @@ export default function InstallButton({
           fontSize: "18px",
           cursor: "pointer",
           transition: "all 0.25s ease",
-          width: "100%",
+          width: isMobile ? "100%" : "60px",
           height: "52px",
           display: "flex",
           alignItems: "center",

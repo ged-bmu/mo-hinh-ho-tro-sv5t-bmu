@@ -1613,7 +1613,7 @@ async function handleLogin() {
       textShadow: "0 0 14px rgba(56,189,248,0.3)",
     }}
   >
-    PHONG TRÀO SINH VIÊN 5 TỐT
+    SINH VIÊN 5 TỐT
   </div>
 
   {/* DÒNG PHỤ */}
