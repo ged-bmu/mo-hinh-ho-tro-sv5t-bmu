@@ -384,7 +384,7 @@ async function handleLogin() {
   }} 
 >
   {/* Trang chủ */}
-{tab === "home" && (
+{(tab === "home" || tab === "login") && (
   <>
     {/* ================= DESKTOP ================= */}
     {!isMobile && (
@@ -423,8 +423,368 @@ async function handleLogin() {
               objectFit: "contain",
             }}
           />
+          {/* ===== CARD ĐĂNG NHẬP / ĐĂNG KÝ ===== */}
+{tab === "login" && (
+  <div
+    style={{
+      width: "min(100%, 500px)",
+      height: "400px",
+      marginTop: "clamp(8px, 1vw, 16px)",
+      background: "rgba(255,255,255,0.96)",
+      backdropFilter: "blur(10px)",
+      WebkitBackdropFilter: "blur(10px)",
+      padding: "24px",
+      borderRadius: "20px",
+      border: "1px solid rgba(255,255,255,0.9)",
+      boxShadow:
+        "0 15px 40px rgba(0,100,180,0.18), 0 4px 12px rgba(0,0,0,0.08)",
+      boxSizing: "border-box",
+      overflowY: "auto",
+      scrollbarWidth: "thin",
+      scrollbarColor: "rgba(100,116,139,0.3) transparent",
+    }}
+  >
+        {/* CỬA SỔ ĐĂNG NHẬP */}
+      <div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "15px",
+    marginBottom: "12px",
+  }}
+>
+
+  <div
+    style={{
+      display: "flex",
+      width: "calc(100% + 30px)",
+      marginLeft: "0px",
+      marginTop: "0",
+      marginBottom: "20px",
+      borderBottom: "1px solid #e5e7eb",
+      boxSizing: "border-box",
+    }}
+  >
+    <button
+      type="button"
+      onClick={() => setAuthMode("login")}
+      style={{
+        flex: 1,
+        minWidth: 0,
+        border: "none",
+        borderBottom:
+          authMode === "login"
+            ? "2px solid #2563eb"
+            : "2px solid transparent",
+        background:
+          authMode === "login" ? "#fff" : "#f8fafc",
+        color:
+          authMode === "login" ? "#2563eb" : "#64748b",
+        padding: "12px 10px",
+        fontSize: "16px",
+        fontWeight: 700,
+        cursor: "pointer",
+        boxSizing: "border-box",
+      }}
+    >
+      ĐĂNG NHẬP
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setAuthMode("register")}
+      style={{
+        flex: 1,
+        minWidth: 0,
+        border: "none",
+        borderLeft: "1px solid #e5e7eb",
+        borderBottom:
+          authMode === "register"
+            ? "2px solid #2563eb"
+            : "2px solid transparent",
+        background:
+          authMode === "register" ? "#fff" : "#f8fafc",
+        color:
+          authMode === "register" ? "#2563eb" : "#64748b",
+        padding: "12px 10px",
+        fontSize: "16px",
+        fontWeight: 700,
+        cursor: "pointer",
+        boxSizing: "border-box",
+      }}
+    >
+      ĐĂNG KÝ
+    </button>
+  </div>
+</div>
+
+<form
+  onSubmit={(e) => {
+    e.preventDefault();
+
+    if (authMode === "login") {
+      handleLogin();
+    } else {
+      handleRegister();
+    }
+  }}
+>
+  {/* ===== HỌ TÊN + LỚP ===== */}
+  {authMode === "register" && (
+    <>
+      <label
+        style={{
+          display: "block",
+          marginTop: "3px",
+          marginBottom: "3px",
+          marginLeft: "3px",
+          fontSize: "14px",
+          fontWeight: 500,
+          color: "#94a3b8",
+        }}
+      >
+        Họ tên
+      </label>
+
+      <input
+        placeholder="Nhập họ và tên"
+        value={hoTen}
+        onChange={(e) => setHoTen(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "12px 14px",
+          boxSizing: "border-box",
+          border: "1px solid #d9dee7",
+          borderRadius: "10px",
+          outline: "none",
+          fontSize: "15px",
+          color: "#000",
+          background: "#fff",
+        }}
+      />
+
+      <label
+        style={{
+          display: "block",
+          marginTop: "3px",
+          marginBottom: "3px",
+          marginLeft: "3px",
+          fontSize: "14px",
+          fontWeight: 500,
+          color: "#94a3b8",
+        }}
+      >
+        Lớp
+      </label>
+
+      <input
+        placeholder="Nhập lớp"
+        value={lop}
+        onChange={(e) => setLop(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "12px 14px",
+          boxSizing: "border-box",
+          border: "1px solid #d9dee7",
+          borderRadius: "10px",
+          outline: "none",
+          fontSize: "15px",
+          color: "#000",
+          background: "#fff",
+        }}
+      />
+    </>
+  )}
+
+  {/* ===== MSSV ===== */}
+  <label
+    style={{
+      display: "block",
+      marginTop: "3px",
+      marginBottom: "3px",
+      marginLeft: "3px",
+      fontSize: "14px",
+      fontWeight: 500,
+      color: "#94a3b8",
+    }}
+  >
+    Mã số sinh viên
+  </label>
+
+  <input
+    placeholder="Nhập mã số sinh viên"
+    value={mssv}
+    onChange={(e) => setMssv(e.target.value)}
+    style={{
+      width: "100%",
+      padding: "12px 14px",
+      boxSizing: "border-box",
+      border: "1px solid #d9dee7",
+      borderRadius: "10px",
+      outline: "none",
+      fontSize: "15px",
+      color: "#000",
+      background: "#fff",
+    }}
+  />
+
+  {/* ===== MẬT KHẨU ===== */}
+  <label
+    style={{
+      display: "block",
+      marginTop: "14px",
+      marginBottom: "3px",
+      marginLeft: "3px",
+      fontSize: "14px",
+      fontWeight: 500,
+      color: "#94a3b8",
+    }}
+  >
+    Mật khẩu
+  </label>
+
+  <div
+    style={{
+      position: "relative",
+      width: "100%",
+    }}
+  >
+    <input
+      type={showPassword ? "text" : "password"}
+      placeholder="Nhập mật khẩu"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      style={{
+        width: "100%",
+        padding: "12px 45px 12px 14px",
+        boxSizing: "border-box",
+        border: "1px solid #d9dee7",
+        borderRadius: "10px",
+        outline: "none",
+        fontSize: "15px",
+        color: "#000",
+        background: "#fff",
+      }}
+    />
+
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      style={{
+        position: "absolute",
+        right: "12px",
+        top: "50%",
+        transform: "translateY(-50%)",
+        border: "none",
+        background: "transparent",
+        padding: "4px",
+        cursor: "pointer",
+        fontSize: "18px",
+        color: "#94a3b8",
+      }}
+      aria-label={
+        showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
+      }
+    >
+      {showPassword ? (
+        <EyeOff size={19} />
+      ) : (
+        <Eye size={19} />
+      )}
+    </button>
+  </div>
+
+  {/* ===== XÁC NHẬN MẬT KHẨU ===== */}
+  {authMode === "register" && (
+    <>
+      <label
+        style={{
+          display: "block",
+          marginTop: "14px",
+          marginBottom: "3px",
+          marginLeft: "3px",
+          fontSize: "14px",
+          fontWeight: 500,
+          color: "#94a3b8",
+        }}
+      >
+        Xác nhận mật khẩu
+      </label>
+
+      <input
+        type="password"
+        placeholder="Nhập lại mật khẩu"
+        value={confirmPassword}
+        onChange={(e) =>
+          setConfirmPassword(e.target.value)
+        }
+        style={{
+          width: "100%",
+          padding: "12px 14px",
+          boxSizing: "border-box",
+          border: "1px solid #d9dee7",
+          borderRadius: "10px",
+          outline: "none",
+          fontSize: "15px",
+          color: "#000",
+          background: "#fff",
+        }}
+      />
+    </>
+  )}
+
+  {/* ===== LƯU ĐĂNG NHẬP ===== */}
+  {authMode === "login" && (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        marginTop: "6px",
+        marginLeft: "3px",
+        height: "28px",
+      }}
+    >
+    </div>
+  )}
+
+  {/* ===== NÚT ===== */}
+  <button
+    type="submit"
+    style={{
+      width: "100%",
+      marginTop: "0px",
+      padding: "12px",
+      border: "none",
+      background: "#2563eb",
+      color: "white",
+      borderRadius: "8px",
+      cursor: "pointer",
+      fontWeight: 600,
+      fontSize: "15px",
+    }}
+  >
+    {authMode === "login" ? "Đăng nhập" : "Đăng ký"}
+  </button>
+  <p
+  style={{
+    margin: "8px 12px",
+    fontSize: "11px",
+    color: "#dc2626",
+    textAlign: "center",
+    lineHeight: 1.5,
+  }}
+>
+  Sinh viên liên hệ CLB Sinh viên 5 tốt BMU trong trường hợp quên mật khẩu.
+</p>
+</form>
+
+
+  </div>
+)}
 
           {/* ===== CARD GIỚI THIỆU ===== */}
+          {tab !== "login" && (
           <div
   style={{
     width: "100%",
@@ -458,8 +818,9 @@ async function handleLogin() {
               sơ Sinh viên 5 tốt cấp Trường.
             </b>
           </div>
-
+          )}
           {/* ===== 3 CARD ===== */}
+          {tab !== "login" && (
 <div
   style={{
     width: "100%",
@@ -661,8 +1022,9 @@ async function handleLogin() {
     </p>
   </div>
 </div>
-
+)}
           {/* ===== NÚT ĐĂNG NHẬP + CÀI ỨNG DỤNG ===== */}
+          {tab !== "login" && (
           <div
             style={{
               width: "100%",
@@ -710,8 +1072,9 @@ async function handleLogin() {
 
             <InstallButton />
           </div>
+          )}
         </div>
-
+            
 
 
 {/* ================= NỬA BÊN PHẢI ================= */}
@@ -1462,7 +1825,6 @@ async function handleLogin() {
   </div>
 </div>
 </div>
-
       </div>
     )}
 
@@ -1497,116 +1859,6 @@ async function handleLogin() {
             }}
           />
 
-          {/* CARD GIỚI THIỆU */}
-          <div
-            style={{
-              position: "relative",
-              fontFamily: "'Noto Serif', serif",
-              fontSize: "15px",
-              width: "90%",
-              height: "auto",
-              background: "#fafafa",
-              borderRadius: "20px",
-              padding: "15px",
-              marginTop: "10px",
-              boxSizing: "border-box",
-              boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
-              textAlign: "justify",
-              lineHeight: 1.5,
-            }}
-          >
-            <b>
-              Với mục tiêu{" "}
-              <span style={{ color: "#2563eb", fontWeight: 600 }}>
-                tăng cường ứng dụng công nghệ thông tin và thúc đẩy chuyển đổi số
-              </span>{" "}
-              trong công tác Hội và phong trào sinh viên,{" "}
-              <span style={{ color: "#2563eb", fontWeight: 600 }}>
-                Hệ thống hỗ trợ Sinh viên 5 tốt BMU
-              </span>{" "}
-              là mô hình Chuyển đổi số được ban hành theo{" "}
-              <span style={{ color: "#2563eb", fontWeight: 600 }}>
-                Kế hoạch số 03/KH-HSV ngày 27/8/2026 của Ban Chấp hành Hội
-                Sinh viên Trường
-              </span>{" "}
-              nhằm hỗ trợ sinh viên theo dõi quá trình rèn luyện, hoàn thiện hồ
-              sơ Sinh viên 5 tốt cấp Trường.
-            </b>
-          </div>
-
-          {/* NÚT ĐĂNG NHẬP + CÀI ỨNG DỤNG */}
-          <div
-            style={{
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "15px",
-              width: "90%",
-              marginTop: "20px",
-            }}
-          >
-            <div
-              style={{
-                position: "relative",
-                width: "100%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "12px",
-              }}
-            >
-              {/* NÚT ĐĂNG NHẬP */}
-              <button
-                type="button"
-                className="cta-btn"
-                onClick={() => setTab("login")}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 8px 20px rgba(37,99,235,.25)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
-                style={{
-                  position: "relative",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "#2563eb",
-                  color: "white",
-                  padding: "13px 35px",
-                  borderRadius: "10px",
-                  fontWeight: 400,
-                  fontSize: "18px",
-                  transition: "all 0.25s ease",
-                  minWidth: "140px",
-                  textAlign: "center",
-                  boxSizing: "border-box",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                <b>Đăng nhập</b>
-              </button>
-
-              {/* NÚT CÀI ỨNG DỤNG */}
-              <div
-                style={{
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "100%",
-                }}
-              >
-                <InstallButton />
-              </div>
-            </div>
-          </div>
         </div>
       </>
     )}
@@ -1622,7 +1874,38 @@ async function handleLogin() {
       boxSizing: "border-box",
     }}
   >
-
+{/* PHIÊN BẢN HIỆN TẠI */}
+<div
+  style={{
+    position: "absolute",
+    top: "8px",
+    right: "20px",
+    zIndex: 10,
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: "5px 10px",
+    border: "1px solid rgba(14,165,233,0.45)",
+    background: "rgba(224,242,254,0.55)",
+    borderRadius: "4px",
+    backdropFilter: "blur(8px)",
+    fontSize: "10px",
+    fontWeight: 800,
+    letterSpacing: "1px",
+    color: "#075985",
+  }}
+>
+  <span
+    style={{
+      width: "6px",
+      height: "6px",
+      borderRadius: "50%",
+      background: "#0ea5e9",
+      boxShadow: "0 0 7px #38bdf8",
+    }}
+  />
+  Phiên bản 1.4.0
+</div>
     {/* ===== CARD LỚN CHỨA TOÀN BỘ NỘI DUNG ===== */}
     <div
       style={{
@@ -1989,6 +2272,38 @@ async function handleLogin() {
       color: "#000000",
     }}
   >
+    {/* PHIÊN BẢN HIỆN TẠI */}
+<div
+  style={{
+    position: "absolute",
+    top: "8px",
+    right: "20px",
+    zIndex: 10,
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: "5px 10px",
+    border: "1px solid rgba(14,165,233,0.45)",
+    background: "rgba(224,242,254,0.55)",
+    borderRadius: "4px",
+    backdropFilter: "blur(8px)",
+    fontSize: "10px",
+    fontWeight: 800,
+    letterSpacing: "1px",
+    color: "#075985",
+  }}
+>
+  <span
+    style={{
+      width: "6px",
+      height: "6px",
+      borderRadius: "50%",
+      background: "#0ea5e9",
+      boxShadow: "0 0 7px #38bdf8",
+    }}
+  />
+  Phiên bản 1.4.0
+</div>
     {/* CARD LỚN CHỨA TOÀN BỘ NỘI DUNG */}
     <div
       style={{
@@ -2208,415 +2523,6 @@ async function handleLogin() {
         ))}
       </div>
     </div>
-  </div>
-)}
-{tab === "login" && (
-  <div
-    style={{
-      width: "100%",
-      minHeight: isMobile ? "auto" : "calc(100vh - 75px)",
-
-      backgroundImage: isMobile
-        ? "url('/trangchumobile.png'), radial-gradient(circle at 0% 0%, #33d1f4 0%, #e5fdff 100%)"
-        : "url('/Trangchu.png')",
-
-      backgroundSize: "100% auto",
-      backgroundPosition: "top center",
-      backgroundRepeat: "no-repeat",
-
-      display: isMobile ? "flex" : "block",
-      flexDirection: isMobile ? "column" : undefined,
-      alignItems: isMobile ? "center" : undefined,
-
-      paddingBottom: isMobile ? "30px" : undefined,
-
-      boxSizing: "border-box",
-    }}
-  >
-
-    {/* ẢNH NỀN MOBILE */}
-    {isMobile && (
-      <img
-        src="/trangchumobile.png"
-        alt=""
-        style={{
-          width: "100%",
-          height: "auto",
-          display: "block",
-          objectFit: "contain",
-          flexShrink: 0,
-        }}
-      />
-    )}
-
-    {/* CỬA SỔ ĐĂNG NHẬP */}
-<div
-  style={{
-    width: "min(92vw, 500px)",
-    height: isMobile
-      ? "auto"
-      : authMode === "register"
-        ? "400px"
-        : "400px",
-    background: "rgba(255, 255, 255, 0.96)",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    padding: "24px",
-    borderRadius: "20px",
-    border: "1px solid rgba(255,255,255,0.9)",
-    boxShadow:
-      "0 15px 40px rgba(0, 100, 180, 0.18), 0 4px 12px rgba(0,0,0,0.08)",
-    boxSizing: "border-box",
-    overflowY: "auto",
-    // Con lăn mảnh hơn trên Firefox
-    scrollbarWidth: "thin",
-    scrollbarColor: "rgba(100, 116, 139, 0.45) transparent",
-
-    transform: isMobile
-      ? "none"
-      : authMode === "register"
-        ? "translate(180px, 230px)"
-        : "translate(180px, 230px)",
-
-    marginTop: isMobile ? "10px" : "0",
-  }}
->
-      <div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "15px",
-    marginBottom: "12px",
-  }}
->
-
-  <div
-    style={{
-      display: "flex",
-      width: "calc(100% + 30px)",
-      marginLeft: "0px",
-      marginTop: "0",
-      marginBottom: "20px",
-      borderBottom: "1px solid #e5e7eb",
-      boxSizing: "border-box",
-    }}
-  >
-    <button
-      type="button"
-      onClick={() => setAuthMode("login")}
-      style={{
-        flex: 1,
-        minWidth: 0,
-        border: "none",
-        borderBottom:
-          authMode === "login"
-            ? "2px solid #2563eb"
-            : "2px solid transparent",
-        background:
-          authMode === "login" ? "#fff" : "#f8fafc",
-        color:
-          authMode === "login" ? "#2563eb" : "#64748b",
-        padding: "12px 10px",
-        fontSize: "16px",
-        fontWeight: 700,
-        cursor: "pointer",
-        boxSizing: "border-box",
-      }}
-    >
-      ĐĂNG NHẬP
-    </button>
-
-    <button
-      type="button"
-      onClick={() => setAuthMode("register")}
-      style={{
-        flex: 1,
-        minWidth: 0,
-        border: "none",
-        borderLeft: "1px solid #e5e7eb",
-        borderBottom:
-          authMode === "register"
-            ? "2px solid #2563eb"
-            : "2px solid transparent",
-        background:
-          authMode === "register" ? "#fff" : "#f8fafc",
-        color:
-          authMode === "register" ? "#2563eb" : "#64748b",
-        padding: "12px 10px",
-        fontSize: "16px",
-        fontWeight: 700,
-        cursor: "pointer",
-        boxSizing: "border-box",
-      }}
-    >
-      ĐĂNG KÝ
-    </button>
-  </div>
-</div>
-
-<form
-  onSubmit={(e) => {
-    e.preventDefault();
-
-    if (authMode === "login") {
-      handleLogin();
-    } else {
-      handleRegister();
-    }
-  }}
->
-  {/* ===== HỌ TÊN + LỚP ===== */}
-  {authMode === "register" && (
-    <>
-      <label
-        style={{
-          display: "block",
-          marginTop: "3px",
-          marginBottom: "3px",
-          marginLeft: "3px",
-          fontSize: "14px",
-          fontWeight: 500,
-          color: "#94a3b8",
-        }}
-      >
-        Họ tên
-      </label>
-
-      <input
-        placeholder="Nhập họ và tên"
-        value={hoTen}
-        onChange={(e) => setHoTen(e.target.value)}
-        style={{
-          width: "100%",
-          padding: "12px 14px",
-          boxSizing: "border-box",
-          border: "1px solid #d9dee7",
-          borderRadius: "10px",
-          outline: "none",
-          fontSize: "15px",
-          color: "#000",
-          background: "#fff",
-        }}
-      />
-
-      <label
-        style={{
-          display: "block",
-          marginTop: "3px",
-          marginBottom: "3px",
-          marginLeft: "3px",
-          fontSize: "14px",
-          fontWeight: 500,
-          color: "#94a3b8",
-        }}
-      >
-        Lớp
-      </label>
-
-      <input
-        placeholder="Nhập lớp"
-        value={lop}
-        onChange={(e) => setLop(e.target.value)}
-        style={{
-          width: "100%",
-          padding: "12px 14px",
-          boxSizing: "border-box",
-          border: "1px solid #d9dee7",
-          borderRadius: "10px",
-          outline: "none",
-          fontSize: "15px",
-          color: "#000",
-          background: "#fff",
-        }}
-      />
-    </>
-  )}
-
-  {/* ===== MSSV ===== */}
-  <label
-    style={{
-      display: "block",
-      marginTop: "3px",
-      marginBottom: "3px",
-      marginLeft: "3px",
-      fontSize: "14px",
-      fontWeight: 500,
-      color: "#94a3b8",
-    }}
-  >
-    Mã số sinh viên
-  </label>
-
-  <input
-    placeholder="Nhập mã số sinh viên"
-    value={mssv}
-    onChange={(e) => setMssv(e.target.value)}
-    style={{
-      width: "100%",
-      padding: "12px 14px",
-      boxSizing: "border-box",
-      border: "1px solid #d9dee7",
-      borderRadius: "10px",
-      outline: "none",
-      fontSize: "15px",
-      color: "#000",
-      background: "#fff",
-    }}
-  />
-
-  {/* ===== MẬT KHẨU ===== */}
-  <label
-    style={{
-      display: "block",
-      marginTop: "14px",
-      marginBottom: "3px",
-      marginLeft: "3px",
-      fontSize: "14px",
-      fontWeight: 500,
-      color: "#94a3b8",
-    }}
-  >
-    Mật khẩu
-  </label>
-
-  <div
-    style={{
-      position: "relative",
-      width: "100%",
-    }}
-  >
-    <input
-      type={showPassword ? "text" : "password"}
-      placeholder="Nhập mật khẩu"
-      value={password}
-      onChange={(e) => setPassword(e.target.value)}
-      style={{
-        width: "100%",
-        padding: "12px 45px 12px 14px",
-        boxSizing: "border-box",
-        border: "1px solid #d9dee7",
-        borderRadius: "10px",
-        outline: "none",
-        fontSize: "15px",
-        color: "#000",
-        background: "#fff",
-      }}
-    />
-
-    <button
-      type="button"
-      onClick={() => setShowPassword(!showPassword)}
-      style={{
-        position: "absolute",
-        right: "12px",
-        top: "50%",
-        transform: "translateY(-50%)",
-        border: "none",
-        background: "transparent",
-        padding: "4px",
-        cursor: "pointer",
-        fontSize: "18px",
-        color: "#94a3b8",
-      }}
-      aria-label={
-        showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
-      }
-    >
-      {showPassword ? (
-        <EyeOff size={19} />
-      ) : (
-        <Eye size={19} />
-      )}
-    </button>
-  </div>
-
-  {/* ===== XÁC NHẬN MẬT KHẨU ===== */}
-  {authMode === "register" && (
-    <>
-      <label
-        style={{
-          display: "block",
-          marginTop: "14px",
-          marginBottom: "3px",
-          marginLeft: "3px",
-          fontSize: "14px",
-          fontWeight: 500,
-          color: "#94a3b8",
-        }}
-      >
-        Xác nhận mật khẩu
-      </label>
-
-      <input
-        type="password"
-        placeholder="Nhập lại mật khẩu"
-        value={confirmPassword}
-        onChange={(e) =>
-          setConfirmPassword(e.target.value)
-        }
-        style={{
-          width: "100%",
-          padding: "12px 14px",
-          boxSizing: "border-box",
-          border: "1px solid #d9dee7",
-          borderRadius: "10px",
-          outline: "none",
-          fontSize: "15px",
-          color: "#000",
-          background: "#fff",
-        }}
-      />
-    </>
-  )}
-
-  {/* ===== LƯU ĐĂNG NHẬP ===== */}
-  {authMode === "login" && (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        marginTop: "6px",
-        marginLeft: "3px",
-        height: "28px",
-      }}
-    >
-    </div>
-  )}
-
-  {/* ===== NÚT ===== */}
-  <button
-    type="submit"
-    style={{
-      width: "100%",
-      marginTop: "0px",
-      padding: "12px",
-      border: "none",
-      background: "#2563eb",
-      color: "white",
-      borderRadius: "8px",
-      cursor: "pointer",
-      fontWeight: 600,
-      fontSize: "15px",
-    }}
-  >
-    {authMode === "login" ? "Đăng nhập" : "Đăng ký"}
-  </button>
-  <p
-  style={{
-    margin: "8px 12px",
-    fontSize: "11px",
-    color: "#dc2626",
-    textAlign: "center",
-    lineHeight: 1.5,
-  }}
->
-  Sinh viên liên hệ CLB Sinh viên 5 tốt BMU trong trường hợp quên mật khẩu.
-</p>
-</form>
-
-    </div>
-
   </div>
 )}
     </main>
