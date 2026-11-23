@@ -118,26 +118,6 @@ export default function InstallButton({
         {isHeader ? "Tải" : isMobile ? "Tải ứng dụng" : ""}
       </button>
 
-       {/* Nút xem thử hướng dẫn iPhone - chỉ hiện khi chạy localhost */}
-      {isDevelopment && !isIOS && (
-        <button
-          onClick={() => setShowIOSGuide(true)}
-          style={{
-            width: "100%",
-            marginTop: "10px",
-            padding: "10px",
-            background: "#eff6ff",
-            color: "#2563eb",
-            border: "1px dashed #2563eb",
-            borderRadius: "10px",
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          Xem thử hướng dẫn iPhone
-        </button>
-      )}
-
     </>
   );
 }

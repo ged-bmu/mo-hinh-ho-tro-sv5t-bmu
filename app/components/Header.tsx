@@ -36,15 +36,12 @@ export default function Header({
     position: "sticky",
     top: 0,
     zIndex: 9999,
-
     background: "rgba(255, 255, 255, 0.96)",
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
     padding: "14px 28px",
     borderBottom: "7px solid",
-borderImage:
-  "linear-gradient(90deg, #1d4ed8, #60a5fa, #7ee7f9) 1",
-
+    borderImage: "linear-gradient(90deg, #1d4ed8, #60a5fa, #7ee7f9) 1",
     boxShadow: "0 4px 18px rgba(15, 23, 42, 0.07)",
   }}
 >
