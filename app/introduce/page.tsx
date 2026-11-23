@@ -428,8 +428,8 @@ async function handleLogin() {
   <div
     style={{
       width: "min(100%, 500px)",
-      height: "400px",
-      marginTop: "clamp(8px, 1vw, 16px)",
+      height: "clamp(340px, 48vh, 460px)",
+      marginTop: "clamp(8px, 1.5vh, 16px)",
       background: "rgba(255,255,255,0.96)",
       backdropFilter: "blur(10px)",
       WebkitBackdropFilter: "blur(10px)",
@@ -790,14 +790,14 @@ async function handleLogin() {
     width: "100%",
     background: "rgba(255,255,255,0.92)",
     borderRadius: "clamp(14px, 1.5vw, 24px)",
-    padding: "clamp(6px, 0.7vw, 10px) clamp(10px, 1.2vw, 18px)",
+    padding: "clamp(6px, 1.2vh, 14px) clamp(10px, 1.2vw, 18px)",
     boxSizing: "border-box",
     boxShadow: "0 8px 25px rgba(0,0,0,0.10)",
     fontFamily: "'Noto Serif', serif",
     fontSize: "clamp(14px, 1.2vw, 19px)",
     textAlign: "justify",
     lineHeight: 1.5,
-    marginTop: "clamp(8px, 1vw, 16px)",
+    marginTop: "clamp(8px, 1.5vh, 16px)",
   }}
 >
             <b>
@@ -827,7 +827,7 @@ async function handleLogin() {
     display: "grid",
     gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
     gap: "clamp(8px, 1vw, 16px)",
-    marginTop: "clamp(10px, 1.2vw, 18px)",
+    marginTop: "clamp(10px, 2vh, 20px)",
   }}
 >
   {/* CARD 1 */}
@@ -837,7 +837,7 @@ async function handleLogin() {
       border: "1px solid rgba(255,255,255,0.8)",
       borderRadius: "20px",
       padding: "clamp(10px, 1vw, 15px)",
-      minHeight: "clamp(110px, 9vw, 145px)",
+      minHeight: "clamp(110px, 14vh, 155px)",
       boxSizing: "border-box",
       boxShadow: "0 5px 18px rgba(30,100,160,0.10)",
       display: "flex",
@@ -901,7 +901,7 @@ async function handleLogin() {
       border: "1px solid rgba(255,255,255,0.8)",
       borderRadius: "20px",
       padding: "clamp(10px, 1vw, 15px)",
-      minHeight: "clamp(110px, 9vw, 145px)",
+      minHeight: "clamp(110px, 14vh, 155px)",
       boxSizing: "border-box",
       boxShadow: "0 5px 18px rgba(30,100,160,0.10)",
       display: "flex",
@@ -965,7 +965,7 @@ async function handleLogin() {
       border: "1px solid rgba(255,255,255,0.8)",
       borderRadius: "20px",
       padding: "clamp(10px, 1vw, 15px)",
-      minHeight: "clamp(110px, 9vw, 145px)",
+      minHeight: "clamp(110px, 14vh, 155px)",
       boxSizing: "border-box",
       boxShadow: "0 5px 18px rgba(30,100,160,0.10)",
       display: "flex",
@@ -1032,7 +1032,7 @@ async function handleLogin() {
               alignItems: "center",
               justifyContent: "center",
               gap: "clamp(10px, 1.5vw, 24px)",
-              marginTop: "clamp(8px, 0.8vw, 12px)",
+              marginTop: "clamp(8px, 1.5vh, 16px)",
               flexWrap: "wrap",
             }}
           >
@@ -1088,7 +1088,7 @@ async function handleLogin() {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "space-evenly",
     position: "relative",
     isolation: "isolate",
     overflow: "hidden",
@@ -1581,7 +1581,7 @@ async function handleLogin() {
       alt=""
       style={{
         position: "relative",
-        width: "clamp(120px, 32vw, 360px)",
+        width: "clamp(120px, min(38vw, 42vh), 420px)",
         maxWidth: "100%",
         height: "auto",
         objectFit: "contain",
@@ -1598,7 +1598,7 @@ async function handleLogin() {
     width: "100%",
     maxWidth: "560px",
     textAlign: "center",
-    marginTop: "clamp(5px, 1vh, 12px)",
+    marginTop: "clamp(5px, 2vh, 24px)",
     position: "relative",
     zIndex: 2,
   }}
@@ -1606,7 +1606,7 @@ async function handleLogin() {
   {/* TIÊU ĐỀ */}
   <div
     style={{
-      fontSize: "clamp(20px, 2vw, 30px)",
+      fontSize: "clamp(20px, min(2.2vw, 3.2vh), 36px)",
       fontWeight: 900,
       color: "#075985",
       letterSpacing: "1.5px",
