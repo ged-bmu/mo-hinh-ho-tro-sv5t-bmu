@@ -8,7 +8,7 @@ import CriteriaModal from "../components/CriteriaModal";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Spinner from "../components/Spinner";
-import { FaFilePdf } from "react-icons/fa";
+import { FileText } from "lucide-react";
 import AvatarEditor from "react-avatar-editor";
 import { useRef } from "react";
 import Image from "next/image";
@@ -500,7 +500,7 @@ return (
     <Spinner size ={24} />
   ) : (
     <>
-      <FaFilePdf size={18} />
+      <FileText size={18} />
       Xuất
       </>
   )}
@@ -787,7 +787,7 @@ return (
         fontSize: 14,
       }}
     >
-      <FaFilePdf size={18} />
+      <FileText size={18} />
       Xuất PDF
     </button>
   </div>

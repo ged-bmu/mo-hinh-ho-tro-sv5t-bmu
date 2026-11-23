@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 import { LogOut, ChevronLeft } from "lucide-react";
+import AppIcon, { type AppIconName } from "../../components/AppIcon";
 
 export default function SidebarChutichhsv() {
   const pathname = usePathname();
@@ -33,27 +34,27 @@ export default function SidebarChutichhsv() {
   const menus = [
     {
       name: "Trang chủ",
-      icon: "🏠",
+      icon: "home" as AppIconName,
       href: "/chutichhsv",
     },
     {
       name: "Quản lý Ban Chấp hành",
-      icon: "👥",
+      icon: "users" as AppIconName,
       href: "/admin/accounts",
     },
     {
       name: "Xét duyệt hồ sơ SV5T",
-      icon: "📋",
+      icon: "clipboard" as AppIconName,
       href: "/chutichhsv/xetduyet",
     },
     {
       name: "Báo cáo & thống kê",
-      icon: "📊",
+      icon: "chart" as AppIconName,
       href: "/chutichhsv/baocao",
     },
     {
       name: "Đổi mật khẩu",
-      icon: "🔑",
+      icon: "key" as AppIconName,
       href: "/doi-mat-khau",
     },
   ];
@@ -167,7 +168,7 @@ export default function SidebarChutichhsv() {
                           lineHeight: 1,
                         }}
                       >
-                        {item.icon}
+                        <AppIcon name={item.icon} size={20} />
                       </span>
 
                       <span>{item.name}</span>
@@ -398,7 +399,7 @@ export default function SidebarChutichhsv() {
                   lineHeight: 1,
                 }}
               >
-                {item.icon}
+                <AppIcon name={item.icon} size={20} />
               </span>
 
               {!collapsed && (

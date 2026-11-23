@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { LogOut, ChevronLeft } from "lucide-react";
+import AppIcon, { type AppIconName } from "./AppIcon";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -121,32 +121,32 @@ useEffect(() => {
   const proofMenus = [
   {
     name: "Đạo đức tốt",
-    icon: "/icondaoduc.png",
+    icon: "sprout" as AppIconName,
     href: `/dao-duc?year=${currentAcademicYear?.id || ""}`,
   },
   {
     name: "Học tập tốt",
-    icon: "/iconhoctap.png",
+    icon: "graduation" as AppIconName,
     href: `/hoc-tap?year=${currentAcademicYear?.id || ""}`,
   },
   {
     name: "Thể lực tốt",
-    icon: "/icontheluc.png",
+    icon: "dumbbell" as AppIconName,
     href: `/the-luc?year=${currentAcademicYear?.id || ""}`,
   },
   {
     name: "Tình nguyện tốt",
-    icon: "/icontinhnguyen.png",
+    icon: "handshake" as AppIconName,
     href: `/tinh-nguyen?year=${currentAcademicYear?.id || ""}`,
   },
   {
     name: "Hội nhập tốt",
-    icon: "/iconhoinhap.png",
+    icon: "globe" as AppIconName,
     href: `/hoi-nhap?year=${currentAcademicYear?.id || ""}`,
   },
   {
     name: "Thành tích khác",
-    icon: "/iconuutien.png",
+    icon: "trophy" as AppIconName,
     href: `/uu-tien?year=${currentAcademicYear?.id || ""}`,
   },
 ];
@@ -162,58 +162,54 @@ const proofPaths = [
   const menus = [
     {
       name: "Trang chủ",
-      icon: "🏠",
+      icon: "home" as AppIconName,
       href: "/",
     },
     {
       name: isMobile ? "Hồ sơ" : "Hồ sơ Sinh viên 5 tốt",
-      icon: "🗂️",
+      icon: "folder-open" as AppIconName,
       href: "/tieuchi",
     },
     {
       name: "Xem Báo cáo",
-      icon: "📝",
+      icon: "file" as AppIconName,
       href: "/bao-cao",
     },
     {
       name: "Mục tiêu học tập",
-      icon: "📊",
+      icon: "chart" as AppIconName,
       href: "/bang-diem",
     },
     {
       name: "Hoạt động sắp tới",
-      icon: "📅",
+      icon: "calendar" as AppIconName,
       href: "/hoat-dong",
     },
     {
       name: "Thông báo",
-      icon: "🔔",
+      icon: "bell" as AppIconName,
       href: "/thongbaouser",
     },
     {
       name: "Hướng dẫn",
-      icon: "📖",
+      icon: "book" as AppIconName,
       href: "/huong-dan",
     },
     {
       name: "Cài đặt",
-      icon: "⚙️",
+      icon: "settings" as AppIconName,
       href: "/caidat",
     },
   ];
 
-  const renderMenuIcon = (icon: string, alt: string) =>
-    icon.endsWith(".png") ? (
-      <Image
-        src={icon}
-        width={22}
-        height={22}
-        alt={alt}
-        style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}
-      />
-    ) : (
-      icon
-    );
+  const renderMenuIcon = (icon: AppIconName, alt: string) => (
+    <span
+      aria-label={alt}
+      style={{ display: "inline-flex", verticalAlign: "middle", marginRight: 6 }}
+    >
+      <AppIcon name={icon} size={22} />
+    </span>
+  );
 
 async function handleLogout() {
     await supabase.auth.signOut();
@@ -269,14 +265,14 @@ async function handleLogout() {
 
         <nav className="mobile-bottom-nav">
           <button onClick={() => setMobileMenu(true)}>
-            ☰
+            <AppIcon name="menu" size={20} />
           </button>
 
           <Link
             href="/"
             className={pathname === "/" ? "active" : ""}
           >
-            <div>🏠</div>
+            <div><AppIcon name="home" size={20} /></div>
           </Link>
 
           <Link
@@ -285,7 +281,7 @@ async function handleLogout() {
               pathname === "/tieuchi" ? "active" : ""
             }
           >
-            <div>🗂️</div>
+            <div><AppIcon name="folder-open" size={20} /></div>
           </Link>
 
           <Link
@@ -294,7 +290,7 @@ async function handleLogout() {
               pathname === "/bao-cao" ? "active" : ""
             }
           >
-            <div>📝</div>
+            <div><AppIcon name="file" size={20} /></div>
           </Link>
           <Link
             href="/bang-diem"
@@ -302,7 +298,7 @@ async function handleLogout() {
               pathname === "/bang-diem" ? "active" : ""
             }
           >
-            <div>📊</div>
+            <div><AppIcon name="chart" size={20} /></div>
           </Link>
 
           <Link
@@ -319,7 +315,7 @@ async function handleLogout() {
       justifyContent: "center",
     }}
   >
-    📅
+    <AppIcon name="calendar" size={20} />
 
     {activeActivityCount > 0 && (
       <span
@@ -355,7 +351,7 @@ async function handleLogout() {
                 : ""
             }
           >
-            <div>⚙️</div>
+            <div><AppIcon name="settings" size={20} /></div>
           </Link>
         </nav>
       </>
@@ -401,7 +397,9 @@ return (
             color: "#1e3a8a",
           }}
         >
-          ☰ Menu
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <AppIcon name="menu" size={20} /> Menu
+          </span>
         </h2>
       )}
     </div>
@@ -453,10 +451,16 @@ return (
                 }}
               >
                 <span>
-                  {collapsed ? "🗂️" : "🗂️ Hồ sơ Sinh viên 5 tốt"}
+                  {collapsed ? (
+                    <AppIcon name="folder-open" size={22} />
+                  ) : (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                      <AppIcon name="folder-open" size={22} /> Hồ sơ Sinh viên 5 tốt
+                    </span>
+                  )}
                 </span>
 
-                {!collapsed && <span>▶</span>}
+                {!collapsed && <AppIcon name="chevron-right" size={18} />}
               </Link>
 
               {showProofMenu && (

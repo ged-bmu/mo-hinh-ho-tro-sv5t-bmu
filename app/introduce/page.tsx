@@ -783,246 +783,256 @@ async function handleLogin() {
   </div>
 )}
 
-          {/* ===== CARD GIỚI THIỆU ===== */}
-          {tab !== "login" && (
-          <div
-  style={{
-    width: "100%",
-    background: "rgba(255,255,255,0.92)",
-    borderRadius: "clamp(14px, 1.5vw, 24px)",
-    padding: "clamp(6px, 1.2vh, 14px) clamp(10px, 1.2vw, 18px)",
-    boxSizing: "border-box",
-    boxShadow: "0 8px 25px rgba(0,0,0,0.10)",
-    fontFamily: "'Noto Serif', serif",
-    fontSize: "clamp(14px, 1.2vw, 19px)",
-    textAlign: "justify",
-    lineHeight: 1.5,
-    marginTop: "clamp(8px, 1.5vh, 16px)",
-  }}
->
-            <b>
-              Với mục tiêu{" "}
-              <span style={{ color: "#2563eb", fontWeight: 600 }}>
-                tăng cường ứng dụng công nghệ thông tin và thúc đẩy chuyển đổi số
-              </span>{" "}
-              trong công tác Hội và phong trào sinh viên,{" "}
-              <span style={{ color: "#2563eb", fontWeight: 600 }}>
-                Hệ thống hỗ trợ Sinh viên 5 tốt BMU
-              </span>{" "}
-              là mô hình Chuyển đổi số được ban hành theo{" "}
-              <span style={{ color: "#2563eb", fontWeight: 600 }}>
-                Kế hoạch số 03/KH-HSV ngày 27/8/2026 của Ban Chấp hành Hội
-                Sinh viên Trường
-              </span>{" "}
-              nhằm hỗ trợ sinh viên theo dõi quá trình rèn luyện, hoàn thiện hồ
-              sơ Sinh viên 5 tốt cấp Trường.
-            </b>
-          </div>
-          )}
-          {/* ===== 3 CARD ===== */}
-          {tab !== "login" && (
-<div
-  style={{
-    width: "100%",
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: "clamp(8px, 1vw, 16px)",
-    marginTop: "clamp(10px, 2vh, 20px)",
-  }}
->
-  {/* CARD 1 */}
+
+{/* ===== CARD GIỚI THIỆU ===== */}
+{tab !== "login" && (
   <div
     style={{
-      background: "rgba(255,255,255,0.96)",
-      border: "1px solid rgba(255,255,255,0.8)",
-      borderRadius: "20px",
-      padding: "clamp(10px, 1vw, 15px)",
-      minHeight: "clamp(110px, 14vh, 155px)",
+      width: "100%",
+      background: "rgba(255,255,255,0.94)",
+      borderRadius: "clamp(16px, 1.5vw, 24px)",
+      padding: "clamp(12px, 2vh, 22px) clamp(14px, 1.5vw, 22px)",
       boxSizing: "border-box",
-      boxShadow: "0 5px 18px rgba(30,100,160,0.10)",
+      boxShadow: "0 8px 25px rgba(0,0,0,0.10)",
+      fontFamily: "'Noto Serif', serif",
+      fontSize: "clamp(14px, 1.1vw, 18px)",
+      textAlign: "justify",
+      lineHeight: 1.65,
+      marginTop: "clamp(12px, 1.8vh, 22px)",
       display: "flex",
-      flexDirection: "column",
       alignItems: "center",
-      textAlign: "center",
     }}
   >
-    <div
-      style={{
-        width: "clamp(36px, 3.2vw, 50px)",
-        height: "clamp(36px, 3.2vw, 50px)",
-        borderRadius: "14px",
-        background: "linear-gradient(135deg, #dbeafe, #e0f2fe)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginBottom: "8px",
-        flexShrink: 0,
-      }}
-    >
-      <img
-        src="/icon-folder.png"
-        alt=""
-        style={{
-          width: "75%",
-          height: "75%",
-          objectFit: "contain",
-        }}
-      />
-    </div>
-
-    <b
-      style={{
-        fontSize: "clamp(11px, 1vw, 15px)",
-        color: "#1e3a8a",
-        marginBottom: "5px",
-      }}
-    >
-      Quản lý minh chứng
+    <b>
+      Với mục tiêu{" "}
+      <span style={{ color: "#2563eb", fontWeight: 600 }}>
+        tăng cường ứng dụng công nghệ thông tin và thúc đẩy chuyển đổi số
+      </span>{" "}
+      trong công tác Hội và phong trào sinh viên,{" "}
+      <span style={{ color: "#2563eb", fontWeight: 600 }}>
+        Hệ thống hỗ trợ Sinh viên 5 tốt BMU
+      </span>{" "}
+      là mô hình Chuyển đổi số được ban hành theo{" "}
+      <span style={{ color: "#2563eb", fontWeight: 600 }}>
+        Kế hoạch số 03/KH-HSV ngày 27/8/2026 của Ban Chấp hành Hội
+        Sinh viên Trường
+      </span>{" "}
+      nhằm hỗ trợ sinh viên theo dõi quá trình rèn luyện, hoàn thiện hồ
+      sơ Sinh viên 5 tốt cấp Trường.
     </b>
-
-    <p
-      style={{
-        margin: 0,
-        fontSize: "clamp(10px, 0.85vw, 13px)",
-        lineHeight: 1.5,
-        color: "#475569",
-      }}
-    >
-      Lưu trữ và quản lý
-      <br />
-      minh chứng theo từng tiêu chí
-    </p>
   </div>
-
-  {/* CARD 2 */}
-  <div
-    style={{
-      background: "rgba(255,255,255,0.96)",
-      border: "1px solid rgba(255,255,255,0.8)",
-      borderRadius: "20px",
-      padding: "clamp(10px, 1vw, 15px)",
-      minHeight: "clamp(110px, 14vh, 155px)",
-      boxSizing: "border-box",
-      boxShadow: "0 5px 18px rgba(30,100,160,0.10)",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      textAlign: "center",
-    }}
-  >
-    <div
-      style={{
-        width: "clamp(36px, 3.2vw, 50px)",
-        height: "clamp(36px, 3.2vw, 50px)",
-        borderRadius: "14px",
-        background: "linear-gradient(135deg, #dbeafe, #e0f2fe)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginBottom: "8px",
-        flexShrink: 0,
-      }}
-    >
-      <img
-        src="/icon-progress.png"
-        alt=""
-        style={{
-          width: "75%",
-          height: "75%",
-          objectFit: "contain",
-        }}
-      />
-    </div>
-
-    <b
-      style={{
-        fontSize: "clamp(11px, 1vw, 15px)",
-        color: "#1e3a8a",
-        marginBottom: "5px",
-      }}
-    >
-      Theo dõi tiến độ
-    </b>
-
-    <p
-      style={{
-        margin: 0,
-        fontSize: "clamp(10px, 0.85vw, 13px)",
-        lineHeight: 1.5,
-        color: "#475569",
-      }}
-    >
-      Cập nhật và theo dõi
-      <br />
-      quá trình hoàn thiện hồ sơ
-    </p>
-  </div>
-
-  {/* CARD 3 */}
-  <div
-    style={{
-      background: "rgba(255,255,255,0.96)",
-      border: "1px solid rgba(255,255,255,0.8)",
-      borderRadius: "20px",
-      padding: "clamp(10px, 1vw, 15px)",
-      minHeight: "clamp(110px, 14vh, 155px)",
-      boxSizing: "border-box",
-      boxShadow: "0 5px 18px rgba(30,100,160,0.10)",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      textAlign: "center",
-    }}
-  >
-    <div
-      style={{
-        width: "clamp(36px, 3.2vw, 50px)",
-        height: "clamp(36px, 3.2vw, 50px)",
-        borderRadius: "14px",
-        background: "linear-gradient(135deg, #dbeafe, #e0f2fe)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        marginBottom: "8px",
-        flexShrink: 0,
-      }}
-    >
-      <img
-        src="/icon-export.png"
-        alt=""
-        style={{
-          width: "75%",
-          height: "75%",
-          objectFit: "contain",
-        }}
-      />
-    </div>
-
-    <b
-      style={{
-        fontSize: "clamp(11px, 1vw, 15px)",
-        color: "#1e3a8a",
-        marginBottom: "5px",
-      }}
-    >
-      Xuất hồ sơ
-    </b>
-
-    <p
-      style={{
-        margin: 0,
-        fontSize: "clamp(10px, 0.85vw, 13px)",
-        lineHeight: 1.5,
-        color: "#475569",
-      }}
-    >
-      Xuất hồ sơ
-      <br />
-      phục vụ công tác xét chọn
-    </p>
-  </div>
-</div>
 )}
+
+         
+{/* ===== 3 CARD CHỨC NĂNG ===== */}
+{tab !== "login" && (
+  <div
+    style={{
+      width: "100%",
+      display: "grid",
+      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+      gap: "clamp(10px, 1.2vw, 20px)",
+      marginTop: "clamp(14px, 2.2vh, 26px)",
+      alignItems: "stretch",
+    }}
+  >
+    {/* CARD 1 */}
+    <div
+      style={{
+        background: "rgba(255,255,255,0.96)",
+        border: "1px solid rgba(255,255,255,0.85)",
+        borderRadius: "clamp(16px, 1.5vw, 22px)",
+        padding: "clamp(14px, 2vh, 24px) clamp(8px, 1vw, 16px)",
+        minHeight: "clamp(150px, 22vh, 210px)",
+        boxSizing: "border-box",
+        boxShadow: "0 5px 18px rgba(30,100,160,0.10)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        gap: "clamp(7px, 1.2vh, 13px)",
+      }}
+    >
+      <div
+        style={{
+          width: "clamp(42px, 5vh, 62px)",
+          height: "clamp(42px, 5vh, 62px)",
+          borderRadius: "16px",
+          background: "linear-gradient(135deg, #dbeafe, #e0f2fe)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <img
+          src="/icon-folder.png"
+          alt=""
+          style={{
+            width: "76%",
+            height: "76%",
+            objectFit: "contain",
+          }}
+        />
+      </div>
+
+      <b
+        style={{
+          fontSize: "clamp(12px, 1.1vw, 17px)",
+          color: "#1e3a8a",
+          lineHeight: 1.35,
+        }}
+      >
+        Quản lý minh chứng
+      </b>
+
+      <p
+        style={{
+          margin: 0,
+          fontSize: "clamp(11px, 0.95vw, 14px)",
+          lineHeight: 1.6,
+          color: "#475569",
+        }}
+      >
+        Lưu trữ và quản lý
+        <br />
+        minh chứng theo từng tiêu chí
+      </p>
+    </div>
+
+    {/* CARD 2 */}
+    <div
+      style={{
+        background: "rgba(255,255,255,0.96)",
+        border: "1px solid rgba(255,255,255,0.85)",
+        borderRadius: "clamp(16px, 1.5vw, 22px)",
+        padding: "clamp(14px, 2vh, 24px) clamp(8px, 1vw, 16px)",
+        minHeight: "clamp(150px, 22vh, 210px)",
+        boxSizing: "border-box",
+        boxShadow: "0 5px 18px rgba(30,100,160,0.10)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        gap: "clamp(7px, 1.2vh, 13px)",
+      }}
+    >
+      <div
+        style={{
+          width: "clamp(42px, 5vh, 62px)",
+          height: "clamp(42px, 5vh, 62px)",
+          borderRadius: "16px",
+          background: "linear-gradient(135deg, #dbeafe, #e0f2fe)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <img
+          src="/icon-progress.png"
+          alt=""
+          style={{
+            width: "76%",
+            height: "76%",
+            objectFit: "contain",
+          }}
+        />
+      </div>
+
+      <b
+        style={{
+          fontSize: "clamp(12px, 1.1vw, 17px)",
+          color: "#1e3a8a",
+          lineHeight: 1.35,
+        }}
+      >
+        Theo dõi tiến độ
+      </b>
+
+      <p
+        style={{
+          margin: 0,
+          fontSize: "clamp(11px, 0.95vw, 14px)",
+          lineHeight: 1.6,
+          color: "#475569",
+        }}
+      >
+        Cập nhật và theo dõi
+        <br />
+        quá trình hoàn thiện hồ sơ
+      </p>
+    </div>
+
+    {/* CARD 3 */}
+    <div
+      style={{
+        background: "rgba(255,255,255,0.96)",
+        border: "1px solid rgba(255,255,255,0.85)",
+        borderRadius: "clamp(16px, 1.5vw, 22px)",
+        padding: "clamp(14px, 2vh, 24px) clamp(8px, 1vw, 16px)",
+        minHeight: "clamp(150px, 22vh, 210px)",
+        boxSizing: "border-box",
+        boxShadow: "0 5px 18px rgba(30,100,160,0.10)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        gap: "clamp(7px, 1.2vh, 13px)",
+      }}
+    >
+      <div
+        style={{
+          width: "clamp(42px, 5vh, 62px)",
+          height: "clamp(42px, 5vh, 62px)",
+          borderRadius: "16px",
+          background: "linear-gradient(135deg, #dbeafe, #e0f2fe)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <img
+          src="/icon-export.png"
+          alt=""
+          style={{
+            width: "76%",
+            height: "76%",
+            objectFit: "contain",
+          }}
+        />
+      </div>
+
+      <b
+        style={{
+          fontSize: "clamp(12px, 1.1vw, 17px)",
+          color: "#1e3a8a",
+          lineHeight: 1.35,
+        }}
+      >
+        Xuất hồ sơ
+      </b>
+
+      <p
+        style={{
+          margin: 0,
+          fontSize: "clamp(11px, 0.95vw, 14px)",
+          lineHeight: 1.6,
+          color: "#475569",
+        }}
+      >
+        Xuất hồ sơ
+        <br />
+        phục vụ công tác xét chọn
+      </p>
+    </div>
+  </div>
+)}
+
           {/* ===== NÚT ĐĂNG NHẬP + CÀI ỨNG DỤNG ===== */}
           {tab !== "login" && (
           <div
@@ -1552,44 +1562,191 @@ async function handleLogin() {
   />
   Phiên bản 1.4.0
 </div>
+
+{/* LOGO + FUTURISTIC ENERGY PLATFORM */}
+<div
+  style={{
+    position: "relative",
+    zIndex: 2,
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    isolation: "isolate",
+    paddingTop: "clamp(12px, 2.5vh, 30px)",
+    boxSizing: "border-box",
+  }}
+>
   {/* LOGO */}
+  <img
+    src="/bonghoa5totintroduce.png"
+    alt=""
+    style={{
+      position: "relative",
+      zIndex: 4,
+      width: "clamp(120px, min(36vw, 39vh), 400px)",
+      maxWidth: "100%",
+      height: "auto",
+      objectFit: "contain",
+      display: "block",
+      filter: "drop-shadow(0 16px 22px rgba(0,70,150,0.25))",
+    }}
+  />
+
+  {/* BỆ NĂNG LƯỢNG 3D */}
   <div
     style={{
-  position: "relative",
-  zIndex: 2,
-  width: "100%",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-}}
+      position: "relative",
+      width: "min(88%, 470px)",
+      height: "clamp(90px, 13vh, 125px)",
+      marginTop: "clamp(-20px, -2.5vh, -10px)",
+      zIndex: 3,
+      perspective: "600px",
+    }}
   >
-    {/* Quầng sáng sau logo */}
+    {/* ÁNH SÁNG DƯỚI ĐẾ */}
     <div
       style={{
         position: "absolute",
-        width: "65%",
-        aspectRatio: "1",
+        left: "15%",
+        right: "15%",
+        top: "35px",
+        height: "55px",
         borderRadius: "50%",
-        background: "rgba(255,255,255,0.25)",
-        filter: "blur(45px)",
-        pointerEvents: "none",
+        background: "radial-gradient(ellipse, rgba(0,210,255,0.42), rgba(0,120,255,0.15) 48%, transparent 75%)",
+        filter: "blur(12px)",
       }}
     />
 
-    <img
-      src="/bonghoa5totintroduce.png"
-      alt=""
+    {/* VÒNG QUỸ ĐẠO XOAY */}
+    <div
       style={{
-        position: "relative",
-        width: "clamp(120px, min(38vw, 42vh), 420px)",
-        maxWidth: "100%",
-        height: "auto",
-        objectFit: "contain",
-        display: "block",
-        filter: "drop-shadow(0 12px 18px rgba(0,100,160,0.17))",
+        position: "absolute",
+        inset: "5px 2%",
+        border: "2px solid rgba(0,220,255,0.75)",
+        borderLeftColor: "transparent",
+        borderRightColor: "rgba(255,255,255,0.9)",
+        borderRadius: "50%",
+        transform: "rotateX(62deg)",
+        animation: "platformOrbit 9s linear infinite",
+        boxShadow: "0 0 12px rgba(0,210,255,0.45)",
       }}
     />
+
+    <div
+      style={{
+        position: "absolute",
+        inset: "13px 9%",
+        border: "2px dashed rgba(255,255,255,0.85)",
+        borderRadius: "50%",
+        transform: "rotateX(62deg)",
+        animation: "platformOrbitReverse 14s linear infinite",
+      }}
+    />
+
+    {/* THÂN ĐẾ */}
+    <div
+      style={{
+        position: "absolute",
+        left: "14%",
+        right: "14%",
+        top: "30px",
+        height: "43px",
+        borderRadius: "50%",
+        background: "linear-gradient(180deg, #8ceaff 0%, #168fcf 35%, #07528e 72%, #032f68 100%)",
+        border: "2px solid rgba(180,245,255,0.95)",
+        boxShadow: "0 12px 18px rgba(0,55,120,0.28), inset 0 5px 8px rgba(255,255,255,0.55), inset 0 -8px 12px rgba(0,20,75,0.55)",
+        zIndex: 2,
+      }}
+    />
+
+    {/* MẶT TRÊN ĐẾ */}
+    <div
+      style={{
+        position: "absolute",
+        left: "14%",
+        right: "14%",
+        top: "20px",
+        height: "32px",
+        borderRadius: "50%",
+        background: "linear-gradient(180deg, #f2ffff 0%, #a7f2ff 24%, #42bce9 65%, #0876b9 100%)",
+        border: "2px solid #ffffff",
+        boxShadow: "0 0 15px rgba(0,220,255,0.8), inset 0 4px 7px rgba(255,255,255,0.95), inset 0 -4px 8px rgba(0,100,180,0.35)",
+        zIndex: 3,
+      }}
+    />
+
+    {/* LÕI NĂNG LƯỢNG */}
+    <div
+      style={{
+        position: "absolute",
+        left: "30%",
+        right: "30%",
+        top: "30px",
+        height: "12px",
+        borderRadius: "50%",
+        border: "1px solid rgba(255,255,255,0.95)",
+        background: "linear-gradient(90deg, rgba(0,190,255,0.15), rgba(255,255,255,0.9), rgba(0,190,255,0.15))",
+        boxShadow: "0 0 12px #00dfff, inset 0 0 7px #ffffff",
+        zIndex: 4,
+      }}
+    />
+
+    {/* VẠCH NĂNG LƯỢNG */}
+    {[0, 1, 2, 3, 4, 5, 6, 7].map((item) => (
+      <div
+        key={item}
+        style={{
+          position: "absolute",
+          left: `${22 + item * 8}%`,
+          top: "63px",
+          width: "3px",
+          height: "9px",
+          borderRadius: "4px",
+          background: "#8ff5ff",
+          boxShadow: "0 0 7px #00dfff",
+          zIndex: 4,
+        }}
+      />
+    ))}
+
+    {/* ĐIỂM NĂNG LƯỢNG */}
+    {[
+      { left: "8%", top: "43px" },
+      { left: "24%", top: "9px" },
+      { left: "73%", top: "9px" },
+      { left: "91%", top: "43px" },
+    ].map((point, index) => (
+      <div
+        key={index}
+        style={{
+          position: "absolute",
+          left: point.left,
+          top: point.top,
+          width: "8px",
+          height: "8px",
+          borderRadius: "50%",
+          background: "#ffffff",
+          border: "1px solid #00dfff",
+          boxShadow: "0 0 12px 3px rgba(0,220,255,0.85)",
+          zIndex: 5,
+        }}
+      />
+    ))}
   </div>
+
+  <style jsx>{`
+    @keyframes platformOrbit {
+      from { transform: rotateX(62deg) rotateZ(0deg); }
+      to { transform: rotateX(62deg) rotateZ(360deg); }
+    }
+    @keyframes platformOrbitReverse {
+      from { transform: rotateX(62deg) rotateZ(360deg); }
+      to { transform: rotateX(62deg) rotateZ(0deg); }
+    }
+  `}</style>
+</div>
+
 
 
 {/* NỘI DUNG BÊN DƯỚI - DIGITAL HUD */}
@@ -1870,40 +2027,677 @@ async function handleLogin() {
             gap: "14px",
           }}
         >
-          {/* CARD NGANG */}            
-                    <div
+          
+  {/* HIỆU ỨNG QUẦNG SÁNG CÔNG NGHỆ */}
+  <div
+    style={{
+      position: "absolute",
+      inset: 0,
+      zIndex: -1,
+      pointerEvents: "none",
+      background: `
+        radial-gradient(ellipse at 50% 25%,
+          rgba(255,255,255,0.42) 0%,
+          rgba(125,230,255,0.18) 35%,
+          transparent 70%)
+      `,
+    }}
+  />
+  
+
+{/* ÁNH SÁNG NỀN */}
+<div className="sv5t-ambient ambient-1" />
+<div className="sv5t-ambient ambient-2" />
+<div className="sv5t-ambient ambient-3" />
+
+{/* VÒNG ÁNH SÁNG */}
+<div className="sv5t-soft-orbit orbit-a" />
+<div className="sv5t-soft-orbit orbit-b" />
+
+{/* HẠT SÁNG */}
+<div className="sv5t-particle particle-a" />
+<div className="sv5t-particle particle-b" />
+<div className="sv5t-particle particle-c" />
+<div className="sv5t-particle particle-d" />
+<div className="sv5t-particle particle-e" />
+
+{/* ================= DIGITAL ENERGY NETWORK ================= */}
+<svg
+  viewBox="0 0 600 760"
+  preserveAspectRatio="none"
   style={{
+    position: "absolute",
+    inset: 0,
     width: "100%",
-    background: "rgba(255,255,255,0.92)",
-    borderRadius: "clamp(14px, 1.5vw, 24px)",
-    padding: "clamp(6px, 1.2vh, 14px) clamp(10px, 1.2vw, 18px)",
-    boxSizing: "border-box",
-    boxShadow: "0 8px 25px rgba(0,0,0,0.10)",
-    fontFamily: "'Noto Serif', serif",
-    fontSize: isMobile ? "16px" : "clamp(14px, 1.2vw, 19px)",
-    textAlign: "justify",
-    lineHeight: 1.5,
-    marginTop: "clamp(8px, 1.5vh, 16px)",
+    height: "100%",
+    zIndex: 1,
+    pointerEvents: "none",
+    overflow: "hidden",
   }}
 >
-            <b>
-              Với mục tiêu{" "}
-              <span style={{ color: "#2563eb", fontWeight: 600 }}>
-                tăng cường ứng dụng công nghệ thông tin và thúc đẩy chuyển đổi số
-              </span>{" "}
-              trong công tác Hội và phong trào sinh viên,{" "}
-              <span style={{ color: "#2563eb", fontWeight: 600 }}>
-                Hệ thống hỗ trợ Sinh viên 5 tốt BMU
-              </span>{" "}
-              là mô hình Chuyển đổi số được ban hành theo{" "}
-              <span style={{ color: "#2563eb", fontWeight: 600 }}>
-                Kế hoạch số 03/KH-HSV ngày 27/8/2026 của Ban Chấp hành Hội
-                Sinh viên Trường
-              </span>{" "}
-              nhằm hỗ trợ sinh viên theo dõi quá trình rèn luyện, hoàn thiện hồ
-              sơ Sinh viên 5 tốt cấp Trường.
-            </b>
-          </div>
+  <defs>
+    <radialGradient id="energyCore">
+      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.5" />
+      <stop offset="40%" stopColor="#38bdf8" stopOpacity="0.2" />
+      <stop offset="100%" stopColor="#0284c7" stopOpacity="0" />
+    </radialGradient>
+
+    <linearGradient id="energyTrace" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stopColor="#0284c7" stopOpacity="0.2" />
+      <stop offset="55%" stopColor="#0ea5e9" stopOpacity="0.7" />
+      <stop offset="100%" stopColor="#ffffff" stopOpacity="0.95" />
+    </linearGradient>
+
+    <filter id="energyGlow">
+      <feGaussianBlur stdDeviation="3.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  {/* 1. QUẦNG SÁNG TẬP TRUNG SAU LOGO */}
+  <ellipse
+    cx="300"
+    cy="245"
+    rx="175"
+    ry="185"
+    fill="url(#energyCore)"
+  />
+
+  {/* 2. MẠCH CHÍNH BÊN TRÁI */}
+  <g
+    fill="none"
+    stroke="url(#energyTrace)"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M 155 75 L 155 125 L 185 155 L 185 205" />
+    <path d="M 105 180 L 135 180 L 165 210 L 165 245" />
+    <path d="M 85 275 L 135 275 L 165 305 L 165 345" />
+    <path d="M 125 395 L 155 365 L 185 365 L 205 345" />
+
+    {/* Các nhánh phụ */}
+    <path d="M 155 125 L 125 155 L 105 155" />
+    <path d="M 185 205 L 215 235 L 235 235" />
+    <path d="M 135 275 L 135 250 L 115 230" />
+    <path d="M 165 305 L 195 305 L 215 285" />
+    <path d="M 155 365 L 135 385 L 105 385" />
+    <path d="M 205 345 L 225 325 L 225 305" />
+  </g>
+
+  {/* 3. MẠCH CHÍNH BÊN PHẢI */}
+  <g
+    fill="none"
+    stroke="url(#energyTrace)"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M 445 75 L 445 125 L 415 155 L 415 205" />
+    <path d="M 495 180 L 465 180 L 435 210 L 435 245" />
+    <path d="M 515 275 L 465 275 L 435 305 L 435 345" />
+    <path d="M 475 395 L 445 365 L 415 365 L 395 345" />
+
+    {/* Các nhánh phụ */}
+    <path d="M 445 125 L 475 155 L 495 155" />
+    <path d="M 415 205 L 385 235 L 365 235" />
+    <path d="M 465 275 L 465 250 L 485 230" />
+    <path d="M 435 305 L 405 305 L 385 285" />
+    <path d="M 445 365 L 465 385 L 495 385" />
+    <path d="M 395 345 L 375 325 L 375 305" />
+  </g>
+
+  {/* 4. MẠCH NHỎ PHÂN BỐ QUANH CHỦ THỂ */}
+  <g
+    fill="none"
+    stroke="#0ea5e9"
+    strokeWidth="1.1"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    opacity="0.65"
+  >
+    {/* Phía trên trái */}
+    <path d="M 90 90 L 110 110 L 110 135 L 130 155" />
+    <path d="M 185 55 L 185 85 L 205 105 L 205 130" />
+    <path d="M 115 215 L 135 215 L 150 230" />
+
+    {/* Phía trên phải */}
+    <path d="M 510 90 L 490 110 L 490 135 L 470 155" />
+    <path d="M 415 55 L 415 85 L 395 105 L 395 130" />
+    <path d="M 485 215 L 465 215 L 450 230" />
+
+    {/* Phía dưới trái */}
+    <path d="M 85 440 L 115 440 L 135 420" />
+    <path d="M 175 430 L 195 410 L 195 390" />
+    <path d="M 235 455 L 235 425 L 250 410" />
+
+    {/* Phía dưới phải */}
+    <path d="M 515 440 L 485 440 L 465 420" />
+    <path d="M 425 430 L 405 410 L 405 390" />
+    <path d="M 365 455 L 365 425 L 350 410" />
+  </g>
+
+  {/* 5. CÁC CHẤM SÁNG DI CHUYỂN THEO ĐÚNG ĐƯỜNG MẠCH */}
+  <g fill="#ffffff" filter="url(#energyGlow)">
+
+    {/* MẠCH TRÁI - DI CHUYỂN TỪ TRONG RA NGOÀI */}
+
+    <circle r="3">
+      <animateMotion
+        dur="3.2s"
+        repeatCount="indefinite"
+        path="M 185 205 L 185 155 L 155 125 L 155 75"
+      />
+    </circle>
+
+    <circle r="2.5">
+      <animateMotion
+        dur="3.8s"
+        begin="0.7s"
+        repeatCount="indefinite"
+        path="M 165 245 L 165 210 L 135 180 L 105 180"
+      />
+    </circle>
+
+    <circle r="2.5">
+      <animateMotion
+        dur="4s"
+        begin="1.2s"
+        repeatCount="indefinite"
+        path="M 165 345 L 165 305 L 135 275 L 85 275"
+      />
+    </circle>
+
+    <circle r="2.5">
+      <animateMotion
+        dur="3.6s"
+        begin="1.8s"
+        repeatCount="indefinite"
+        path="M 205 345 L 185 365 L 155 365 L 125 395"
+      />
+    </circle>
+
+    {/* NHÁNH PHỤ BÊN TRÁI */}
+
+    <circle r="2">
+      <animateMotion
+        dur="3.4s"
+        begin="0.5s"
+        repeatCount="indefinite"
+        path="M 155 125 L 125 155 L 105 155"
+      />
+    </circle>
+
+    <circle r="2">
+      <animateMotion
+        dur="3.2s"
+        begin="1.4s"
+        repeatCount="indefinite"
+        path="M 185 205 L 215 235 L 235 235"
+      />
+    </circle>
+
+    <circle r="2">
+      <animateMotion
+        dur="3.5s"
+        begin="2s"
+        repeatCount="indefinite"
+        path="M 165 305 L 195 305 L 215 285"
+      />
+    </circle>
+
+    {/* MẠCH PHẢI - DI CHUYỂN TỪ TRONG RA NGOÀI */}
+
+    <circle r="3">
+      <animateMotion
+        dur="3.2s"
+        begin="0.4s"
+        repeatCount="indefinite"
+        path="M 415 205 L 415 155 L 445 125 L 445 75"
+      />
+    </circle>
+
+    <circle r="2.5">
+      <animateMotion
+        dur="3.8s"
+        begin="1s"
+        repeatCount="indefinite"
+        path="M 435 245 L 435 210 L 465 180 L 495 180"
+      />
+    </circle>
+
+    <circle r="2.5">
+      <animateMotion
+        dur="4s"
+        begin="1.5s"
+        repeatCount="indefinite"
+        path="M 435 345 L 435 305 L 465 275 L 515 275"
+      />
+    </circle>
+
+    <circle r="2.5">
+      <animateMotion
+        dur="3.6s"
+        begin="2.1s"
+        repeatCount="indefinite"
+        path="M 395 345 L 415 365 L 445 365 L 475 395"
+      />
+    </circle>
+
+    {/* NHÁNH PHỤ BÊN PHẢI */}
+
+    <circle r="2">
+      <animateMotion
+        dur="3.4s"
+        begin="0.8s"
+        repeatCount="indefinite"
+        path="M 445 125 L 475 155 L 495 155"
+      />
+    </circle>
+
+    <circle r="2">
+      <animateMotion
+        dur="3.2s"
+        begin="1.7s"
+        repeatCount="indefinite"
+        path="M 415 205 L 385 235 L 365 235"
+      />
+    </circle>
+
+    <circle r="2">
+      <animateMotion
+        dur="3.5s"
+        begin="2.3s"
+        repeatCount="indefinite"
+        path="M 435 305 L 405 305 L 385 285"
+      />
+    </circle>
+
+    {/* CÁC MẠCH NHỎ PHÍA TRÊN */}
+
+    <circle r="1.8">
+      <animateMotion
+        dur="3.5s"
+        begin="0.3s"
+        repeatCount="indefinite"
+        path="M 90 90 L 110 110 L 110 135 L 130 155"
+      />
+    </circle>
+
+    <circle r="1.8">
+      <animateMotion
+        dur="3.8s"
+        begin="1.1s"
+        repeatCount="indefinite"
+        path="M 185 55 L 185 85 L 205 105 L 205 130"
+      />
+    </circle>
+
+    <circle r="1.8">
+      <animateMotion
+        dur="3.5s"
+        begin="0.6s"
+        repeatCount="indefinite"
+        path="M 510 90 L 490 110 L 490 135 L 470 155"
+      />
+    </circle>
+
+    <circle r="1.8">
+      <animateMotion
+        dur="3.8s"
+        begin="1.5s"
+        repeatCount="indefinite"
+        path="M 415 55 L 415 85 L 395 105 L 395 130"
+      />
+    </circle>
+
+    {/* CÁC MẠCH NHỎ PHÍA DƯỚI */}
+
+    <circle r="1.8">
+      <animateMotion
+        dur="3.6s"
+        begin="1s"
+        repeatCount="indefinite"
+        path="M 85 440 L 115 440 L 135 420"
+      />
+    </circle>
+
+    <circle r="1.8">
+      <animateMotion
+        dur="3.6s"
+        begin="1.8s"
+        repeatCount="indefinite"
+        path="M 235 455 L 235 425 L 250 410"
+      />
+    </circle>
+
+    <circle r="1.8">
+      <animateMotion
+        dur="3.6s"
+        begin="1.3s"
+        repeatCount="indefinite"
+        path="M 515 440 L 485 440 L 465 420"
+      />
+    </circle>
+
+    <circle r="1.8">
+      <animateMotion
+        dur="3.6s"
+        begin="2s"
+        repeatCount="indefinite"
+        path="M 365 455 L 365 425 L 350 410"
+      />
+    </circle>
+  </g>
+
+  {/* 6. NÚT KẾT NỐI TRÊN CÁC MẠCH */}
+  <g fill="#ffffff" filter="url(#energyGlow)">
+    {/* Nút mạch trái */}
+    <circle cx="155" cy="75" r="3" />
+    <circle cx="155" cy="125" r="3" />
+    <circle cx="185" cy="205" r="3" />
+    <circle cx="105" cy="180" r="2.5" />
+    <circle cx="165" cy="245" r="2.5" />
+    <circle cx="85" cy="275" r="3" />
+    <circle cx="165" cy="345" r="2.5" />
+    <circle cx="125" cy="395" r="3" />
+    <circle cx="205" cy="345" r="2.5" />
+
+    {/* Nút mạch phải */}
+    <circle cx="445" cy="75" r="3" />
+    <circle cx="445" cy="125" r="3" />
+    <circle cx="415" cy="205" r="3" />
+    <circle cx="495" cy="180" r="2.5" />
+    <circle cx="435" cy="245" r="2.5" />
+    <circle cx="515" cy="275" r="3" />
+    <circle cx="435" cy="345" r="2.5" />
+    <circle cx="475" cy="395" r="3" />
+    <circle cx="395" cy="345" r="2.5" />
+
+    {/* Nút mạch phụ */}
+    <circle cx="90" cy="90" r="2" />
+    <circle cx="185" cy="55" r="2" />
+    <circle cx="235" cy="235" r="2" />
+    <circle cx="235" cy="455" r="2" />
+    <circle cx="510" cy="90" r="2" />
+    <circle cx="415" cy="55" r="2" />
+    <circle cx="365" cy="235" r="2" />
+    <circle cx="365" cy="455" r="2" />
+  </g>
+
+  {/* 7. VÒNG KẾT NỐI NHỎ */}
+  <g
+    fill="none"
+    stroke="#ffffff"
+    strokeWidth="1"
+    opacity="0.55"
+  >
+    <circle cx="155" cy="75" r="6" />
+    <circle cx="445" cy="75" r="6" />
+    <circle cx="90" cy="90" r="4" />
+    <circle cx="510" cy="90" r="4" />
+  </g>
+
+  {/* 8. HẠT SÁNG TRANG TRÍ */}
+  <g fill="#ffffff" filter="url(#energyGlow)">
+    <circle cx="120" cy="300" r="1.8" />
+    <circle cx="200" cy="160" r="1.8" />
+    <circle cx="145" cy="450" r="1.8" />
+    <circle cx="250" cy="180" r="1.8" />
+
+    <circle cx="480" cy="300" r="1.8" />
+    <circle cx="400" cy="160" r="1.8" />
+    <circle cx="455" cy="450" r="1.8" />
+    <circle cx="350" cy="180" r="1.8" />
+  </g>
+</svg>
+
+
+{/* LOGO + FUTURISTIC ENERGY PLATFORM */}
+<div
+  style={{
+    position: "relative",
+    zIndex: 2,
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    isolation: "isolate",
+    paddingTop: "clamp(12px, 2.5vh, 30px)",
+    boxSizing: "border-box",
+  }}
+>
+  {/* LOGO */}
+  <img
+    src="/bonghoa5totintroduce.png"
+    alt=""
+    style={{
+      position: "relative",
+      zIndex: 4,
+      width: "clamp(120px, min(36vw, 39vh), 400px)",
+      maxWidth: "100%",
+      height: "auto",
+      objectFit: "contain",
+      display: "block",
+      filter: "drop-shadow(0 16px 22px rgba(0,70,150,0.25))",
+    }}
+  />
+
+  {/* BỆ NĂNG LƯỢNG 3D */}
+  <div
+    style={{
+      position: "relative",
+      width: "min(88%, 470px)",
+      height: "clamp(90px, 13vh, 125px)",
+      marginTop: "clamp(-20px, -2.5vh, -10px)",
+      zIndex: 3,
+      perspective: "600px",
+    }}
+  >
+    {/* ÁNH SÁNG DƯỚI ĐẾ */}
+    <div
+      style={{
+        position: "absolute",
+        left: "15%",
+        right: "15%",
+        top: "35px",
+        height: "55px",
+        borderRadius: "50%",
+        background: "radial-gradient(ellipse, rgba(0,210,255,0.42), rgba(0,120,255,0.15) 48%, transparent 75%)",
+        filter: "blur(12px)",
+      }}
+    />
+
+    {/* VÒNG QUỸ ĐẠO XOAY */}
+    <div
+      style={{
+        position: "absolute",
+        inset: "5px 2%",
+        border: "2px solid rgba(0,220,255,0.75)",
+        borderLeftColor: "transparent",
+        borderRightColor: "rgba(255,255,255,0.9)",
+        borderRadius: "50%",
+        transform: "rotateX(62deg)",
+        animation: "platformOrbit 9s linear infinite",
+        boxShadow: "0 0 12px rgba(0,210,255,0.45)",
+      }}
+    />
+
+    <div
+      style={{
+        position: "absolute",
+        inset: "13px 9%",
+        border: "2px dashed rgba(255,255,255,0.85)",
+        borderRadius: "50%",
+        transform: "rotateX(62deg)",
+        animation: "platformOrbitReverse 14s linear infinite",
+      }}
+    />
+
+    {/* THÂN ĐẾ */}
+    <div
+      style={{
+        position: "absolute",
+        left: "14%",
+        right: "14%",
+        top: "30px",
+        height: "43px",
+        borderRadius: "50%",
+        background: "linear-gradient(180deg, #8ceaff 0%, #168fcf 35%, #07528e 72%, #032f68 100%)",
+        border: "2px solid rgba(180,245,255,0.95)",
+        boxShadow: "0 12px 18px rgba(0,55,120,0.28), inset 0 5px 8px rgba(255,255,255,0.55), inset 0 -8px 12px rgba(0,20,75,0.55)",
+        zIndex: 2,
+      }}
+    />
+
+    {/* MẶT TRÊN ĐẾ */}
+    <div
+      style={{
+        position: "absolute",
+        left: "14%",
+        right: "14%",
+        top: "20px",
+        height: "32px",
+        borderRadius: "50%",
+        background: "linear-gradient(180deg, #f2ffff 0%, #a7f2ff 24%, #42bce9 65%, #0876b9 100%)",
+        border: "2px solid #ffffff",
+        boxShadow: "0 0 15px rgba(0,220,255,0.8), inset 0 4px 7px rgba(255,255,255,0.95), inset 0 -4px 8px rgba(0,100,180,0.35)",
+        zIndex: 3,
+      }}
+    />
+
+    {/* LÕI NĂNG LƯỢNG */}
+    <div
+      style={{
+        position: "absolute",
+        left: "30%",
+        right: "30%",
+        top: "30px",
+        height: "12px",
+        borderRadius: "50%",
+        border: "1px solid rgba(255,255,255,0.95)",
+        background: "linear-gradient(90deg, rgba(0,190,255,0.15), rgba(255,255,255,0.9), rgba(0,190,255,0.15))",
+        boxShadow: "0 0 12px #00dfff, inset 0 0 7px #ffffff",
+        zIndex: 4,
+      }}
+    />
+
+    {/* VẠCH NĂNG LƯỢNG */}
+    {[0, 1, 2, 3, 4, 5, 6, 7].map((item) => (
+      <div
+        key={item}
+        style={{
+          position: "absolute",
+          left: `${22 + item * 8}%`,
+          top: "63px",
+          width: "3px",
+          height: "9px",
+          borderRadius: "4px",
+          background: "#8ff5ff",
+          boxShadow: "0 0 7px #00dfff",
+          zIndex: 4,
+        }}
+      />
+    ))}
+
+    {/* ĐIỂM NĂNG LƯỢNG */}
+    {[
+      { left: "8%", top: "43px" },
+      { left: "24%", top: "9px" },
+      { left: "73%", top: "9px" },
+      { left: "91%", top: "43px" },
+    ].map((point, index) => (
+      <div
+        key={index}
+        style={{
+          position: "absolute",
+          left: point.left,
+          top: point.top,
+          width: "8px",
+          height: "8px",
+          borderRadius: "50%",
+          background: "#ffffff",
+          border: "1px solid #00dfff",
+          boxShadow: "0 0 12px 3px rgba(0,220,255,0.85)",
+          zIndex: 5,
+        }}
+      />
+    ))}
+  </div>
+
+  <style jsx>{`
+    @keyframes platformOrbit {
+      from { transform: rotateX(62deg) rotateZ(0deg); }
+      to { transform: rotateX(62deg) rotateZ(360deg); }
+    }
+    @keyframes platformOrbitReverse {
+      from { transform: rotateX(62deg) rotateZ(360deg); }
+      to { transform: rotateX(62deg) rotateZ(0deg); }
+    }
+  `}</style>
+</div>
+
+
+
+{/* NỘI DUNG BÊN DƯỚI - DIGITAL HUD */}
+<div
+  style={{
+    width: "100%",
+    maxWidth: "560px",
+    textAlign: "center",
+    marginTop: "clamp(5px, 2vh, 24px)",
+    position: "relative",
+    zIndex: 2,
+  }}
+>
+  {/* TIÊU ĐỀ */}
+  <div
+    style={{
+      fontSize: "clamp(20px, min(2.2vw, 3.2vh), 36px)",
+      fontWeight: 900,
+      color: "#075985",
+      letterSpacing: "1.5px",
+      textShadow: "0 0 14px rgba(56,189,248,0.3)",
+    }}
+  >
+    SINH VIÊN 5 TỐT
+  </div>
+
+  {/* DÒNG PHỤ */}
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "10px",
+      marginTop: "8px",
+      color: "#0c4a6e",
+      fontSize: "clamp(14px, 1.2vw, 19px)",
+      fontWeight: 600,
+      letterSpacing: "0.5px",
+    }}
+  >
+    <span
+      style={{
+        width: "24px",
+        height: "1px",
+        background: "linear-gradient(90deg, transparent, #0ea5e9)",
+      }}
+    />
+    Hành trình hơn cả một danh hiệu
+    <span
+      style={{
+        width: "24px",
+        height: "1px",
+        background: "linear-gradient(90deg, #0ea5e9, transparent)",
+      }}
+    />
+  </div>
+</div>
+
 <div
             style={{
               width: "100%",
@@ -1911,7 +2705,7 @@ async function handleLogin() {
               alignItems: "center",
               justifyContent: "center",
               gap: "clamp(10px, 1.5vw, 24px)",
-              marginTop: "clamp(8px, 1.5vh, 16px)",
+              marginTop: "2px",
               flexWrap: "wrap",
             }}
           >

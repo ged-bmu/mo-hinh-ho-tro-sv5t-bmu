@@ -5,7 +5,7 @@ import { supabase } from "../../../../lib/supabase";
 import { authFetch } from "@/lib/auth-fetch";
 import { sendNotification } from "@/lib/notification";
 import { getStudentStudyYear } from "@/lib/studentInfo";
-import { FaFilePdf } from "react-icons/fa";
+import { FileText } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import Spinner from "../../../components/Spinner";

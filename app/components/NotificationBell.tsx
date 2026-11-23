@@ -1,6 +1,6 @@
 "use client";
 
-import { FaBell } from "react-icons/fa";
+import { Bell } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
@@ -61,7 +61,7 @@ export default function NotificationBell() {
           position: "relative",
         }}
       >
-        <FaBell
+        <Bell
           size={22}
           color="#6b7280"
         />
