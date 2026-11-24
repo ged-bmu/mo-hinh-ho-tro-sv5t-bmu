@@ -334,6 +334,32 @@ console.log(data?.[0]);
       console.log(error);
       return;
     }
+        // Gửi thông báo đến các thiết bị Admin đã bật
+    try {
+      const { data: sessionData } =
+        await supabase.auth.getSession();
+
+      const accessToken =
+        sessionData.session?.access_token;
+
+      if (accessToken && data?.[0]?.id) {
+        await fetch("/api/send-admin-chat-notification", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            messageId: data[0].id,
+          }),
+        });
+      }
+    } catch (notificationError) {
+      console.error(
+        "Lỗi gửi thông báo Admin:",
+        notificationError
+      );
+    }
 
     await supabase
       .from("conversations")
