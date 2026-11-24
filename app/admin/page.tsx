@@ -13,6 +13,11 @@ import AdminSidebar from "../components/AdminSidebar";
 import NotificationBell from "../components/NotificationBell";
 import CriteriaModal from "../components/CriteriaModal";
 import { authFetch } from "@/lib/auth-fetch";
+import {
+  checkAdminNotificationStatus,
+  enableAdminNotifications,
+  disableAdminNotifications,
+} from "@/lib/admin-notifications";
 
 export default function AdminPage() {
     const toolbarButtonStyle: React.CSSProperties = {
@@ -82,6 +87,118 @@ const toolbarDangerStyle: React.CSSProperties = {
   const keyword = search.toLowerCase();
   const pathname = usePathname();
   const [sending, setSending] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [adminDeviceNotificationEnabled, setAdminDeviceNotificationEnabled] =
+  useState(false);
+
+const [loadingAdminDeviceNotification, setLoadingAdminDeviceNotification] =
+  useState(true);
+
+const [updatingAdminDeviceNotification, setUpdatingAdminDeviceNotification] =
+  useState(false);
+  // ===============================
+// ĐẾM TIN NHẮN ADMIN CHƯA ĐỌC
+// ===============================
+useEffect(() => {
+  let mounted = true;
+
+  async function loadUnreadChatCount() {
+    const { data, error } = await supabase
+      .from("conversations")
+      .select("unread_admin");
+
+    if (error) {
+      console.error("Lỗi đếm tin nhắn chưa đọc:", error);
+      return;
+    }
+
+    if (mounted) {
+      const total = (data || []).reduce(
+        (sum, item) => sum + (item.unread_admin || 0),
+        0
+      );
+
+      setUnreadChatCount(total);
+    }
+  }
+
+  loadUnreadChatCount();
+
+  const channel = supabase
+    .channel("admin-unread-chat-count")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "conversations",
+      },
+      () => {
+        loadUnreadChatCount();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    mounted = false;
+    supabase.removeChannel(channel);
+  };
+}, []);
+// ===============================
+// THÔNG BÁO RIÊNG CHO THIẾT BỊ ADMIN
+// ===============================
+useEffect(() => {
+  let mounted = true;
+
+  async function loadAdminDeviceNotificationStatus() {
+    try {
+      const enabled = await checkAdminNotificationStatus();
+
+      if (mounted) {
+        setAdminDeviceNotificationEnabled(enabled);
+      }
+    } catch (error) {
+      console.error("Lỗi kiểm tra thông báo thiết bị Admin:", error);
+    } finally {
+      if (mounted) {
+        setLoadingAdminDeviceNotification(false);
+      }
+    }
+  }
+
+  loadAdminDeviceNotificationStatus();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
+
+async function toggleAdminDeviceNotification() {
+  if (updatingAdminDeviceNotification) return;
+
+  setUpdatingAdminDeviceNotification(true);
+
+  try {
+    if (adminDeviceNotificationEnabled) {
+      await disableAdminNotifications();
+      setAdminDeviceNotificationEnabled(false);
+      alert("Đã tắt thông báo trên thiết bị này.");
+    } else {
+      await enableAdminNotifications();
+      setAdminDeviceNotificationEnabled(true);
+      alert("Đã bật thông báo trên thiết bị này.");
+    }
+  } catch (error: any) {
+    console.error("Lỗi bật/tắt thông báo Admin:", error);
+
+    alert(
+      error?.message ||
+        "Không thể cập nhật thông báo. Vui lòng thử lại."
+    );
+  } finally {
+    setUpdatingAdminDeviceNotification(false);
+  }
+}
   const filteredStudents = students.filter((sv) => {
     const matchSearch =
       sv.ho_ten?.toLowerCase().includes(keyword) ||
@@ -2436,37 +2553,56 @@ return (
   </button>
 
   {/* NHẮN TIN / TRAO ĐỔI */}
-  <button
-    type="button"
-    onClick={() => {
-      window.location.href = "/trao-doi";
-    }}
-    style={{
-      minHeight: 42,
-      display: "inline-flex",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 8,
-      padding: "0 13px",
-      border: "1px solid #c7d2fe",
-      borderRadius: 11,
-      background: "#eef2ff",
-      color: "#0d1fad",
-      fontSize: 12,
-      fontWeight: 700,
-      cursor: "pointer",
-      whiteSpace: "nowrap",
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.background = "#e0e7ff";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.background = "#eef2ff";
-    }}
-  >
-    <AdminIcon name="message" size={16} />
-    Nhắn tin
-  </button>
+<button
+  type="button"
+  onClick={() => {
+    window.location.href = "/trao-doi";
+  }}
+  style={{
+    position: "relative",
+    height: 42,
+    padding: "0 16px",
+    borderRadius: 10,
+    border: "1px solid #dbe3ee",
+    background: "#ffffff",
+    color: "#334155",
+    fontSize: 13,
+    fontWeight: 600,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  }}
+>
+  <AdminIcon name="message" size={16} />
+  Nhắn tin
+
+  {unreadChatCount > 0 && (
+    <span
+      style={{
+        position: "absolute",
+        top: -8,
+        right: -8,
+        minWidth: 22,
+        height: 22,
+        padding: "0 5px",
+        borderRadius: 999,
+        background: "#ef4444",
+        color: "#ffffff",
+        fontSize: 11,
+        fontWeight: 700,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        border: "2px solid #ffffff",
+        boxSizing: "border-box",
+        boxShadow: "0 2px 6px rgba(239,68,68,0.3)",
+      }}
+    >
+      {unreadChatCount > 5 ? "5+" : unreadChatCount}
+    </span>
+  )}
+</button>
   {/* QUẢN LÝ TIÊU CHUẨN */}
   <button
     type="button"
@@ -2499,6 +2635,7 @@ return (
     <AdminIcon name="file" size={16} />
     Tiêu chuẩn
   </button>
+  
   {/* ĐẶT LỊCH KIỂM TRA */}
 <button
   type="button"
@@ -2530,6 +2667,59 @@ return (
   {checkDate
     ? `Kiểm tra: ${new Date(checkDate).toLocaleDateString("vi-VN")}`
     : "Đặt lịch kiểm tra"}
+</button>
+{/* THÔNG BÁO RIÊNG CHO THIẾT BỊ ADMIN */}
+<button
+  type="button"
+  onClick={toggleAdminDeviceNotification}
+  disabled={
+    loadingAdminDeviceNotification ||
+    updatingAdminDeviceNotification
+  }
+  style={{
+    minHeight: 42,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    padding: "0 14px",
+    border: `1px solid ${
+      adminDeviceNotificationEnabled ? "#bbf7d0" : "#dbe3ee"
+    }`,
+    borderRadius: 11,
+    background: adminDeviceNotificationEnabled
+      ? "#f0fdf4"
+      : "#ffffff",
+    color: adminDeviceNotificationEnabled
+      ? "#15803d"
+      : "#334155",
+    fontSize: 12,
+    fontWeight: 700,
+    cursor:
+      loadingAdminDeviceNotification ||
+      updatingAdminDeviceNotification
+        ? "wait"
+        : "pointer",
+    opacity:
+      loadingAdminDeviceNotification ||
+      updatingAdminDeviceNotification
+        ? 0.65
+        : 1,
+    whiteSpace: "nowrap",
+  }}
+>
+  <AdminIcon
+    name="bell"
+    size={16}
+  />
+
+  {loadingAdminDeviceNotification
+    ? "Đang kiểm tra..."
+    : updatingAdminDeviceNotification
+    ? "Đang cập nhật..."
+    : adminDeviceNotificationEnabled
+    ? "Đã bật thông báo"
+    : "Bật thông báo thiết bị"}
 </button>
   {/* TRẠNG THÁI ĐĂNG KÝ */}
   {currentAcademicYear && (

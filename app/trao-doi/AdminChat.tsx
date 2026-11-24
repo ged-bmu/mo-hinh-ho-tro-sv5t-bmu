@@ -572,7 +572,7 @@ return (
       w-full
       min-h-0
       overflow-hidden
-      bg-[#f4f7fb]
+      bg-[linear-gradient(135deg,#edfaff_0%,#f7fbff_48%,#eaf4ff_100%)]
     "
   >
 
@@ -598,80 +598,107 @@ return (
   `}
 >
 
-      {/* Sidebar Header */}
-      <div className="border-b border-slate-100 bg-white px-5 pb-4 pt-5">
+{/* Sidebar Header */}
+<div className="border-b border-sky-100 bg-[linear-gradient(135deg,#ffffff_0%,#effaff_100%)] px-5 pb-4 pt-5">
 
-        <div className="flex items-center justify-between">
+{/* Nút về trang chủ */}
+<Link
+  href="/admin"
+  className="
+    mb-3 flex items-center gap-2
+    rounded-lg
+    border border-blue-200
+    bg-blue-600
+    px-3 py-2
+    text-xs font-semibold text-white
+    shadow-sm shadow-blue-500/20
+    transition-all duration-200
+    hover:bg-blue-700
+    hover:shadow-md
+  "
+>
+  <svg
+    className="h-4 w-4 shrink-0"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m3 10 9-7 9 7" />
+    <path d="M5 10v10h14V10" />
+    <path d="M9 20v-6h6v6" />
+  </svg>
 
-          <div className="flex items-center gap-3">
+  <span>Về trang chủ</span>
 
-            <div
-              className="
-                flex h-11 w-11 items-center justify-center
-                rounded-2xl
-                bg-gradient-to-br from-blue-600 to-indigo-600
-                text-xl
-                shadow-lg shadow-blue-500/20
-              "
-            >
-              💬
-            </div>
+</Link>
 
-            <div>
-              <h1 className="text-[17px] font-bold tracking-tight text-slate-900">
-                Hỗ trợ sinh viên
-              </h1>
+  <div className="flex items-center justify-between">
 
-              <div className="mt-0.5 flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span className="text-xs font-medium text-slate-400">
-                  Trung tâm hỗ trợ
-                </span>
-              </div>
-            </div>
+    <div className="flex items-center gap-3">
 
-          </div>
-
-          <div
-            className="
-              flex h-9 w-9 items-center justify-center
-              rounded-xl bg-slate-50
-              text-slate-400
-            "
-            title={`${users.length} cuộc trò chuyện`}
-          >
-            <span className="text-sm font-bold">
-              {users.length}
-            </span>
-          </div>
-
-        </div>
-
-        {/* Search */}
-        {/* Search */}
-<div className="relative mt-5">
-  <input
-    type="text"
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    placeholder="Tìm kiếm cuộc trò chuyện..."
-    className="
-      h-10 w-full rounded-xl
-      border border-slate-200
-      bg-slate-50
-      px-3
-      text-sm text-slate-700
-      outline-none
-      transition
-      placeholder:text-slate-400
-      focus:border-blue-400
-      focus:bg-white
-      focus:ring-4
-      focus:ring-blue-500/10
-    "
-  />
-</div>
+      <div
+        className="
+          flex h-11 w-11 items-center justify-center
+          rounded-2xl
+          bg-gradient-to-br from-cyan-400 to-sky-600
+          text-xl
+          shadow-lg shadow-blue-500/20
+        "
+      >
+        💬
       </div>
+
+      <div>
+        <h1 className="text-[17px] font-bold tracking-tight text-slate-900">
+          Trung tâm hỗ trợ sinh viên
+        </h1>
+      </div>
+
+    </div>
+
+    <div
+      className="
+        flex h-9 w-9 items-center justify-center
+        rounded-xl bg-slate-50
+        text-slate-400
+      "
+      title={`${users.length} cuộc trò chuyện`}
+    >
+      <span className="text-sm font-bold">
+        {users.length}
+      </span>
+    </div>
+
+  </div>
+
+  {/* Search */}
+  <div className="relative mt-5">
+    <input
+      type="text"
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      placeholder="Tìm kiếm cuộc trò chuyện..."
+      className="
+        h-10 w-full rounded-xl
+        border border-slate-200
+        bg-slate-50
+        px-3
+        text-sm text-slate-700
+        outline-none
+        transition
+        placeholder:text-slate-400
+        focus:border-blue-400
+        focus:bg-white
+        focus:ring-4
+        focus:ring-blue-500/10
+      "
+    />
+  </div>
+
+</div>
 
       {/* Conversation list */}
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -777,7 +804,7 @@ onClick={() => {
 
   ${
     isSelected
-      ? "bg-blue-50/80"
+      ? "bg-cyan-50/90"
       : item.hasConversation
         ? "hover:bg-slate-50"
         : "opacity-60"
@@ -791,7 +818,7 @@ onClick={() => {
                       className="
                         absolute left-0 top-2 bottom-2
                         w-1 rounded-r-full
-                        bg-blue-600
+                        bg-sky-500
                       "
                     />
                   )}
@@ -807,7 +834,7 @@ onClick={() => {
                         text-sm font-bold
                         ${
                           isSelected
-                            ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/20"
+                            ? "bg-gradient-to-br from-cyan-400 to-sky-600 text-white shadow-md shadow-cyan-500/20"
                             : "bg-slate-100 text-slate-600"
                         }
                       `}
@@ -911,26 +938,6 @@ onClick={() => {
 
           <div className="flex items-center gap-2">
 
-            <div
-              className="
-                flex h-8 w-8 items-center justify-center
-                rounded-lg bg-blue-100
-                text-sm
-              "
-            >
-              🛡️
-            </div>
-
-            <div>
-              <p className="text-xs font-semibold text-slate-700">
-                Quản trị viên
-              </p>
-
-              <p className="text-[10px] text-slate-400">
-                Đang trực tuyến
-              </p>
-            </div>
-
           </div>
 
           <div className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -1022,7 +1029,7 @@ onClick={() => {
                   items-center justify-center
                   rounded-2xl
                   bg-gradient-to-br
-                  from-blue-500 to-indigo-600
+                      from-cyan-400 to-sky-600
                   text-sm font-bold
                   text-white
                   shadow-md
@@ -1147,7 +1154,7 @@ onClick={() => {
     flex-1
     flex-col
     overflow-hidden
-    bg-[#f4f7fb]
+    bg-[linear-gradient(135deg,#edfaff_0%,#f7fbff_48%,#eaf4ff_100%)]
   "
 >
 
@@ -1163,7 +1170,7 @@ onClick={() => {
                   absolute -right-32 -top-32
                   h-72 w-72
                   rounded-full
-                  bg-blue-100/30
+                  bg-cyan-200/35
                   blur-3xl
                 "
               />
@@ -1173,10 +1180,19 @@ onClick={() => {
                   absolute -bottom-40 -left-40
                   h-80 w-80
                   rounded-full
-                  bg-indigo-100/20
+                  bg-sky-200/30
                   blur-3xl
                 "
               />
+
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                <img
+                  src="/bonghoa5tot.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="h-[280px] w-[280px] select-none object-contain opacity-[0.12] blur-[1px] md:h-[360px] md:w-[360px]"
+                />
+              </div>
             </div>
 
 
@@ -1329,12 +1345,6 @@ onClick={() => {
   inputRef={inputRef}
 />
 
-              <div className="mt-2 hidden px-1 sm:block">
-                <span className="text-[10px] text-slate-400">
-                  Tin nhắn được bảo mật · Hệ thống hỗ trợ SV5T BMU
-                </span>
-              </div>
-
             </div>
 
           </div>
@@ -1356,7 +1366,7 @@ onClick={() => {
                 items-center justify-center
                 rounded-[28px]
                 bg-gradient-to-br
-                from-blue-500 to-indigo-600
+                from-cyan-400 to-sky-600
                 text-5xl
                 shadow-2xl
                 shadow-blue-500/20

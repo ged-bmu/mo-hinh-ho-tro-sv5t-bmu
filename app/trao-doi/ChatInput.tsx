@@ -89,11 +89,11 @@ setSelectedFile,
   };
 }, [setSelectedFile]);
   return (
-    <div className="border-t bg-white p-2 md:p-3">
+    <div className="border-t border-cyan-100 bg-white/95 p-2 md:p-3">
         {replyMessage && (
-  <div className="mb-3 rounded-lg border-l-4 border-blue-500 bg-gray-100 p-3">
+  <div className="mb-3 rounded-lg border-l-4 border-cyan-500 bg-cyan-50/70 p-3">
     <div className="flex items-center justify-between">
-      <div className="text-xs font-semibold text-blue-600">
+      <div className="text-xs font-semibold text-sky-600">
         {replyMessage.sender_role === "user"
           ? "Sinh viên"
           : "CLB SV5T"}
@@ -240,7 +240,7 @@ onChange={(e)=>{
     px-4
     py-3
     outline-none
-    focus:border-blue-500
+    focus:border-cyan-500
   "
 />
 
@@ -256,7 +256,7 @@ onChange={(e)=>{
             transition
             ${
   !isSending && (message.trim() || selectedFile)
-    ? "bg-blue-500 text-white hover:bg-blue-600"
+    ? "bg-gradient-to-br from-cyan-400 to-sky-600 text-white hover:from-cyan-500 hover:to-sky-700"
     : "cursor-not-allowed bg-gray-200 text-gray-400"
 }
           `}

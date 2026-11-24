@@ -140,7 +140,7 @@ function handleScroll() {
 return (
 <div 
   ref={messagesContainerRef}
-  className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 px-3 py-3 md:px-6 md:py-5"
+  className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-transparent px-3 py-3 md:px-6 md:py-5"
 >
       <div className="space-y-5">
 
@@ -228,8 +228,8 @@ return (
   <div
     className={`max-w-[420px] break-words whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
       isMe
-        ? "bg-blue-600 text-white"
-        : "border border-blue-100 bg-white text-slate-700"
+        ? "bg-gradient-to-br from-[#35c9e8] to-[#168fcf] text-white shadow-cyan-500/20"
+        : "border border-cyan-100 bg-white/95 text-slate-700 shadow-cyan-100/40"
     }`}
   >
     {msg.content}
