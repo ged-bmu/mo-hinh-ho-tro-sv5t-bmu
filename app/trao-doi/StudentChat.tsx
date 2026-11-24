@@ -247,7 +247,6 @@ async function loadMessages() {
   /* -----------------------
       Gửi tin nhắn
   ------------------------ */
-console.log("FILE ĐANG CHỌN:", selectedFile);
 async function sendMessage() {
   if (!conversationId || isSending) return;
   if (!message.trim() && !selectedFile) return;
@@ -334,7 +333,7 @@ console.log(data?.[0]);
       console.log(error);
       return;
     }
-        // Gửi thông báo đến các thiết bị Admin đã bật
+           // Gửi thông báo đến các thiết bị Admin đã bật
     try {
       const { data: sessionData } =
         await supabase.auth.getSession();
@@ -343,20 +342,32 @@ console.log(data?.[0]);
         sessionData.session?.access_token;
 
       if (accessToken && data?.[0]?.id) {
-        await fetch("/api/send-admin-chat-notification", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            messageId: data[0].id,
-          }),
-        });
+        const notificationResponse = await fetch(
+          "/api/send-admin-chat-notification",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              messageId: data[0].id,
+            }),
+          }
+        );
+
+        const notificationResult =
+          await notificationResponse.json();
+
+        console.log(
+          "KẾT QUẢ API THÔNG BÁO ADMIN:",
+          notificationResponse.status,
+          notificationResult
+        );
       }
     } catch (notificationError) {
       console.error(
-        "Lỗi gửi thông báo Admin:",
+        "LỖI GỌI API THÔNG BÁO ADMIN:",
         notificationError
       );
     }
