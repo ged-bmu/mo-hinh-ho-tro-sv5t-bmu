@@ -1,4 +1,5 @@
 import { FaFacebook } from "react-icons/fa";
+import AppIcon from "./AppIcon";
 
 export default function Footer() {
   return (
@@ -46,17 +47,26 @@ export default function Footer() {
               color: "#111827",
             }}
           >
-            <p style={{ margin: "4px 0" }}>
-              🏛 Câu lạc bộ Sinh viên 5 tốt Trường Đại học Y Dược Buôn Ma Thuột
-            </p>
+           <p style={{ margin: "4px 0" }}>
+  <span style={{ display: "inline-flex", alignItems: "center", whiteSpace: "nowrap" }}>
+    <AppIcon name="landmark" size={16} style={{ marginRight: 6 }} />
+    Câu lạc bộ Sinh viên 5 tốt Trường Đại học Y Dược Buôn Ma Thuột
+  </span>
+</p>
 
-            <p style={{ margin: "4px 0" }}>
-              📍 298 Hà Huy Tập, phường Tân An, tỉnh Đắk Lắk
-            </p>
+<p style={{ margin: "4px 0" }}>
+  <span style={{ display: "inline-flex", alignItems: "center", whiteSpace: "nowrap" }}>
+    <AppIcon name="map-pin" size={16} style={{ marginRight: 6 }} />
+    298 Hà Huy Tập, phường Tân An, tỉnh Đắk Lắk
+  </span>
+</p>
 
-            <p style={{ margin: "4px 0" }}>
-              ✉ hoisinhvien@bmu.edu.vn
-            </p>
+<p style={{ margin: "4px 0" }}>
+  <span style={{ display: "inline-flex", alignItems: "center", whiteSpace: "nowrap" }}>
+    <AppIcon name="mail" size={16} style={{ marginRight: 6 }} />
+    hoisinhvien@bmu.edu.vn
+  </span>
+</p>
           </div>
         </div>
 
@@ -108,7 +118,7 @@ export default function Footer() {
         </span>
 
         <span>
-          Sinh viên lớp 22DA1, Trường Đại học Y Dược Buôn Ma Thuột
+          Hội Sinh viên Việt Nam Trường Đại học Y Dược Buôn Ma Thuột
         </span>
       </div>
     </div>

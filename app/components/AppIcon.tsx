@@ -43,6 +43,13 @@ import {
   FileText,
   FileSpreadsheet,
   LogOut,
+  Hand,
+  Zap,
+  RotateCcw,
+  ExternalLink,
+  Megaphone,
+  Clock,
+  Landmark,
 } from "lucide-react";
 
 export type AppIconName =
@@ -88,7 +95,14 @@ export type AppIconName =
   | "pencil"
   | "file"
   | "spreadsheet"
-  | "logout";
+  | "logout"
+  | "hand"
+  | "zap"
+  | "rotate-ccw"
+  | "external-link"
+  | "megaphone"
+  | "clock"
+  | "landmark";
 
 const icons = {
   archive: Archive,
@@ -134,6 +148,13 @@ const icons = {
   file: FileText,
   spreadsheet: FileSpreadsheet,
   logout: LogOut,
+  hand: Hand,
+  zap: Zap,
+  "rotate-ccw": RotateCcw,
+  "external-link": ExternalLink,
+  megaphone: Megaphone,
+  clock: Clock,
+  landmark: Landmark,
 } satisfies Record<AppIconName, React.ComponentType<LucideProps>>;
 
 export default function AppIcon({
