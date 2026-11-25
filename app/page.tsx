@@ -11,7 +11,7 @@ import BellUserTemp from "./components/BellUserTemp";
 import Header from "./components/Header";
 import Spinner from "./components/Spinner";
 import NotificationCard from "./components/NotificationCard";
-import { CircleHelp } from "lucide-react";
+import AppIcon from "./components/AppIcon";
 
 export default function Home() {
   const [profile, setProfile] = useState<any>(null);
@@ -44,7 +44,6 @@ useEffect(() => {
       setRightCardScale(savedPercent / 100);
     }
   } catch (error) {
-    console.error("Lỗi tải kích thước thẻ trang chủ:", error);
   }
 }, []);
 
@@ -53,7 +52,6 @@ function updateRightCardScale(percent: number) {
   try {
     window.localStorage.setItem("home-right-card-size", String(percent));
   } catch (error) {
-    console.error("Lỗi lưu kích thước thẻ trang chủ:", error);
   }
 }
 
@@ -89,7 +87,6 @@ useEffect(() => {
 
     if (!active) return;
     if (error) {
-      console.error("Lỗi tải kết quả tiêu chí năm học hiện tại:", error);
       setCriteriaResults(null);
       return;
     }
@@ -1027,7 +1024,10 @@ return (
         textAlign: isMobile ? "center" : "left", 
       }} 
     > 
-      👋 Xin chào, {profile?.ho_ten} 
+      <span style={{ whiteSpace: "nowrap", display: "inline-flex", alignItems: "center" }}>
+  <AppIcon name="hand" size={18} style={{ marginRight: 6 }} />
+  Xin chào, {profile?.ho_ten}
+</span>
     </h2>
 
 {profile?.trang_thai === "da_dat" &&
@@ -1055,41 +1055,80 @@ return (
         textAlign: "center",
       }}
     >
-      🎉 Bạn đã đạt danh hiệu Sinh viên 5 tốt cấp Trường, năm học 2025 - 2026 🎉
+      <AppIcon name="trophy" size={16} />
+      Bạn đã đạt danh hiệu Sinh viên 5 tốt cấp Trường, năm học 2025 - 2026
+      <AppIcon name="trophy" size={16} />
     </span>
   </div>
 )}
   </div>
 
 {registrationOpen && (
-  <button
-    type="button"
-    onClick={toggleRegistration}
-    disabled={registrationLoading}
-    style={{
-      background: isRegistered ? "#fff7ed" : "#2563eb",
-      color: isRegistered ? "#c2410c" : "#ffffff",
-      border: isRegistered
-        ? "1px solid #fdba74"
-        : "1px solid #2563eb",
-      padding: "9px 16px",
-      borderRadius: "10px",
-      fontWeight: 700,
-      fontSize: "14px",
-      cursor: registrationLoading ? "wait" : "pointer",
-      opacity: registrationLoading ? 0.7 : 1,
-      width: isMobile ? "100%" : "auto",
-      transition: "all .25s ease",
-      lineHeight: 1.2,
-      whiteSpace: "nowrap",
-    }}
-  >
-    {registrationLoading
-      ? "Đang cập nhật..."
-      : isRegistered
-      ? "↩ Hủy đăng ký rèn luyện"
-      : "Đăng ký rèn luyện"}
-  </button>
+  <>
+    <button
+      type="button"
+      onClick={toggleRegistration}
+      disabled={registrationLoading}
+      style={{
+        background: isRegistered ? "#fff7ed" : "#2563eb",
+        color: isRegistered ? "#c2410c" : "#ffffff",
+        border: isRegistered
+          ? "1px solid #fdba74"
+          : "1px solid #2563eb",
+        padding: "9px 16px",
+        borderRadius: "10px",
+        fontWeight: 700,
+        fontSize: "14px",
+        cursor: registrationLoading ? "wait" : "pointer",
+        opacity: registrationLoading ? 0.7 : 1,
+        width: isMobile ? "100%" : "auto",
+        transition: "all .25s ease",
+        lineHeight: 1.2,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {registrationLoading
+        ? "Đang cập nhật..."
+        : isRegistered
+        ? (
+          <>
+            <span style={{ whiteSpace: "nowrap", display: "inline-flex", alignItems: "center" }}>
+  <AppIcon name="rotate-ccw" size={16} style={{ marginRight: 6 }} />
+  Hủy đăng ký rèn luyện
+</span>
+          </>
+        )
+        : "Đăng ký rèn luyện"}
+    </button>
+
+    <a
+      href="https://doan-hoi-bmu.vercel.app/"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+
+        display: "none",
+
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#16a34a",
+        color: "#ffffff",
+        border: "1px solid #16a34a",
+        padding: "9px 16px",
+        borderRadius: "10px",
+        fontWeight: 700,
+        fontSize: "14px",
+        cursor: "pointer",
+        width: isMobile ? "100%" : "auto",
+        textDecoration: "none",
+        transition: "all .25s ease",
+        lineHeight: 1.2,
+        whiteSpace: "nowrap",
+      }}
+    >
+      Nhận minh chứng <AppIcon name="external-link" size={16} style={{ marginLeft: 6, verticalAlign: "middle" }} />
+    </a>
+  </>
 )}
 
   <div style={{ position: "relative", width: isMobile ? "100%" : "auto" }}>
@@ -1134,7 +1173,7 @@ return (
           display: "none",
         }}
       >
-        <div style={{ padding: "8px 10px", color: "#64748b", fontSize: 12, fontWeight: 700 }}>
+        <div style={{ padding: "8px 10px", color: "#64748b", fontSize: 14, fontWeight: 700 }}>
           Chọn năm học
         </div>
         {academicYears.map((year) => (
@@ -1160,7 +1199,7 @@ return (
             onMouseLeave={(event) => { event.currentTarget.style.background = "transparent"; }}
           >
             <span>{year.name}</span>
-            {year.is_current && <span style={{ color: "#15803d", fontSize: 12 }}>Hiện tại</span>}
+            {year.is_current && <span style={{ color: "#15803d", fontSize: 14 }}>Hiện tại</span>}
           </button>
         ))}
       </div>
@@ -1207,7 +1246,10 @@ style={{
     borderBottom: "1px solid #000000",
   }}
 >
-  🏅Tiến độ
+  <span style={{ whiteSpace: "nowrap", display: "inline-flex", alignItems: "center" }}>
+  <AppIcon name="trophy" size={18} style={{ marginRight: 6 }} />
+  Tiến độ
+</span>
 </div>
 
   {!isMobile ? (
@@ -1415,7 +1457,10 @@ circleCircumference -
       borderTopRightRadius: "16px",
     }}
   >
-    ⚡ Thao tác nhanh
+   <span style={{ whiteSpace: "nowrap", display: "inline-flex", alignItems: "center" }}>
+  <AppIcon name="zap" size={18} style={{ marginRight: 6 }} />
+  Thao tác nhanh
+</span>
   </div>
 
   {/* XEM BÁO CÁO */}
@@ -1461,7 +1506,7 @@ circleCircumference -
         flexShrink: 0,
       }}
     >
-      📑
+      <AppIcon name="file" size={20} />
     </div>
 
     <div style={{ minWidth: 0, flex: 1 }}>
@@ -1471,7 +1516,7 @@ circleCircumference -
     </div>
 
     <span style={{ fontSize: 18, color: "#2563EB", fontWeight: 700 }}>
-      →
+      <AppIcon name="chevron-right" size={18} color="#2563EB" />
     </span>
   </a>
 
@@ -1529,7 +1574,7 @@ circleCircumference -
         flexShrink: 0,
       }}
     >
-      💬
+      <AppIcon name="message" size={20} />
     </div>
 
     <div style={{ minWidth: 0, flex: 1 }}>
@@ -1539,7 +1584,7 @@ circleCircumference -
     </div>
 
     <span style={{ fontSize: 18, color: "#F97316", fontWeight: 700 }}>
-      →
+      <AppIcon name="chevron-right" size={18} color="#F97316" />
     </span>
 
     {unreadMessages > 0 && (
@@ -1554,7 +1599,7 @@ circleCircumference -
           borderRadius: 999,
           background: "#EF4444",
           color: "#fff",
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: 800,
           display: "flex",
           alignItems: "center",
@@ -1612,7 +1657,7 @@ circleCircumference -
       flexShrink: 0,
     }}
   >
-    ⚙️
+    <AppIcon name="settings" size={20} />
   </div>
 
   <div style={{ minWidth: 0, flex: 1 }}>
@@ -1622,20 +1667,22 @@ circleCircumference -
   </div>
 
   <span style={{ fontSize: 18, color: "#7C3AED", fontWeight: 700 }}>
-    →
+    <AppIcon name="chevron-right" size={18} color="#7C3AED" />
   </span>
 </a>
 </div>
 
     {/* ================= CARD CHỨC NĂNG BÊN PHẢI ================= */}
   <div
-    style={{
-  background: "transparent",
-  borderRadius: 0,
-  padding: 0,
-  boxShadow: "none",
-}}
-  >
+  style={{
+    background: "#ffffff",
+    borderRadius: "16px",
+    padding: "0 0 14px",
+    border: "1px solid #e5e7eb",
+    boxShadow: "0 4px 14px rgba(15, 23, 42, 0.08)",
+    overflow: "hidden",
+  }}
+>
     {/* Tiêu đề */}
     <div
       style={{
@@ -1653,163 +1700,398 @@ circleCircumference -
       Chức năng
     </div>
 
-    {/* 3 nút */}
+
+
+{/* 3 CARD CHỨC NĂNG */}
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+    gap: isMobile ? "10px" : "12px",
+  }}
+>
+  {/* HỒ SƠ SINH VIÊN 5 TỐT */}
+  <a
+    href="/tieuchi"
+    style={{
+      position: "relative",
+      overflow: "hidden",
+      background: "linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%)",
+      border: "1px solid #E9D5FF",
+      borderRadius: "16px",
+      padding: isMobile ? "12px 14px 32px" : "16px 18px 42px",
+      textDecoration: "none",
+      color: "#1e1b4b",
+      boxShadow: "0 3px 10px rgba(109,40,217,0.06)",
+      transition: "transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease",
+      display: "flex",
+      alignItems: "center",
+      gap: isMobile ? "11px" : "13px",
+      minHeight: isMobile ? "128px" : "180px",
+      boxSizing: "border-box",
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = "translateY(-3px)";
+      e.currentTarget.style.boxShadow = "0 9px 22px rgba(109,40,217,0.13)";
+      e.currentTarget.style.borderColor = "#C4B5FD";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = "translateY(0)";
+      e.currentTarget.style.boxShadow = "0 3px 10px rgba(109,40,217,0.06)";
+      e.currentTarget.style.borderColor = "#E9D5FF";
+    }}
+  >
+    {/* Trang trí nền */}
     <div
       style={{
-        display: "grid",
-        gridTemplateColumns: isMobile
-          ? "1fr"
-          : "repeat(3, 1fr)",
-        gap: "14px",
+        position: "absolute",
+        width: isMobile ? 80 : 100,
+        height: isMobile ? 80 : 100,
+        borderRadius: "50%",
+        background: "rgba(216,180,254,0.20)",
+        right: isMobile ? -38 : -45,
+        top: isMobile ? -45 : -55,
+        pointerEvents: "none",
+      }}
+    />
+
+    {/* Biểu tượng */}
+    <div
+      style={{
+        position: "relative",
+        zIndex: 1,
+        flexShrink: 0,
+        width: isMobile
+          ? "clamp(36px, 10vw, 42px)"
+          : "clamp(40px, 3vw, 48px)",
+        height: isMobile
+          ? "clamp(36px, 10vw, 42px)"
+          : "clamp(40px, 3vw, 48px)",
+        borderRadius: isMobile ? "11px" : "13px",
+        background: "linear-gradient(135deg, #E9D5FF, #D8B4FE)",
+        border: "1px solid rgba(255,255,255,0.9)",
+        boxShadow: "0 4px 10px rgba(139,92,246,0.13)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
-      {/* Hồ sơ Sinh viên 5 tốt */}
-      <a
-        href="/tieuchi"
+      <img
+        src="/bonghoa5tot.png"
+        alt="Biểu tượng Sinh viên 5 tốt"
         style={{
-          background: "#F3E8FF",
-          borderRadius: "14px",
-          padding: "20px",
-          textDecoration: "none",
-          color: "#111827",
-          boxShadow: "0 3px 8px rgba(0,0,0,.05)",
-          transition: ".25s",
-          minHeight: "150px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
+          width: "75%",
+          height: "75%",
+          objectFit: "contain",
         }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.transform = "translateY(-4px)")
-        }
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.transform = "translateY(0)")
-        }
-      >
-        <img
-  src="/bonghoa5tot.png"
-  alt="Biểu tượng Sinh viên 5 tốt"
-  style={{
-    width: 38,
-    height: 38,
-    objectFit: "contain",
-  }}
-/>
-
-        <h3
-          style={{
-            margin: "10px 0 6px",
-            fontSize: 19,
-          }}
-        >
-          Hồ sơ Sinh viên 5 tốt
-        </h3>
-
-        <p
-          style={{
-            margin: 0,
-            color: "#8796aa",
-            fontSize: 13,
-            lineHeight: 1.4,
-          }}
-        >
-          Quản lý minh chứng theo từng tiêu chí Sinh viên 5 Tốt.
-        </p>
-      </a>
-
-      {/* Mục tiêu học tập */}
-      <a
-        href="/bang-diem"
-        style={{
-          background: "#DCFCE7",
-          borderRadius: "14px",
-          padding: "20px",
-          textDecoration: "none",
-          color: "#111827",
-          boxShadow: "0 3px 8px rgba(0,0,0,.05)",
-          transition: ".25s",
-          minHeight: "150px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-        }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.transform = "translateY(-4px)")
-        }
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.transform = "translateY(0)")
-        }
-      >
-        <div style={{ fontSize: 34 }}>📊</div>
-
-        <h3
-          style={{
-            margin: "10px 0 6px",
-            fontSize: 19,
-          }}
-        >
-          Mục tiêu học tập
-        </h3>
-
-        <p
-          style={{
-            margin: 0,
-            color: "#64748b",
-            fontSize: 13,
-            lineHeight: 1.4,
-          }}
-        >
-          Theo dõi kết quả học tập và đề ra mục tiêu của bạn.
-        </p>
-      </a>
-
-      {/* Hoạt động */}
-      <a
-        href="/hoat-dong"
-        style={{
-          background: "#E0F2FE",
-          borderRadius: "14px",
-          padding: "20px",
-          textDecoration: "none",
-          color: "#111827",
-          boxShadow: "0 3px 8px rgba(0,0,0,.05)",
-          transition: ".25s",
-          minHeight: "150px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-        }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.transform = "translateY(-4px)")
-        }
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.transform = "translateY(0)")
-        }
-      >
-        <div style={{ fontSize: 34 }}>📅</div>
-
-        <h3
-          style={{
-            margin: "10px 0 6px",
-            fontSize: 19,
-          }}
-        >
-          Hoạt động sắp tới
-        </h3>
-
-        <p
-          style={{
-            margin: 0,
-            color: "#64748b",
-            fontSize: 13,
-            lineHeight: 1.4,
-          }}
-        >
-          Xem các hoạt động sắp diễn ra trong thời gian tới.
-        </p>
-      </a>
+      />
     </div>
 
+    {/* Nội dung */}
+    <div
+      style={{
+        position: "relative",
+        zIndex: 1,
+        minWidth: 0,
+        flex: 1,
+      }}
+    >
+      <h3
+        style={{
+          margin: "0 0 5px",
+          fontSize: isMobile
+            ? "clamp(14px, 4vw, 16px)"
+            : "clamp(15px, 1vw, 16px)",
+          fontWeight: 800,
+          color: "#5B21B6",
+          letterSpacing: "-0.25px",
+          lineHeight: 1.3,
+        }}
+      >
+        Hồ sơ Sinh viên 5 tốt
+      </h3>
+
+      <p
+        style={{
+          margin: 0,
+          color: "#7C6B9A",
+          fontSize: isMobile
+            ? "clamp(11px, 3.2vw, 12px)"
+            : "clamp(11px, 0.75vw, 12px)",
+          lineHeight: 1.5,
+        }}
+      >
+        Quản lý minh chứng theo từng tiêu chí Sinh viên 5 tốt.
+      </p>
+    </div>
+
+    {/* Mũi tên phía dưới */}
+    <span
+      style={{
+        position: "absolute",
+        right: isMobile ? 13 : 17,
+        bottom: isMobile ? 7 : 9,
+        zIndex: 1,
+        color: "#7C3AED",
+        fontSize: isMobile ? "19px" : "22px",
+        fontWeight: 700,
+        lineHeight: 1,
+      }}
+    >
+      →
+    </span>
+  </a>
+
+  {/* MỤC TIÊU HỌC TẬP */}
+  <a
+    href="/bang-diem"
+    style={{
+      position: "relative",
+      overflow: "hidden",
+      background: "linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)",
+      border: "1px solid #BBF7D0",
+      borderRadius: "16px",
+      padding: isMobile ? "12px 14px 32px" : "16px 18px 42px",
+      textDecoration: "none",
+      color: "#14532D",
+      boxShadow: "0 3px 10px rgba(22,163,74,0.06)",
+      transition: "transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease",
+      display: "flex",
+      alignItems: "center",
+      gap: isMobile ? "11px" : "13px",
+      minHeight: isMobile ? "128px" : "180px",
+      boxSizing: "border-box",
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = "translateY(-3px)";
+      e.currentTarget.style.boxShadow = "0 9px 22px rgba(22,163,74,0.13)";
+      e.currentTarget.style.borderColor = "#86EFAC";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = "translateY(0)";
+      e.currentTarget.style.boxShadow = "0 3px 10px rgba(22,163,74,0.06)";
+      e.currentTarget.style.borderColor = "#BBF7D0";
+    }}
+  >
+    {/* Trang trí nền */}
+    <div
+      style={{
+        position: "absolute",
+        width: isMobile ? 80 : 100,
+        height: isMobile ? 80 : 100,
+        borderRadius: "50%",
+        background: "rgba(134,239,172,0.20)",
+        right: isMobile ? -38 : -45,
+        top: isMobile ? -45 : -55,
+        pointerEvents: "none",
+      }}
+    />
+
+    {/* Biểu tượng */}
+    <div
+      style={{
+        position: "relative",
+        zIndex: 1,
+        flexShrink: 0,
+        width: isMobile
+          ? "clamp(36px, 10vw, 42px)"
+          : "clamp(40px, 3vw, 48px)",
+        height: isMobile
+          ? "clamp(36px, 10vw, 42px)"
+          : "clamp(40px, 3vw, 48px)",
+        borderRadius: isMobile ? "11px" : "13px",
+        background: "linear-gradient(135deg, #BBF7D0, #86EFAC)",
+        border: "1px solid rgba(255,255,255,0.9)",
+        boxShadow: "0 4px 10px rgba(22,163,74,0.13)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#166534",
+      }}
+    >
+      <AppIcon name="chart" size={isMobile ? 22 : 25} />
+    </div>
+
+    {/* Nội dung */}
+    <div
+      style={{
+        position: "relative",
+        zIndex: 1,
+        minWidth: 0,
+        flex: 1,
+      }}
+    >
+      <h3
+        style={{
+          margin: "0 0 5px",
+          fontSize: isMobile
+            ? "clamp(14px, 4vw, 16px)"
+            : "clamp(15px, 1vw, 16px)",
+          fontWeight: 800,
+          color: "#166534",
+          letterSpacing: "-0.25px",
+          lineHeight: 1.3,
+        }}
+      >
+        Mục tiêu học tập
+      </h3>
+
+      <p
+        style={{
+          margin: 0,
+          color: "#64856F",
+          fontSize: isMobile
+            ? "clamp(11px, 3.2vw, 12px)"
+            : "clamp(11px, 0.75vw, 12px)",
+          lineHeight: 1.5,
+        }}
+      >
+        Theo dõi kết quả học tập và đề ra mục tiêu của bạn.
+      </p>
+    </div>
+
+    {/* Mũi tên phía dưới */}
+    <span
+      style={{
+        position: "absolute",
+        right: isMobile ? 13 : 17,
+        bottom: isMobile ? 7 : 9,
+        zIndex: 1,
+        color: "#15803D",
+        fontSize: isMobile ? "19px" : "22px",
+        fontWeight: 700,
+        lineHeight: 1,
+      }}
+    >
+      →
+    </span>
+  </a>
+
+  {/* HOẠT ĐỘNG SẮP TỚI */}
+  <a
+    href="/hoat-dong"
+    style={{
+      position: "relative",
+      overflow: "hidden",
+      background: "linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)",
+      border: "1px solid #BAE6FD",
+      borderRadius: "16px",
+      padding: isMobile ? "12px 14px 32px" : "16px 18px 42px",
+      textDecoration: "none",
+      color: "#0C4A6E",
+      boxShadow: "0 3px 10px rgba(2,132,199,0.06)",
+      transition: "transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease",
+      display: "flex",
+      alignItems: "center",
+      gap: isMobile ? "11px" : "13px",
+      minHeight: isMobile ? "128px" : "180px",
+      boxSizing: "border-box",
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = "translateY(-3px)";
+      e.currentTarget.style.boxShadow = "0 9px 22px rgba(2,132,199,0.13)";
+      e.currentTarget.style.borderColor = "#7DD3FC";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = "translateY(0)";
+      e.currentTarget.style.boxShadow = "0 3px 10px rgba(2,132,199,0.06)";
+      e.currentTarget.style.borderColor = "#BAE6FD";
+    }}
+  >
+    {/* Trang trí nền */}
+    <div
+      style={{
+        position: "absolute",
+        width: isMobile ? 80 : 100,
+        height: isMobile ? 80 : 100,
+        borderRadius: "50%",
+        background: "rgba(125,211,252,0.20)",
+        right: isMobile ? -38 : -45,
+        top: isMobile ? -45 : -55,
+        pointerEvents: "none",
+      }}
+    />
+
+    {/* Biểu tượng */}
+    <div
+      style={{
+        position: "relative",
+        zIndex: 1,
+        flexShrink: 0,
+        width: isMobile
+          ? "clamp(36px, 10vw, 42px)"
+          : "clamp(40px, 3vw, 48px)",
+        height: isMobile
+          ? "clamp(36px, 10vw, 42px)"
+          : "clamp(40px, 3vw, 48px)",
+        borderRadius: isMobile ? "11px" : "13px",
+        background: "linear-gradient(135deg, #BAE6FD, #7DD3FC)",
+        border: "1px solid rgba(255,255,255,0.9)",
+        boxShadow: "0 4px 10px rgba(2,132,199,0.13)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#075985",
+      }}
+    >
+      <AppIcon name="calendar" size={isMobile ? 22 : 25} />
+    </div>
+
+    {/* Nội dung */}
+    <div
+      style={{
+        position: "relative",
+        zIndex: 1,
+        minWidth: 0,
+        flex: 1,
+      }}
+    >
+      <h3
+        style={{
+          margin: "0 0 5px",
+          fontSize: isMobile
+            ? "clamp(14px, 4vw, 16px)"
+            : "clamp(15px, 1vw, 16px)",
+          fontWeight: 800,
+          color: "#075985",
+          letterSpacing: "-0.25px",
+          lineHeight: 1.3,
+        }}
+      >
+        Hoạt động sắp tới
+      </h3>
+
+      <p
+        style={{
+          margin: 0,
+          color: "#64849A",
+          fontSize: isMobile
+            ? "clamp(11px, 3.2vw, 12px)"
+            : "clamp(11px, 0.75vw, 12px)",
+          lineHeight: 1.5,
+        }}
+      >
+        Xem các hoạt động sắp diễn ra trong thời gian tới.
+      </p>
+    </div>
+
+    {/* Mũi tên phía dưới */}
+    <span
+      style={{
+        position: "absolute",
+        right: isMobile ? 13 : 17,
+        bottom: isMobile ? 7 : 9,
+        zIndex: 1,
+        color: "#0284C7",
+        fontSize: isMobile ? "19px" : "22px",
+        fontWeight: 700,
+        lineHeight: 1,
+      }}
+    >
+      →
+    </span>
+  </a>
+</div>
 </div>
 </div>
 </div>
@@ -1885,7 +2167,10 @@ circleCircumference -
         flexShrink: 0,
       }}
     >
-      <span>📅 Hoạt động sắp tới</span>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <AppIcon name="calendar" size={18} />
+        Hoạt động sắp tới
+      </span>
 
       <span
         style={{
@@ -1897,7 +2182,7 @@ circleCircumference -
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 12,
+          fontSize: 14,
           fontWeight: 800,
           lineHeight: 1,
           boxShadow: "0 2px 6px rgba(37, 99, 235, 0.25)",
@@ -1906,35 +2191,6 @@ circleCircumference -
         {nextActivities.length}
       </span>
 
-      {!isMobile && (
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            marginLeft: "auto",
-            color: "#1e3a8a",
-            fontSize: 12,
-            fontWeight: 600,
-            whiteSpace: "nowrap",
-          }}
-        >
-          <span>Cỡ thẻ</span>
-          <input
-            type="range"
-            min={90}
-            max={120}
-            step={5}
-            value={Math.round(rightCardScale * 100)}
-            aria-label="Điều chỉnh kích thước các thẻ bên phải"
-            onChange={(event) => updateRightCardScale(Number(event.target.value))}
-            style={{ width: 90, accentColor: "#2563eb", cursor: "pointer" }}
-          />
-          <span style={{ minWidth: 36, textAlign: "right" }}>
-            {Math.round(rightCardScale * 100)}%
-          </span>
-        </label>
-      )}
 
       {/* Mũi tên chỉ hiện trên mobile */}
       {isMobile && (
@@ -1949,7 +2205,7 @@ circleCircumference -
               : "rotate(0deg)",
           }}
         >
-          ▼
+          <AppIcon name="chevron-down" size={18} />
         </span>
       )}
     </div>
@@ -1989,7 +2245,7 @@ circleCircumference -
               {/* Tên hoạt động và trạng thái */}
               <div
                 style={{
-                  flex: "1 1 40%",
+                  flex: "0 1 42%",
                   minWidth: 0,
                   display: "flex",
                   flexDirection: "column",
@@ -2016,7 +2272,7 @@ circleCircumference -
                     width: "fit-content",
                     padding: "3px 9px",
                     borderRadius: 999,
-                    fontSize: 11 * cardScale,
+                    fontSize: 12 * cardScale,
                     fontWeight: 800,
                     background:
                       activity.displayStatus === "ongoing"
@@ -2028,17 +2284,22 @@ circleCircumference -
                         : "#1D4ED8",
                   }}
                 >
+                  <AppIcon
+                    name={activity.displayStatus === "ongoing" ? "check" : "clock"}
+                    size={12}
+                    style={{ marginRight: 4 }}
+                  />
                   {activity.displayStatus === "ongoing"
-                    ? "● Đang diễn ra"
-                    : "◷ Sắp diễn ra"}
+                    ? "Đang diễn ra"
+                    : "Sắp diễn ra"}
                 </span>
               </div>
 
               {/* Tiêu chí */}
               <div
                 style={{
-                  flex: "0 0 150px",
-                  fontSize: 13 * cardScale,
+                  flex: "0 0 130px",
+                  fontSize: 14 * cardScale,
                   whiteSpace: "nowrap",
                   fontWeight: 600,
                   display: isMobile ? "none" : "block",
@@ -2080,32 +2341,60 @@ circleCircumference -
               </div>
 
               {/* Thời gian */}
-              <div
-                style={{
-                  flex: "0 0 155px",
-                  color: "#64748B",
-                  fontSize: 13 * cardScale,
-                  whiteSpace: "nowrap",
-                  display: isMobile ? "none" : "block",
-                }}
-              >
-                🕒 {formatEventTime(activity.event_time, activity.end_time)}
-              </div>
+<div
+  style={{
+    flex: "0 0 205px",
+    color: "#64748B",
+    fontSize: 13 * cardScale,
+    whiteSpace: "nowrap",
+    display: isMobile ? "none" : "flex",
+    alignItems: "center",
+    minWidth: 0,
+  }}
+>
+  <span
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4,
+      whiteSpace: "nowrap",
+    }}
+  >
+    <AppIcon name="clock" size={14} />
+    {formatEventTime(activity.event_time, activity.end_time)}
+  </span>
+</div>
 
               {/* Xem chi tiết */}
-              <a
-                href="/hoat-dong"
-                style={{
-                  flex: "0 0 auto",
-                  color: "#2563EB",
-                  textDecoration: "none",
-                  fontWeight: 600,
-                  fontSize: 13 * cardScale,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {isMobile ? "Xem →" : "Xem chi tiết →"}
-              </a>
+             <a
+  href="/hoat-dong"
+  style={{
+    flex: "0 0 auto",
+    flexShrink: 0,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "max-content",
+    whiteSpace: "nowrap",
+    color: "#2563EB",
+    textDecoration: "none",
+    fontWeight: 600,
+    fontSize: 14 * cardScale,
+  }}
+>
+  <span
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      flexWrap: "nowrap",
+      whiteSpace: "nowrap",
+      gap: 2,
+    }}
+  >
+    {isMobile ? "Xem" : "Xem chi tiết"}
+    <AppIcon name="chevron-right" size={14} />
+  </span>
+</a>
             </div>
           ))
         ) : (
@@ -2124,92 +2413,150 @@ circleCircumference -
     )}
   </div>
 
-  {/* ===================================================== */}
-  {/* THÔNG TIN CHUNG */}
-  {/* ===================================================== */}
+{/* ===================================================== */}
+{/* THÔNG TIN CHUNG */}
+{/* ===================================================== */}
 
+<div
+  style={{
+    flex: "0 0 auto",
+    width: "100%",
+    boxSizing: "border-box",
+    position: "relative",
+    overflow: "hidden",
+    background: "linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 55%, #FED7AA 100%)",
+    borderRadius: 16,
+    padding: `${18 * cardScale}px ${22 * cardScale}px`,
+    border: "1px solid #FDBA74",
+    borderLeft: `${5 * cardScale}px solid #EA580C`,
+    boxShadow: "0 5px 16px rgba(194, 65, 12, 0.10)",
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 14 * cardScale,
+  }}
+>
+  {/* Họa tiết trang trí */}
   <div
     style={{
-      flex: "0 0 auto",
-      width: "100%",
-      boxSizing: "border-box",
-      background:
-        "linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)",
-      borderRadius: "14px",
-      padding: `${18 * cardScale}px ${22 * cardScale}px`,
-      border: "1px solid #FED7AA",
-      boxShadow: "0 3px 8px rgba(0,0,0,.05)",
+      position: "absolute",
+      width: 130 * cardScale,
+      height: 130 * cardScale,
+      borderRadius: "50%",
+      background: "rgba(249, 115, 22, 0.07)",
+      right: -45 * cardScale,
+      top: -65 * cardScale,
+      pointerEvents: "none",
+    }}
+  />
+
+  {/* Icon */}
+  <div
+    style={{
+      width: 48 * cardScale,
+      height: 48 * cardScale,
+      minWidth: 48 * cardScale,
+      borderRadius: 14,
+      background: "linear-gradient(135deg, #FB923C, #EA580C)",
       display: "flex",
       alignItems: "center",
-      gap: 14 * cardScale,
+      justifyContent: "center",
+      boxShadow: "0 4px 10px rgba(234, 88, 12, 0.22)",
+      position: "relative",
+      zIndex: 1,
     }}
   >
-    {/* Icon */}
+    <AppIcon
+      name="megaphone"
+      size={25 * cardScale}
+      style={{ color: "#FFFFFF" }}
+    />
+  </div>
+
+  {/* Nội dung */}
+  <div
+    style={{
+      minWidth: 0,
+      flex: 1,
+      position: "relative",
+      zIndex: 1,
+    }}
+  >
+    {/* Nhãn và tiêu đề */}
     <div
       style={{
-        width: 46 * cardScale,
-        height: 46 * cardScale,
-        borderRadius: 12,
-        background: "#FFEDD5",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
-        fontSize: 25 * cardScale,
-        flexShrink: 0,
+        flexWrap: "wrap",
+        gap: 7 * cardScale,
       }}
     >
-      📢
-    </div>
-
-    {/* Nội dung */}
-    <div
-      style={{
-        minWidth: 0,
-        flex: 1,
-      }}
-    >
-      {/* Tiêu đề */}
-      <div
+      <span
         style={{
-          fontSize: 16 * cardScale,
+          fontSize: 10 * cardScale,
+          fontWeight: 800,
+          color: "#FFFFFF",
+          background: "#EA580C",
+          padding: `${3 * cardScale}px ${8 * cardScale}px`,
+          borderRadius: 999,
+          letterSpacing: "0.5px",
+          whiteSpace: "nowrap",
+        }}
+      >
+        THÔNG BÁO
+      </span>
+
+      <span
+        style={{
+          fontSize: 17 * cardScale,
           fontWeight: 800,
           color: "#9A3412",
         }}
       >
         Thông tin chung
-      </div>
+      </span>
+    </div>
 
-      {/* Nội dung thông báo */}
+    {/* Nội dung thông báo */}
+    <div
+      style={{
+        fontSize: 14 * cardScale,
+        color: "#7C2D12",
+        marginTop: 9 * cardScale,
+        lineHeight: 1.65,
+        textAlign: "justify",
+        overflowWrap: "anywhere",
+      }}
+    >
+      {generalNotification?.content ||
+        "Sẽ sớm có thông báo từ Ban chủ nhiệm Câu lạc bộ Sinh viên 5 tốt BMU"}
+    </div>
+
+    {/* Thời gian cập nhật */}
+    {generalNotification?.created_at && (
       <div
         style={{
-          fontSize: 14 * cardScale,
-          color: "#C2410C",
-          marginTop: 5 * cardScale,
-          lineHeight: 1.5,
-          wordBreak: "break-word",
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+          marginTop: 11 * cardScale,
+          paddingTop: 9 * cardScale,
+          borderTop: "1px solid rgba(234, 88, 12, 0.18)",
+          color: "#9A3412",
+          fontSize: 12 * cardScale,
+          fontWeight: 600,
         }}
       >
-        {generalNotification?.content ||
-          "Sẽ sớm có thông báo từ Ban chủ nhiệm Câu lạc bộ Sinh viên 5 tốt BMU"}
-      </div>
-
-      {/* Thời gian */}
-      {generalNotification?.created_at && (
-        <div
-          style={{
-            fontSize: 12 * cardScale,
-            color: "#9A3412",
-            marginTop: 7 * cardScale,
-          }}
-        >
+        <AppIcon name="clock" size={13 * cardScale} />
+        <span>
           Cập nhật:{" "}
           {new Date(
             generalNotification.created_at
           ).toLocaleString("vi-VN")}
-        </div>
-      )}
-    </div>
+        </span>
+      </div>
+    )}
   </div>
+</div>
 </div>
 
 </div>
@@ -2350,12 +2697,16 @@ circleCircumference -
           background: "rgba(219, 234, 254, 0.75)",
           border: "1px solid #BFDBFE",
           color: "#1E40AF",
-          fontSize: 13,
+          fontSize: 14,
           fontWeight: 700,
           lineHeight: 1.5,
         }}
       >
-        ⭐ Đạo đức – Năng lực – Tâm huyết ⭐
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <AppIcon name="star" size={14} />
+          Đạo đức – Năng lực – Tâm huyết
+          <AppIcon name="star" size={14} />
+        </span>
         <br />
         Sinh viên 5 tốt, hành trình hơn cả một danh hiệu!
       </div>
