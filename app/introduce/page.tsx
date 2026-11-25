@@ -2013,7 +2013,7 @@ async function handleLogin() {
           display: "block",
           objectFit: "contain",
           flexShrink: 0,
-          zIndex: 100,
+          zIndex: 10,
         }}
       />
 
