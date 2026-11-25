@@ -2174,15 +2174,15 @@ circleCircumference -
 
       <span
         style={{
-          width: 24,
-          height: 24,
+          width: 22,
+          height: 22,
           borderRadius: "50%",
           background: "#2563EB",
           color: "#fff",
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 14,
+          fontSize: 11,
           fontWeight: 800,
           lineHeight: 1,
           boxShadow: "0 2px 6px rgba(37, 99, 235, 0.25)",
@@ -2492,7 +2492,7 @@ circleCircumference -
     >
       <span
         style={{
-          fontSize: 10 * cardScale,
+          fontSize: 13 * cardScale,
           fontWeight: 800,
           color: "#FFFFFF",
           background: "#EA580C",
@@ -2502,17 +2502,7 @@ circleCircumference -
           whiteSpace: "nowrap",
         }}
       >
-        THÔNG BÁO
-      </span>
-
-      <span
-        style={{
-          fontSize: 17 * cardScale,
-          fontWeight: 800,
-          color: "#9A3412",
-        }}
-      >
-        Thông tin chung
+        THÔNG BÁO CHUNG
       </span>
     </div>
 

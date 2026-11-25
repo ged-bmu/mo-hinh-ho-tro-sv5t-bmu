@@ -47,23 +47,38 @@ export default function Footer() {
               color: "#111827",
             }}
           >
-           <p style={{ margin: "4px 0" }}>
-  <span style={{ display: "inline-flex", alignItems: "center", whiteSpace: "nowrap" }}>
-    <AppIcon name="landmark" size={16} style={{ marginRight: 6 }} />
+         <p style={{ margin: "4px 0" }}>
+  <span style={{
+    display: "inline-flex",
+    alignItems: "center",
+    flexWrap: "wrap",
+    minWidth: 0,
+  }}>
+    <AppIcon name="landmark" size={16} style={{ marginRight: 6, flexShrink: 0 }} />
     Câu lạc bộ Sinh viên 5 tốt Trường Đại học Y Dược Buôn Ma Thuột
   </span>
 </p>
 
 <p style={{ margin: "4px 0" }}>
-  <span style={{ display: "inline-flex", alignItems: "center", whiteSpace: "nowrap" }}>
-    <AppIcon name="map-pin" size={16} style={{ marginRight: 6 }} />
+  <span style={{
+    display: "inline-flex",
+    alignItems: "center",
+    flexWrap: "wrap",
+    minWidth: 0,
+  }}>
+    <AppIcon name="map-pin" size={16} style={{ marginRight: 6, flexShrink: 0 }} />
     298 Hà Huy Tập, phường Tân An, tỉnh Đắk Lắk
   </span>
 </p>
 
 <p style={{ margin: "4px 0" }}>
-  <span style={{ display: "inline-flex", alignItems: "center", whiteSpace: "nowrap" }}>
-    <AppIcon name="mail" size={16} style={{ marginRight: 6 }} />
+  <span style={{
+    display: "inline-flex",
+    alignItems: "center",
+    flexWrap: "wrap",
+    minWidth: 0,
+  }}>
+    <AppIcon name="mail" size={16} style={{ marginRight: 6, flexShrink: 0 }} />
     hoisinhvien@bmu.edu.vn
   </span>
 </p>
