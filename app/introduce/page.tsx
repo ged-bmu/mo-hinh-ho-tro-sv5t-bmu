@@ -182,30 +182,32 @@ async function handleLogin() {
         flexDirection: "column",
       }}
     >
-{/* Header */}
+{/* ================= HEADER ================= */}
 <div
   className="intro-header"
   style={{
     display: "flex",
-    justifyContent: isMobile ? "center" : "space-between",
+    justifyContent: "space-between",
     alignItems: "center",
-    padding: isMobile ? "12px 35px" : "clamp(8px, 0.8vw, 12px) clamp(18px, 2.3vw, 35px)",
-    background: "white",
-    borderBottom: "1px solid #eee",
+    padding: isMobile ? "10px 14px" : "8px clamp(18px, 2.3vw, 35px)",
+    background: "rgba(255,255,255,0.96)",
+    borderBottom: "1px solid #e5eaf2",
+    boxShadow: "0 2px 12px rgba(15,23,42,0.04)",
     position: "sticky",
     top: 0,
     zIndex: 100,
+    gap: 12,
+    backdropFilter: "blur(12px)",
   }}
 >
-  {/* Logo + Tên */}
+  {/* LOGO + TÊN HỆ THỐNG */}
   <div
     style={{
       display: "flex",
-      flexDirection: isMobile ? "column" : "row",
+      flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
-      gap: isMobile ? "8px" : "12px",
-      flex: isMobile ? 1 : "unset",
+      gap: isMobile ? 6 : 12,
+      minWidth: 0,
     }}
   >
     <img
@@ -213,163 +215,270 @@ async function handleLogin() {
       src="/logo-header.png"
       alt="Logo"
       style={{
-        height: isMobile ? "42px" : "clamp(40px, 3.3vw, 50px)",
+        height: isMobile ? 38 : "clamp(40px, 3.3vw, 50px)",
+        width: "auto",
         objectFit: "contain",
+        flexShrink: 0,
       }}
     />
 
-   <img
-  className="intro-title"
-  src= {isMobile ? "/Tenhethong2.png" : "Tenhethong1.png"}
-  alt="Tên hệ thống"
-  style={{
-    height: isMobile ? "50px" : "clamp(48px, 4vw, 60px)",
-    objectFit: "contain",
-    marginLeft: isMobile ?"0" : "5"
-  }}
-/>
+    <img
+      className="intro-title"
+      src={isMobile ? "/Tenhethong2.png" : "/Tenhethong1.png"}
+      alt="Tên hệ thống"
+      style={{
+        height: isMobile ? 42 : "clamp(48px, 4vw, 60px)",
+        maxWidth: isMobile ? "calc(100vw - 100px)" : "none",
+        objectFit: "contain",
+        flexShrink: 1,
+      }}
+    />
   </div>
 
-  {/* Nút menu mobile */}
-  {isMobile && (
-    <button
-      className="hamburger-btn"
-      onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-      style={{
-        position: "absolute",
-        right: "16px",
-        top: "30%",
-        transform: "translateY(-50%)",
-        border: "none",
-        background: "transparent",
-        fontSize: "22px",
-        cursor: "pointer",
-      }}
-    >
-      ☰
-    </button>
-  )}
-
-  {/* Menu desktop */}
+  {/* MENU DESKTOP */}
   {!isMobile && (
     <div
       className="intro-header-buttons"
       style={{
         display: "flex",
         alignItems: "center",
-        gap: "clamp(4px, 0.5vw, 8px)",
+        gap: 5,
+        padding: 5,
+        background: "#f1f5f9",
+        border: "1px solid #e8edf4",
+        borderRadius: 14,
       }}
     >
       {[
-        { id: "home", label: "Trang chủ" },
-        { id: "about", label: "Giới thiệu" },
-        { id: "criteria", label: "Tiêu chuẩn" },
+        { id: "home", label: "Trang chủ"},
+        { id: "about", label: "Giới thiệu"},
+        { id: "criteria", label: "Tiêu chuẩn"},
       ].map((item) => (
         <button
           key={item.id}
           onClick={() => setTab(item.id)}
-             onMouseEnter={(e) => {
-      e.currentTarget.style.borderColor = "#2563eb";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.borderColor = "transparent";
-    }}
           style={{
-            padding: "clamp(6px, 0.6vw, 9px) clamp(10px, 1.2vw, 18px)",
-            fontSize: "clamp(12px, 1vw, 15px)",
-            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 7,
+            position: "relative",
+            padding: "10px 17px",
+            fontSize: "clamp(12px, 1vw, 14px)",
+            borderRadius: 10,
             cursor: "pointer",
-            fontWeight: 600,
-            transition: "0.2s",
-            background: tab === item.id ? "#2563eb" : "#f3f4f6",
-            color: tab === item.id ? "white" : "#111",
+            fontWeight: tab === item.id ? 700 : 600,
+            border: "1px solid",
+            borderColor:
+              tab === item.id ? "#dbeafe" : "transparent",
+            transition: "all 0.2s ease",
+            background:
+              tab === item.id
+                ? "#ffffff"
+                : "transparent",
+            color:
+              tab === item.id
+                ? "#1d4ed8"
+                : "#475569",
+            boxShadow:
+              tab === item.id
+                ? "0 2px 6px rgba(37,99,235,0.08)"
+                : "none",
+          }}
+          onMouseEnter={(e) => {
+            if (tab !== item.id) {
+              e.currentTarget.style.background = "#e2e8f0";
+              e.currentTarget.style.color = "#1e293b";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (tab !== item.id) {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "#475569";
+            }
           }}
         >
           {item.label}
         </button>
       ))}
 
+      {/* ĐĂNG NHẬP */}
       <button
-  type="button"
-  className="cta-btn"
-  onClick={() => setTab("login")}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.borderColor = "#2563eb";
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.borderColor = "transparent";
-  }}
-  style={{
-    background: tab === "login" ? "#2563eb" : "#f8fafc",
-    color: tab === "login" ? "white" : "black",
-    padding: "clamp(6px, 0.6vw, 9px) clamp(10px, 1.2vw, 18px)",
-    fontSize: "clamp(12px, 1vw, 15px)",
-    borderRadius: "10px",
-    fontWeight: 600,
-    border: "2px solid transparent",
-    transition: "all 0.2s ease",
-    cursor: "pointer",
-  }}
->
-  Đăng nhập
-</button>
+        type="button"
+        className="cta-btn"
+        onClick={() => setTab("login")}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 7,
+          marginLeft: 5,
+          padding: "10px 19px",
+          fontSize: "clamp(12px, 1vw, 14px)",
+          borderRadius: 11,
+          fontWeight: 700,
+          border: "none",
+          transition: "all 0.2s ease",
+          cursor: "pointer",
+          background:
+            tab === "login"
+              ? "#1d4ed8"
+              : "linear-gradient(135deg,#2563eb,#0ea5e9)",
+          color: "#ffffff",
+          boxShadow: "0 3px 10px rgba(37,99,235,0.18)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-1px)";
+          e.currentTarget.style.boxShadow =
+            "0 5px 14px rgba(37,99,235,0.25)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow =
+            "0 3px 10px rgba(37,99,235,0.18)";
+        }}
+      >
+        Đăng nhập
+      </button>
     </div>
   )}
+
+  {/* MENU MOBILE */}
+  {isMobile && (
+    <button
+      className="hamburger-btn"
+      onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+      aria-label="Mở menu"
+      aria-expanded={mobileMenuOpen}
+      style={{
+        width: 40,
+        height: 40,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        border: "1px solid #e2e8f0",
+        borderRadius: 12,
+        background: mobileMenuOpen ? "#eff6ff" : "#f8fafc",
+        color: "#2563eb",
+        fontSize: 21,
+        cursor: "pointer",
+        flexShrink: 0,
+        transition: "all 0.2s ease",
+      }}
+    >
+      {mobileMenuOpen ? "✕" : "☰"}
+    </button>
+  )}
 </div>
-{mobileMenuOpen && (
-  <div className="mobile-dropdown">
 
-    <button
-  onClick={() => { setTab("home"); setMobileMenuOpen(false); }}
-  style={{
-    background: tab === "home" ? "#2563eb" : "#f3f4f6",
-    color: tab === "home" ? "white" : "#111",
-    textAlign: "center"
-  }}
->
-  Trang chủ
-</button>
+{/* ================= MENU MOBILE DROPDOWN ================= */}
+{isMobile && mobileMenuOpen && (
+  <div
+    className="mobile-dropdown"
+    style={{
+      position: "sticky",
+      top: 59,
+      zIndex: 99,
+      background: "#ffffff",
+      borderBottom: "1px solid #e2e8f0",
+      boxShadow: "0 8px 20px rgba(15,23,42,0.08)",
+      padding: "10px 12px 14px",
+      display: "flex",
+      flexDirection: "column",
+      gap: 7,
+    }}
+  >
+    {[
+      { id: "home", label: "Trang chủ", desc: "Quay về trang chính" },
+      { id: "about", label: "Giới thiệu", desc: "Thông tin mô hình SV5T" },
+      { id: "criteria", label: "Tiêu chuẩn", desc: "Xem các tiêu chí đánh giá" },
+    ].map((item) => (
+      <button
+        key={item.id}
+        onClick={() => {
+          setTab(item.id);
+          setMobileMenuOpen(false);
+        }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          width: "100%",
+          padding: "11px 13px",
+          borderRadius: 12,
+          border: tab === item.id
+            ? "1px solid #bfdbfe"
+            : "1px solid transparent",
+          background: tab === item.id ? "#eff6ff" : "#f8fafc",
+          color: tab === item.id ? "#1d4ed8" : "#334155",
+          textAlign: "left",
+          cursor: "pointer",
+          transition: "all 0.2s ease",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: tab === item.id ? "#1d4ed8" : "#1e293b",
+            }}
+          >
+            {item.label}
+          </div>
 
-    <button
-  onClick={() => { setTab("about"); setMobileMenuOpen(false); }}
-  style={{
-    background: tab === "about" ? "#2563eb" : "#f3f4f6",
-    color: tab === "about" ? "white" : "#111",
-    textAlign: "center"
-  }}
->
-  Giới thiệu
-</button>
-    <button
-  onClick={() => { setTab("criteria"); setMobileMenuOpen(false); }}
-  style={{
-    background: tab === "criteria" ? "#2563eb" : "#f3f4f6",
-    color: tab === "criteria" ? "white" : "#111",
-    textAlign: "center"
-  }}
->
-  Tiêu chí
-</button>
+          <div
+            style={{
+              fontSize: 11,
+              color: "#64748b",
+              marginTop: 2,
+            }}
+          >
+            {item.desc}
+          </div>
+        </div>
 
-    <button
-  type="button"
-  onClick={() => {
-    setTab("login");
-    setMobileMenuOpen(false);
-  }}
-  style={{
-    background: tab === "login" ? "#2563eb" : "#f3f4f6",
-    color: tab === "login" ? "white" : "#111",
-    textAlign: "center",
-    border: "none",
-    cursor: "pointer",
-    padding: "10px",
-    borderRadius: "8px",
-  }}
->
-  Đăng nhập
-</button>
+        {tab === item.id && (
+          <span
+            style={{
+              color: "#2563eb",
+              fontWeight: 700,
+              fontSize: 14,
+            }}
+          >
+            ✓
+          </span>
+        )}
+      </button>
+    ))}
 
+    {/* ĐĂNG NHẬP MOBILE */}
+    <button
+      type="button"
+      onClick={() => {
+        setTab("login");
+        setMobileMenuOpen(false);
+      }}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        width: "100%",
+        padding: "12px",
+        marginTop: 4,
+        border: "none",
+        borderRadius: 12,
+        cursor: "pointer",
+        background: "linear-gradient(135deg,#2563eb,#0ea5e9)",
+        color: "#ffffff",
+        fontSize: 13,
+        fontWeight: 700,
+        boxShadow: "0 3px 10px rgba(37,99,235,0.18)",
+      }}
+    >
+      Đăng nhập hệ thống
+    </button>
   </div>
 )}
 
@@ -3719,96 +3828,303 @@ minHeight: "clamp(340px, 48vh, 460px)",
         </div>
       )}
 
-      {/* ===== CÁC TIÊU CHÍ ===== */}
+{/* ===== CÁC TIÊU CHÍ ===== */}
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "1fr",
+    gap: "16px",
+  }}
+>
+  {criteria.map((item: any) => {
+    const title = (item.title || "").toLowerCase();
+
+    const criterionIcon = title.includes("đạo đức")
+      ? "/icondaoduc.png"
+      : title.includes("học tập")
+      ? "/iconhoctap.png"
+      : title.includes("thể lực")
+      ? "/icontheluc.png"
+      : title.includes("tình nguyện")
+      ? "/icontinhnguyen.png"
+      : title.includes("hội nhập")
+      ? "/iconhoinhap.png"
+      : title.includes("ưu tiên") || title.includes("thành tích")
+      ? "/iconuutien.png"
+      : null;
+
+    const normalizeHeading = (line: string) =>
+      line
+        .trim()
+        .replace(/^\\?#*\s*/, "")
+        .replace(/^\*\*(.*?)\*\*$/, "$1")
+        .trim();
+
+    const renderInlineText = (text: string) =>
+      text
+        .split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g)
+        .map((part: string, i: number) => {
+          if (
+            part.startsWith("**") &&
+            part.endsWith("**") &&
+            part.length >= 4
+          ) {
+            return <strong key={i}>{part.slice(2, -2)}</strong>;
+          }
+
+          if (
+            part.startsWith("*") &&
+            part.endsWith("*") &&
+            part.length >= 2
+          ) {
+            return <em key={i}>{part.slice(1, -1)}</em>;
+          }
+
+          return part;
+        });
+
+    return (
       <div
+        className="criteria-card"
+        key={item.id}
         style={{
-          display: "grid",
-          gridTemplateColumns: "1fr",
-          gap: "20px",
+          background: "#ffffff",
+          borderRadius: 16,
+          padding: isMobile ? 16 : 22,
+          boxShadow: "0 2px 8px rgba(15,23,42,0.04)",
+          border: "1px solid #e2e8f0",
+          boxSizing: "border-box",
+          minWidth: 0,
         }}
       >
-        {criteria.map((item: any) => (
-          <div
-            className="criteria-card"
-            key={item.id}
+        {/* TIÊU ĐỀ */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 14,
+          }}
+        >
+          {criterionIcon && (
+            <img
+              src={criterionIcon}
+              alt=""
+              style={{
+                width: isMobile ? 30 : 34,
+                height: isMobile ? 30 : 34,
+                objectFit: "contain",
+                flexShrink: 0,
+              }}
+            />
+          )}
+
+          <h2
             style={{
-              background: "#f8fafc",
-              borderRadius: "18px",
-              padding: isMobile ? "20px" : "28px",
-              boxShadow:
-                "0 4px 12px rgba(0,0,0,.06)",
-              border: "1px solid #eef2f7",
-              boxSizing: "border-box",
+              margin: 0,
+              color: "#1e40af",
+              fontSize: isMobile ? 17 : 19,
+              fontWeight: 700,
+              lineHeight: 1.5,
+              wordBreak: "break-word",
             }}
           >
-            <h2
-              style={{
-                marginTop: 0,
-                color: "#2563eb",
-                fontSize: isMobile ? "21px" : "26px",
-                marginBottom: "10px",
-              }}
-            >
-              {item.title}
-            </h2>
+            {item.title}
+          </h2>
+        </div>
 
-            <div
-              className="criteria-content"
-              style={{
-                marginTop: "18px",
-                whiteSpace: "pre-wrap",
-                lineHeight: "1.8",
-                minHeight: "250px",
-                fontSize: isMobile ? "15px" : "17px",
-                color: "#111827",
-              }}
-            >
-              {item.content?.trim() || "Chưa cập nhật"}
-            </div>
+        {/* NỘI DUNG TIÊU CHÍ */}
+        <div
+          className="criteria-content"
+          style={{
+            marginTop: 10,
+            whiteSpace: "pre-wrap",
+            lineHeight: 1.75,
+            minHeight: isMobile ? "auto" : 160,
+            fontSize: isMobile ? 13.5 : 14,
+            color: "#334155",
+            overflowWrap: "anywhere",
+          }}
+        >
+          {item.content?.trim() ? (
+            item.content.split("\n").map((line: string, index: number) => {
+              const text = line.trim();
+              const heading = normalizeHeading(text);
 
-            <div
-              style={{
-                marginTop: "20px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: "10px",
-                flexWrap: "wrap",
-              }}
-            >
-              <span
-                style={{
-                  background: item.content?.trim()
-                    ? "#DCFCE7"
-                    : "#FEF3C7",
-                  color: item.content?.trim()
-                    ? "#15803D"
-                    : "#B45309",
-                  padding: "6px 14px",
-                  borderRadius: "999px",
-                  fontWeight: 600,
-                  fontSize: "14px",
-                }}
-              >
-                {item.content?.trim()
-                  ? "Đã cập nhật"
-                  : "Chưa cập nhật"}
-              </span>
+              // TIÊU CHUẨN BẮT BUỘC
+              if (heading.includes("Tiêu chuẩn bắt buộc")) {
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      display: "inline-block",
+                      margin: "12px 0 8px",
+                      padding: "5px 10px",
+                      borderRadius: 8,
+                      background: "#fee2e2",
+                      color: "#b91c1c",
+                      border: "1px solid #fecaca",
+                      fontWeight: 700,
+                      fontSize: 12,
+                    }}
+                  >
+                    🔴 Tiêu chuẩn bắt buộc
+                  </div>
+                );
+              }
 
-              <span
-                style={{
-                  color: "#64748b",
-                  fontSize: "13px",
-                }}
-              >
-                {new Date(
-                  item.updated_at
-                ).toLocaleString("vi-VN")}
-              </span>
-            </div>
-          </div>
-        ))}
+              // TIÊU CHÍ ĐẠT THÊM
+              if (
+                heading.includes("Đạt thêm 01 trong các tiêu chí sau") ||
+                heading.includes("Đạt 01 trong các tiêu sau") ||
+                heading.includes("Đạt 01 trong các tiêu chí sau")
+              ) {
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      display: "inline-block",
+                      margin: "12px 0 8px",
+                      padding: "5px 10px",
+                      borderRadius: 8,
+                      background: "#ffedd5",
+                      color: "#c2410c",
+                      border: "1px solid #fed7aa",
+                      fontWeight: 700,
+                      fontSize: 12,
+                    }}
+                  >
+                    {["Thể lực", "Tình nguyện"].some((name) =>
+                      item.title
+                        .toLowerCase()
+                        .includes(name.toLowerCase())
+                    )
+                      ? "🟠 Đạt 01 trong các tiêu sau"
+                      : "🟠 Đạt thêm 01 trong các tiêu chí sau"}
+                  </div>
+                );
+              }
+
+              // KỸ NĂNG
+              if (heading === "Kỹ năng") {
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      display: "inline-block",
+                      margin: "12px 0 8px",
+                      padding: "5px 10px",
+                      borderRadius: 8,
+                      background: "#dbeafe",
+                      color: "#1d4ed8",
+                      border: "1px solid #bfdbfe",
+                      fontWeight: 700,
+                      fontSize: 12,
+                    }}
+                  >
+                    🔵 Kỹ năng
+                  </div>
+                );
+              }
+
+              // NGOẠI NGỮ
+              if (heading === "Ngoại ngữ") {
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      display: "inline-block",
+                      margin: "12px 0 8px",
+                      padding: "5px 10px",
+                      borderRadius: 8,
+                      background: "#ede9fe",
+                      color: "#6d28d9",
+                      border: "1px solid #ddd6fe",
+                      fontWeight: 700,
+                      fontSize: 12,
+                    }}
+                  >
+                    🟣 Ngoại ngữ
+                  </div>
+                );
+              }
+
+              // DÒNG TRỐNG
+              if (!text) {
+                return <div key={index} style={{ height: 5 }} />;
+              }
+
+              // NỘI DUNG + ĐẬM + NGHIÊNG
+              return (
+                <div
+                  key={index}
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    marginBottom: 3,
+                  }}
+                >
+                  {renderInlineText(text)}
+                </div>
+              );
+            })
+          ) : (
+            "Chưa cập nhật"
+          )}
+        </div>
+
+        {/* TRẠNG THÁI + THỜI GIAN */}
+        <div
+          style={{
+            marginTop: 16,
+            paddingTop: 12,
+            borderTop: "1px solid #f1f5f9",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: isMobile ? "flex-start" : "center",
+            gap: 8,
+            flexWrap: "wrap",
+          }}
+        >
+          <span
+            style={{
+              background: item.content?.trim()
+                ? "#ecfdf5"
+                : "#fffbeb",
+              color: item.content?.trim()
+                ? "#047857"
+                : "#b45309",
+              padding: "5px 10px",
+              borderRadius: 8,
+              fontWeight: 600,
+              fontSize: 12,
+              border: `1px solid ${
+                item.content?.trim()
+                  ? "#d1fae5"
+                  : "#fef3c7"
+              }`,
+            }}
+          >
+            {item.content?.trim()
+              ? "Đã cập nhật"
+              : "Chưa cập nhật"}
+          </span>
+
+          <span
+            style={{
+              color: "#94a3b8",
+              fontSize: 11,
+              lineHeight: 1.5,
+            }}
+          >
+            {item.updated_at
+              ? new Date(item.updated_at).toLocaleString("vi-VN")
+              : "Chưa có thời gian cập nhật"}
+          </span>
+        </div>
       </div>
+    );
+  })}
+</div>
     </div>
   </div>
 )}
