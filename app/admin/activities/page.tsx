@@ -137,8 +137,8 @@ export default function ActivitiesAdminPage() {
     text: "text-orange-700",
   },
   tinh_nguyen: {
-    bg: "bg-blue-100",
-    text: "text-blue-700",
+    bg: "bg-green-100",
+    text: "text-green-700",
   },
   hoi_nhap: {
     bg: "bg-purple-100",
