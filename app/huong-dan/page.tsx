@@ -579,11 +579,11 @@ const [showReminder, setShowReminder] = useState(false);
             }}
           >
             {[
-              ["🌟", "Đạo đức tốt"],
-              ["📚", "Học tập tốt"],
-              ["💪", "Thể lực tốt"],
-              ["❤️", "Tình nguyện tốt"],
-              ["🌏", "Hội nhập tốt"],
+              ["Đạo đức tốt"],
+              ["Học tập tốt"],
+              ["Thể lực tốt"],
+              ["Tình nguyện tốt"],
+              ["Hội nhập tốt"],
             ].map(([icon, title]) => (
               <div
                 key={title}
