@@ -202,14 +202,16 @@ async function handleLogin() {
 >
   {/* LOGO + TÊN HỆ THỐNG */}
   <div
-    style={{
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center",
-      gap: isMobile ? 6 : 12,
-      minWidth: 0,
-    }}
-  >
+  style={{
+    display: "flex",
+    flexDirection: isMobile ? "column" : "row",
+    alignItems: "center",
+    justifyContent: isMobile ? "center" : "flex-start",
+    gap: isMobile ? 4 : 12,
+    minWidth: 0,
+    width: "100%",
+  }}
+>
     <img
       className="intro-logo"
       src="/logo-header.png"
@@ -376,22 +378,24 @@ async function handleLogin() {
   <div
     className="mobile-dropdown"
     style={{
-      position: "sticky",
-      top: 59,
-      zIndex: 99,
-      background: "#ffffff",
-      borderBottom: "1px solid #e2e8f0",
-      boxShadow: "0 8px 20px rgba(15,23,42,0.08)",
-      padding: "10px 12px 14px",
-      display: "flex",
-      flexDirection: "column",
-      gap: 7,
-    }}
+  position: "absolute",
+  top: 59,
+  left: 0,
+  right: 0,
+  zIndex: 9999,
+  background: "#ffffff",
+  borderBottom: "1px solid #e2e8f0",
+  boxShadow: "0 8px 20px rgba(15,23,42,0.08)",
+  padding: "10px 12px 14px",
+  display: "flex",
+  flexDirection: "column",
+  gap: 7,
+}}
   >
     {[
-      { id: "home", label: "Trang chủ", desc: "Quay về trang chính" },
-      { id: "about", label: "Giới thiệu", desc: "Thông tin mô hình SV5T" },
-      { id: "criteria", label: "Tiêu chuẩn", desc: "Xem các tiêu chí đánh giá" },
+      { id: "home", label: "Trang chủ"},
+      { id: "about", label: "Giới thiệu"},
+      { id: "criteria", label: "Tiêu chuẩn Sinh viên 5 tốt"},
     ].map((item) => (
       <button
         key={item.id}
@@ -425,16 +429,6 @@ async function handleLogin() {
             }}
           >
             {item.label}
-          </div>
-
-          <div
-            style={{
-              fontSize: 11,
-              color: "#64748b",
-              marginTop: 2,
-            }}
-          >
-            {item.desc}
           </div>
         </div>
 
