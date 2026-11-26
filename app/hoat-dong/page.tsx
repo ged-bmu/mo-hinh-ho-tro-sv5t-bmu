@@ -25,6 +25,12 @@ type Activity = {
   registration_deadline: string | null;
   created_at: string;
   status: string;
+  academic_year_id: number | null;
+};
+type AcademicYear = {
+  id: number;
+  name: string;
+  is_current: boolean;
 };
 
 const criterionLabel: Record<string, string> = {
@@ -108,9 +114,13 @@ export default function ActivitiesPage() {
   const [tab, setTab] = useState("proof");
   const [filterCriterion, setFilterCriterion] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterYear, setFilterYear] = useState("all");
+  const [searchActivity, setSearchActivity] = useState("");
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [showProfile, setShowProfile] = useState(false);
   const [currentTime, setCurrentTime] = useState(Date.now());
   const [mounted, setMounted] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
 useEffect(() => {
   setMounted(true);
@@ -128,45 +138,66 @@ useEffect(() => {
     loadActivities();
   }, []);
 
-  async function loadActivities() {
-    setLoading(true);
+async function loadActivities() {
+  setLoading(true);
 
-    const { data, error } = await supabase
-      .from("activities")
-      .select("*")
-      .order("event_time", { ascending: true });
+  const [activityResult, yearResult] = await Promise.all([
+    supabase.from("activities").select("*"),
+    supabase
+      .from("academic_years")
+      .select("id, name, is_current")
+      .order("id", { ascending: false }),
+  ]);
 
-    if (!error && data) {
-      setActivities(data);
-    }
-
-    setLoading(false);
+  if (!activityResult.error && activityResult.data) {
+    setActivities(activityResult.data);
   }
+
+  if (!yearResult.error && yearResult.data) {
+    setAcademicYears(yearResult.data);
+  }
+
+  setLoading(false);
+}
 
 const sorted = useMemo(() => {
   return [...activities].sort((a, b) => {
-    const statusOrder = {
+    const statusOrder: Record<string, number> = {
       ongoing: 0,
       upcoming: 1,
       ended: 2,
+      not_started: 3,
     };
 
     const statusA = getActivityStatus(a, currentTime);
     const statusB = getActivityStatus(b, currentTime);
 
-    if (statusA !== statusB) {
-      return statusOrder[statusA] - statusOrder[statusB];
+    const priorityDiff =
+      statusOrder[statusA] - statusOrder[statusB];
+
+    if (priorityDiff !== 0) return priorityDiff;
+
+    const startA = a.event_time
+      ? new Date(a.event_time).getTime()
+      : 0;
+
+    const startB = b.event_time
+      ? new Date(b.event_time).getTime()
+      : 0;
+
+    const endA = a.end_time
+      ? new Date(a.end_time).getTime()
+      : startA;
+
+    const endB = b.end_time
+      ? new Date(b.end_time).getTime()
+      : startB;
+
+    if (statusA === "ended") {
+      return endB - endA;
     }
 
-    const timeA = a.event_time
-      ? new Date(a.event_time).getTime()
-      : Infinity;
-
-    const timeB = b.event_time
-      ? new Date(b.event_time).getTime()
-      : Infinity;
-
-    return timeA - timeB;
+    return startA - startB;
   });
 }, [activities, currentTime]);
 
@@ -176,6 +207,15 @@ const filteredActivities = useMemo(() => {
       filterCriterion === "all" ||
       activity.criterion === filterCriterion;
 
+    const matchYear =
+      filterYear === "all" ||
+      String(activity.academic_year_id) === filterYear;
+
+    const matchSearch =
+      activity.title
+        .toLowerCase()
+        .includes(searchActivity.trim().toLowerCase());
+
     const status = getActivityStatus(activity, currentTime);
 
     const matchStatus =
@@ -184,9 +224,21 @@ const filteredActivities = useMemo(() => {
       (filterStatus === "ongoing" && status === "ongoing") ||
       (filterStatus === "ended" && status === "ended");
 
-    return matchCriterion && matchStatus;
+    return (
+      matchCriterion &&
+      matchYear &&
+      matchSearch &&
+      matchStatus
+    );
   });
-}, [sorted, filterCriterion, filterStatus, currentTime]);
+}, [
+  sorted,
+  filterCriterion,
+  filterYear,
+  searchActivity,
+  filterStatus,
+  currentTime,
+]);
 
 if (loading) {
   return (
@@ -234,90 +286,133 @@ return (
     background: "#f5f7fb",
   }}
 >
-            <div
-  className="mb-8 rounded-2xl p-6 text-white shadow-lg"
-  style={{
-    background: "linear-gradient(to right, #33d1f4 0%, #a7f5fc 100%)",
-  }}
->
-  <div className="mb-5">
-    <h2
-      className="text-2xl font-bold"
-      style={{ color: "#000000" }}
-    >
-      Theo dõi hoạt động
-    </h2>
-  </div>
-
-<div>
-  <div className="stats-grid">
-  <div className="rounded-xl border border-gray-200 bg-white p-4">
-    <p className="text-xs font-medium text-gray-500">
-      Tổng hoạt động
-    </p>
-    <p className="mt-1 text-2xl font-bold text-green-600">
-      {activities.length}
-    </p>
-  </div>
-
-  <div className="rounded-xl border border-gray-200 bg-white p-4">
-    <p className="text-xs font-medium text-gray-500">
-      Đang diễn ra
-    </p>
-    <p className="mt-1 text-2xl font-bold text-blue-600">
-      {activities.filter(
-        (a) => getActivityStatus(a, currentTime) === "ongoing"
-      ).length}
-    </p>
-  </div>
-
-  <div className="rounded-xl border border-gray-200 bg-white p-4">
-    <p className="text-xs font-medium text-gray-500">
-      Sắp diễn ra
-    </p>
-    <p className="mt-1 text-2xl font-bold text-cyan-600">
-      {activities.filter(
-        (a) => getActivityStatus(a, currentTime) === "upcoming"
-      ).length}
-    </p>
-  </div>
-
-  <div className="rounded-xl border border-gray-200 bg-white p-4">
-    <p className="text-xs font-medium text-gray-500">
-      Đã kết thúc
-    </p>
-    <p className="mt-1 text-2xl font-bold text-red-600">
-      {activities.filter(
-        (a) => getActivityStatus(a, currentTime) === "ended"
-      ).length}
-    </p>
-  </div>
-</div>
-  </div>
-<style jsx>{`
-  .stats-grid {
-    display: grid;
-    width: 100%;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
-  }
-
-  @media (max-width: 767px) {
-    .stats-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-  }
-`}</style>
-</div>
-
         <div
           style={{
             maxWidth: "1800px",
             margin: "0 auto",
           }}
         >
+<div 
+className="mb-6 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4"
+style={{
+    background: "linear-gradient(to right, #33d1f4 0%, #a7f5fc 100%)",
+  }}>
+  <div 
+  className="mb-3 flex items-center justify-between gap-3">
+      <h2
+    className="text-2xl font-bold"
+    style={{ color: "#000000" }}
+  >
+    Theo dõi hoạt động
+  </h2>
 
+  <button
+    type="button"
+    onClick={() => {
+      setFilterYear("all");
+      setFilterCriterion("all");
+      setFilterStatus("all");
+      setSearchActivity("");
+    }}
+    className="text-sm font-semibold text-blue-600 hover:text-blue-800 whitespace-nowrap"
+  >
+    Xóa bộ lọc
+  </button>
+</div>
+{/* NÚT LỌC MOBILE */}
+<button
+  type="button"
+  onClick={() => setShowMobileFilters((prev) => !prev)}
+  className="mb-3 flex w-full items-center justify-start gap-2 rounded-xl border border-white/60 bg-white/80 px-4 py-3 text-sm font-semibold text-gray-800 shadow-sm md:hidden"
+>
+  <span>🔎 Tìm kiếm</span>
+  <span>{showMobileFilters ? "▲" : "▼"}</span>
+</button>
+<div
+  className={`grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid lg:grid-cols-4 ${
+    showMobileFilters ? "" : "hidden"
+  }`}
+>
+    {/* NĂM HỌC */}
+    <div>
+      <label className="mb-2 block text-xs font-semibold text-gray-600">
+        Năm học
+      </label>
+
+      <select
+        value={filterYear}
+        onChange={(e) => setFilterYear(e.target.value)}
+        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 outline-none focus:border-blue-500 focus:bg-white"
+      >
+        <option value="all">Tất cả năm học</option>
+
+        {academicYears.map((year) => (
+          <option key={year.id} value={String(year.id)}>
+            {year.name}
+            {year.is_current ? " (Hiện tại)" : ""}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    {/* TIÊU CHÍ */}
+    <div>
+      <label className="mb-2 block text-xs font-semibold text-gray-600">
+        Tiêu chí
+      </label>
+
+      <select
+        value={filterCriterion}
+        onChange={(e) => setFilterCriterion(e.target.value)}
+        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 outline-none focus:border-blue-500 focus:bg-white"
+      >
+        <option value="all">Tất cả tiêu chí</option>
+        <option value="dao_duc">Đạo đức tốt</option>
+        <option value="hoc_tap">Học tập tốt</option>
+        <option value="the_luc">Thể lực tốt</option>
+        <option value="tinh_nguyen">Tình nguyện tốt</option>
+        <option value="hoi_nhap">Hội nhập tốt</option>
+      </select>
+    </div>
+
+    {/* TRẠNG THÁI */}
+    <div>
+      <label className="mb-2 block text-xs font-semibold text-gray-600">
+        Trạng thái
+      </label>
+
+      <select
+        value={filterStatus}
+        onChange={(e) => setFilterStatus(e.target.value)}
+        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 outline-none focus:border-blue-500 focus:bg-white"
+      >
+        <option value="all">Tất cả trạng thái</option>
+        <option value="ongoing">Đang diễn ra</option>
+        <option value="upcoming">Sắp diễn ra</option>
+        <option value="ended">Đã kết thúc</option>
+      </select>
+    </div>
+
+    {/* TÌM KIẾM */}
+    <div>
+      <label className="mb-2 block text-xs font-semibold text-gray-600">
+        Tìm kiếm
+      </label>
+
+      <input
+        type="text"
+        value={searchActivity}
+        onChange={(e) => setSearchActivity(e.target.value)}
+        placeholder="Nhập tên hoạt động..."
+        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 outline-none focus:border-blue-500 focus:bg-white"
+      />
+    </div>
+  </div>
+
+  {/* KẾT QUẢ + RESET */}
+  <div className="mt-3 border-t border-gray-100 pt-3">
+</div>
+  </div>
           {sorted.length === 0 ? (
             <div className="rounded-xl border bg-white p-8 text-center text-gray-500">
               Chưa có hoạt động nào.

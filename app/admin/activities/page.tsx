@@ -24,6 +24,12 @@ type Activity = {
   registration_deadline: string | null;
   created_at: string;
   status: string;
+  academic_year_id: number | null;
+};
+type AcademicYear = {
+  id: number;
+  name: string;
+  is_current: boolean;
 };
 
 type StudentRecipient = {
@@ -86,6 +92,8 @@ function getDocumentStoragePath(url: string): string | null {
 }
 export default function ActivitiesAdminPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
+  const [academicYearId, setAcademicYearId] = useState<number | null>(null);
   const [currentTime, setCurrentTime] = useState(Date.now());useEffect(() => {const timer = setInterval(() => {setCurrentTime(Date.now());}, 30000);return () => clearInterval(timer);}, []);
   const [openId, setOpenId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -119,6 +127,11 @@ export default function ActivitiesAdminPage() {
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>([]);
   const [tokenFilter, setTokenFilter] = useState("all");
   const [currentAcademicYear, setCurrentAcademicYear] = useState("");
+  const [filterYear, setFilterYear] = useState("all");
+  const [filterCriterion, setFilterCriterion] = useState("all");
+  const [searchActivity, setSearchActivity] = useState("");
+  const [showActivityStats, setShowActivityStats] = useState(false);
+  const [showActivityForm, setShowActivityForm] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const criterionStyle: Record<
   string,
@@ -149,6 +162,7 @@ export default function ActivitiesAdminPage() {
     text: "text-gray-700",
   },
 };
+
 function handleDocumentUpload(
   e: React.ChangeEvent<HTMLInputElement>
 ) {
@@ -174,6 +188,42 @@ function handleDocumentUpload(
 
   input.value = "";
 }
+const filteredActivities = activities.filter((activity) => {
+  const matchYear =
+    filterYear === "all" ||
+    String(activity.academic_year_id ?? "") === filterYear;
+
+  const matchCriterion =
+    filterCriterion === "all" ||
+    activity.criterion === filterCriterion;
+
+  const matchSearch = activity.title
+    .toLowerCase()
+    .includes(searchActivity.trim().toLowerCase());
+
+  return matchYear && matchCriterion && matchSearch;
+});
+async function loadAcademicYears() {
+  const { data, error } = await supabase
+    .from("academic_years")
+    .select("id, name, is_current")
+    .order("id", { ascending: false });
+
+  if (error) {
+    console.error("Lỗi tải năm học:", error);
+    return;
+  }
+
+  if (data) {
+    setAcademicYears(data);
+
+    const currentYear = data.find((y) => y.is_current);
+
+    if (currentYear) {
+      setAcademicYearId(currentYear.id);
+    }
+  }
+}
   async function loadActivities() {
     const { data, error } = await supabase
       .from("activities")
@@ -184,6 +234,7 @@ function handleDocumentUpload(
   }
 
   useEffect(() => {
+    loadAcademicYears();
     loadActivities();
   }, []);
 
@@ -664,58 +715,186 @@ const sendSelectedNotifications = async () => {
     ← Trang chủ
   </a>
 </div>
-       <div className="mb-8 rounded-2xl bg-gradient-to-r from-sky-500 via-cyan-500 to-blue-600 p-6 text-white shadow-lg">
-  <div className="mb-5">
-    <h2 className="text-2xl font-bold text-white">
-  Quản lý hoạt động
-</h2>
 
-<p className="mt-1 text-sm text-sky-100">
-  Quản lý, tạo mới và theo dõi các hoạt động dành cho Sinh viên 5 Tốt.
-</p>
+<div className="mb-8 rounded-2xl bg-gradient-to-r from-sky-500 via-cyan-500 to-blue-600 p-4 sm:p-6 text-white shadow-lg">
+  {/* Tiêu đề */}
+  <button
+    type="button"
+    onClick={() => setShowActivityStats(!showActivityStats)}
+    className="flex w-full items-center justify-between md:cursor-default"
+  >
+    <h2 className="text-xl sm:text-2xl font-bold text-white">
+      Quản lý hoạt động
+    </h2>
+
+    <span className="text-xl md:hidden transition-transform duration-200">
+      {showActivityStats ? "▲" : "▼"}
+    </span>
+  </button>
+
+
+{/* Thống kê: luôn hiện trên desktop, chỉ mở khi bấm trên mobile */}
+<div className={`${showActivityStats ? "block" : "hidden"} md:block mt-5`}>
+  <div className="rounded-xl bg-white px-4 sm:px-5 py-4 shadow-sm">
+    <div className="flex flex-col md:flex-row md:items-center gap-5 md:gap-8">
+
+      {/* Thống kê trạng thái */}
+      <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 md:shrink-0">
+        <div>
+          <p className="text-xs text-gray-500">Đang diễn ra</p>
+          <p className="text-xl font-bold leading-tight text-red-600">
+            {activities.filter(
+              (a) => getActivityStatus(a, currentTime) === "ongoing"
+            ).length}
+          </p>
+        </div>
+
+        <div className="border-t sm:border-t-0 sm:border-l border-gray-200 pt-3 sm:pt-0 sm:pl-8">
+          <p className="text-xs text-gray-500">Sắp diễn ra</p>
+          <p className="text-xl font-bold leading-tight text-blue-600">
+            {activities.filter(
+              (a) => getActivityStatus(a, currentTime) === "scheduled"
+            ).length}
+          </p>
+        </div>
+      </div>
+
+      {/* Thống kê tiêu chí */}
+      <div className="min-w-0 flex-1 border-t md:border-t-0 md:border-l border-gray-200 pt-4 md:pt-0 md:pl-8">
+        <p className="mb-3 text-sm font-semibold text-gray-700">
+          Hoạt động theo tiêu chí
+        </p>
+
+        <div className="flex flex-wrap gap-2">
+          {[
+            {
+              key: "dao_duc",
+              name: "Đạo đức tốt",
+              color: "bg-rose-50 text-rose-700",
+              countColor: "text-rose-700",
+            },
+            {
+              key: "hoc_tap",
+              name: "Học tập tốt",
+              color: "bg-blue-50 text-blue-700",
+              countColor: "text-blue-700",
+            },
+            {
+              key: "the_luc",
+              name: "Thể lực tốt",
+              color: "bg-orange-50 text-orange-700",
+              countColor: "text-orange-700",
+            },
+            {
+              key: "tinh_nguyen",
+              name: "Tình nguyện tốt",
+              color: "bg-emerald-50 text-emerald-700",
+              countColor: "text-emerald-700",
+            },
+            {
+              key: "hoi_nhap",
+              name: "Hội nhập tốt",
+              color: "bg-violet-50 text-violet-700",
+              countColor: "text-violet-700",
+            },
+          ].map((criterion) => (
+            <div
+              key={criterion.name}
+              className={`flex items-center gap-2 rounded-lg px-3 py-1.5 ${criterion.color}`}
+            >
+              <span className="whitespace-nowrap text-sm font-medium">
+                {criterion.name}
+              </span>
+
+              <span className={`text-base font-bold ${criterion.countColor}`}>
+                {activities.filter(
+                  (a) => a.criterion === criterion.key
+                ).length}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+    </div>
   </div>
+</div>
 
-  <div className="grid grid-cols-3 gap-4">
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <p className="text-xs font-medium text-gray-500">
-        Tổng hoạt động
-      </p>
-      <p className="mt-1 text-2xl font-bold text-blue-600">
-        {activities.length}
-      </p>
+</div>
+
+{/* BỘ LỌC HOẠT ĐỘNG */}
+<div className="mb-5 rounded-xl border border-gray-200 bg-white p-3 sm:p-4">
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+
+    {/* Lọc năm học */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Năm học
+      </label>
+      <select
+        value={filterYear}
+        onChange={(e) => setFilterYear(e.target.value)}
+        className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-500"
+      >
+        <option value="all">Tất cả năm học</option>
+        {academicYears.map((year) => (
+          <option key={year.id} value={String(year.id)}>
+            {year.name}
+          </option>
+        ))}
+      </select>
     </div>
 
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <p className="text-xs font-medium text-gray-500">
-        Sắp diễn ra
-      </p>
-      <p className="mt-1 text-2xl font-bold text-blue-600">
-        {
-activities.filter(
-  (a) => getActivityStatus(a, currentTime) === "scheduled"
-).length
-}
-      </p>
+    {/* Lọc tiêu chí */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Tiêu chí
+      </label>
+      <select
+        value={filterCriterion}
+        onChange={(e) => setFilterCriterion(e.target.value)}
+        className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-500"
+      >
+        <option value="all">Tất cả tiêu chí</option>
+        <option value="dao_duc">Đạo đức</option>
+        <option value="hoc_tap">Học tập</option>
+        <option value="the_luc">Thể lực</option>
+        <option value="tinh_nguyen">Tình nguyện</option>
+        <option value="hoi_nhap">Hội nhập</option>
+      </select>
     </div>
 
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <p className="text-xs font-medium text-gray-500">
-        Đang diễn ra
-      </p>
-      <p className="mt-1 text-2xl font-bold text-red-600">
-        {
-activities.filter(
-  (a) => getActivityStatus(a, currentTime) === "ongoing"
-).length
-}
-      </p>
+    {/* Tìm kiếm */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Tìm chương trình
+      </label>
+      <input
+        type="text"
+        value={searchActivity}
+        onChange={(e) => setSearchActivity(e.target.value)}
+        placeholder="Nhập tên chương trình..."
+        className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-500"
+      />
     </div>
+
   </div>
 </div>
 
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-[420px_1fr]">
           {/* ================= FORM ================= */}
           <div>
+            {/* NÚT MỞ FORM TRÊN MOBILE */}
+<button
+  type="button"
+  onClick={() => setShowActivityForm(!showActivityForm)}
+  className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 via-cyan-500 to-blue-600 px-5 py-4 font-semibold text-white shadow-lg transition hover:brightness-105 xl:hidden"
+>
+  {showActivityForm ? "✕ Đóng form hoạt động" : "+ Thêm hoạt động"}
+</button>
+
+{/* FORM: MOBILE ẨN/MỞ, DESKTOP LUÔN HIỆN */}
+<div className={`${showActivityForm ? "block" : "hidden"} xl:block`}>
             <div className="rounded-2xl border border-gray-200 bg-white p-7 shadow-sm">
               <div className="mb-6">
                 <h3 className="text-xl font-bold text-gray-900">
@@ -821,6 +1000,28 @@ activities.filter(
                   <label className="mb-2 block text-sm font-semibold text-gray-700">
                     Đơn vị tổ chức
                   </label>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Năm học
+                </label>
+
+                <select
+                  value={academicYearId ?? ""}
+                  onChange={(e) =>
+                    setAcademicYearId(e.target.value ? Number(e.target.value) : null)
+                  }
+                  className="w-full border rounded-lg px-3 py-2"
+                >
+                  <option value="">-- Chọn năm học --</option>
+
+                  {academicYears.map((year) => (
+                    <option key={year.id} value={year.id}>
+                      {year.name}
+                      {year.is_current ? " (Hiện tại)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
                   <input
                     className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                     placeholder="Đoàn trường, Hội Sinh viên..."
@@ -1025,11 +1226,12 @@ activities.filter(
       Hủy
     </button>
   )}
-</div>
+               </div>
               </div>
             </div>
           </div>
-
+        </div>
+ 
           {/* ================= DANH SÁCH (PHẦN 2) ================= */}
           <div>
                         <div className="rounded-2xl border border-gray-200 bg-white p-7 shadow-sm">
@@ -1038,25 +1240,72 @@ activities.filter(
                   <h3 className="text-xl font-bold text-gray-900">
                     Danh sách hoạt động
                   </h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Tổng cộng {activities.length} hoạt động
-                  </p>
                 </div>
               </div>
 
-              {activities.length === 0 ? (
-                <div className="rounded-xl border-2 border-dashed border-gray-200 py-16 text-center">
-                  <div className="text-5xl">📂</div>
-                  <h4 className="mt-4 text-lg font-semibold text-gray-700">
-                    Chưa có hoạt động nào
-                  </h4>
-                  <p className="mt-2 text-gray-500">
-                    Hãy thêm hoạt động đầu tiên bằng biểu mẫu bên trái.
-                  </p>
-                </div>
-              ) : (
+                {activities.length === 0 ? (
+                  <div className="rounded-xl border-2 border-dashed border-gray-200 py-16 text-center">
+                    <div className="text-5xl">📂</div>
+                    <h4 className="mt-4 text-lg font-semibold text-gray-700">
+                      Chưa có hoạt động nào
+                    </h4>
+                    <p className="mt-2 text-gray-500">
+                      Hãy thêm hoạt động đầu tiên bằng biểu mẫu bên trái.
+                    </p>
+                  </div>
+                ) : filteredActivities.length === 0 ? (
+                  <div className="rounded-xl border-2 border-dashed border-gray-200 py-12 text-center">
+                    <div className="text-4xl">🔍</div>
+                    <h4 className="mt-3 text-lg font-semibold text-gray-700">
+                      Không tìm thấy hoạt động
+                    </h4>
+                    <p className="mt-2 text-sm text-gray-500">
+                      Hãy thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.
+                    </p>
+                  </div>
+                ) : (
                 <div className="space-y-4">
-                  {activities.map((activity) => (
+                {[...filteredActivities]
+                  .sort((a, b) => {
+                    const statusOrder = {
+                      ongoing: 0,
+                      scheduled: 1,
+                      ended: 2,
+                      not_started: 3,
+                    };
+
+                    const statusA = getActivityStatus(a, currentTime);
+                    const statusB = getActivityStatus(b, currentTime);
+
+                    const priorityDiff =
+                      statusOrder[statusA as keyof typeof statusOrder] -
+                      statusOrder[statusB as keyof typeof statusOrder];
+
+                    if (priorityDiff !== 0) return priorityDiff;
+
+                    const startA = a.event_time
+                      ? new Date(a.event_time).getTime()
+                      : 0;
+
+                    const startB = b.event_time
+                      ? new Date(b.event_time).getTime()
+                      : 0;
+
+                    const endA = a.end_time
+                      ? new Date(a.end_time).getTime()
+                      : startA;
+
+                    const endB = b.end_time
+                      ? new Date(b.end_time).getTime()
+                      : startB;
+
+                    if (statusA === "ended") {
+                      return endB - endA;
+                    }
+
+                    return startA - startB;
+                  })
+                  .map((activity) => (
                     <div
                       key={activity.id}
                       className="overflow-hidden rounded-2xl border border-gray-200 transition hover:shadow-md"
